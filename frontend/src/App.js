@@ -118,6 +118,7 @@ const Navigation = () => {
     { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { path: "/simulation", label: "Simulation", icon: Radio },
     { path: "/agents", label: "AI Agents", icon: Bot },
+    { path: "/events", label: "Event Agents", icon: Eye },
     { path: "/lab", label: "Strategy Lab", icon: FlaskConical },
     { path: "/marketplace", label: "Marketplace", icon: Store },
     { path: "/admin", label: "Admin", icon: Shield },
