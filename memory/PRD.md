@@ -1,9 +1,11 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 4 Complete + Stability Testing Passed
+## Current Status: Phase 5 Complete - Investor Demo Ready
 
 ### Overview
 AlphaAI is a decentralized AI-powered hedge fund platform that allows investors to deposit capital into a vault managed by autonomous AI trading agents. The platform includes a marketplace for external developers to launch their own trading agents.
+
+**Copyright © 2026 Martin Maughan. All rights reserved. AlphaAI Platform.**
 
 ### All Implemented Features
 
@@ -34,11 +36,22 @@ AlphaAI is a decentralized AI-powered hedge fund platform that allows investors 
 - Batch Strategy Generation
 - New Agent Addition
 
-**Phase 4.1 - Bug Fixes (March 2026)** ✅
-- Added `/api/market/top-coins` endpoint
-- Added `/api/market/chart/{symbol}` endpoint
-- Added `/api/execution/simulate` endpoint
-- Added `/api/investors/toggle-paper-trading/{wallet}` endpoint
+**Phase 5 - Enhanced Simulation (March 2026)** ✅ NEW
+- **100x Time Acceleration**: Simulate months of trading in seconds
+- **Historical Data Loading**: Load BTC/ETH price data for backtesting
+- **4 Specialized Trading Agents**:
+  - Arbitrage Agent (25% allocation)
+  - Momentum Agent (25% allocation)
+  - Funding Rate Agent (25% allocation)
+  - AI Research Lab (25% allocation, auto-generates strategies)
+- **Stress Testing Scenarios**:
+  - BTC 30% Drop (24h simulation)
+  - ETH Flash Crash 50% (12h simulation)
+  - Market Panic Sell 40% (6h simulation)
+  - Liquidity Crisis 25% (48h simulation)
+- **Real-time Agent Performance Tracking**
+- **Export Results** (PDF, CSV, JSON)
+- **Risk Management Integration**: Auto-stop at 5% drawdown, position reduction
 
 ### API Endpoints Summary
 
