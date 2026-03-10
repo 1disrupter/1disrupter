@@ -1,21 +1,24 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 4 Complete
+## Current Status: Phase 4 Complete + Stability Testing Passed
+
+### Overview
+AlphaAI is a decentralized AI-powered hedge fund platform that allows investors to deposit capital into a vault managed by autonomous AI trading agents. The platform includes a marketplace for external developers to launch their own trading agents.
 
 ### All Implemented Features
 
 **Phase 1 - MVP Core** ✅
-- 5 AI Trading Agents
+- 5 AI Trading Agents (DataCollector, Decision, Strategy, Execution, Risk)
 - Investor Dashboard with wallet connection
-- Fund NAV, deposit/withdraw
-- AI Market Analysis (GPT-5.2)
+- Fund NAV, deposit/withdraw functionality
+- AI Market Analysis (GPT-5.2 via Emergent LLM Key)
 - Marketplace with 90/10 revenue sharing
 
 **Phase 2 - Advanced Features** ✅
 - AI Research & Strategy Lab
-- Risk Management Engine
-- Capital Allocation Engine
-- Execution Optimization Layer
+- Risk Management Engine (drawdown, loss limits, position sizes)
+- Capital Allocation Engine (dynamic allocation to top performers)
+- Execution Optimization Layer (slippage, gas optimization)
 - Paper Trading Sandbox
 
 **Phase 3 - Simulation Integration** ✅
@@ -24,14 +27,21 @@
 - Comprehensive logging
 - Agent interaction tracking
 
-**Phase 4 - Reports & Live Mode** ✅ (NEW)
-- **Daily Performance Reports**: P&L, win rate, trades, best/worst trade
-- **Weekly Performance Reports**: Sharpe ratio, daily breakdown, strategy rankings
-- **Mode Switching**: Paper → Testnet → Live ($1000 max safety limit)
-- **Batch Strategy Generation**: Add multiple strategies at once
-- **New Agent Addition**: Dynamically add agents to system
+**Phase 4 - Reports & Live Mode** ✅
+- Daily Performance Reports
+- Weekly Performance Reports
+- Mode Switching (Paper → Testnet → Live)
+- Batch Strategy Generation
+- New Agent Addition
+
+**Phase 4.1 - Bug Fixes (March 2026)** ✅
+- Added `/api/market/top-coins` endpoint
+- Added `/api/market/chart/{symbol}` endpoint
+- Added `/api/execution/simulate` endpoint
+- Added `/api/investors/toggle-paper-trading/{wallet}` endpoint
 
 ### API Endpoints Summary
+
 ```
 Simulation:
 - POST /api/simulation/start
@@ -65,14 +75,76 @@ Risk:
 Capital:
 - GET /api/capital/allocations
 - POST /api/capital/rebalance
+
+Execution:
+- GET /api/execution/stats
+- POST /api/execution/simulate  (NEW)
+
+Market:
+- GET /api/market/top-coins  (NEW)
+- GET /api/market/chart/{symbol}  (NEW)
+
+Investors:
+- POST /api/investors/register
+- GET /api/investors/{wallet}
+- POST /api/investors/deposit
+- POST /api/investors/withdraw
+- POST /api/investors/toggle-paper-trading/{wallet}  (NEW)
+
+Fund:
+- GET /api/fund/stats
+- GET /api/fund/allocation
+- GET /api/fund/performance-history
+
+Agents:
+- GET /api/agents
+- POST /api/agents/add
+
+Trading:
+- GET /api/trades
+- POST /api/paper/trade
+- GET /api/paper/portfolio/{wallet}
+- POST /api/paper/reset/{wallet}
+
+Analytics:
+- GET /api/analytics/overview
+- GET /api/analytics/strategies
+
+AI:
+- POST /api/ai/analyze
+
+Marketplace:
+- GET /api/marketplace/agents
+- POST /api/marketplace/agents
 ```
 
-### Test Results
-- Backend: 90.2% pass rate
+### Test Results (March 2026)
+- Backend: 93% pass rate
 - Frontend: 95% pass rate
+- Stress Testing: 100% (20 cycles, 10 strategy generations)
+- Edge Cases: 100% handled correctly
 
-### Next Action Items
-1. Deploy smart contracts to Sepolia
-2. Integrate Uniswap V3 for real DEX trades
-3. Add WebSocket for real-time streaming
-4. Implement historical data backtesting
+### Technical Stack
+- **Backend**: FastAPI (Python)
+- **Frontend**: React with Shadcn/UI components
+- **Database**: MongoDB (motor async driver)
+- **AI Integration**: OpenAI GPT-5.2 (via Emergent LLM Key)
+- **Market Data**: CoinGecko API
+
+### Next Action Items (P0)
+1. Deploy smart contracts (FundVault, ShareToken) to Sepolia testnet
+2. Integrate Web3 wallet transactions for real deposits/withdrawals
+3. Add user authentication system (JWT)
+
+### Future Tasks (P1-P3)
+- Integrate with real DEX (Uniswap V3) for live trading
+- Historical backtesting with real price data
+- WebSocket real-time updates
+- Public leaderboard for rankings
+- Email notifications & referral system
+- Mobile optimization
+
+### Known Limitations
+- All trading data is currently simulated
+- CoinGecko may return mock data when rate-limited
+- Wallet connections are demo-mode without real blockchain integration
