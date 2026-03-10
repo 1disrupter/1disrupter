@@ -219,6 +219,55 @@ class SimulationConfig(BaseModel):
     risk_events_triggered: int = 0
     last_risk_check: Optional[str] = None
     auto_deploy_enabled: bool = True
+    # Enhanced simulation settings
+    time_acceleration: int = 1  # 1x = real-time, 100x = accelerated
+    sim_start_date: str = "2025-01-01"
+    sim_end_date: str = "2025-12-31"
+    sim_current_date: Optional[str] = None
+    historical_data_loaded: bool = False
+    stress_test_active: bool = False
+    stress_test_scenario: Optional[str] = None
+
+class AgentConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    type: str  # strategy, sandbox, data, execution, risk
+    capital_allocation_percent: float = 25.0
+    max_position: float = 0.1
+    stop_loss_percent: float = 5.0
+    auto_generate_strategies: bool = False
+    backtest_historical: bool = False
+    deploy_top_strategies: bool = False
+    is_active: bool = True
+    performance_ytd: float = 0.0
+    trades_executed: int = 0
+
+class StressTestScenario(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    trigger: str  # price_drop, volatility_spike, liquidity_crisis
+    drop_percent: float = 30.0
+    duration_hours: int = 24
+    is_active: bool = False
+    started_at: Optional[str] = None
+    results: Optional[Dict[str, Any]] = None
+
+class HistoricalDataPoint(BaseModel):
+    timestamp: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+    symbol: str = "BTC/USDT"
+
+class SimulationExportRequest(BaseModel):
+    formats: List[str] = ["pdf", "csv"]
+    include_charts: bool = True
+    include_trades: bool = True
+    include_agent_performance: bool = True
 
 class SimulationLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
