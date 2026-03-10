@@ -300,8 +300,8 @@ const LandingPage = () => {
 
       <footer className="px-4 py-8 border-t border-zinc-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2"><Brain className="w-5 h-5 text-[#7B61FF]" /><span className="font-semibold">AlphaAI Fund</span></div>
-          <p className="text-sm text-zinc-500">© 2025 AlphaAI Fund. Testnet deployment for demonstration.</p>
+          <div className="flex items-center gap-2"><Brain className="w-5 h-5 text-[#7B61FF]" /><span className="font-semibold">AlphaAI Platform</span></div>
+          <p className="text-sm text-zinc-500">© 2026 Martin Maughan. All rights reserved. AlphaAI Platform.</p>
         </div>
       </footer>
     </div>
