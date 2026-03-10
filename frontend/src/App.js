@@ -1699,6 +1699,21 @@ const EventAgentsDashboard = () => {
   );
 };
 
+// Event Agents Page Wrapper
+const EventAgentsPage = () => {
+  return (
+    <div className="min-h-screen pt-24 pb-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <h1 className="text-4xl font-bold mb-2 font-['Outfit']">Event-Driven Agents</h1>
+          <p className="text-zinc-400">Smart contract event monitors with automated actions and dashboards</p>
+        </motion.div>
+        <EventAgentsDashboard />
+      </div>
+    </div>
+  );
+};
+
 // Simulation Control Page
 const SimulationPage = () => {
   const [simConfig, setSimConfig] = useState(null);
