@@ -1461,23 +1461,140 @@ const SimulationPage = () => {
         <Card className="glass-card mb-8 border-[#7B61FF]/30" data-testid="control-panel">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Cpu className="w-5 h-5 text-[#7B61FF]" />Control Panel</CardTitle>
-            <CardDescription>Execute simulation cycles and manage agents</CardDescription>
+            <CardDescription>Execute simulation cycles, manage agents, and generate reports</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mb-4">
               <Button onClick={runCycle} disabled={!running || cycleRunning} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90" data-testid="run-cycle-btn">
                 {cycleRunning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />}
                 Run Trade Cycle
               </Button>
               <Button onClick={autoDeployTop} variant="outline" className="rounded-full border-[#00FF94]/50 text-[#00FF94] hover:bg-[#00FF94]/10" data-testid="auto-deploy-btn">
-                <Rocket className="w-4 h-4 mr-2" />Auto-Deploy Top Strategies
+                <Rocket className="w-4 h-4 mr-2" />Auto-Deploy Top
+              </Button>
+              <Button onClick={addStrategies} variant="outline" className="rounded-full border-[#FFB800]/50 text-[#FFB800] hover:bg-[#FFB800]/10" data-testid="add-strategies-btn">
+                <Sparkles className="w-4 h-4 mr-2" />Add New Strategies
               </Button>
               <Button onClick={rebalanceCapital} variant="outline" className="rounded-full border-zinc-700" data-testid="rebalance-capital-btn">
-                <Scale className="w-4 h-4 mr-2" />Rebalance Capital
+                <Scale className="w-4 h-4 mr-2" />Rebalance
               </Button>
-              <Button onClick={fetchData} variant="outline" className="rounded-full border-zinc-700" data-testid="refresh-data-btn">
-                <RefreshCw className="w-4 h-4 mr-2" />Refresh Data
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={generateDailyReport} variant="outline" className="rounded-full border-zinc-700" data-testid="daily-report-btn">
+                <FileCode className="w-4 h-4 mr-2" />Daily Report
               </Button>
+              <Button onClick={generateWeeklyReport} variant="outline" className="rounded-full border-zinc-700" data-testid="weekly-report-btn">
+                <ScrollText className="w-4 h-4 mr-2" />Weekly Report
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="rounded-full border-zinc-700" data-testid="mode-switch-btn">
+                    <Radio className="w-4 h-4 mr-2" />
+                    Mode: {simStats?.simulation?.mode?.toUpperCase() || 'PAPER'}
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-[#121212] border-zinc-800">
+                  <DropdownMenuItem onClick={() => switchMode('paper')} className={simStats?.simulation?.mode === 'paper' ? 'text-[#00FF94]' : ''}>
+                    Paper Trading
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => switchMode('testnet')} className={simStats?.simulation?.mode === 'testnet' ? 'text-[#FFB800]' : ''}>
+                    Testnet
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => switchMode('live')} className="text-red-400">
+                    Live Trading ($1000)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Performance Reports */}
+        {(dailyReport || weeklyReport) && (
+          <Card className="glass-card mb-8 border-[#00FF94]/30" data-testid="reports-panel">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5 text-[#00FF94]" />Performance Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="daily" className="w-full">
+                <TabsList className="bg-[#050505] mb-4">
+                  <TabsTrigger value="daily" disabled={!dailyReport}>Daily</TabsTrigger>
+                  <TabsTrigger value="weekly" disabled={!weeklyReport}>Weekly</TabsTrigger>
+                </TabsList>
+                
+                {dailyReport && (
+                  <TabsContent value="daily">
+                    <div className="grid md:grid-cols-3 gap-4 mb-4">
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Daily P&L</p>
+                        <p className={`text-2xl font-bold font-['JetBrains_Mono'] ${dailyReport.summary?.daily_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                          {dailyReport.summary?.daily_pnl >= 0 ? '+' : ''}${dailyReport.summary?.daily_pnl?.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Win Rate</p>
+                        <p className="text-2xl font-bold font-['JetBrains_Mono']">{dailyReport.trading?.win_rate?.toFixed(1)}%</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Trades Today</p>
+                        <p className="text-2xl font-bold font-['JetBrains_Mono']">{dailyReport.trading?.total_trades}</p>
+                      </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-sm text-zinc-400 mb-2">Best Trade</p>
+                        <p className="text-lg font-bold text-[#00FF94] font-['JetBrains_Mono']">+${dailyReport.trading?.best_trade?.toFixed(2)}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-sm text-zinc-400 mb-2">Worst Trade</p>
+                        <p className="text-lg font-bold text-red-400 font-['JetBrains_Mono']">${dailyReport.trading?.worst_trade?.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                )}
+                
+                {weeklyReport && (
+                  <TabsContent value="weekly">
+                    <div className="grid md:grid-cols-4 gap-4 mb-4">
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Weekly P&L</p>
+                        <p className={`text-2xl font-bold font-['JetBrains_Mono'] ${weeklyReport.summary?.weekly_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                          {weeklyReport.summary?.weekly_pnl >= 0 ? '+' : ''}${weeklyReport.summary?.weekly_pnl?.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Sharpe Ratio</p>
+                        <p className="text-2xl font-bold font-['JetBrains_Mono'] text-[#7B61FF]">{weeklyReport.summary?.sharpe_ratio}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Win Rate</p>
+                        <p className="text-2xl font-bold font-['JetBrains_Mono']">{weeklyReport.trading?.win_rate?.toFixed(1)}%</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Total Trades</p>
+                        <p className="text-2xl font-bold font-['JetBrains_Mono']">{weeklyReport.trading?.total_trades}</p>
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                      <p className="text-sm text-zinc-400 mb-3">Daily Breakdown</p>
+                      <div className="flex gap-2">
+                        {weeklyReport.trading?.daily_breakdown?.slice(0, 7).map((day, i) => (
+                          <div key={i} className="flex-1 text-center p-2 rounded bg-[#121212]">
+                            <p className="text-xs text-zinc-500">{day.date?.slice(5)}</p>
+                            <p className={`text-sm font-mono ${day.pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                              {day.pnl >= 0 ? '+' : ''}{day.pnl}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+                )}
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
             </div>
           </CardContent>
         </Card>
