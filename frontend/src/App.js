@@ -2440,6 +2440,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/simulation" element={<SimulationPage />} />
             <Route path="/agents" element={<AgentsPage />} />
+            <Route path="/events" element={<EventAgentsPage />} />
             <Route path="/lab" element={<StrategyLabPage />} />
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
