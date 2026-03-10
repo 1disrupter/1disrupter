@@ -374,6 +374,102 @@ class AlphaAIAPITester:
         if success:
             print(f"   Paper portfolio reset: {reset.get('message', 'Unknown')}")
 
+    def test_reports_endpoints(self):
+        """Test NEW REPORTS endpoints - CRITICAL NEW FEATURE"""
+        print("\n=== TESTING REPORTS (NEW FEATURE) ===")
+        
+        # Test Daily Report generation
+        success, daily_report = self.run_test("Generate Daily Report", "GET", "reports/daily", 200)
+        if success and daily_report:
+            print(f"   Daily Report Generated:")
+            print(f"   - Date: {daily_report.get('date', 'Unknown')}")
+            print(f"   - Daily P&L: ${daily_report.get('summary', {}).get('daily_pnl', 0):.2f}")
+            print(f"   - Daily Return: {daily_report.get('summary', {}).get('daily_return_percent', 0):.2f}%")
+            print(f"   - Total Trades: {daily_report.get('trading', {}).get('total_trades', 0)}")
+            print(f"   - Win Rate: {daily_report.get('trading', {}).get('win_rate', 0):.1f}%")
+        
+        # Test Weekly Report generation
+        success, weekly_report = self.run_test("Generate Weekly Report", "GET", "reports/weekly", 200)
+        if success and weekly_report:
+            print(f"   Weekly Report Generated:")
+            print(f"   - Period: {weekly_report.get('period', 'Unknown')}")
+            print(f"   - Weekly P&L: ${weekly_report.get('summary', {}).get('weekly_pnl', 0):.2f}")
+            print(f"   - Weekly Return: {weekly_report.get('summary', {}).get('weekly_return_percent', 0):.2f}%")
+            print(f"   - Sharpe Ratio: {weekly_report.get('summary', {}).get('sharpe_ratio', 0):.2f}")
+            print(f"   - Total Trades: {weekly_report.get('trading', {}).get('total_trades', 0)}")
+            print(f"   - Active Strategies: {weekly_report.get('strategies', {}).get('total', 0)}")
+        
+        # Test Report History
+        success, history = self.run_test("Get Report History", "GET", "reports/history?limit=5", 200)
+        if success and history:
+            print(f"   Found {len(history)} historical reports")
+            for report in history[:2]:
+                print(f"   - {report.get('report_type', 'unknown')}: {report.get('generated_at', 'unknown')[:10]}")
+
+    def test_mode_switching_endpoints(self):
+        """Test NEW MODE SWITCHING endpoints - CRITICAL NEW FEATURE"""
+        print("\n=== TESTING MODE SWITCHING (NEW FEATURE) ===")
+        
+        # Test switch to paper mode
+        success, paper_result = self.run_test("Switch to Paper Mode", "POST", "simulation/switch-mode?mode=paper", 200)
+        if success and paper_result:
+            print(f"   Paper Mode Switch:")
+            print(f"   - Message: {paper_result.get('message', 'Unknown')}")
+            print(f"   - Mode: {paper_result.get('mode', 'unknown')}")
+            print(f"   - Capital: ${paper_result.get('capital', 0):,.2f}")
+        
+        # Test switch to testnet mode
+        success, testnet_result = self.run_test("Switch to Testnet Mode", "POST", "simulation/switch-mode?mode=testnet", 200)
+        if success and testnet_result:
+            print(f"   Testnet Mode Switch:")
+            print(f"   - Message: {testnet_result.get('message', 'Unknown')}")
+            print(f"   - Mode: {testnet_result.get('mode', 'unknown')}")
+            print(f"   - Capital: ${testnet_result.get('capital', 0):,.2f}")
+        
+        # Test switch to live mode with capital limit
+        success, live_result = self.run_test("Switch to Live Mode", "POST", "simulation/switch-mode?mode=live&live_capital=5000", 200)
+        if success and live_result:
+            print(f"   Live Mode Switch:")
+            print(f"   - Message: {live_result.get('message', 'Unknown')}")
+            print(f"   - Mode: {live_result.get('mode', 'unknown')}")
+            print(f"   - Capital: ${live_result.get('capital', 0):,.2f}")
+            print(f"   - Warning: {live_result.get('warning', 'None')}")
+        
+        # Switch back to paper for safety
+        self.run_test("Switch Back to Paper", "POST", "simulation/switch-mode?mode=paper", 200)
+
+    def test_batch_strategies_endpoints(self):
+        """Test NEW BATCH STRATEGIES endpoints - CRITICAL NEW FEATURE"""
+        print("\n=== TESTING BATCH STRATEGIES (NEW FEATURE) ===")
+        
+        # Test add batch strategies with default count
+        success, batch_result = self.run_test("Add Batch Strategies (Default)", "POST", "strategies/add-batch", 200)
+        if success and batch_result:
+            print(f"   Batch Strategies Added:")
+            print(f"   - Message: {batch_result.get('message', 'Unknown')}")
+            print(f"   - Count: {len(batch_result.get('strategies', []))}")
+            for strategy in batch_result.get('strategies', [])[:2]:
+                print(f"   - {strategy.get('name', 'Unknown')}: {strategy.get('type', 'unknown')} (Sharpe: {strategy.get('sharpe', 0)})")
+        
+        # Test add batch strategies with custom count
+        success, batch_custom = self.run_test("Add Batch Strategies (Custom Count)", "POST", "strategies/add-batch?count=5", 200)
+        if success and batch_custom:
+            print(f"   Custom Batch Added:")
+            print(f"   - Message: {batch_custom.get('message', 'Unknown')}")
+            print(f"   - Count: {len(batch_custom.get('strategies', []))}")
+        
+        # Test add new agent
+        success, agent_result = self.run_test(
+            "Add New Agent", 
+            "POST", 
+            "agents/add?name=TestAgent&agent_type=strategy&description=Test%20agent&strategy=Test%20strategy", 
+            200
+        )
+        if success and agent_result:
+            print(f"   New Agent Added:")
+            print(f"   - Message: {agent_result.get('message', 'Unknown')}")
+            print(f"   - Agent Name: {agent_result.get('agent', {}).get('name', 'Unknown')}")
+
     def test_simulation_endpoints(self):
         """Test MVP Simulation endpoints - CRITICAL NEW FEATURE"""
         print("\n=== TESTING MVP SIMULATION (CRITICAL NEW) ===")
