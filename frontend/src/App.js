@@ -1372,6 +1372,64 @@ const SimulationPage = () => {
     }
   };
 
+  // Enhanced simulation functions
+  const runAcceleratedSimulation = async () => {
+    setAcceleratedRunning(true);
+    try {
+      // First configure with 100x speed
+      await axios.post(`${API}/simulation/configure`, {
+        time_acceleration: 100,
+        start_date: "2025-01-01",
+        end_date: "2025-12-31",
+        initial_capital: 100000,
+        stress_test_enabled: true
+      });
+      
+      // Load historical data
+      await axios.post(`${API}/simulation/load-historical-data?use_sample=true`);
+      
+      // Run accelerated simulation
+      const res = await axios.post(`${API}/simulation/run-accelerated?days_to_simulate=${daysToSimulate}`);
+      setAcceleratedResults(res.data);
+      toast.success(`Simulated ${daysToSimulate} days at 100x speed!`);
+      fetchData();
+      
+      // Fetch agent performance
+      const perfRes = await axios.get(`${API}/simulation/agent-performance`);
+      setAgentPerformance(perfRes.data.agents || []);
+    } catch (error) {
+      toast.error("Accelerated simulation failed");
+      console.error(error);
+    }
+    setAcceleratedRunning(false);
+  };
+
+  const runStressTest = async (scenario) => {
+    setStressTestRunning(true);
+    try {
+      const res = await axios.post(`${API}/simulation/stress-test?scenario_name=${encodeURIComponent(scenario)}`);
+      setStressTestResults(res.data);
+      toast.success(`Stress test complete: ${res.data.results?.survival_status}`);
+      fetchData();
+    } catch (error) {
+      toast.error("Stress test failed");
+    }
+    setStressTestRunning(false);
+  };
+
+  const exportResults = async () => {
+    try {
+      const res = await axios.post(`${API}/simulation/export`, {
+        formats: ["pdf", "csv"],
+        include_trades: true,
+        include_agent_performance: true
+      });
+      toast.success("Results exported successfully!");
+    } catch (error) {
+      toast.error("Export failed");
+    }
+  };
+
   const getLogIcon = (type) => {
     switch (type) {
       case 'trade': return Activity;
