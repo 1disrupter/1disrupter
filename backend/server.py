@@ -1277,6 +1277,21 @@ async def get_top_coins_endpoint():
         return mock_coins
     return coins
 
+@api_router.get("/market/chart/{symbol}")
+async def get_market_chart_endpoint(symbol: str, days: int = 30):
+    """Get price chart data for a coin"""
+    chart_data = await get_market_chart(symbol.lower(), days)
+    if not chart_data:
+        # Return mock chart data if CoinGecko is unavailable
+        base_price = 45000 if symbol.lower() == "bitcoin" else 2500 if symbol.lower() == "ethereum" else 100
+        mock_prices = []
+        for i in range(days):
+            timestamp = int((datetime.now(timezone.utc) - timedelta(days=days-i)).timestamp() * 1000)
+            price = base_price * (1 + random.uniform(-0.05, 0.05))
+            mock_prices.append([timestamp, round(price, 2)])
+        return {"prices": mock_prices}
+    return chart_data
+
 # ============= AGENTS ROUTES =============
 
 @api_router.get("/agents", response_model=List[TradingAgent])
