@@ -1259,6 +1259,24 @@ async def get_performance_history():
         data.append({"date": (datetime.now(timezone.utc) - timedelta(days=30-i)).strftime("%Y-%m-%d"), "value": round(base_value, 2), "btc": round(base_value * random.uniform(0.9, 1.1), 2)})
     return data
 
+# ============= MARKET DATA ROUTES =============
+
+@api_router.get("/market/top-coins")
+async def get_top_coins_endpoint():
+    """Get top 20 coins by market cap from CoinGecko"""
+    coins = await get_top_coins()
+    if not coins:
+        # Return mock data if CoinGecko is unavailable
+        mock_coins = [
+            {"id": "bitcoin", "symbol": "btc", "name": "Bitcoin", "current_price": 45000, "market_cap": 880000000000, "price_change_percentage_24h": 2.5},
+            {"id": "ethereum", "symbol": "eth", "name": "Ethereum", "current_price": 2500, "market_cap": 300000000000, "price_change_percentage_24h": 1.8},
+            {"id": "solana", "symbol": "sol", "name": "Solana", "current_price": 100, "market_cap": 45000000000, "price_change_percentage_24h": 5.2},
+            {"id": "avalanche", "symbol": "avax", "name": "Avalanche", "current_price": 35, "market_cap": 14000000000, "price_change_percentage_24h": 3.1},
+            {"id": "polygon", "symbol": "matic", "name": "Polygon", "current_price": 0.8, "market_cap": 8000000000, "price_change_percentage_24h": -1.2},
+        ]
+        return mock_coins
+    return coins
+
 # ============= AGENTS ROUTES =============
 
 @api_router.get("/agents", response_model=List[TradingAgent])
@@ -1381,6 +1399,46 @@ async def get_execution_stats():
         "dex_usage": {"uniswap_v3": 55.0, "sushiswap": 25.0, "curve": 15.0, "balancer": 5.0}
     }
 
+class ExecutionSimulateRequest(BaseModel):
+    symbol: str
+    side: str
+    amount: float
+    strategy_id: Optional[str] = None
+
+@api_router.post("/execution/simulate")
+async def simulate_trade_execution(request: ExecutionSimulateRequest):
+    """Simulate trade execution to preview slippage, gas fees, and expected price"""
+    # Get current price (simulated)
+    prices = {"BTC/USDT": 45000, "ETH/USDT": 2500, "SOL/USDT": 100, "AVAX/USDT": 35, "MATIC/USDT": 0.8}
+    base_price = prices.get(request.symbol, 100)
+    
+    # Calculate simulated execution details
+    slippage = round(random.uniform(0.01, 0.3), 3)
+    execution_price = base_price * (1 + slippage/100) if request.side == "buy" else base_price * (1 - slippage/100)
+    gas_fee = round(random.uniform(1, 10), 2)
+    
+    # Estimate P&L range
+    price_impact = request.amount * execution_price * (slippage / 100)
+    trade_value = request.amount * execution_price
+    
+    return {
+        "success": True,
+        "simulation": {
+            "symbol": request.symbol,
+            "side": request.side,
+            "amount": request.amount,
+            "base_price": base_price,
+            "estimated_execution_price": round(execution_price, 2),
+            "estimated_slippage": slippage,
+            "estimated_gas_fee": gas_fee,
+            "trade_value": round(trade_value, 2),
+            "price_impact": round(price_impact, 2),
+            "best_route": random.choice(["Uniswap V3", "SushiSwap", "Curve"]),
+            "estimated_total_cost": round(trade_value + gas_fee + price_impact, 2)
+        },
+        "warning": "This is a simulation. Actual execution may vary based on market conditions."
+    }
+
 # ============= MARKETPLACE ROUTES =============
 
 @api_router.get("/marketplace/agents", response_model=List[MarketplaceAgent])
@@ -1462,6 +1520,34 @@ async def get_paper_portfolio(wallet_address: str):
 async def reset_paper_portfolio(wallet_address: str):
     await db.investors.update_one({"wallet_address": wallet_address}, {"$set": {"paper_balance": 10000, "paper_pnl": 0}})
     return {"success": True, "message": "Paper portfolio reset to $10,000"}
+
+@api_router.post("/investors/toggle-paper-trading/{wallet_address}")
+async def toggle_paper_trading(wallet_address: str):
+    """Toggle paper trading mode for an investor"""
+    investor = await db.investors.find_one({"wallet_address": wallet_address})
+    if not investor:
+        raise HTTPException(status_code=404, detail="Investor not found")
+    
+    current_status = investor.get('is_paper_trading', False)
+    new_status = not current_status
+    
+    await db.investors.update_one(
+        {"wallet_address": wallet_address}, 
+        {"$set": {"is_paper_trading": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    await sim_engine.log_event(
+        "system", 
+        f"Paper trading {'enabled' if new_status else 'disabled'} for {wallet_address[:10]}...", 
+        agent_name="SystemAdmin"
+    )
+    
+    return {
+        "success": True,
+        "wallet_address": wallet_address,
+        "is_paper_trading": new_status,
+        "message": f"Paper trading {'enabled' if new_status else 'disabled'}"
+    }
 
 # ============= ANALYTICS ROUTES =============
 
