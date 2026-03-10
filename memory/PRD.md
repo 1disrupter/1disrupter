@@ -36,7 +36,7 @@ AlphaAI is a decentralized AI-powered hedge fund platform that allows investors 
 - Batch Strategy Generation
 - New Agent Addition
 
-**Phase 5 - Enhanced Simulation (March 2026)** ✅ NEW
+**Phase 5 - Enhanced Simulation (March 2026)** ✅
 - **100x Time Acceleration**: Simulate months of trading in seconds
 - **Historical Data Loading**: Load BTC/ETH price data for backtesting
 - **4 Specialized Trading Agents**:
@@ -52,6 +52,30 @@ AlphaAI is a decentralized AI-powered hedge fund platform that allows investors 
 - **Real-time Agent Performance Tracking**
 - **Export Results** (PDF, CSV, JSON)
 - **Risk Management Integration**: Auto-stop at 5% drawdown, position reduction
+
+**Phase 6 - Smart Contract Integration (March 2026)** ✅ NEW
+- **AlphaAIManager.sol Contract**: Full Solidity smart contract for on-chain operations
+- **Contract Features**:
+  - Investor deposit/withdraw functions
+  - Strategy management (add, allocate, deallocate)
+  - On-chain balance tracking
+  - Emergency withdrawal (owner only)
+- **Admin Panel Integration**:
+  - 6-step deployment guide with faucet links
+  - Contract source code viewer with copy function
+  - Contract registration form
+  - Etherscan integration links
+- **Backend API Endpoints**:
+  - `/api/contract/info` - Get deployment status
+  - `/api/contract/source` - Get Solidity source code
+  - `/api/contract/register` - Register deployed contract
+  - `/api/contract/balance/{wallet}` - Get on-chain balance
+  - `/api/contract/strategies` - Get on-chain strategies
+  - `/api/contract/prepare-deposit` - Prepare deposit transaction
+  - `/api/contract/prepare-withdraw` - Prepare withdrawal transaction
+  - `/api/contract/events` - Get contract events
+  - `/api/contract/deployment-guide` - Step-by-step guide
+  - `/api/contract/abi` - Get contract ABI
 
 ### API Endpoints Summary
 
