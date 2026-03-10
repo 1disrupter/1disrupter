@@ -1437,6 +1437,7 @@ const SmartContractPanel = () => {
       </CardContent>
     </Card>
   );
+};
 
 // Simulation Control Page
 const SimulationPage = () => {
