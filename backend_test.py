@@ -552,7 +552,12 @@ def main():
     tester.test_analytics_endpoints()
     tester.test_market_data_endpoints()
     
-    # NEW FEATURE TESTS
+    # NEW FEATURE TESTS - CRITICAL FOR REVIEW
+    tester.test_reports_endpoints()  # NEW: Daily/Weekly Reports
+    tester.test_mode_switching_endpoints()  # NEW: Mode Switching
+    tester.test_batch_strategies_endpoints()  # NEW: Batch Strategies
+    
+    # EXISTING FEATURE TESTS
     tester.test_strategy_lab_endpoints()
     tester.test_risk_management_endpoints()
     tester.test_capital_allocation_endpoints()
