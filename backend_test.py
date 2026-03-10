@@ -463,6 +463,9 @@ def main():
     tester.test_execution_optimization_endpoints()
     tester.test_paper_trading_endpoints()
     
+    # CRITICAL MVP SIMULATION TESTS
+    tester.test_simulation_endpoints()
+    
     # Print final results
     print("\n" + "=" * 50)
     print(f"📊 FINAL RESULTS")
