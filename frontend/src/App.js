@@ -1226,10 +1226,217 @@ const AdminPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Smart Contract Section */}
+        <SmartContractPanel />
       </div>
     </div>
   );
 };
+
+// Smart Contract Panel Component
+const SmartContractPanel = () => {
+  const [contractInfo, setContractInfo] = useState(null);
+  const [deploymentGuide, setDeploymentGuide] = useState(null);
+  const [contractAddress, setContractAddress] = useState('');
+  const [deployerAddress, setDeployerAddress] = useState('');
+  const [txHash, setTxHash] = useState('');
+  const [registering, setRegistering] = useState(false);
+  const [showCode, setShowCode] = useState(false);
+  const [sourceCode, setSourceCode] = useState('');
+
+  useEffect(() => {
+    axios.get(`${API}/contract/info`).then(res => setContractInfo(res.data)).catch(console.error);
+    axios.get(`${API}/contract/deployment-guide`).then(res => setDeploymentGuide(res.data)).catch(console.error);
+  }, []);
+
+  const fetchSourceCode = async () => {
+    try {
+      const res = await axios.get(`${API}/contract/source`);
+      setSourceCode(res.data.source);
+      setShowCode(true);
+    } catch (error) {
+      toast.error("Failed to fetch source code");
+    }
+  };
+
+  const registerContract = async () => {
+    if (!contractAddress || !deployerAddress || !txHash) {
+      toast.error("Please fill all fields");
+      return;
+    }
+    setRegistering(true);
+    try {
+      const res = await axios.post(`${API}/contract/register?contract_address=${contractAddress}&deployer_address=${deployerAddress}&tx_hash=${txHash}`);
+      toast.success(res.data.message);
+      setContractInfo({ ...contractInfo, deployed: true, contract_address: contractAddress });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Registration failed");
+    }
+    setRegistering(false);
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!");
+  };
+
+  return (
+    <Card className="glass-card mt-8 border-[#7B61FF]/30" data-testid="smart-contract-panel">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileCode className="w-5 h-5 text-[#7B61FF]" />
+          Smart Contract (Sepolia Testnet)
+        </CardTitle>
+        <CardDescription>Deploy and manage the AlphaAI Manager contract on Ethereum</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Contract Status */}
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-lg bg-[#050505] border border-zinc-800">
+          <div className={`w-3 h-3 rounded-full ${contractInfo?.deployed ? 'bg-[#00FF94]' : 'bg-[#FFB800]'}`} />
+          <div className="flex-1">
+            <p className="font-medium">{contractInfo?.deployed ? 'Contract Deployed' : 'Contract Not Deployed'}</p>
+            <p className="text-sm text-zinc-400">
+              {contractInfo?.deployed 
+                ? <a href={`https://sepolia.etherscan.io/address/${contractInfo.contract_address}`} target="_blank" rel="noopener noreferrer" className="text-[#7B61FF] hover:underline">{contractInfo.contract_address}</a>
+                : 'Deploy to Sepolia testnet to enable on-chain transactions'}
+            </p>
+          </div>
+          <Badge className={contractInfo?.deployed ? 'bg-[#00FF94]/20 text-[#00FF94]' : 'bg-[#FFB800]/20 text-[#FFB800]'}>
+            {contractInfo?.network?.toUpperCase() || 'SEPOLIA'}
+          </Badge>
+        </div>
+
+        {/* Deployment Steps */}
+        {!contractInfo?.deployed && deploymentGuide && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Rocket className="w-5 h-5 text-[#FFB800]" />
+              Deployment Steps
+            </h3>
+            <div className="space-y-3">
+              {deploymentGuide.steps?.map((step, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[#050505] border border-zinc-800">
+                  <div className="w-6 h-6 rounded-full bg-[#7B61FF]/20 text-[#7B61FF] flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    {step.step}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{step.title}</p>
+                    <p className="text-xs text-zinc-400">{step.description}</p>
+                    {step.links && (
+                      <div className="mt-1 flex gap-2">
+                        {step.links.map((link, j) => (
+                          <a key={j} href={link} target="_blank" rel="noopener noreferrer" className="text-xs text-[#7B61FF] hover:underline flex items-center gap-1">
+                            <ExternalLink className="w-3 h-3" />{link.split('/')[2]}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Contract Source */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Terminal className="w-5 h-5 text-[#00FF94]" />
+              Contract Source Code
+            </h3>
+            <div className="flex gap-2">
+              <Button onClick={fetchSourceCode} variant="outline" size="sm" className="rounded-full border-zinc-700">
+                {showCode ? 'Refresh' : 'View Code'}
+              </Button>
+              {showCode && (
+                <Button onClick={() => copyToClipboard(sourceCode)} variant="outline" size="sm" className="rounded-full border-zinc-700">
+                  <Copy className="w-4 h-4 mr-1" />Copy
+                </Button>
+              )}
+            </div>
+          </div>
+          {showCode && (
+            <div className="bg-[#050505] border border-zinc-800 rounded-lg p-4 max-h-[300px] overflow-auto">
+              <pre className="text-xs text-zinc-300 font-mono whitespace-pre-wrap">{sourceCode}</pre>
+            </div>
+          )}
+        </div>
+
+        {/* Register Deployed Contract */}
+        {!contractInfo?.deployed && (
+          <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Check className="w-5 h-5 text-[#00FF94]" />
+              Register Deployed Contract
+            </h3>
+            <div className="grid md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="text-sm text-zinc-400 block mb-1">Contract Address</label>
+                <Input 
+                  placeholder="0x..." 
+                  value={contractAddress} 
+                  onChange={e => setContractAddress(e.target.value)}
+                  className="bg-[#121212] border-zinc-700 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 block mb-1">Deployer Address</label>
+                <Input 
+                  placeholder="0x..." 
+                  value={deployerAddress}
+                  onChange={e => setDeployerAddress(e.target.value)}
+                  className="bg-[#121212] border-zinc-700 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 block mb-1">Transaction Hash</label>
+                <Input 
+                  placeholder="0x..." 
+                  value={txHash}
+                  onChange={e => setTxHash(e.target.value)}
+                  className="bg-[#121212] border-zinc-700 font-mono text-sm"
+                />
+              </div>
+            </div>
+            <Button 
+              onClick={registerContract} 
+              disabled={registering}
+              className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90"
+            >
+              {registering ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+              Register Contract
+            </Button>
+          </div>
+        )}
+
+        {/* Contract Functions (if deployed) */}
+        {contractInfo?.deployed && (
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-[#00FF94]" />Investor Functions
+              </h4>
+              <p className="text-xs text-zinc-400 mb-2">deposit(), withdraw(), getInvestorBalance()</p>
+              <Button size="sm" variant="outline" className="rounded-full border-[#00FF94]/50 text-[#00FF94]">
+                <ExternalLink className="w-3 h-3 mr-1" />View on Etherscan
+              </Button>
+            </div>
+            <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Target className="w-4 h-4 text-[#7B61FF]" />Strategy Functions
+              </h4>
+              <p className="text-xs text-zinc-400 mb-2">addStrategy(), allocateToStrategy(), getStrategy()</p>
+              <Button size="sm" variant="outline" className="rounded-full border-[#7B61FF]/50 text-[#7B61FF]">
+                <ExternalLink className="w-3 h-3 mr-1" />View on Etherscan
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
 // Simulation Control Page
 const SimulationPage = () => {
