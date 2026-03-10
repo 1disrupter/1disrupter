@@ -392,6 +392,13 @@ def main():
     tester.test_analytics_endpoints()
     tester.test_market_data_endpoints()
     
+    # NEW FEATURE TESTS
+    tester.test_strategy_lab_endpoints()
+    tester.test_risk_management_endpoints()
+    tester.test_capital_allocation_endpoints()
+    tester.test_execution_optimization_endpoints()
+    tester.test_paper_trading_endpoints()
+    
     # Print final results
     print("\n" + "=" * 50)
     print(f"📊 FINAL RESULTS")
