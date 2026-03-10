@@ -1,90 +1,100 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
 ## Original Problem Statement
-Build a decentralized AI-powered hedge fund platform where investors deposit capital into a vault that autonomous AI trading agents manage. The platform also allows external developers to launch their own trading AI agents and earn revenue through a marketplace.
+Build a fully autonomous AI-powered hedge fund platform where investors deposit capital into a pooled vault managed by AI agents. The system continuously generates, tests, ranks, and deploys trading strategies while providing dashboards, smart contracts, and a marketplace for third-party AI agents.
 
 ## User Personas
-1. **Crypto Investor** - Wants passive income through AI-managed trading
-2. **DeFi Enthusiast** - Interested in automated yield strategies
-3. **AI Developer** - Wants to monetize trading algorithms through marketplace
-4. **Fund Administrator** - Needs oversight of trading operations and risk
+1. **Crypto Investor** - Passive income through AI-managed trading
+2. **DeFi Enthusiast** - Automated yield strategies
+3. **AI Developer** - Monetize trading algorithms via marketplace
+4. **Fund Administrator** - Oversight of operations and risk
 
 ## Core Requirements (Static)
 - Multi-agent AI trading system
-- Investor wallet integration
-- Deposit/Withdraw functionality
-- Fund NAV tracking
-- Portfolio allocation management
+- Investor wallet integration & portfolio management
+- AI Strategy Lab (generation, backtesting, sandbox, deployment)
+- Risk Management Engine
+- Capital Allocation Engine
+- Execution Optimization Layer
+- Paper Trading Sandbox
 - AI Agent Marketplace
-- Admin risk monitoring dashboard
-- Real-time analytics
+- Admin dashboard with risk controls
 
 ## What's Been Implemented (Jan 2026)
 
-### Backend (FastAPI + MongoDB)
-- ✅ Investor registration and management APIs
-- ✅ Deposit/Withdraw functionality with share calculation
-- ✅ Fund stats, NAV, allocation endpoints
+### Phase 1 - MVP Core
 - ✅ 5 AI Trading Agents (Data, Decision, Strategy, Execution, Risk)
-- ✅ AI Market Analysis using OpenAI GPT-5.2 (Emergent LLM key)
+- ✅ Investor Dashboard with wallet connection
+- ✅ Fund NAV, deposit/withdraw, performance charts
+- ✅ AI Market Analysis (OpenAI GPT-5.2)
 - ✅ CoinGecko market data integration
-- ✅ Trade logging system
-- ✅ Risk alerts management
-- ✅ Marketplace agents CRUD
-- ✅ Analytics/performance metrics
+- ✅ Marketplace with revenue sharing
 
-### Frontend (React + Tailwind + Shadcn UI)
-- ✅ Landing page with hero, stats, features
-- ✅ Glassmorphism navigation
-- ✅ Wallet connection (MetaMask + Demo mode)
-- ✅ Investor Dashboard with charts
-- ✅ AI Agents page with analysis feature
-- ✅ Marketplace with agent submission
-- ✅ Analytics page with metrics
-- ✅ Admin dashboard with alerts
+### Phase 2 - Advanced Features (NEW)
+- ✅ **AI Research & Strategy Lab**
+  - StrategyGeneratorAgent - AI creates new trading strategies
+  - BacktestingAgent - Tests on historical data
+  - SandboxValidationAgent - Paper trading validation
+  - StrategyRankingAgent - Ranks by Sharpe/return/drawdown
+  - LiveDeploymentAgent - Deploys top strategies
+  - Strategy Pipeline visualization (Generated → Backtested → Sandbox → Live)
+  
+- ✅ **Risk Management Engine**
+  - Configurable max drawdown, position size, daily loss limits
+  - Real-time risk status monitoring
+  - Auto stop-loss enforcement
+  - Risk alert system
+  
+- ✅ **Capital Allocation Engine**
+  - Performance-based allocation
+  - Dynamic rebalancing
+  - Strategy weighting by Sharpe ratio
+  
+- ✅ **Execution Optimization Layer**
+  - Order splitting simulation
+  - Slippage tracking
+  - Gas fee optimization
+  - DEX routing suggestions
+  
+- ✅ **Paper Trading Sandbox**
+  - $10,000 virtual starting balance
+  - Real-time P&L tracking
+  - Trade execution simulation
+  - Portfolio reset capability
 
-### Design System
-- ✅ Dark theme (Obsidian background)
-- ✅ Outfit/Inter/JetBrains Mono fonts
-- ✅ Electric Purple (#7B61FF) primary
-- ✅ Neon Green (#00FF94) secondary
-- ✅ Glassmorphism cards
-- ✅ Responsive layout
-
-## Prioritized Backlog
-
-### P0 (Critical)
-- [ ] Smart contract deployment (Solidity)
-- [ ] Real wallet transactions on testnet
-- [ ] On-chain share token (ERC-20)
-
-### P1 (High)
-- [ ] Real trading execution via DEX APIs
-- [ ] Historical performance persistence
-- [ ] User authentication/sessions
-- [ ] Email notifications for alerts
-
-### P2 (Medium)
-- [ ] Backtesting simulation engine
-- [ ] Paper trading mode
-- [ ] Developer agent sandbox
-- [ ] Social features (leaderboards)
-
-### P3 (Nice to have)
-- [ ] Mobile app (React Native)
-- [ ] Multi-chain support
-- [ ] Governance token
-- [ ] DAO voting
-
-## Technical Stack
+### Tech Stack
 - Frontend: React 19, Tailwind CSS, Shadcn UI, Recharts, Framer Motion
 - Backend: FastAPI, Motor (async MongoDB)
 - AI: OpenAI GPT-5.2 via Emergent LLM key
 - Market Data: CoinGecko API
-- Wallet: ethers.js, web3.js
+
+## Prioritized Backlog
+
+### P0 (Critical)
+- [ ] Smart contract deployment to Sepolia testnet
+- [ ] Real on-chain transactions (deposit/withdraw)
+- [ ] ERC-20 ShareToken implementation
+
+### P1 (High)
+- [ ] DEX integration (Uniswap V3) for real execution
+- [ ] Persistent historical data storage
+- [ ] User authentication with sessions
+- [ ] WebSocket real-time updates
+
+### P2 (Medium)
+- [ ] Actual backtesting with historical price data
+- [ ] ML-based strategy parameter optimization
+- [ ] Developer sandbox for agent testing
+- [ ] Performance leaderboards
+
+### P3 (Nice to have)
+- [ ] Mobile responsive improvements
+- [ ] Multi-chain support (Polygon, Arbitrum)
+- [ ] Governance token & DAO voting
+- [ ] Social features
 
 ## Next Tasks
-1. Deploy FundVault smart contract to Sepolia testnet
-2. Implement real USDC deposit/withdraw
-3. Add investor authentication
-4. Connect to DEX for real trade execution
+1. Create Solidity smart contracts (FundVault, ShareToken, ProfitDistributor)
+2. Deploy to Sepolia testnet
+3. Integrate real DEX trading via Uniswap V3
+4. Implement WebSocket for real-time strategy updates
