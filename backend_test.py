@@ -203,6 +203,177 @@ class AlphaAIAPITester:
         self.run_test("Top Coins", "GET", "market/top-coins", 200)
         self.run_test("Price Chart", "GET", "market/chart/bitcoin?days=7", 200)
 
+    def test_strategy_lab_endpoints(self):
+        """Test Strategy Lab endpoints - NEW FEATURE"""
+        print("\n=== TESTING STRATEGY LAB (NEW) ===")
+        
+        # Get strategies
+        success, strategies = self.run_test("Get Lab Strategies", "GET", "lab/strategies", 200)
+        if success and strategies:
+            print(f"   Found {len(strategies)} strategies")
+            for strategy in strategies[:2]:
+                print(f"   - {strategy.get('name', 'Unknown')}: {strategy.get('status', 'unknown')} (Sharpe: {strategy.get('sharpe_ratio', 0)})")
+        
+        # Get strategy rankings
+        success, rankings = self.run_test("Get Strategy Rankings", "GET", "lab/rankings", 200)
+        if success and rankings:
+            print(f"   Found {len(rankings)} ranked strategies")
+        
+        # Generate new strategy
+        success, generated = self.run_test(
+            "Generate Strategy", 
+            "POST", 
+            "lab/strategies/generate", 
+            200,
+            {"strategy_type": "momentum", "risk_level": "medium"}
+        )
+        if success and generated:
+            strategy_id = generated.get('strategy', {}).get('id')
+            print(f"   Generated strategy ID: {strategy_id}")
+            
+            if strategy_id:
+                # Test backtest
+                success, backtest = self.run_test(
+                    "Backtest Strategy", 
+                    "POST", 
+                    f"lab/strategies/{strategy_id}/backtest", 
+                    200,
+                    {"strategy_id": strategy_id, "initial_capital": 10000}
+                )
+                if success:
+                    print(f"   Backtest completed")
+                
+                # Test sandbox
+                success, sandbox = self.run_test(
+                    "Start Sandbox", 
+                    "POST", 
+                    f"lab/strategies/{strategy_id}/sandbox", 
+                    200
+                )
+                if success:
+                    print(f"   Sandbox started")
+
+    def test_risk_management_endpoints(self):
+        """Test Risk Management Engine endpoints - NEW FEATURE"""
+        print("\n=== TESTING RISK MANAGEMENT (NEW) ===")
+        
+        # Get risk config
+        success, config = self.run_test("Get Risk Config", "GET", "risk/config", 200)
+        if success and config:
+            print(f"   Max Drawdown: {config.get('max_drawdown', 0)}%")
+            print(f"   Max Daily Loss: {config.get('max_daily_loss', 0)}%")
+            print(f"   Auto Shutdown: {config.get('auto_shutdown_enabled', False)}")
+        
+        # Get portfolio risk status
+        success, status = self.run_test("Get Portfolio Risk Status", "GET", "risk/portfolio-status", 200)
+        if success and status:
+            print(f"   Current Drawdown: {status.get('current_drawdown', 0)}%")
+            print(f"   Risk Level: {status.get('risk_level', 'unknown')}")
+            print(f"   Daily P&L: {status.get('daily_pnl', 0)}%")
+
+    def test_capital_allocation_endpoints(self):
+        """Test Capital Allocation Engine endpoints - NEW FEATURE"""
+        print("\n=== TESTING CAPITAL ALLOCATION (NEW) ===")
+        
+        # Get capital allocations
+        success, allocations = self.run_test("Get Capital Allocations", "GET", "capital/allocations", 200)
+        if success and allocations:
+            print(f"   Found {len(allocations)} capital allocations")
+            for alloc in allocations[:2]:
+                print(f"   - {alloc.get('strategy_name', 'Unknown')}: {alloc.get('allocation_percent', 0)}%")
+        
+        # Test rebalance
+        success, rebalance = self.run_test("Rebalance Capital", "POST", "capital/rebalance", 200)
+        if success and rebalance:
+            print(f"   Rebalance result: {rebalance.get('message', 'Unknown')}")
+
+    def test_execution_optimization_endpoints(self):
+        """Test Execution Optimization Layer endpoints - NEW FEATURE"""
+        print("\n=== TESTING EXECUTION OPTIMIZATION (NEW) ===")
+        
+        # Get execution stats
+        success, stats = self.run_test("Get Execution Stats", "GET", "execution/stats", 200)
+        if success and stats:
+            print(f"   Orders Today: {stats.get('total_orders_today', 0)}")
+            print(f"   Avg Slippage: {stats.get('avg_slippage', 0)}%")
+            print(f"   Avg Gas Fee: ${stats.get('avg_gas_fee', 0)}")
+            print(f"   Best Price Rate: {stats.get('best_price_achieved', 0)}%")
+        
+        # Test execution simulation
+        success, simulation = self.run_test(
+            "Simulate Execution", 
+            "POST", 
+            "execution/simulate", 
+            200,
+            None,  # Using query params
+            {'Content-Type': 'application/json'}
+        )
+        # Try with query params in URL
+        success, simulation = self.run_test(
+            "Simulate Execution", 
+            "POST", 
+            "execution/simulate?symbol=BTC/USDT&amount=1.0&side=buy", 
+            200
+        )
+        if success and simulation:
+            print(f"   Simulation: {simulation.get('symbol', 'Unknown')} - Price: ${simulation.get('execution_price', 0):,.2f}")
+
+    def test_paper_trading_endpoints(self):
+        """Test Paper Trading endpoints - NEW FEATURE"""
+        print("\n=== TESTING PAPER TRADING (NEW) ===")
+        
+        if not self.test_wallet:
+            print("   Skipping paper trading tests - no test wallet available")
+            return
+        
+        # Toggle paper trading
+        success, toggle = self.run_test(
+            "Toggle Paper Trading", 
+            "POST", 
+            f"investors/toggle-paper-trading?wallet_address={self.test_wallet}", 
+            200
+        )
+        if success:
+            print(f"   Paper trading toggled: {toggle.get('is_paper_trading', False)}")
+        
+        # Execute paper trade
+        success, trade = self.run_test(
+            "Execute Paper Trade", 
+            "POST", 
+            "paper/trade", 
+            200,
+            {
+                "wallet_address": self.test_wallet,
+                "symbol": "BTC/USDT",
+                "side": "buy",
+                "amount": 0.1
+            }
+        )
+        if success and trade:
+            print(f"   Paper trade executed - P&L: ${trade.get('pnl', 0):.2f}")
+        
+        # Get paper portfolio
+        success, portfolio = self.run_test(
+            "Get Paper Portfolio", 
+            "GET", 
+            f"paper/portfolio/{self.test_wallet}", 
+            200
+        )
+        if success and portfolio:
+            print(f"   Paper Balance: ${portfolio.get('paper_balance', 0):,.2f}")
+            print(f"   Paper P&L: ${portfolio.get('paper_pnl', 0):.2f}")
+            print(f"   Total Trades: {portfolio.get('total_trades', 0)}")
+        
+        # Reset paper portfolio
+        success, reset = self.run_test(
+            "Reset Paper Portfolio", 
+            "POST", 
+            f"paper/reset/{self.test_wallet}", 
+            200
+        )
+        if success:
+            print(f"   Paper portfolio reset: {reset.get('message', 'Unknown')}")
+
 def main():
     print("🚀 Starting AlphaAI Fund API Tests")
     print("=" * 50)
