@@ -693,6 +693,11 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen pt-24 px-4 pb-12">
       <div className="max-w-7xl mx-auto">
+        {/* Live Price Feed */}
+        <div className="mb-6">
+          <LivePriceTicker compact={false} />
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold font-['Outfit']" data-testid="dashboard-title">Investor Dashboard</h1>
