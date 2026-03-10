@@ -1576,6 +1576,172 @@ const SimulationPage = () => {
           </CardContent>
         </Card>
 
+        {/* Enhanced Simulation Panel */}
+        <Card className="glass-card mb-8 border-[#FFB800]/30" data-testid="enhanced-simulation-panel">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Gauge className="w-5 h-5 text-[#FFB800]" />Accelerated Simulation & Stress Testing</CardTitle>
+            <CardDescription>Run 100x time-accelerated backtests and stress test scenarios</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Accelerated Simulation */}
+              <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-[#FFB800]" />100x Time Acceleration
+                </h3>
+                <div className="flex items-center gap-3 mb-4">
+                  <Input 
+                    type="number" 
+                    value={daysToSimulate} 
+                    onChange={(e) => setDaysToSimulate(Number(e.target.value))}
+                    className="w-24 bg-[#121212] border-zinc-700"
+                    min={1}
+                    max={365}
+                  />
+                  <span className="text-zinc-400">days to simulate</span>
+                </div>
+                <Button 
+                  onClick={runAcceleratedSimulation} 
+                  disabled={acceleratedRunning}
+                  className="w-full rounded-full bg-[#FFB800] text-black hover:bg-[#FFB800]/90"
+                  data-testid="run-accelerated-btn"
+                >
+                  {acceleratedRunning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Rocket className="w-4 h-4 mr-2" />}
+                  {acceleratedRunning ? 'Simulating...' : 'Run Accelerated Backtest'}
+                </Button>
+                
+                {acceleratedResults && (
+                  <div className="mt-4 p-3 rounded-lg bg-[#121212] border border-[#FFB800]/30">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-zinc-500">Days Simulated</p>
+                        <p className="font-mono font-bold">{acceleratedResults.summary?.days_simulated}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Total Trades</p>
+                        <p className="font-mono font-bold">{acceleratedResults.summary?.total_trades}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Final Capital</p>
+                        <p className="font-mono font-bold text-[#00FF94]">${acceleratedResults.summary?.final_capital?.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Total Return</p>
+                        <p className={`font-mono font-bold ${acceleratedResults.summary?.total_return_percent >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                          {acceleratedResults.summary?.total_return_percent >= 0 ? '+' : ''}{acceleratedResults.summary?.total_return_percent?.toFixed(2)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Win Rate</p>
+                        <p className="font-mono font-bold">{acceleratedResults.summary?.win_rate}%</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Best Day P&L</p>
+                        <p className="font-mono font-bold text-[#00FF94]">+${acceleratedResults.summary?.best_day?.day_pnl?.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Stress Testing */}
+              <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />Stress Test Scenarios
+                </h3>
+                <div className="space-y-2 mb-4">
+                  <Button 
+                    onClick={() => runStressTest('High Volatility BTC Drop')}
+                    disabled={stressTestRunning}
+                    variant="outline"
+                    className="w-full justify-start rounded-lg border-zinc-700 hover:border-red-500/50"
+                    data-testid="stress-btc-drop-btn"
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2 text-red-400 rotate-180" />
+                    BTC 30% Drop (24h)
+                  </Button>
+                  <Button 
+                    onClick={() => runStressTest('ETH Flash Crash')}
+                    disabled={stressTestRunning}
+                    variant="outline"
+                    className="w-full justify-start rounded-lg border-zinc-700 hover:border-red-500/50"
+                    data-testid="stress-eth-crash-btn"
+                  >
+                    <Zap className="w-4 h-4 mr-2 text-red-400" />
+                    ETH Flash Crash 50% (12h)
+                  </Button>
+                  <Button 
+                    onClick={() => runStressTest('Market Panic Sell')}
+                    disabled={stressTestRunning}
+                    variant="outline"
+                    className="w-full justify-start rounded-lg border-zinc-700 hover:border-red-500/50"
+                    data-testid="stress-panic-btn"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-red-400" />
+                    Market Panic Sell 40% (6h)
+                  </Button>
+                </div>
+                
+                {stressTestResults && (
+                  <div className="p-3 rounded-lg bg-[#121212] border border-red-500/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-zinc-400">{stressTestResults.scenario}</span>
+                      <Badge className={stressTestResults.results?.survival_status === 'SURVIVED' ? 'bg-[#00FF94]/20 text-[#00FF94]' : 'bg-red-500/20 text-red-400'}>
+                        {stressTestResults.results?.survival_status}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-zinc-500">Max Drawdown</p>
+                        <p className="font-mono font-bold text-red-400">-{stressTestResults.results?.max_drawdown_percent?.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Final Capital</p>
+                        <p className="font-mono font-bold">${stressTestResults.results?.final_capital?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    {stressTestResults.results?.risk_actions_taken?.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-zinc-800">
+                        <p className="text-xs text-zinc-500 mb-1">Risk Actions Triggered:</p>
+                        {stressTestResults.results.risk_actions_taken.map((action, i) => (
+                          <p key={i} className="text-xs text-[#FFB800]">• {action}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Agent Performance */}
+            {agentPerformance.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-[#7B61FF]" />Agent Performance
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {agentPerformance.map((agent, i) => (
+                    <div key={i} className="p-3 rounded-lg bg-[#050505] border border-zinc-800">
+                      <p className="text-sm font-medium mb-1">{agent.name}</p>
+                      <p className={`text-xl font-bold font-mono ${agent.performance_ytd >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                        {agent.performance_ytd >= 0 ? '+' : ''}{agent.performance_ytd}%
+                      </p>
+                      <p className="text-xs text-zinc-500">{agent.trades_executed || agent.strategies_deployed || 0} {agent.type === 'sandbox' ? 'strategies' : 'trades'}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Export Button */}
+            <div className="mt-6 flex justify-end">
+              <Button onClick={exportResults} variant="outline" className="rounded-full border-zinc-700" data-testid="export-results-btn">
+                <FileCode className="w-4 h-4 mr-2" />Export Results (PDF/CSV)
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Performance Reports */}
         {(dailyReport || weeklyReport) && (
           <Card className="glass-card mb-8 border-[#00FF94]/30" data-testid="reports-panel">
