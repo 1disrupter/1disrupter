@@ -1428,10 +1428,10 @@ const SimulationPage = () => {
               <Button onClick={autoDeployTop} variant="outline" className="rounded-full border-[#00FF94]/50 text-[#00FF94] hover:bg-[#00FF94]/10" data-testid="auto-deploy-btn">
                 <Rocket className="w-4 h-4 mr-2" />Auto-Deploy Top Strategies
               </Button>
-              <Button onClick={rebalanceCapital} variant="outline" className="rounded-full border-zinc-700" data-testid="rebalance-btn">
+              <Button onClick={rebalanceCapital} variant="outline" className="rounded-full border-zinc-700" data-testid="rebalance-capital-btn">
                 <Scale className="w-4 h-4 mr-2" />Rebalance Capital
               </Button>
-              <Button onClick={fetchData} variant="outline" className="rounded-full border-zinc-700" data-testid="refresh-btn">
+              <Button onClick={fetchData} variant="outline" className="rounded-full border-zinc-700" data-testid="refresh-data-btn">
                 <RefreshCw className="w-4 h-4 mr-2" />Refresh Data
               </Button>
             </div>
