@@ -1320,6 +1320,47 @@ const SimulationPage = () => {
     }
   };
 
+  const generateDailyReport = async () => {
+    try {
+      const res = await axios.get(`${API}/reports/daily`);
+      setDailyReport(res.data);
+      toast.success("Daily report generated!");
+    } catch (error) {
+      toast.error("Report generation failed");
+    }
+  };
+
+  const generateWeeklyReport = async () => {
+    try {
+      const res = await axios.get(`${API}/reports/weekly`);
+      setWeeklyReport(res.data);
+      toast.success("Weekly report generated!");
+    } catch (error) {
+      toast.error("Report generation failed");
+    }
+  };
+
+  const switchMode = async (newMode) => {
+    try {
+      const res = await axios.post(`${API}/simulation/switch-mode?mode=${newMode}&live_capital=1000`);
+      toast.success(res.data.message);
+      if (res.data.warning) toast.warning(res.data.warning);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Mode switch failed");
+    }
+  };
+
+  const addStrategies = async () => {
+    try {
+      const res = await axios.post(`${API}/strategies/add-batch?count=3`);
+      toast.success(res.data.message);
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to add strategies");
+    }
+  };
+
   const getLogIcon = (type) => {
     switch (type) {
       case 'trade': return Activity;
