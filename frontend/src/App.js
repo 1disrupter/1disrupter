@@ -1231,6 +1231,345 @@ const AdminPage = () => {
   );
 };
 
+// Simulation Control Page
+const SimulationPage = () => {
+  const [simConfig, setSimConfig] = useState(null);
+  const [simStats, setSimStats] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [interactions, setInteractions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [cycleRunning, setCycleRunning] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const [configRes, statsRes, logsRes, interactionsRes] = await Promise.all([
+        axios.get(`${API}/simulation/config`),
+        axios.get(`${API}/simulation/stats`),
+        axios.get(`${API}/simulation/logs?limit=30`),
+        axios.get(`${API}/simulation/agent-interactions?limit=20`)
+      ]);
+      setSimConfig(configRes.data);
+      setSimStats(statsRes.data);
+      setLogs(logsRes.data);
+      setInteractions(interactionsRes.data);
+      setRunning(configRes.data?.is_running || false);
+    } catch (error) {
+      console.error("Error fetching simulation data:", error);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const startSimulation = async () => {
+    try {
+      const res = await axios.post(`${API}/simulation/start`);
+      toast.success(res.data.message);
+      setRunning(true);
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to start simulation");
+    }
+  };
+
+  const stopSimulation = async () => {
+    try {
+      const res = await axios.post(`${API}/simulation/stop`);
+      toast.success(res.data.message);
+      setRunning(false);
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to stop simulation");
+    }
+  };
+
+  const runCycle = async () => {
+    setCycleRunning(true);
+    try {
+      const res = await axios.post(`${API}/simulation/run-cycle`);
+      toast.success(`Cycle complete! ${res.data.cycle_results?.length || 0} trades executed`);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Cycle failed");
+    }
+    setCycleRunning(false);
+  };
+
+  const autoDeployTop = async () => {
+    try {
+      const res = await axios.post(`${API}/lab/auto-deploy-top`);
+      toast.success(res.data.message);
+      fetchData();
+    } catch (error) {
+      toast.error("Auto-deploy failed");
+    }
+  };
+
+  const rebalanceCapital = async () => {
+    try {
+      await axios.post(`${API}/capital/rebalance`);
+      toast.success("Capital rebalanced!");
+      fetchData();
+    } catch (error) {
+      toast.error("Rebalance failed");
+    }
+  };
+
+  const getLogIcon = (type) => {
+    switch (type) {
+      case 'trade': return Activity;
+      case 'risk': return AlertTriangle;
+      case 'allocation': return Scale;
+      case 'strategy': return Target;
+      case 'agent': return Bot;
+      default: return Terminal;
+    }
+  };
+
+  const getLogColor = (type) => {
+    switch (type) {
+      case 'trade': return '#00FF94';
+      case 'risk': return '#FF6B6B';
+      case 'allocation': return '#7B61FF';
+      case 'strategy': return '#FFB800';
+      case 'agent': return '#00D4FF';
+      default: return '#71717A';
+    }
+  };
+
+  if (loading) return <div className="min-h-screen pt-24 px-4 flex items-center justify-center"><RefreshCw className="w-8 h-8 animate-spin text-[#7B61FF]" /></div>;
+
+  return (
+    <div className="min-h-screen pt-24 px-4 pb-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold font-['Outfit']" data-testid="simulation-title">MVP Simulation Control</h1>
+            <p className="text-zinc-400 mt-1">Paper trading mode with full agent coordination</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge className={running ? 'bg-[#00FF94]/20 text-[#00FF94] animate-pulse' : 'bg-zinc-700 text-zinc-400'} data-testid="simulation-status">
+              <CircleDot className="w-3 h-3 mr-1" />
+              {running ? 'RUNNING' : 'STOPPED'}
+            </Badge>
+            {!running ? (
+              <Button onClick={startSimulation} className="rounded-full bg-[#00FF94] text-black hover:bg-[#00FF94]/90" data-testid="start-simulation-btn">
+                <Play className="w-4 h-4 mr-2" />Start Simulation
+              </Button>
+            ) : (
+              <Button onClick={stopSimulation} variant="outline" className="rounded-full border-red-500/50 text-red-400 hover:bg-red-500/10" data-testid="stop-simulation-btn">
+                <StopCircle className="w-4 h-4 mr-2" />Stop
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Simulation Stats */}
+        {simStats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+            <Card className="glass-card" data-testid="sim-capital">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-zinc-500 mb-1">Current Capital</p>
+                <p className="text-xl font-bold font-['JetBrains_Mono']">{formatCurrency(simStats.simulation?.current_capital || 10000)}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card" data-testid="sim-return">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-zinc-500 mb-1">Total Return</p>
+                <p className={`text-xl font-bold font-['JetBrains_Mono'] ${simStats.simulation?.total_return_percent >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                  {simStats.simulation?.total_return_percent >= 0 ? '+' : ''}{simStats.simulation?.total_return_percent?.toFixed(2)}%
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card" data-testid="sim-trades">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-zinc-500 mb-1">Total Trades</p>
+                <p className="text-xl font-bold font-['JetBrains_Mono']">{simStats.trading?.total_trades || 0}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card" data-testid="sim-winrate">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-zinc-500 mb-1">Win Rate</p>
+                <p className="text-xl font-bold font-['JetBrains_Mono']">{simStats.trading?.win_rate?.toFixed(1) || 0}%</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card" data-testid="sim-strategies">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-zinc-500 mb-1">Active Strategies</p>
+                <p className="text-xl font-bold font-['JetBrains_Mono']">{simStats.strategies?.active || 0}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card" data-testid="sim-risk-events">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-zinc-500 mb-1">Risk Events</p>
+                <p className="text-xl font-bold font-['JetBrains_Mono'] text-[#FFB800]">{simStats.risk?.events_triggered || 0}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Control Panel */}
+        <Card className="glass-card mb-8 border-[#7B61FF]/30" data-testid="control-panel">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Cpu className="w-5 h-5 text-[#7B61FF]" />Control Panel</CardTitle>
+            <CardDescription>Execute simulation cycles and manage agents</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={runCycle} disabled={!running || cycleRunning} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90" data-testid="run-cycle-btn">
+                {cycleRunning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />}
+                Run Trade Cycle
+              </Button>
+              <Button onClick={autoDeployTop} variant="outline" className="rounded-full border-[#00FF94]/50 text-[#00FF94] hover:bg-[#00FF94]/10" data-testid="auto-deploy-btn">
+                <Rocket className="w-4 h-4 mr-2" />Auto-Deploy Top Strategies
+              </Button>
+              <Button onClick={rebalanceCapital} variant="outline" className="rounded-full border-zinc-700" data-testid="rebalance-btn">
+                <Scale className="w-4 h-4 mr-2" />Rebalance Capital
+              </Button>
+              <Button onClick={fetchData} variant="outline" className="rounded-full border-zinc-700" data-testid="refresh-btn">
+                <RefreshCw className="w-4 h-4 mr-2" />Refresh Data
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          {/* Simulation Logs */}
+          <Card className="glass-card" data-testid="simulation-logs">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><ScrollText className="w-5 h-5 text-[#00FF94]" />Simulation Logs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-2">
+                  {logs.length === 0 ? (
+                    <p className="text-zinc-500 text-center py-8">No logs yet. Start the simulation!</p>
+                  ) : logs.map((log, i) => {
+                    const Icon = getLogIcon(log.log_type);
+                    const color = getLogColor(log.log_type);
+                    return (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[#050505] border border-zinc-800" data-testid={`log-${i}`}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}20` }}>
+                          <Icon className="w-4 h-4" style={{ color }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-xs" style={{ borderColor: color, color }}>{log.log_type}</Badge>
+                            {log.agent_name && <span className="text-xs text-zinc-500">{log.agent_name}</span>}
+                          </div>
+                          <p className="text-sm text-zinc-300 break-words">{log.message}</p>
+                          <p className="text-xs text-zinc-600 mt-1">{new Date(log.timestamp).toLocaleTimeString()}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Agent Interactions */}
+          <Card className="glass-card" data-testid="agent-interactions">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Bot className="w-5 h-5 text-[#7B61FF]" />Agent Interactions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-2">
+                  {interactions.length === 0 ? (
+                    <p className="text-zinc-500 text-center py-8">No interactions yet</p>
+                  ) : interactions.map((interaction, i) => (
+                    <div key={i} className="p-3 rounded-lg bg-[#050505] border border-zinc-800" data-testid={`interaction-${i}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className="bg-[#7B61FF]/20 text-[#7B61FF] text-xs">{interaction.from_agent}</Badge>
+                        <ArrowUpRight className="w-3 h-3 text-zinc-500" />
+                        <Badge className="bg-[#00FF94]/20 text-[#00FF94] text-xs">{interaction.to_agent}</Badge>
+                      </div>
+                      <p className="text-xs text-zinc-400">
+                        <span className="text-[#FFB800]">{interaction.interaction_type}</span>: {JSON.stringify(interaction.payload).slice(0, 80)}...
+                      </p>
+                      <p className="text-xs text-zinc-600 mt-1">{new Date(interaction.timestamp).toLocaleTimeString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Risk & Strategy Status */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card className="glass-card" data-testid="risk-status">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5 text-[#FF6B6B]" />Risk Engine Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-zinc-400">Current Drawdown</span>
+                    <span className={simStats?.risk?.current_drawdown > 4 ? 'text-red-400' : 'text-[#00FF94]'}>
+                      {simStats?.risk?.current_drawdown?.toFixed(2) || 0}%
+                    </span>
+                  </div>
+                  <Progress value={(simStats?.risk?.current_drawdown || 0) * 20} className="h-2" />
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-zinc-400">Daily P&L</span>
+                    <span className={simStats?.risk?.daily_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}>
+                      {simStats?.risk?.daily_pnl >= 0 ? '+' : ''}{simStats?.risk?.daily_pnl?.toFixed(2) || 0}%
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#050505]">
+                  <span className="text-sm text-zinc-400">Auto-Stop Enabled</span>
+                  <Badge className="bg-[#00FF94]/20 text-[#00FF94]">Active</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#050505]">
+                  <span className="text-sm text-zinc-400">Active Alerts</span>
+                  <Badge className="bg-[#FFB800]/20 text-[#FFB800]">{simStats?.risk?.active_alerts || 0}</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card" data-testid="strategy-status">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Target className="w-5 h-5 text-[#FFB800]" />Strategy Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-[#050505] text-center">
+                  <p className="text-3xl font-bold text-[#00FF94]">{simStats?.strategies?.live || 0}</p>
+                  <p className="text-xs text-zinc-500">Live</p>
+                </div>
+                <div className="p-4 rounded-lg bg-[#050505] text-center">
+                  <p className="text-3xl font-bold text-[#FFB800]">{simStats?.strategies?.in_sandbox || 0}</p>
+                  <p className="text-xs text-zinc-500">In Sandbox</p>
+                </div>
+                <div className="p-4 rounded-lg bg-[#050505] text-center">
+                  <p className="text-3xl font-bold text-zinc-400">{simStats?.strategies?.total || 0}</p>
+                  <p className="text-xs text-zinc-500">Total</p>
+                </div>
+                <div className="p-4 rounded-lg bg-[#050505] text-center">
+                  <p className="text-3xl font-bold text-[#7B61FF]">{simStats?.strategies?.active || 0}</p>
+                  <p className="text-xs text-zinc-500">Active</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main App
 function App() {
   return (
@@ -1241,6 +1580,7 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/simulation" element={<SimulationPage />} />
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/lab" element={<StrategyLabPage />} />
             <Route path="/marketplace" element={<MarketplacePage />} />
