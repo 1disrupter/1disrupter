@@ -115,10 +115,10 @@ const Navigation = () => {
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
+    { path: "/simulation", label: "Simulation", icon: Radio },
     { path: "/agents", label: "AI Agents", icon: Bot },
     { path: "/lab", label: "Strategy Lab", icon: FlaskConical },
     { path: "/marketplace", label: "Marketplace", icon: Store },
-    { path: "/analytics", label: "Analytics", icon: LineChart },
     { path: "/admin", label: "Admin", icon: Shield },
   ];
 
