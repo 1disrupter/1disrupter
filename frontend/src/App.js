@@ -1595,9 +1595,6 @@ const SimulationPage = () => {
             </CardContent>
           </Card>
         )}
-            </div>
-          </CardContent>
-        </Card>
 
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           {/* Simulation Logs */}
