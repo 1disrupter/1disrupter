@@ -338,9 +338,10 @@ const Navigation = () => {
                     )}
                     <DropdownMenuItem onClick={disconnectWallet} className="text-red-400">
                       <X className="w-4 h-4 mr-2" />Disconnect
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <Button onClick={connectWallet} disabled={loading} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 glow-primary" data-testid="connect-wallet-btn">
                 <Wallet className="w-4 h-4 mr-2" />
