@@ -1240,6 +1240,9 @@ const SimulationPage = () => {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [cycleRunning, setCycleRunning] = useState(false);
+  const [dailyReport, setDailyReport] = useState(null);
+  const [weeklyReport, setWeeklyReport] = useState(null);
+  const [activeTab, setActiveTab] = useState("control");
 
   const fetchData = async () => {
     try {
