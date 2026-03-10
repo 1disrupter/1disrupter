@@ -2442,7 +2442,8 @@ async def get_event_agents():
             doc = agent.model_dump()
             doc["description"] = agent_data["description"]
             await db.event_agents.insert_one(doc)
-            agents.append(doc)
+        # Re-fetch without _id
+        agents = await db.event_agents.find({}, {"_id": 0}).to_list(20)
     
     return {"agents": agents, "count": len(agents)}
 
