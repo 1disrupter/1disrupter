@@ -374,6 +374,70 @@ class AlphaAIAPITester:
         if success:
             print(f"   Paper portfolio reset: {reset.get('message', 'Unknown')}")
 
+    def test_simulation_endpoints(self):
+        """Test MVP Simulation endpoints - CRITICAL NEW FEATURE"""
+        print("\n=== TESTING MVP SIMULATION (CRITICAL NEW) ===")
+        
+        # Get simulation config
+        success, config = self.run_test("Get Simulation Config", "GET", "simulation/config", 200)
+        if success and config:
+            print(f"   Simulation running: {config.get('is_running', False)}")
+            print(f"   Mode: {config.get('mode', 'unknown')}")
+            print(f"   Initial capital: ${config.get('initial_capital', 0):,.2f}")
+        
+        # Start simulation
+        success, start_result = self.run_test("Start Simulation", "POST", "simulation/start", 200)
+        if success and start_result:
+            print(f"   Start result: {start_result.get('message', 'Unknown')}")
+            print(f"   Agents active: {start_result.get('config', {}).get('agents_active', 0)}")
+            print(f"   Strategies active: {start_result.get('config', {}).get('strategies_active', 0)}")
+        
+        # Run simulation cycle
+        success, cycle_result = self.run_test("Run Simulation Cycle", "POST", "simulation/run-cycle", 200)
+        if success and cycle_result:
+            print(f"   Cycle executed: {len(cycle_result.get('cycle_results', []))} trades")
+            print(f"   Risk status: {cycle_result.get('risk_status', {}).get('risk_level', 'unknown')}")
+        
+        # Get simulation stats
+        success, stats = self.run_test("Get Simulation Stats", "GET", "simulation/stats", 200)
+        if success and stats:
+            sim_data = stats.get('simulation', {})
+            trading_data = stats.get('trading', {})
+            risk_data = stats.get('risk', {})
+            print(f"   Current capital: ${sim_data.get('current_capital', 0):,.2f}")
+            print(f"   Total trades: {trading_data.get('total_trades', 0)}")
+            print(f"   Win rate: {trading_data.get('win_rate', 0)}%")
+            print(f"   Risk events: {risk_data.get('events_triggered', 0)}")
+        
+        # Get simulation logs
+        success, logs = self.run_test("Get Simulation Logs", "GET", "simulation/logs?limit=10", 200)
+        if success and logs:
+            print(f"   Found {len(logs)} simulation logs")
+            for log in logs[:2]:
+                print(f"   - {log.get('log_type', 'unknown')}: {log.get('message', '')[:50]}...")
+        
+        # Get agent interactions
+        success, interactions = self.run_test("Get Agent Interactions", "GET", "simulation/agent-interactions?limit=10", 200)
+        if success and interactions:
+            print(f"   Found {len(interactions)} agent interactions")
+            for interaction in interactions[:2]:
+                print(f"   - {interaction.get('from_agent', 'unknown')} -> {interaction.get('to_agent', 'unknown')}: {interaction.get('interaction_type', 'unknown')}")
+        
+        # Test auto-deploy top strategies
+        success, deploy_result = self.run_test("Auto Deploy Top Strategies", "POST", "lab/auto-deploy-top", 200)
+        if success and deploy_result:
+            print(f"   Auto-deploy result: {deploy_result.get('message', 'Unknown')}")
+            print(f"   Deployed count: {deploy_result.get('deployed_count', 0)}")
+        
+        # Stop simulation
+        success, stop_result = self.run_test("Stop Simulation", "POST", "simulation/stop", 200)
+        if success and stop_result:
+            print(f"   Stop result: {stop_result.get('message', 'Unknown')}")
+            final_stats = stop_result.get('final_stats', {})
+            print(f"   Final capital: ${final_stats.get('final_capital', 0):,.2f}")
+            print(f"   Total P&L: ${final_stats.get('total_pnl', 0):,.2f}")
+            print(f"   Risk events: {final_stats.get('risk_events', 0)}")
+
 def main():
     print("🚀 Starting AlphaAI Fund API Tests")
     print("=" * 50)
