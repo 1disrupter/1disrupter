@@ -249,7 +249,7 @@ const formatAddress = (address) => {
 
 // Navigation
 const Navigation = () => {
-  const { wallet, connectWallet, disconnectWallet, loading } = useWallet();
+  const { wallet, connectWallet, disconnectWallet, loading, chainId, ethBalance, switchToSepolia } = useWallet();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -263,6 +263,8 @@ const Navigation = () => {
     { path: "/marketplace", label: "Marketplace", icon: Store },
     { path: "/admin", label: "Admin", icon: Shield },
   ];
+
+  const isOnSepolia = chainId === 11155111;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
@@ -294,20 +296,48 @@ const Navigation = () => {
 
           <div className="flex items-center gap-3">
             {wallet ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="rounded-full border-[#7B61FF]/30 hover:border-[#7B61FF] bg-[#7B61FF]/10" data-testid="wallet-dropdown">
-                    <Wallet className="w-4 h-4 mr-2 text-[#7B61FF]" />
-                    {formatAddress(wallet)}
-                    <ChevronDown className="w-4 h-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#121212] border-zinc-800">
-                  <DropdownMenuItem onClick={() => navigator.clipboard.writeText(wallet)}>
-                    <Copy className="w-4 h-4 mr-2" />Copy Address
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={disconnectWallet} className="text-red-400">
-                    <X className="w-4 h-4 mr-2" />Disconnect
+              <>
+                {/* Network Badge */}
+                {chainId && (
+                  <Badge 
+                    className={`${isOnSepolia ? 'bg-[#00FF94]/20 text-[#00FF94]' : 'bg-[#FFB800]/20 text-[#FFB800] cursor-pointer'}`}
+                    onClick={!isOnSepolia ? switchToSepolia : undefined}
+                    data-testid="network-badge"
+                  >
+                    {isOnSepolia ? '⚡ Sepolia' : '⚠️ Wrong Network'}
+                  </Badge>
+                )}
+                
+                {/* ETH Balance */}
+                {ethBalance && (
+                  <div className="hidden sm:flex items-center gap-1 px-3 py-1 rounded-full bg-zinc-800/50 border border-zinc-700">
+                    <span className="text-xs text-zinc-400">ETH</span>
+                    <span className="text-sm font-mono font-bold text-white">{parseFloat(ethBalance).toFixed(4)}</span>
+                  </div>
+                )}
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="rounded-full border-[#7B61FF]/30 hover:border-[#7B61FF] bg-[#7B61FF]/10" data-testid="wallet-dropdown">
+                      <Wallet className="w-4 h-4 mr-2 text-[#7B61FF]" />
+                      {formatAddress(wallet)}
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-[#121212] border-zinc-800">
+                    <DropdownMenuItem onClick={() => navigator.clipboard.writeText(wallet)}>
+                      <Copy className="w-4 h-4 mr-2" />Copy Address
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.open(`https://sepolia.etherscan.io/address/${wallet}`, '_blank')}>
+                      <ExternalLink className="w-4 h-4 mr-2" />View on Etherscan
+                    </DropdownMenuItem>
+                    {!isOnSepolia && (
+                      <DropdownMenuItem onClick={switchToSepolia} className="text-[#FFB800]">
+                        <Zap className="w-4 h-4 mr-2" />Switch to Sepolia
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={disconnectWallet} className="text-red-400">
+                      <X className="w-4 h-4 mr-2" />Disconnect
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
