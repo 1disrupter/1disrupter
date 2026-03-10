@@ -496,6 +496,9 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen pt-20">
+      {/* Live Price Ticker */}
+      <LivePriceTicker compact={true} />
+      
       <section className="relative px-4 py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 grid-pattern opacity-50" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7B61FF]/20 rounded-full blur-[120px]" />
