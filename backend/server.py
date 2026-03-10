@@ -1797,77 +1797,72 @@ async def get_market_chart_endpoint(symbol: str, days: int = 30):
 
 @api_router.get("/market/live-prices")
 async def get_live_prices():
-    """Get live prices for major cryptocurrencies"""
+    """Get live prices for major cryptocurrencies from Kraken"""
     try:
         async with httpx.AsyncClient() as client:
+            # Use Kraken API - no rate limits for public endpoints
             response = await client.get(
-                "https://api.coingecko.com/api/v3/simple/price",
-                params={
-                    "ids": "bitcoin,ethereum,solana,avalanche-2,matic-network,chainlink,uniswap,aave",
-                    "vs_currencies": "usd",
-                    "include_24hr_change": "true",
-                    "include_24hr_vol": "true",
-                    "include_market_cap": "true"
-                },
+                "https://api.kraken.com/0/public/Ticker",
+                params={"pair": "XBTUSD,ETHUSD,SOLUSD,AVAXUSD,MATICUSD,LINKUSD,UNIUSD,AAVEUSD"},
                 timeout=10.0
             )
             if response.status_code == 200:
                 data = response.json()
-                prices = []
+                result = data.get('result', {})
+                
                 symbol_map = {
-                    "bitcoin": ("BTC", "Bitcoin"),
-                    "ethereum": ("ETH", "Ethereum"),
-                    "solana": ("SOL", "Solana"),
-                    "avalanche-2": ("AVAX", "Avalanche"),
-                    "matic-network": ("MATIC", "Polygon"),
-                    "chainlink": ("LINK", "Chainlink"),
-                    "uniswap": ("UNI", "Uniswap"),
-                    "aave": ("AAVE", "Aave")
+                    "XXBTZUSD": ("BTC", "Bitcoin"),
+                    "XETHZUSD": ("ETH", "Ethereum"),
+                    "SOLUSD": ("SOL", "Solana"),
+                    "AVAXUSD": ("AVAX", "Avalanche"),
+                    "MATICUSD": ("MATIC", "Polygon"),
+                    "LINKUSD": ("LINK", "Chainlink"),
+                    "UNIUSD": ("UNI", "Uniswap"),
+                    "AAVEUSD": ("AAVE", "Aave")
                 }
-                for coin_id, coin_data in data.items():
-                    symbol, name = symbol_map.get(coin_id, (coin_id.upper(), coin_id.title()))
-                    prices.append({
-                        "id": coin_id,
-                        "symbol": symbol,
-                        "name": name,
-                        "price": coin_data.get("usd", 0),
-                        "change_24h": round(coin_data.get("usd_24h_change", 0), 2),
-                        "volume_24h": coin_data.get("usd_24h_vol", 0),
-                        "market_cap": coin_data.get("usd_market_cap", 0)
-                    })
-                return {
-                    "prices": sorted(prices, key=lambda x: x.get("market_cap", 0), reverse=True),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "source": "coingecko"
-                }
+                
+                prices = []
+                for pair, ticker_data in result.items():
+                    if pair in symbol_map:
+                        symbol, name = symbol_map[pair]
+                        current_price = float(ticker_data.get('c', ['0'])[0])
+                        open_price = float(ticker_data.get('o', '0'))
+                        volume = float(ticker_data.get('v', ['0', '0'])[1])
+                        
+                        # Calculate 24h change
+                        change_24h = ((current_price - open_price) / open_price * 100) if open_price > 0 else 0
+                        
+                        prices.append({
+                            "id": name.lower(),
+                            "symbol": symbol,
+                            "name": name,
+                            "price": round(current_price, 2 if current_price >= 1 else 4),
+                            "change_24h": round(change_24h, 2),
+                            "volume_24h": volume * current_price,
+                            "market_cap": 0  # Kraken doesn't provide market cap
+                        })
+                
+                if prices:
+                    # Sort by a rough market cap estimate
+                    cap_order = {"BTC": 1, "ETH": 2, "SOL": 3, "AVAX": 4, "LINK": 5, "MATIC": 6, "UNI": 7, "AAVE": 8}
+                    prices.sort(key=lambda x: cap_order.get(x["symbol"], 99))
+                    
+                    return {
+                        "prices": prices,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "source": "kraken"
+                    }
     except Exception as e:
-        print(f"CoinGecko error: {e}")
+        print(f"Kraken API error: {e}")
     
-    # Fallback with simulated live prices
-    base_prices = {
-        "BTC": 45000 + random.uniform(-500, 500),
-        "ETH": 2500 + random.uniform(-50, 50),
-        "SOL": 100 + random.uniform(-5, 5),
-        "AVAX": 35 + random.uniform(-2, 2),
-        "MATIC": 0.8 + random.uniform(-0.05, 0.05),
-        "LINK": 15 + random.uniform(-1, 1),
-        "UNI": 8 + random.uniform(-0.5, 0.5),
-        "AAVE": 90 + random.uniform(-5, 5)
-    }
-    prices = [
-        {"id": "bitcoin", "symbol": "BTC", "name": "Bitcoin", "price": round(base_prices["BTC"], 2), "change_24h": round(random.uniform(-3, 5), 2), "volume_24h": 25000000000, "market_cap": 880000000000},
-        {"id": "ethereum", "symbol": "ETH", "name": "Ethereum", "price": round(base_prices["ETH"], 2), "change_24h": round(random.uniform(-3, 5), 2), "volume_24h": 12000000000, "market_cap": 300000000000},
-        {"id": "solana", "symbol": "SOL", "name": "Solana", "price": round(base_prices["SOL"], 2), "change_24h": round(random.uniform(-5, 8), 2), "volume_24h": 2000000000, "market_cap": 45000000000},
-        {"id": "avalanche-2", "symbol": "AVAX", "name": "Avalanche", "price": round(base_prices["AVAX"], 2), "change_24h": round(random.uniform(-4, 6), 2), "volume_24h": 500000000, "market_cap": 14000000000},
-        {"id": "matic-network", "symbol": "MATIC", "name": "Polygon", "price": round(base_prices["MATIC"], 4), "change_24h": round(random.uniform(-4, 4), 2), "volume_24h": 300000000, "market_cap": 8000000000},
-        {"id": "chainlink", "symbol": "LINK", "name": "Chainlink", "price": round(base_prices["LINK"], 2), "change_24h": round(random.uniform(-3, 5), 2), "volume_24h": 400000000, "market_cap": 9000000000},
-        {"id": "uniswap", "symbol": "UNI", "name": "Uniswap", "price": round(base_prices["UNI"], 2), "change_24h": round(random.uniform(-4, 6), 2), "volume_24h": 150000000, "market_cap": 5000000000},
-        {"id": "aave", "symbol": "AAVE", "name": "Aave", "price": round(base_prices["AAVE"], 2), "change_24h": round(random.uniform(-3, 5), 2), "volume_24h": 100000000, "market_cap": 1300000000}
-    ]
+    # Fallback - should rarely happen
     return {
-        "prices": prices,
+        "prices": [
+            {"id": "bitcoin", "symbol": "BTC", "name": "Bitcoin", "price": 70000, "change_24h": 0, "volume_24h": 0, "market_cap": 0},
+            {"id": "ethereum", "symbol": "ETH", "name": "Ethereum", "price": 2000, "change_24h": 0, "volume_24h": 0, "market_cap": 0},
+        ],
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "source": "simulated"
+        "source": "fallback"
     }
 
 # ============= AGENTS ROUTES =============
