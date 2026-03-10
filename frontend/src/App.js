@@ -10,7 +10,8 @@ import {
   Clock, Users, DollarSign, Percent, Target, Brain, Cpu,
   RefreshCw, ExternalLink, Copy, Sparkles, FlaskConical, Play,
   Pause, TestTube, Rocket, StopCircle, Gauge, Scale, Split,
-  Beaker, Trophy, FileCode, Radio, CircleDot, Terminal, ScrollText
+  Beaker, Trophy, FileCode, Radio, CircleDot, Terminal, ScrollText,
+  Plus, Minus, ArrowDown, Eye
 } from "lucide-react";
 import {
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid,
