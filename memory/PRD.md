@@ -1,68 +1,78 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Original Problem Statement
-Build a fully autonomous AI-powered hedge fund platform with integrated MVP Simulation, AI Research Lab, Risk Engine, and Capital Allocation - all modules working together in paper trading mode.
+## Current Status: Phase 4 Complete
 
-## What's Been Implemented (Jan 2026)
+### All Implemented Features
 
-### Phase 1 - MVP Core ✅
-- 5 AI Trading Agents (Data, Decision, Strategy, Execution, Risk)
+**Phase 1 - MVP Core** ✅
+- 5 AI Trading Agents
 - Investor Dashboard with wallet connection
-- Fund NAV, deposit/withdraw, performance charts
-- AI Market Analysis (OpenAI GPT-5.2)
-- Marketplace with revenue sharing
+- Fund NAV, deposit/withdraw
+- AI Market Analysis (GPT-5.2)
+- Marketplace with 90/10 revenue sharing
 
-### Phase 2 - Advanced Features ✅
-- AI Research & Strategy Lab (generate, backtest, sandbox, deploy)
-- Risk Management Engine with configurable limits
-- Capital Allocation Engine with dynamic rebalancing
+**Phase 2 - Advanced Features** ✅
+- AI Research & Strategy Lab
+- Risk Management Engine
+- Capital Allocation Engine
 - Execution Optimization Layer
 - Paper Trading Sandbox
 
-### Phase 3 - SIMULATION INTEGRATION ✅ (NEW)
+**Phase 3 - Simulation Integration** ✅
+- Simulation Control Page
+- Trade cycle execution
+- Comprehensive logging
+- Agent interaction tracking
 
-**Simulation Control Page (`/simulation`)**
-- Start/Stop simulation in paper trading mode
-- Run trade cycles manually
-- Real-time simulation statistics
-- Simulation logs (trade, risk, allocation, strategy, agent events)
-- Agent interaction logging
+**Phase 4 - Reports & Live Mode** ✅ (NEW)
+- **Daily Performance Reports**: P&L, win rate, trades, best/worst trade
+- **Weekly Performance Reports**: Sharpe ratio, daily breakdown, strategy rankings
+- **Mode Switching**: Paper → Testnet → Live ($1000 max safety limit)
+- **Batch Strategy Generation**: Add multiple strategies at once
+- **New Agent Addition**: Dynamically add agents to system
 
-**Integrated Modules:**
-1. **SimulationEngine** - Central coordinator for all agents
-2. **Risk Engine** - Auto-stops trading if drawdown/loss limits exceeded
-3. **Capital Allocation** - Dynamically reallocates based on Sharpe ratio
-4. **AI Research Lab** - Auto-deploys top strategies (Sharpe > 1.5)
-5. **Execution Layer** - Logs slippage, gas fees for each trade
+### API Endpoints Summary
+```
+Simulation:
+- POST /api/simulation/start
+- POST /api/simulation/stop
+- POST /api/simulation/run-cycle
+- POST /api/simulation/switch-mode?mode=X&live_capital=Y
+- GET /api/simulation/stats
+- GET /api/simulation/logs
+- GET /api/simulation/agent-interactions
 
-**API Endpoints:**
-- POST /api/simulation/start - Start paper trading
-- POST /api/simulation/stop - Stop simulation
-- POST /api/simulation/run-cycle - Execute one trading cycle
-- GET /api/simulation/stats - Get comprehensive stats
-- GET /api/simulation/logs - Get event logs
-- GET /api/simulation/agent-interactions - Get agent communication logs
-- POST /api/lab/auto-deploy-top - Auto-deploy high-performing strategies
-- POST /api/capital/rebalance - Trigger capital reallocation
+Reports:
+- GET /api/reports/daily
+- GET /api/reports/weekly
+- GET /api/reports/history
 
-**Logging System:**
-- SimulationLog: Captures all events with type, agent, message, details
-- AgentInteraction: Records from_agent, to_agent, interaction_type, payload
-- All logs persisted to MongoDB
+Strategy Lab:
+- GET /api/lab/strategies
+- POST /api/lab/strategies/generate
+- POST /api/lab/strategies/{id}/backtest
+- POST /api/lab/strategies/{id}/sandbox
+- POST /api/lab/strategies/{id}/deploy
+- POST /api/lab/auto-deploy-top
+- POST /api/strategies/add-batch?count=N
 
-## Test Results
-- Backend: 87.8% pass rate
-- Frontend: 90% pass rate
-- Overall: 89% - MVP Simulation fully functional
+Risk:
+- GET /api/risk/config
+- PUT /api/risk/config
+- GET /api/risk/alerts
+- GET /api/risk/portfolio-status
 
-## Next Action Items
-1. Deploy to Sepolia testnet with real smart contracts
-2. Integrate Uniswap V3 for actual DEX execution
-3. Add WebSocket for real-time log streaming
-4. Implement historical data backfill for backtesting
+Capital:
+- GET /api/capital/allocations
+- POST /api/capital/rebalance
+```
 
-## Tech Stack
-- Frontend: React 19, Tailwind CSS, Shadcn UI, Recharts
-- Backend: FastAPI, Motor (MongoDB), SimulationEngine class
-- AI: OpenAI GPT-5.2 via Emergent LLM key
-- Market Data: CoinGecko API
+### Test Results
+- Backend: 90.2% pass rate
+- Frontend: 95% pass rate
+
+### Next Action Items
+1. Deploy smart contracts to Sepolia
+2. Integrate Uniswap V3 for real DEX trades
+3. Add WebSocket for real-time streaming
+4. Implement historical data backtesting
