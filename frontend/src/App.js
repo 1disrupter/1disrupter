@@ -1243,6 +1243,14 @@ const SimulationPage = () => {
   const [dailyReport, setDailyReport] = useState(null);
   const [weeklyReport, setWeeklyReport] = useState(null);
   const [activeTab, setActiveTab] = useState("control");
+  
+  // Enhanced simulation state
+  const [acceleratedRunning, setAcceleratedRunning] = useState(false);
+  const [stressTestRunning, setStressTestRunning] = useState(false);
+  const [acceleratedResults, setAcceleratedResults] = useState(null);
+  const [stressTestResults, setStressTestResults] = useState(null);
+  const [agentPerformance, setAgentPerformance] = useState([]);
+  const [daysToSimulate, setDaysToSimulate] = useState(30);
 
   const fetchData = async () => {
     try {
