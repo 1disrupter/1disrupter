@@ -3036,6 +3036,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/simulation" element={<SimulationPage />} />
+            <Route path="/research" element={<ResearchEnginePage />} />
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/events" element={<EventAgentsPage />} />
             <Route path="/lab" element={<StrategyLabPage />} />
