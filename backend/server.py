@@ -2466,12 +2466,10 @@ async def generate_investor_report(
     latest_sim = await db.research_simulations.find_one({}, {"_id": 0}, sort=[("timestamp", -1)])
     latest_wf = await db.walk_forward_tests.find_one({}, {"_id": 0}, sort=[("timestamp", -1)])
     
-    # Get strategy performance
-    strategies = await db.strategies.find({"status": "live"}, {"_id": 0}).to_list(10)
-    
     # Build report
+    report_id = str(uuid.uuid4())
     report = {
-        "report_id": str(uuid.uuid4()),
+        "report_id": report_id,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "report_period": "6 months",
         "fund_name": "AlphaAI Fund",
@@ -2491,7 +2489,7 @@ async def generate_investor_report(
             "sharpe_ratio": latest_sim.get("metrics", {}).get("sharpe_ratio", 0) if latest_sim else 0,
             "sortino_ratio": latest_sim.get("metrics", {}).get("sortino_ratio", 0) if latest_sim else 0,
             "profit_factor": latest_sim.get("metrics", {}).get("profit_factor", 0) if latest_sim else 0,
-            "var_95": round(random.uniform(2, 5), 2),  # Value at Risk
+            "var_95": round(random.uniform(2, 5), 2),
             "expected_shortfall": round(random.uniform(3, 7), 2)
         },
         
@@ -2511,7 +2509,9 @@ async def generate_investor_report(
             "worst_trade": latest_sim.get("metrics", {}).get("worst_trade", 0) if latest_sim else 0,
             "avg_holding_period": "4.2 hours",
             "trades_per_day": latest_sim.get("metrics", {}).get("trade_frequency", 0) if latest_sim else 0
-        }
+        },
+        
+        "walk_forward_results": {}
     }
     
     if include_equity_curve and latest_sim:
@@ -2526,17 +2526,18 @@ async def generate_investor_report(
             "recommendation": "ROBUST" if latest_wf.get("aggregate_metrics", {}).get("robustness_score", 0) >= 70 else "NEEDS_REVIEW"
         }
     
-    # Store report
-    await db.investor_reports.insert_one(report)
+    # Store report (make copy without _id issues)
+    report_doc = dict(report)
+    await db.investor_reports.insert_one(report_doc)
     
-    await sim_engine.log_event("research", f"Investor report generated: {report['report_id']}", agent_name="ResearchEngine")
+    await sim_engine.log_event("research", f"Investor report generated: {report_id}", agent_name="ResearchEngine")
     
     return {
         "success": True,
-        "report_id": report["report_id"],
+        "report_id": report_id,
         "format": report_format,
         "report": report,
-        "download_url": f"/api/research/reports/{report['report_id']}"
+        "download_url": f"/api/research/reports/{report_id}"
     }
 
 @api_router.get("/research/reports/{report_id}")
