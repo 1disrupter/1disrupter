@@ -2139,6 +2139,9 @@ async def toggle_paper_trading(wallet_address: str):
 
 # ============= ALPHAAI RESEARCH ENGINE =============
 
+import csv
+from pathlib import Path
+
 class ResearchEngineConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     target_period_months: int = 6
@@ -2146,6 +2149,7 @@ class ResearchEngineConfig(BaseModel):
     training_window_days: int = 90
     testing_window_days: int = 30
     initial_capital: float = 100000.0
+    data_sources: List[str] = ["/data/btc_usd.csv", "/data/eth_usd.csv"]
 
 class WalkForwardResult(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -2178,22 +2182,80 @@ class PerformanceMetrics(BaseModel):
     winning_trades: int
     losing_trades: int
 
+def load_csv_price_data(filepath: str) -> List[Dict]:
+    """Load historical price data from CSV file"""
+    data = []
+    full_path = Path(__file__).parent / filepath.lstrip('/')
+    
+    if not full_path.exists():
+        print(f"CSV file not found: {full_path}")
+        return data
+    
+    try:
+        with open(full_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                data.append({
+                    "timestamp": row.get("Time", ""),
+                    "open": float(row.get("Open", 0)),
+                    "high": float(row.get("High", 0)),
+                    "low": float(row.get("Low", 0)),
+                    "close": float(row.get("Close", 0)),
+                    "volume": float(row.get("Volume", 0))
+                })
+    except Exception as e:
+        print(f"Error loading CSV: {e}")
+    
+    return data
+
+@api_router.get("/research/data-sources")
+async def get_data_sources():
+    """Get available historical data sources"""
+    btc_data = load_csv_price_data("data/btc_usd.csv")
+    eth_data = load_csv_price_data("data/eth_usd.csv")
+    
+    return {
+        "sources": [
+            {
+                "file": "/data/btc_usd.csv",
+                "symbol": "BTC/USD",
+                "records": len(btc_data),
+                "start_date": btc_data[0]["timestamp"] if btc_data else None,
+                "end_date": btc_data[-1]["timestamp"] if btc_data else None,
+                "start_price": btc_data[0]["close"] if btc_data else None,
+                "end_price": btc_data[-1]["close"] if btc_data else None
+            },
+            {
+                "file": "/data/eth_usd.csv",
+                "symbol": "ETH/USD",
+                "records": len(eth_data),
+                "start_date": eth_data[0]["timestamp"] if eth_data else None,
+                "end_date": eth_data[-1]["timestamp"] if eth_data else None,
+                "start_price": eth_data[0]["close"] if eth_data else None,
+                "end_price": eth_data[-1]["close"] if eth_data else None
+            }
+        ]
+    }
+
 @api_router.post("/research/run-simulation")
 async def run_research_simulation(
     target_months: int = 6,
     speed_multiplier: int = 500,
     initial_capital: float = 100000.0
 ):
-    """Run 500x accelerated simulation for research purposes"""
+    """Run 500x accelerated simulation using historical CSV data"""
     
-    # Calculate simulation parameters
-    total_days = target_months * 30
-    cycles_per_day = 24  # Hourly trading cycles
-    total_cycles = total_days * cycles_per_day
+    # Load historical data from CSV files
+    btc_data = load_csv_price_data("data/btc_usd.csv")
+    eth_data = load_csv_price_data("data/eth_usd.csv")
     
-    await sim_engine.log_event("research", f"Starting {speed_multiplier}x accelerated simulation for {target_months} months", agent_name="ResearchEngine")
+    if not btc_data or not eth_data:
+        return {"success": False, "error": "Historical data files not found"}
     
-    # Initialize simulation state
+    await sim_engine.log_event("research", f"Starting {speed_multiplier}x simulation using CSV data ({len(btc_data)} BTC + {len(eth_data)} ETH records)", agent_name="ResearchEngine")
+    
+    # Simulation parameters
+    total_days = min(target_months * 30, len(btc_data))
     capital = initial_capital
     equity_curve = []
     all_trades = []
@@ -2201,53 +2263,75 @@ async def run_research_simulation(
     peak_capital = capital
     max_drawdown = 0
     
-    # Agent configurations
+    # Agent configurations with strategies
     agents = [
-        {"name": "Arbitrage Agent", "allocation": 0.25, "win_rate": 0.65, "avg_return": 0.003},
-        {"name": "Momentum Agent", "allocation": 0.25, "win_rate": 0.55, "avg_return": 0.005},
-        {"name": "Funding Rate Agent", "allocation": 0.25, "win_rate": 0.70, "avg_return": 0.002},
-        {"name": "AI Research Lab", "allocation": 0.25, "win_rate": 0.50, "avg_return": 0.008}
+        {"name": "Arbitrage Agent", "allocation": 0.25, "strategy": "mean_reversion", "lookback": 5},
+        {"name": "Momentum Agent", "allocation": 0.25, "strategy": "trend_following", "lookback": 10},
+        {"name": "Funding Rate Agent", "allocation": 0.25, "strategy": "volatility_breakout", "lookback": 3},
+        {"name": "AI Research Lab", "allocation": 0.25, "strategy": "adaptive", "lookback": 7}
     ]
     
-    start_date = datetime.now(timezone.utc) - timedelta(days=total_days)
+    # Strategy contribution tracking
+    strategy_pnl = {a["name"]: 0 for a in agents}
+    strategy_trades = {a["name"]: 0 for a in agents}
     
-    for day in range(total_days):
-        current_date = start_date + timedelta(days=day)
+    for day_idx in range(total_days):
+        btc_price = btc_data[day_idx]["close"]
+        eth_price = eth_data[day_idx]["close"] if day_idx < len(eth_data) else eth_data[-1]["close"]
+        btc_prev = btc_data[max(0, day_idx-1)]["close"]
+        eth_prev = eth_data[max(0, day_idx-1)]["close"] if day_idx < len(eth_data) else eth_data[-1]["close"]
+        
+        # Calculate market signals
+        btc_return = (btc_price - btc_prev) / btc_prev if btc_prev > 0 else 0
+        eth_return = (eth_price - eth_prev) / eth_prev if eth_prev > 0 else 0
+        
         day_pnl = 0
-        day_trades = []
+        current_date = btc_data[day_idx]["timestamp"]
         
         for agent in agents:
             agent_capital = capital * agent["allocation"]
             
-            # Simulate multiple trades per day per agent
-            for _ in range(random.randint(2, 8)):
-                # Determine trade outcome based on agent characteristics
-                is_winner = random.random() < agent["win_rate"]
-                
-                # Calculate trade P&L
-                if is_winner:
-                    trade_return = random.uniform(0.001, agent["avg_return"] * 2)
-                else:
-                    trade_return = -random.uniform(0.001, agent["avg_return"] * 1.5)
-                
-                trade_pnl = agent_capital * 0.1 * trade_return  # 10% position size
-                day_pnl += trade_pnl
-                
-                trade = {
-                    "id": str(uuid.uuid4()),
-                    "timestamp": current_date.isoformat(),
-                    "agent": agent["name"],
-                    "symbol": random.choice(["BTC/USDT", "ETH/USDT", "SOL/USDT"]),
-                    "side": random.choice(["buy", "sell"]),
-                    "pnl": round(trade_pnl, 2),
-                    "return_pct": round(trade_return * 100, 4)
-                }
-                day_trades.append(trade)
-                all_trades.append(trade)
+            # Strategy-based trading logic
+            if agent["strategy"] == "mean_reversion":
+                # Trade against large moves
+                signal = -btc_return if abs(btc_return) > 0.02 else btc_return * 0.5
+            elif agent["strategy"] == "trend_following":
+                # Follow the trend
+                signal = btc_return * 1.5 if btc_return > 0 else btc_return * 0.8
+            elif agent["strategy"] == "volatility_breakout":
+                # Trade on volatility
+                signal = abs(btc_return) * (1 if btc_return > 0 else -1) * 2
+            else:  # adaptive
+                # Mix of strategies
+                signal = btc_return * 0.7 + eth_return * 0.3
+            
+            # Calculate P&L based on signal and position
+            position_size = agent_capital * 0.15  # 15% position
+            trade_pnl = position_size * signal * random.uniform(0.8, 1.2)  # Add some noise
+            
+            day_pnl += trade_pnl
+            strategy_pnl[agent["name"]] += trade_pnl
+            strategy_trades[agent["name"]] += 1
+            
+            # Record trade
+            trade = {
+                "id": str(uuid.uuid4()),
+                "timestamp": current_date,
+                "agent": agent["name"],
+                "strategy": agent["strategy"],
+                "symbol": "BTC/USD" if random.random() > 0.3 else "ETH/USD",
+                "btc_price": btc_price,
+                "eth_price": eth_price,
+                "side": "buy" if signal > 0 else "sell",
+                "pnl": round(trade_pnl, 2),
+                "return_pct": round(signal * 100, 4)
+            }
+            all_trades.append(trade)
         
         # Update capital
         capital += day_pnl
-        daily_returns.append(day_pnl / (capital - day_pnl) if capital > day_pnl else 0)
+        daily_return = day_pnl / (capital - day_pnl) if capital > day_pnl else 0
+        daily_returns.append(daily_return)
         
         # Track drawdown
         if capital > peak_capital:
@@ -2255,12 +2339,14 @@ async def run_research_simulation(
         current_drawdown = (peak_capital - capital) / peak_capital * 100
         max_drawdown = max(max_drawdown, current_drawdown)
         
-        # Record equity point
+        # Record equity curve
         equity_curve.append({
-            "date": current_date.strftime("%Y-%m-%d"),
+            "date": current_date,
             "equity": round(capital, 2),
             "drawdown": round(current_drawdown, 2),
-            "daily_pnl": round(day_pnl, 2)
+            "daily_pnl": round(day_pnl, 2),
+            "btc_price": btc_price,
+            "eth_price": eth_price
         })
     
     # Calculate performance metrics
@@ -2274,61 +2360,97 @@ async def run_research_simulation(
     std_daily_return = (sum((r - avg_daily_return) ** 2 for r in daily_returns) / len(daily_returns)) ** 0.5 if daily_returns else 1
     sharpe_ratio = (avg_daily_return / std_daily_return) * (252 ** 0.5) if std_daily_return > 0 else 0
     
+    # Sortino ratio (downside deviation only)
+    negative_returns = [r for r in daily_returns if r < 0]
+    downside_std = (sum(r ** 2 for r in negative_returns) / len(negative_returns)) ** 0.5 if negative_returns else 1
+    sortino_ratio = (avg_daily_return / downside_std) * (252 ** 0.5) if downside_std > 0 else 0
+    
     gross_profit = sum(t["pnl"] for t in winning_trades)
     gross_loss = abs(sum(t["pnl"] for t in losing_trades))
     profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf')
+    
+    # Strategy contribution
+    strategy_contribution = [
+        {
+            "name": name,
+            "pnl": round(pnl, 2),
+            "trades": strategy_trades[name],
+            "contribution_pct": round(pnl / (capital - initial_capital) * 100, 2) if capital != initial_capital else 0
+        }
+        for name, pnl in strategy_pnl.items()
+    ]
     
     metrics = {
         "total_return": round(total_return, 2),
         "annualized_return": round(annualized_return, 2),
         "sharpe_ratio": round(sharpe_ratio, 2),
-        "sortino_ratio": round(sharpe_ratio * 1.2, 2),  # Simplified
+        "sortino_ratio": round(sortino_ratio, 2),
         "max_drawdown": round(max_drawdown, 2),
         "win_rate": round(len(winning_trades) / len(all_trades) * 100, 2) if all_trades else 0,
-        "profit_factor": round(profit_factor, 2),
+        "profit_factor": round(min(profit_factor, 999), 2),
         "trade_frequency": round(len(all_trades) / total_days, 1),
         "avg_trade_return": round(sum(t["pnl"] for t in all_trades) / len(all_trades), 2) if all_trades else 0,
         "best_trade": round(max(t["pnl"] for t in all_trades), 2) if all_trades else 0,
         "worst_trade": round(min(t["pnl"] for t in all_trades), 2) if all_trades else 0,
         "total_trades": len(all_trades),
         "winning_trades": len(winning_trades),
-        "losing_trades": len(losing_trades)
+        "losing_trades": len(losing_trades),
+        "strategy_contribution": strategy_contribution
     }
     
-    # Store results
+    # Store simulation result
     simulation_result = {
         "id": str(uuid.uuid4()),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "config": {
             "target_months": target_months,
             "speed_multiplier": speed_multiplier,
-            "initial_capital": initial_capital
+            "initial_capital": initial_capital,
+            "data_sources": ["/data/btc_usd.csv", "/data/eth_usd.csv"]
         },
         "metrics": metrics,
         "final_capital": round(capital, 2),
-        "equity_curve_summary": equity_curve[-30:],  # Last 30 days
-        "trade_count": len(all_trades)
+        "equity_curve_summary": equity_curve,
+        "trade_count": len(all_trades),
+        "price_data": {
+            "btc_start": btc_data[0]["close"],
+            "btc_end": btc_data[-1]["close"] if btc_data else 0,
+            "btc_return": round((btc_data[-1]["close"] - btc_data[0]["close"]) / btc_data[0]["close"] * 100, 2) if btc_data else 0,
+            "eth_start": eth_data[0]["close"],
+            "eth_end": eth_data[-1]["close"] if eth_data else 0,
+            "eth_return": round((eth_data[-1]["close"] - eth_data[0]["close"]) / eth_data[0]["close"] * 100, 2) if eth_data else 0
+        }
     }
     
     await db.research_simulations.insert_one(simulation_result)
     
-    await sim_engine.log_event("research", f"Simulation complete: {total_return:.2f}% return over {target_months} months", 
+    # Save trade history to file
+    trade_history_path = Path(__file__).parent / "reports" / "investor_reports" / f"trades_{simulation_result['id'][:8]}.json"
+    trade_history_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(trade_history_path, 'w') as f:
+        json.dump({"trades": all_trades[-100:]}, f)  # Save last 100 trades
+    
+    await sim_engine.log_event("research", f"Simulation complete: {total_return:.2f}% return over {target_months} months using historical data", 
                               agent_name="ResearchEngine",
                               details=metrics)
     
     return {
         "success": True,
         "simulation_id": simulation_result["id"],
+        "data_sources_used": ["/data/btc_usd.csv", "/data/eth_usd.csv"],
         "summary": {
-            "period": f"{target_months} months",
+            "period": f"{target_months} months ({total_days} days)",
             "speed": f"{speed_multiplier}x",
             "initial_capital": initial_capital,
             "final_capital": round(capital, 2),
             "total_return_pct": round(total_return, 2),
             "total_trades": len(all_trades)
         },
+        "price_performance": simulation_result["price_data"],
         "metrics": metrics,
-        "equity_curve": equity_curve[-60:]  # Last 60 days for charting
+        "strategy_contribution": strategy_contribution,
+        "equity_curve": equity_curve[-60:],
+        "trade_history_saved": str(trade_history_path)
     }
 
 @api_router.post("/research/walk-forward-test")
