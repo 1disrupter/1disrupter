@@ -3550,6 +3550,77 @@ async def generate_marketing_video(video_name: str, background_tasks: Background
         "video_name": video_name
     }
 
+@api_router.get("/marketing/preview")
+async def video_preview_page():
+    """HTML page to preview all marketing videos"""
+    from fastapi.responses import HTMLResponse
+    
+    videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
+    videos = []
+    if videos_dir.exists():
+        for f in videos_dir.iterdir():
+            if f.suffix.lower() == '.mp4':
+                videos.append({
+                    "name": f.stem.replace("_", " ").title(),
+                    "url": f"/api/marketing/video/{f.name}",
+                    "size_mb": round(f.stat().st_size / (1024 * 1024), 1)
+                })
+    
+    video_cards = ""
+    for v in videos:
+        video_cards += f'''
+        <div style="background: #1a1a2e; border-radius: 12px; padding: 20px; margin: 15px 0;">
+            <h3 style="color: #00FF94; margin-bottom: 15px;">{v["name"]} ({v["size_mb"]} MB)</h3>
+            <video width="100%" controls style="border-radius: 8px; max-height: 400px;">
+                <source src="{v["url"]}" type="video/mp4">
+                Your browser does not support video.
+            </video>
+            <a href="{v["url"]}" download style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: #7B61FF; color: white; text-decoration: none; border-radius: 6px;">⬇️ Download</a>
+        </div>
+        '''
+    
+    html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>AlphaAI Marketing Videos</title>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
+                color: white;
+                min-height: 100vh;
+                margin: 0;
+                padding: 40px;
+            }}
+            .container {{
+                max-width: 900px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #7B61FF;
+                text-align: center;
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }}
+            .subtitle {{
+                text-align: center;
+                color: #888;
+                margin-bottom: 40px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🎬 AlphaAI Marketing Videos</h1>
+            <p class="subtitle">Generated with Sora 2 AI • Ready for social media</p>
+            {video_cards if videos else '<p style="text-align:center; color:#666;">No videos generated yet.</p>'}
+        </div>
+    </body>
+    </html>
+    '''
+    return HTMLResponse(content=html)
+
 # Include router and middleware
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
