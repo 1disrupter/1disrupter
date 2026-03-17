@@ -282,7 +282,7 @@ def create_table_of_contents(story, styles):
     for num, title in toc_items:
         indent = 20 if num.startswith("   ") else 0
         story.append(Paragraph(f"<b>{num}</b> {title}", ParagraphStyle(
-            'TOCItem', parent=styles['BodyText'], leftIndent=indent, spaceBefore=2, spaceAfter=2)))
+            'TOCItem', parent=styles['CustomBody'], leftIndent=indent, spaceBefore=2, spaceAfter=2)))
     
     story.append(PageBreak())
 
@@ -297,7 +297,7 @@ def create_executive_summary(story, styles):
     external developers can launch their own trading agents, comprehensive simulation capabilities 
     with accelerated backtesting, real-time market data integration, and smart contract integration 
     for on-chain fund management.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(Paragraph("1.2 Core Capabilities", styles['SubHeading']))
     capabilities = [
@@ -311,7 +311,7 @@ def create_executive_summary(story, styles):
         "<b>Event-Driven Agents</b>: Agents that react to smart contract events automatically",
     ]
     for cap in capabilities:
-        story.append(Paragraph(f"• {cap}", styles['BodyText']))
+        story.append(Paragraph(f"• {cap}", styles['CustomBody']))
     
     story.append(Paragraph("1.3 Key Platform Statistics", styles['SubHeading']))
     stats_data = [
@@ -407,7 +407,7 @@ def create_architecture_section(story, styles):
     <b>Event Flow</b>: Smart contract emits event (e.g., InvestorDeposited) → Event-driven 
     agents detect event → Execute automated actions (update balances, allocate to strategies) 
     → Update dashboards.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     story.append(PageBreak())
 
 def create_backend_section(story, styles, server_code):
@@ -417,13 +417,13 @@ def create_backend_section(story, styles, server_code):
     story.append(Paragraph("""
     The backend is a monolithic FastAPI application contained in a single file (server.py). 
     This section documents all data models, the simulation engine, API endpoints, and core logic.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     # 3.1 Data Models
     story.append(Paragraph("3.1 Data Models (Pydantic)", styles['SubHeading']))
     models = extract_pydantic_models(server_code)
     
-    story.append(Paragraph(f"Total Models Defined: <b>{len(models)}</b>", styles['BodyText']))
+    story.append(Paragraph(f"Total Models Defined: <b>{len(models)}</b>", styles['CustomBody']))
     story.append(Spacer(1, 0.1*inch))
     
     # Key models table
@@ -522,7 +522,7 @@ class RiskConfig(BaseModel):
     story.append(Paragraph("""
     The SimulationEngine class is the core of the trading simulation. It coordinates all agents, 
     manages capital allocation, executes trades, and enforces risk rules.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     sim_engine_code = """
 class SimulationEngine:
@@ -629,7 +629,7 @@ class SimulationEngine:
     story.append(Paragraph("3.3 API Endpoints - Full Reference", styles['SubHeading']))
     
     routes = extract_api_routes(server_code)
-    story.append(Paragraph(f"Total API Endpoints: <b>{len(routes)}</b>", styles['BodyText']))
+    story.append(Paragraph(f"Total API Endpoints: <b>{len(routes)}</b>", styles['CustomBody']))
     
     # Group endpoints by category
     endpoint_categories = {
@@ -828,7 +828,7 @@ def create_smart_contract_section(story, styles, contract_code):
     story.append(Paragraph("""
     The AlphaAIManager smart contract handles on-chain fund management including investor 
     deposits, withdrawals, and strategy allocations. Deployed on Ethereum Sepolia testnet.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(Paragraph("5.1 Complete Solidity Source Code", styles['SubHeading']))
     story.append(Paragraph(format_code_for_pdf(contract_code), styles['CodeBlock']))
@@ -896,7 +896,7 @@ def create_ai_integration_section(story, styles):
     story.append(Paragraph("""
     The platform uses OpenAI GPT-5.2 via the Emergent LLM Key for market analysis. 
     The AI provides sentiment analysis, support/resistance levels, and trading recommendations.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     ai_code = """
 from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -948,7 +948,7 @@ async def ai_market_analysis(request: AIAnalysisRequest):
     <b>System Message:</b> "You are an expert crypto trading analyst."<br/><br/>
     <b>User Prompt Template:</b><br/>
     "Analyze [SYMBOL] @ $[PRICE], 24h: [CHANGE]%. Give: sentiment, levels, recommendation, risk (1-10)."
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     story.append(PageBreak())
 
 def create_frontend_section(story, styles, app_code):
@@ -958,7 +958,7 @@ def create_frontend_section(story, styles, app_code):
     story.append(Paragraph("""
     The frontend is a single-page React application with comprehensive UI for investors, 
     administrators, and traders. It uses Shadcn/UI components and ethers.js for Web3 integration.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     # 4.1 React Components
     story.append(Paragraph("4.1 React Components", styles['SubHeading']))
@@ -1093,7 +1093,7 @@ def create_database_section(story, styles):
     story.append(Paragraph("""
     The platform uses MongoDB with the Motor async driver. All collections store JSON documents 
     with auto-generated string IDs (not ObjectIds) to avoid serialization issues.
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     collections = [
         ['Collection', 'Document Structure', 'Purpose'],
@@ -1197,7 +1197,7 @@ def create_workflow_section(story, styles):
     3. User approves connection → Frontend calls POST /api/investors/register<br/>
     4. Backend creates investor record → Returns investor data<br/>
     5. User redirected to Dashboard → Can view portfolio, enable paper trading
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(Paragraph("10.2 Simulation Flow", styles['SubHeading']))
     story.append(Paragraph("""
@@ -1209,7 +1209,7 @@ def create_workflow_section(story, styles):
     6. After each trade → Risk engine checks rules<br/>
     7. If risk violated → Auto-stop or reduce positions<br/>
     8. Results logged to database → Displayed on dashboard
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(Paragraph("10.3 Strategy Lab Flow", styles['SubHeading']))
     story.append(Paragraph("""
@@ -1222,7 +1222,7 @@ def create_workflow_section(story, styles):
     7. Sandbox testing runs → Paper trades strategy<br/>
     8. If Sharpe > 1.0 and positive returns → User clicks "Deploy"<br/>
     9. Strategy goes live → Receives capital allocation
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(Paragraph("10.4 Research Engine Flow", styles['SubHeading']))
     story.append(Paragraph("""
@@ -1235,7 +1235,7 @@ def create_workflow_section(story, styles):
     7. Returns comprehensive results with charts<br/>
     8. User can run Walk-Forward Test → Validates robustness<br/>
     9. Generate Investor Report → Creates PDF/JSON
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(Paragraph("10.5 Smart Contract Flow", styles['SubHeading']))
     story.append(Paragraph("""
@@ -1248,7 +1248,7 @@ def create_workflow_section(story, styles):
     7. Event agents detect event → Process automatically<br/>
     8. Investor Monitor Agent → Updates balances dashboard<br/>
     9. Strategy Allocator Agent → Auto-allocates 25% to top strategy
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(Paragraph("10.6 Event-Driven Agent Flow", styles['SubHeading']))
     story.append(Paragraph("""
@@ -1260,7 +1260,7 @@ def create_workflow_section(story, styles):
     6. Execution agents → Auto-allocate funds to strategies<br/>
     7. Analytics agents → Refresh dashboards<br/>
     8. Agent stats updated → events_processed_count incremented
-    """, styles['BodyText']))
+    """, styles['CustomBody']))
     
     story.append(PageBreak())
 
