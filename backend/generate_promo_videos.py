@@ -51,7 +51,7 @@ VIDEO_PROMPTS = {
             Color scheme: dark background, purple, neon green.
             Fast-paced, engaging, suitable for short-form social content. No text.
         """,
-        "size": "720x1280",  # Portrait for Instagram Reels/TikTok
+        "size": "1024x1792",  # Portrait for Instagram Reels/TikTok
         "duration": 4
     },
     
