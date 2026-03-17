@@ -3487,6 +3487,69 @@ async def generate_marketing_image(image_name: str):
     except Exception as e:
         return {"success": False, "message": str(e)}
 
+# ============= VIDEO ASSETS ENDPOINTS =============
+
+@api_router.get("/marketing/videos")
+async def list_marketing_videos():
+    """List all available marketing videos"""
+    videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
+    if not videos_dir.exists():
+        return {"videos": [], "message": "No marketing videos generated yet"}
+    
+    videos = []
+    for f in videos_dir.iterdir():
+        if f.suffix.lower() in ['.mp4', '.webm', '.mov']:
+            videos.append({
+                "name": f.stem,
+                "filename": f.name,
+                "url": f"/api/marketing/video/{f.name}",
+                "size_mb": round(f.stat().st_size / (1024 * 1024), 1)
+            })
+    
+    return {"videos": videos, "count": len(videos)}
+
+@api_router.get("/marketing/video/{filename}")
+async def get_marketing_video(filename: str):
+    """Get a specific marketing video"""
+    videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
+    filepath = videos_dir / filename
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    return FileResponse(
+        path=str(filepath), 
+        media_type="video/mp4",
+        filename=filename
+    )
+
+@api_router.post("/marketing/generate-video/{video_name}")
+async def generate_marketing_video(video_name: str, background_tasks: BackgroundTasks):
+    """Generate a specific marketing video using Sora 2 (runs in background)"""
+    import subprocess
+    
+    # Available video types
+    available = ["hero_promo", "social_short", "agents_showcase", "security_promo"]
+    if video_name not in available:
+        return {"success": False, "message": f"Unknown video. Available: {available}"}
+    
+    # Run in background since video generation takes 2-5 minutes
+    def generate():
+        subprocess.run(
+            ["python", str(Path(__file__).parent / "generate_promo_videos.py"), video_name],
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+    
+    background_tasks.add_task(generate)
+    
+    return {
+        "success": True,
+        "message": f"Video generation started for '{video_name}'. Check /api/marketing/videos in 3-5 minutes.",
+        "video_name": video_name
+    }
+
 # Include router and middleware
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
