@@ -20,7 +20,8 @@ OUTPUT_DIR = Path(__file__).parent / "marketing_assets" / "videos"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Video prompts for AlphaAI - designed for different social media platforms
-# Sora 2 only supports: 1280x720 (landscape) and 720x1280 (portrait)
+# Sora 2 model only supports: 1280x720 (landscape)
+# For vertical content, we'll crop/reformat in post or use landscape
 VIDEO_PROMPTS = {
     # Main promotional video - Hero style (Landscape for YouTube/Website/Twitter)
     "hero_promo": {
@@ -39,19 +40,19 @@ VIDEO_PROMPTS = {
         "duration": 8
     },
     
-    # Instagram/TikTok vertical video
-    "social_vertical": {
+    # Social media short video (can be cropped to vertical in editing)
+    "social_short": {
         "prompt": """
-            Vertical video for social media showcasing AI trading technology.
-            Sleek futuristic interface with holographic trading charts floating in dark space.
-            Purple and green glowing neural pathways connect different data points.
-            A sophisticated AI assistant robot with a glowing chest emblem analyzes crypto markets.
-            Coins (Bitcoin, Ethereum) flow through secure digital pathways into a vault.
-            Dynamic camera movements, modern transitions, premium fintech feel.
-            Color scheme: dark background, purple, neon green.
-            Fast-paced, engaging, suitable for short-form social content. No text.
+            Fast-paced fintech promo showcasing AI trading technology.
+            Sleek futuristic interface with holographic trading charts in dark space.
+            Purple and green glowing neural pathways connect data points.
+            A sophisticated AI robot with glowing chest emblem analyzes crypto markets.
+            Bitcoin and Ethereum coins flow through secure digital pathways into a vault.
+            Dynamic camera movements, premium fintech feel.
+            Dark background with purple and neon green accents.
+            Engaging, suitable for social media. No text.
         """,
-        "size": "720x1280",  # Portrait for Instagram Reels/TikTok (CORRECTED)
+        "size": "1280x720",  # Landscape (crop center for vertical)
         "duration": 4
     },
     
@@ -71,18 +72,18 @@ VIDEO_PROMPTS = {
         "duration": 8
     },
     
-    # Smart contract/security focused (Portrait for social)
-    "security_vertical": {
+    # Smart contract/security focused
+    "security_promo": {
         "prompt": """
-            Vertical video showcasing blockchain security for a crypto hedge fund.
+            Video showcasing blockchain security for a crypto hedge fund.
             Central glowing hexagonal vault made of interconnected blockchain nodes.
             Digital ETH coins and tokens flowing in through secure quantum tunnels.
             Shield effects and encryption visualizations surrounding the vault.
             Purple and gold color scheme on dark background.
             Represents security, transparency, and decentralized fund management.
-            Smooth, mesmerizing motion suitable for social media. No text.
+            Smooth, mesmerizing motion suitable for all platforms. No text.
         """,
-        "size": "720x1280",  # Portrait for Instagram/TikTok (CORRECTED)
+        "size": "1280x720",  # Landscape
         "duration": 4
     }
 }
