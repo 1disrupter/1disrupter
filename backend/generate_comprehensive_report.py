@@ -70,7 +70,7 @@ def get_styles():
     
     # Body text
     styles.add(ParagraphStyle(
-        'BodyText',
+        'CustomBody',
         parent=styles['Normal'],
         fontSize=9,
         textColor=colors.HexColor('#333333'),
