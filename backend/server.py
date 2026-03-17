@@ -3432,6 +3432,61 @@ async def regenerate_comprehensive_pdf():
     except subprocess.CalledProcessError as e:
         return {"success": False, "message": f"Generation failed: {e.stderr}"}
 
+# ============= MARKETING ASSETS ENDPOINTS =============
+
+@api_router.get("/marketing/assets")
+async def list_marketing_assets():
+    """List all available marketing assets"""
+    assets_dir = Path(__file__).parent / "marketing_assets"
+    if not assets_dir.exists():
+        return {"assets": [], "message": "No marketing assets generated yet"}
+    
+    assets = []
+    for f in assets_dir.iterdir():
+        if f.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
+            assets.append({
+                "name": f.stem,
+                "filename": f.name,
+                "url": f"/api/marketing/image/{f.name}",
+                "size_kb": round(f.stat().st_size / 1024, 1)
+            })
+    
+    return {"assets": assets, "count": len(assets)}
+
+@api_router.get("/marketing/image/{filename}")
+async def get_marketing_image(filename: str):
+    """Get a specific marketing image"""
+    assets_dir = Path(__file__).parent / "marketing_assets"
+    filepath = assets_dir / filename
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    media_type = "image/jpeg" if filepath.suffix.lower() in ['.jpg', '.jpeg'] else "image/png"
+    return FileResponse(path=str(filepath), media_type=media_type)
+
+@api_router.post("/marketing/generate/{image_name}")
+async def generate_marketing_image(image_name: str):
+    """Generate a specific marketing image using Nano Banana"""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["python", str(Path(__file__).parent / "generate_marketing_images.py"), image_name],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "message": f"Generated {image_name}",
+                "url": f"/api/marketing/image/{image_name}.jpg"
+            }
+        else:
+            return {"success": False, "message": result.stderr or "Generation failed"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
 # Include router and middleware
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
