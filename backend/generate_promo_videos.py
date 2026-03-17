@@ -51,7 +51,7 @@ VIDEO_PROMPTS = {
             Color scheme: dark background, purple, neon green.
             Fast-paced, engaging, suitable for short-form social content. No text.
         """,
-        "size": "1024x1792",  # Portrait for Instagram Reels/TikTok
+        "size": "720x1280",  # Portrait for Instagram Reels/TikTok (CORRECTED)
         "duration": 4
     },
     
@@ -82,7 +82,7 @@ VIDEO_PROMPTS = {
             Represents security, transparency, and decentralized fund management.
             Smooth, mesmerizing motion suitable for social media. No text.
         """,
-        "size": "1024x1792",  # Portrait for Instagram/TikTok
+        "size": "720x1280",  # Portrait for Instagram/TikTok (CORRECTED)
         "duration": 4
     }
 }
