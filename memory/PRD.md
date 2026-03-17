@@ -1,6 +1,6 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 5 Complete - Investor Demo Ready
+## Current Status: Phase 7 Complete - Project Export Ready
 
 ### Overview
 AlphaAI is a decentralized AI-powered hedge fund platform that allows investors to deposit capital into a vault managed by autonomous AI trading agents. The platform includes a marketplace for external developers to launch their own trading agents.
@@ -53,29 +53,30 @@ AlphaAI is a decentralized AI-powered hedge fund platform that allows investors 
 - **Export Results** (PDF, CSV, JSON)
 - **Risk Management Integration**: Auto-stop at 5% drawdown, position reduction
 
-**Phase 6 - Smart Contract Integration (March 2026)** ✅ NEW
+**Phase 6 - Smart Contract & Live Data (March 2026)** ✅
 - **AlphaAIManager.sol Contract**: Full Solidity smart contract for on-chain operations
+- **MetaMask Integration**: Real wallet connectivity via ethers.js
+- **Live Price Feed**: Real-time crypto prices from Kraken API
+- **Event-Driven Agents**: Agents that react to smart contract events automatically
 - **Contract Features**:
   - Investor deposit/withdraw functions
   - Strategy management (add, allocate, deallocate)
   - On-chain balance tracking
   - Emergency withdrawal (owner only)
-- **Admin Panel Integration**:
-  - 6-step deployment guide with faucet links
-  - Contract source code viewer with copy function
-  - Contract registration form
-  - Etherscan integration links
-- **Backend API Endpoints**:
-  - `/api/contract/info` - Get deployment status
-  - `/api/contract/source` - Get Solidity source code
-  - `/api/contract/register` - Register deployed contract
-  - `/api/contract/balance/{wallet}` - Get on-chain balance
-  - `/api/contract/strategies` - Get on-chain strategies
-  - `/api/contract/prepare-deposit` - Prepare deposit transaction
-  - `/api/contract/prepare-withdraw` - Prepare withdrawal transaction
-  - `/api/contract/events` - Get contract events
-  - `/api/contract/deployment-guide` - Step-by-step guide
-  - `/api/contract/abi` - Get contract ABI
+
+**Phase 7 - Comprehensive Project Export (March 2026)** ✅ NEW
+- **Full Technical Documentation PDF**: 43+ page PDF with complete system details
+- **7-Point Export Structure**:
+  1. Full project overview and concept
+  2. All pages and website content
+  3. AI agent logic, workflows, and automations
+  4. Trading strategies, signal logic, and rules
+  5. Backend structure and system architecture
+  6. All prompts, configurations, and code
+  7. End-to-end system workflow breakdown
+- **API Endpoints**:
+  - `GET /api/export/comprehensive-pdf` - Download the complete documentation
+  - `POST /api/export/regenerate-pdf` - Regenerate the documentation
 
 ### API Endpoints Summary
 
