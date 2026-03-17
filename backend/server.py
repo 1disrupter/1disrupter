@@ -3388,6 +3388,50 @@ async def get_integration_config():
         }
     }
 
+# ============= PDF EXPORT ENDPOINT =============
+
+from fastapi.responses import FileResponse
+
+@api_router.get("/export/comprehensive-pdf")
+async def download_comprehensive_pdf():
+    """Download the comprehensive project documentation PDF"""
+    pdf_path = Path(__file__).parent / "reports" / "AlphaAI_Complete_Technical_Documentation.pdf"
+    
+    if not pdf_path.exists():
+        # Generate if not exists
+        import subprocess
+        subprocess.run(["python", str(Path(__file__).parent / "generate_comprehensive_report.py")], check=True)
+    
+    if pdf_path.exists():
+        return FileResponse(
+            path=str(pdf_path),
+            filename="AlphaAI_Complete_Technical_Documentation.pdf",
+            media_type="application/pdf"
+        )
+    
+    raise HTTPException(status_code=404, detail="PDF report not found. Please run the generator script.")
+
+@api_router.post("/export/regenerate-pdf")
+async def regenerate_comprehensive_pdf():
+    """Regenerate the comprehensive project documentation PDF"""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["python", str(Path(__file__).parent / "generate_comprehensive_report.py")],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        pdf_path = Path(__file__).parent / "reports" / "AlphaAI_Complete_Technical_Documentation.pdf"
+        return {
+            "success": True,
+            "message": "PDF regenerated successfully",
+            "path": str(pdf_path),
+            "download_url": "/api/export/comprehensive-pdf"
+        }
+    except subprocess.CalledProcessError as e:
+        return {"success": False, "message": f"Generation failed: {e.stderr}"}
+
 # Include router and middleware
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
