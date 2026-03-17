@@ -20,8 +20,9 @@ OUTPUT_DIR = Path(__file__).parent / "marketing_assets" / "videos"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Video prompts for AlphaAI - designed for different social media platforms
+# Sora 2 only supports: 1280x720 (landscape) and 720x1280 (portrait)
 VIDEO_PROMPTS = {
-    # Main promotional video - Hero style
+    # Main promotional video - Hero style (Landscape for YouTube/Website/Twitter)
     "hero_promo": {
         "prompt": """
             Cinematic tech advertisement for AlphaAI crypto hedge fund.
@@ -31,10 +32,10 @@ VIDEO_PROMPTS = {
             Bitcoin and Ethereum symbols orbit around a central futuristic vault.
             Sleek AI robots analyze holographic market data in a command center.
             End with the brain-blockchain hybrid glowing brighter, radiating success.
-            Color palette: deep navy, electric purple (#7B61FF), neon green (#00FF94), gold accents.
+            Color palette: deep navy, electric purple, neon green, gold accents.
             Professional, premium, cutting-edge fintech aesthetic. No text overlays.
         """,
-        "size": "1792x1024",  # Widescreen for YouTube/website
+        "size": "1280x720",  # Landscape HD for YouTube/Website
         "duration": 8
     },
     
@@ -47,29 +48,14 @@ VIDEO_PROMPTS = {
             A sophisticated AI assistant robot with a glowing chest emblem analyzes crypto markets.
             Coins (Bitcoin, Ethereum) flow through secure digital pathways into a vault.
             Dynamic camera movements, modern transitions, premium fintech feel.
-            Color scheme: dark background, purple (#7B61FF), neon green (#00FF94).
+            Color scheme: dark background, purple, neon green.
             Fast-paced, engaging, suitable for short-form social content. No text.
         """,
-        "size": "1024x1792",  # Portrait for Instagram Reels/TikTok
+        "size": "720x1280",  # Portrait for Instagram Reels/TikTok
         "duration": 4
     },
     
-    # Square video for Instagram/Twitter feed
-    "social_square": {
-        "prompt": """
-            Square format video for social media feed.
-            Central focus: A glowing AI brain made of circuits, surrounded by orbiting cryptocurrency symbols.
-            The brain pulses with intelligence, analyzing market patterns shown as flowing data streams.
-            Secure blockchain vault materializes, showing fund security and transparency.
-            Four AI agents appear briefly - each with different colored glows (purple, cyan, gold, green).
-            Premium dark theme with electric purple and green neon accents.
-            Smooth, hypnotic motion perfect for auto-play feeds. No text overlays.
-        """,
-        "size": "1024x1024",  # Square for Instagram/Twitter
-        "duration": 4
-    },
-    
-    # Trading agents showcase
+    # Trading agents showcase (Landscape)
     "agents_showcase": {
         "prompt": """
             Showcase of AI trading agents in a futuristic command center.
@@ -81,8 +67,23 @@ VIDEO_PROMPTS = {
             Professional, powerful, showcasing autonomous AI trading capabilities.
             Dark background with purple and green accent lighting. No text.
         """,
-        "size": "1280x720",  # Standard HD
+        "size": "1280x720",  # Standard HD landscape
         "duration": 8
+    },
+    
+    # Smart contract/security focused (Portrait for social)
+    "security_vertical": {
+        "prompt": """
+            Vertical video showcasing blockchain security for a crypto hedge fund.
+            Central glowing hexagonal vault made of interconnected blockchain nodes.
+            Digital ETH coins and tokens flowing in through secure quantum tunnels.
+            Shield effects and encryption visualizations surrounding the vault.
+            Purple and gold color scheme on dark background.
+            Represents security, transparency, and decentralized fund management.
+            Smooth, mesmerizing motion suitable for social media. No text.
+        """,
+        "size": "720x1280",  # Portrait for Instagram/TikTok
+        "duration": 4
     }
 }
 
