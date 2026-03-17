@@ -40,51 +40,76 @@ VIDEO_PROMPTS = {
         "duration": 8
     },
     
-    # Social media short video (can be cropped to vertical in editing)
+    # Social media short video - EXTENDED with outro
     "social_short": {
         "prompt": """
             Fast-paced fintech promo showcasing AI trading technology.
-            Sleek futuristic interface with holographic trading charts in dark space.
+            
+            SCENE 1 (0-3s): Sleek futuristic interface with holographic trading charts in dark space.
             Purple and green glowing neural pathways connect data points.
-            A sophisticated AI robot with glowing chest emblem analyzes crypto markets.
+            
+            SCENE 2 (3-6s): A sophisticated AI robot with glowing chest emblem analyzes crypto markets.
             Bitcoin and Ethereum coins flow through secure digital pathways into a vault.
             Dynamic camera movements, premium fintech feel.
-            Dark background with purple and neon green accents.
+            
+            OUTRO (6-8s): Camera pulls back to reveal a majestic glowing AI brain logo.
+            The brain pulses with purple and green energy, representing AlphaAI.
+            Particles of light swirl around it creating a premium ending.
+            
+            Dark background with purple and neon green accents throughout.
             Engaging, suitable for social media. No text.
         """,
-        "size": "1280x720",  # Landscape (crop center for vertical)
-        "duration": 4
+        "size": "1280x720",
+        "duration": 8  # Extended from 4 to 8 seconds
     },
     
-    # Trading agents showcase (Landscape)
+    # Trading agents showcase (Landscape) - EXTENDED with outro
     "agents_showcase": {
         "prompt": """
             Showcase of AI trading agents in a futuristic command center.
-            Four sophisticated robots stand at holographic workstations in a dark tech environment.
+            
+            SCENE 1 (0-4s): Four sophisticated robots stand at holographic workstations in a dark tech environment.
             Each robot has distinct glowing colors: purple (Arbitrage), cyan (Momentum), gold (Research), green (Funding).
             They analyze different trading strategies on floating holographic screens.
-            Camera pans across the room showing their coordinated work.
+            
+            SCENE 2 (4-8s): Camera pans across the room showing their coordinated work.
             Data flows between them as green streams of light.
+            The agents work together, processing market data in real-time.
+            
+            OUTRO (8-12s): All four agents turn toward camera, their chest emblems glowing brighter.
+            They merge their data streams into a central glowing orb representing unified AI intelligence.
+            The orb transforms into a brain-like structure pulsing with all four colors.
+            Particles radiate outward creating an epic ending.
+            
             Professional, powerful, showcasing autonomous AI trading capabilities.
             Dark background with purple and green accent lighting. No text.
         """,
-        "size": "1280x720",  # Standard HD landscape
-        "duration": 8
+        "size": "1280x720",
+        "duration": 12  # Extended to 12 seconds with outro
     },
     
-    # Smart contract/security focused
+    # Smart contract/security focused - EXTENDED with outro
     "security_promo": {
         "prompt": """
             Video showcasing blockchain security for a crypto hedge fund.
-            Central glowing hexagonal vault made of interconnected blockchain nodes.
+            
+            SCENE 1 (0-4s): Central glowing hexagonal vault made of interconnected blockchain nodes.
             Digital ETH coins and tokens flowing in through secure quantum tunnels.
-            Shield effects and encryption visualizations surrounding the vault.
+            
+            SCENE 2 (4-8s): Shield effects and encryption visualizations surrounding the vault.
             Purple and gold color scheme on dark background.
+            The vault opens slightly revealing golden light inside - representing secure wealth.
+            
+            OUTRO (8-12s): The vault closes and transforms into a glowing diamond shape.
+            Multiple shield layers form around it, pulsing with security.
+            Camera pulls back to show the vault floating in a field of stars.
+            Final pulse of purple and gold energy radiates outward.
+            
             Represents security, transparency, and decentralized fund management.
             Smooth, mesmerizing motion suitable for all platforms. No text.
         """,
-        "size": "1280x720",  # Landscape
-        "duration": 4
+        "size": "1280x720",
+        "duration": 12  # Extended to 12 seconds with outro
     }
 }
 
