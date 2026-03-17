@@ -82,7 +82,7 @@ VIDEO_PROMPTS = {
             Represents security, transparency, and decentralized fund management.
             Smooth, mesmerizing motion suitable for social media. No text.
         """,
-        "size": "720x1280",  # Portrait for Instagram/TikTok
+        "size": "1024x1792",  # Portrait for Instagram/TikTok
         "duration": 4
     }
 }
