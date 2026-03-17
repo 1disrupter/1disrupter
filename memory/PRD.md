@@ -163,26 +163,46 @@ Marketplace:
 - Edge Cases: 100% handled correctly
 
 ### Technical Stack
-- **Backend**: FastAPI (Python)
-- **Frontend**: React with Shadcn/UI components
+- **Backend**: FastAPI (Python 3.11+)
+- **Frontend**: React 18 with Shadcn/UI components
 - **Database**: MongoDB (motor async driver)
 - **AI Integration**: OpenAI GPT-5.2 (via Emergent LLM Key)
-- **Market Data**: CoinGecko API
+- **Market Data**: Kraken API (live prices)
+- **Web3**: ethers.js (frontend), web3.py (backend)
+- **Smart Contract**: Solidity 0.8.20+
+- **PDF Generation**: ReportLab
 
 ### Next Action Items (P0)
-1. Deploy smart contracts (FundVault, ShareToken) to Sepolia testnet
-2. Integrate Web3 wallet transactions for real deposits/withdrawals
-3. Add user authentication system (JWT)
+1. Deploy AlphaAIManager.sol smart contract to Sepolia testnet
+2. Implement JWT-based user authentication
+3. Integrate with real DEX (Uniswap V3) for live trade execution
+4. Implement real blockchain event listeners (Web3.py subscriptions)
 
 ### Future Tasks (P1-P3)
-- Integrate with real DEX (Uniswap V3) for live trading
-- Historical backtesting with real price data
-- WebSocket real-time updates
-- Public leaderboard for rankings
-- Email notifications & referral system
-- Mobile optimization
+- Security audit of smart contract before mainnet
+- WebSocket real-time updates (replace HTTP polling)
+- Email notifications for alerts and reports
+- Public leaderboard and referral system
+- Mobile optimization and responsive design overhaul
+- Fiat on-ramp integration (MoonPay)
 
 ### Known Limitations
-- All trading data is currently simulated
-- CoinGecko may return mock data when rate-limited
-- Wallet connections are demo-mode without real blockchain integration
+- Trading is currently simulated (paper trading mode)
+- Smart contract interactions are simulated until contract is deployed
+- User authentication not implemented
+- Real DEX execution not integrated
+
+### Files Structure
+```
+/app/
+├── backend/
+│   ├── server.py                    # Main FastAPI app (~3,400 lines)
+│   ├── generate_comprehensive_report.py  # PDF export generator
+│   ├── contracts/AlphaAIManager.sol # Smart contract
+│   ├── data/                        # Historical CSV data
+│   └── reports/                     # Generated PDF reports
+├── frontend/
+│   └── src/App.js                   # Main React app (~3,100 lines)
+└── memory/
+    └── PRD.md                       # This document
+```
