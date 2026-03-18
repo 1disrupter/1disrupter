@@ -3890,6 +3890,143 @@ async def get_hc_ad(filename: str, request: Request):
         raise HTTPException(status_code=404, detail="Ad not found")
     return FileResponse(path=str(filepath), media_type="video/mp4")
 
+@api_router.get("/marketing/ads-v2/preview")
+async def hc_ads_preview_page():
+    """Preview page for high-converting ads v2"""
+    from fastapi.responses import HTMLResponse
+    
+    ads_dir = Path(__file__).parent / "marketing_assets" / "ads_v2"
+    ads = []
+    if ads_dir.exists():
+        for f in sorted(ads_dir.iterdir()):
+            if f.suffix.lower() == '.mp4' and 'voice' in f.name:
+                hook = f.stem.replace("alphaai_hc_ad_", "").replace("_voice", "").upper()
+                ads.append({
+                    "name": hook,
+                    "filename": f.name,
+                    "url": f"/api/marketing/ad-v2/{f.name}",
+                    "size_mb": round(f.stat().st_size / (1024 * 1024), 1)
+                })
+    
+    hooks = {
+        "MAIN": "This AI trades crypto for you 24/7",
+        "V1": "I built an AI that trades crypto for me",
+        "V2": "This bot never sleeps",
+        "V3": "Stop trading manually"
+    }
+    
+    ad_cards = ""
+    for ad in ads:
+        hook_text = hooks.get(ad["name"], ad["name"])
+        star = "⭐ RECOMMENDED" if ad["name"] == "MAIN" else ""
+        ad_cards += f'''
+        <div class="ad-card">
+            <div class="badge">{star}</div>
+            <h3>Hook: {ad["name"]}</h3>
+            <p class="hook-text">"{hook_text}"</p>
+            <video controls preload="auto" playsinline>
+                <source src="{ad["url"]}" type="video/mp4">
+            </video>
+            <a href="{ad["url"]}" download class="btn">⬇️ Download</a>
+        </div>
+        '''
+    
+    html = f'''<!DOCTYPE html>
+<html>
+<head>
+    <title>AlphaAI High-Converting Ads v2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #0a0a15 0%, #1a1033 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }}
+        .container {{ max-width: 1400px; margin: 0 auto; }}
+        h1 {{ color: #7B61FF; text-align: center; font-size: 28px; margin-bottom: 5px; }}
+        .subtitle {{ text-align: center; color: #00FF94; margin-bottom: 20px; font-size: 14px; }}
+        .specs {{
+            display: flex; justify-content: center; gap: 20px;
+            background: rgba(123,97,255,0.1); padding: 12px; border-radius: 8px;
+            margin-bottom: 25px; flex-wrap: wrap;
+        }}
+        .specs span {{ color: #00FF94; font-size: 13px; }}
+        .ads-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }}
+        .ad-card {{
+            background: rgba(30, 30, 50, 0.9);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #333;
+            position: relative;
+        }}
+        .ad-card .badge {{
+            position: absolute; top: 10px; right: 10px;
+            background: #00FF94; color: black; padding: 3px 8px;
+            border-radius: 4px; font-size: 10px; font-weight: bold;
+        }}
+        .ad-card h3 {{ color: #7B61FF; font-size: 14px; margin-bottom: 5px; }}
+        .ad-card .hook-text {{ color: #aaa; font-size: 12px; margin-bottom: 12px; font-style: italic; }}
+        video {{
+            width: 100%; max-height: 400px;
+            border-radius: 8px; background: #000;
+        }}
+        .btn {{
+            display: block; text-align: center;
+            margin-top: 10px; padding: 10px;
+            background: #7B61FF; color: white;
+            text-decoration: none; border-radius: 6px;
+            font-weight: 500;
+        }}
+        .btn:hover {{ background: #6B51EF; }}
+        .structure {{
+            background: rgba(0,0,0,0.3); padding: 15px;
+            border-radius: 8px; margin-bottom: 20px;
+        }}
+        .structure h3 {{ color: #00FF94; margin-bottom: 10px; font-size: 14px; }}
+        .structure table {{ width: 100%; font-size: 12px; }}
+        .structure td {{ padding: 4px 8px; border-bottom: 1px solid #333; }}
+        .structure td:first-child {{ color: #7B61FF; width: 60px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 High-Converting Ads v2</h1>
+        <p class="subtitle">Optimized for TikTok • Instagram Reels • YouTube Shorts • Paid Ads</p>
+        
+        <div class="specs">
+            <span>📐 9:16 Vertical</span>
+            <span>⏱️ 14 seconds</span>
+            <span>📱 720x1280</span>
+            <span>🎙️ With Voiceover</span>
+            <span>🎯 4 Hook Variations</span>
+        </div>
+        
+        <div class="structure">
+            <h3>📋 Ad Structure</h3>
+            <table>
+                <tr><td>0-2s</td><td><b>HOOK</b> - Attention grabber</td></tr>
+                <tr><td>2-3.5s</td><td><b>PROBLEM</b> - "Most people LOSE MONEY"</td></tr>
+                <tr><td>3.5-7s</td><td><b>SOLUTION</b> - "AlphaAI finds trades automatically"</td></tr>
+                <tr><td>7-11s</td><td><b>PROOF</b> - "+12% last month (paper trading)"</td></tr>
+                <tr><td>11-14s</td><td><b>CTA</b> - "TRY IT FREE - Link in bio"</td></tr>
+            </table>
+        </div>
+        
+        <div class="ads-grid">
+            {ad_cards}
+        </div>
+    </div>
+</body>
+</html>'''
+    return HTMLResponse(content=html)
+
 # Include router and middleware
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
