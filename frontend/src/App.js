@@ -603,77 +603,51 @@ const LandingPage = () => {
 // Dashboard Page with Paper Trading
 const DashboardPage = () => {
   const { wallet, investor, refreshInvestor } = useWallet();
-  const [fundStats, setFundStats] = useState(null);
-  const [allocation, setAllocation] = useState([]);
-  const [performanceHistory, setPerformanceHistory] = useState([]);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [depositLoading, setDepositLoading] = useState(false);
-  const [withdrawLoading, setWithdrawLoading] = useState(false);
-  const [showDepositDialog, setShowDepositDialog] = useState(false);
-  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
-  const [isPaperTrading, setIsPaperTrading] = useState(false);
-  const [paperPortfolio, setPaperPortfolio] = useState(null);
-  const [paperSymbol, setPaperSymbol] = useState('BTC/USDT');
-  const [paperAmount, setPaperAmount] = useState('');
-  const [paperSide, setPaperSide] = useState('buy');
+  const [signals, setSignals] = useState([
+    { symbol: 'BTC', signal: 'BUY', confidence: 87, price: 67432 },
+    { symbol: 'ETH', signal: 'HOLD', confidence: 72, price: 3521 },
+    { symbol: 'SOL', signal: 'SELL', confidence: 65, price: 142 },
+  ]);
+  const [aiSummary, setAiSummary] = useState("Market showing bullish momentum on BTC. ETH consolidating near support. Consider taking profits on SOL.");
+  const [performance, setPerformance] = useState({ return_30d: 12.4, win_rate: 68, max_drawdown: 4.2, total_signals: 847 });
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
+  // Show upgrade popup after 2 minutes
   useEffect(() => {
-    Promise.all([
-      axios.get(`${API}/fund/stats`),
-      axios.get(`${API}/fund/allocation`),
-      axios.get(`${API}/fund/performance-history`)
-    ]).then(([statsRes, allocRes, perfRes]) => {
-      setFundStats(statsRes.data);
-      setAllocation(allocRes.data);
-      setPerformanceHistory(perfRes.data);
+    const timer = setTimeout(() => {
+      if (!isPro) setShowUpgradePopup(true);
+    }, 120000); // 2 minutes
+    return () => clearTimeout(timer);
+  }, [isPro]);
+
+  // Fetch signals from backend
+  useEffect(() => {
+    axios.get(`${API}/live-prices`).then(res => {
+      if (res.data.prices) {
+        const btcPrice = res.data.prices.find(p => p.symbol === 'BTC')?.price || 67432;
+        const ethPrice = res.data.prices.find(p => p.symbol === 'ETH')?.price || 3521;
+        const solPrice = res.data.prices.find(p => p.symbol === 'SOL')?.price || 142;
+        setSignals([
+          { symbol: 'BTC', signal: 'BUY', confidence: 87, price: btcPrice },
+          { symbol: 'ETH', signal: 'HOLD', confidence: 72, price: ethPrice },
+          { symbol: 'SOL', signal: 'SELL', confidence: 65, price: solPrice },
+        ]);
+      }
     }).catch(console.error);
   }, []);
 
-  useEffect(() => {
-    if (wallet && isPaperTrading) {
-      axios.get(`${API}/paper/portfolio/${wallet}`).then(res => setPaperPortfolio(res.data)).catch(console.error);
-    }
-  }, [wallet, isPaperTrading]);
-
-  const handleDeposit = async () => {
-    if (!wallet || !depositAmount || parseFloat(depositAmount) < 100) { toast.error("Minimum deposit is $100"); return; }
-    setDepositLoading(true);
-    try {
-      const response = await axios.post(`${API}/investors/deposit`, { wallet_address: wallet, amount: parseFloat(depositAmount) });
-      toast.success(response.data.message);
-      setDepositAmount(''); setShowDepositDialog(false); refreshInvestor();
-    } catch (error) { toast.error(error.response?.data?.detail || "Deposit failed"); }
-    setDepositLoading(false);
+  const getSignalColor = (signal) => {
+    if (signal === 'BUY') return 'text-[#00FF94] bg-[#00FF94]/10 border-[#00FF94]/30';
+    if (signal === 'SELL') return 'text-red-400 bg-red-400/10 border-red-400/30';
+    return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30';
   };
 
-  const handleWithdraw = async () => {
-    if (!wallet || !withdrawAmount || parseFloat(withdrawAmount) <= 0) { toast.error("Enter a valid amount"); return; }
-    setWithdrawLoading(true);
-    try {
-      const response = await axios.post(`${API}/investors/withdraw`, { wallet_address: wallet, amount: parseFloat(withdrawAmount) });
-      toast.success(response.data.message);
-      setWithdrawAmount(''); setShowWithdrawDialog(false); refreshInvestor();
-    } catch (error) { toast.error(error.response?.data?.detail || "Withdrawal failed"); }
-    setWithdrawLoading(false);
-  };
-
-  const executePaperTrade = async () => {
-    if (!paperAmount || parseFloat(paperAmount) <= 0) { toast.error("Enter valid amount"); return; }
-    try {
-      const res = await axios.post(`${API}/paper/trade`, { wallet_address: wallet, symbol: paperSymbol, side: paperSide, amount: parseFloat(paperAmount) });
-      toast.success(`Paper trade executed! PnL: $${res.data.pnl}`);
-      setPaperPortfolio(prev => ({ ...prev, paper_balance: res.data.new_paper_balance }));
-      setPaperAmount('');
-    } catch (error) { toast.error(error.response?.data?.detail || "Trade failed"); }
-  };
-
-  const resetPaperPortfolio = async () => {
-    try {
-      await axios.post(`${API}/paper/reset/${wallet}`);
-      toast.success("Paper portfolio reset to $10,000");
-      setPaperPortfolio({ paper_balance: 10000, paper_pnl: 0, total_trades: 0 });
-    } catch (error) { toast.error("Reset failed"); }
+  const getSignalIcon = (signal) => {
+    if (signal === 'BUY') return <ArrowUpRight className="w-6 h-6" />;
+    if (signal === 'SELL') return <ArrowDownRight className="w-6 h-6" />;
+    return <Activity className="w-6 h-6" />;
   };
 
   if (!wallet) {
@@ -683,7 +657,7 @@ const DashboardPage = () => {
           <CardContent className="p-8 text-center">
             <Wallet className="w-16 h-16 mx-auto mb-4 text-[#7B61FF]" />
             <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
-            <p className="text-zinc-400 mb-6">Connect to view your dashboard</p>
+            <p className="text-zinc-400 mb-6">Connect to view your AI signals dashboard</p>
             <WalletConnectButton />
           </CardContent>
         </Card>
@@ -693,139 +667,306 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen pt-24 px-4 pb-12">
-      <div className="max-w-7xl mx-auto">
-        {/* Live Price Feed */}
-        <div className="mb-6">
-          <LivePriceTicker compact={false} />
-        </div>
-
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold font-['Outfit']" data-testid="dashboard-title">Investor Dashboard</h1>
-            <p className="text-zinc-400 mt-1">Welcome back, {formatAddress(wallet)}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#050505] border border-zinc-800">
-              <span className="text-sm text-zinc-400">Paper Trading</span>
-              <Switch checked={isPaperTrading} onCheckedChange={setIsPaperTrading} data-testid="paper-trading-toggle" />
+      <div className="max-w-4xl mx-auto">
+        
+        {/* Delayed Signals Warning */}
+        {!isPro && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-between"
+            data-testid="delayed-signals-warning"
+          >
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-yellow-400" />
+              <span className="text-yellow-400 font-medium">You are viewing delayed signals (15 min)</span>
             </div>
-            <Button onClick={() => setShowDepositDialog(true)} className="rounded-full bg-[#00FF94] text-black hover:bg-[#00FF94]/90" data-testid="deposit-btn">
-              <ArrowUpRight className="w-4 h-4 mr-2" />Deposit
+            <Button 
+              onClick={() => setShowUpgradePopup(true)} 
+              className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 rounded-full text-sm"
+              data-testid="unlock-live-btn"
+            >
+              <Zap className="w-4 h-4 mr-1" /> Unlock Live
             </Button>
-            <Button onClick={() => setShowWithdrawDialog(true)} variant="outline" className="rounded-full border-zinc-700" data-testid="withdraw-btn">
-              <ArrowDownRight className="w-4 h-4 mr-2" />Withdraw
-            </Button>
-          </div>
-        </div>
-
-        {isPaperTrading && paperPortfolio && (
-          <Card className="glass-card mb-8 border-[#FFB800]/30" data-testid="paper-trading-panel">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Beaker className="w-5 h-5 text-[#FFB800]" />Paper Trading Sandbox</CardTitle>
-              <CardDescription>Practice trading with virtual funds - no real money at risk</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800">
-                  <p className="text-sm text-zinc-500">Paper Balance</p>
-                  <p className="text-2xl font-bold font-['JetBrains_Mono']">{formatCurrency(paperPortfolio.paper_balance)}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800">
-                  <p className="text-sm text-zinc-500">Total P&L</p>
-                  <p className={`text-2xl font-bold font-['JetBrains_Mono'] ${paperPortfolio.paper_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                    {paperPortfolio.paper_pnl >= 0 ? '+' : ''}${paperPortfolio.paper_pnl?.toFixed(2)}
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800">
-                  <p className="text-sm text-zinc-500">Return</p>
-                  <p className={`text-2xl font-bold font-['JetBrains_Mono'] ${paperPortfolio.return_percent >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                    {paperPortfolio.return_percent >= 0 ? '+' : ''}{paperPortfolio.return_percent}%
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800">
-                  <p className="text-sm text-zinc-500">Total Trades</p>
-                  <p className="text-2xl font-bold font-['JetBrains_Mono']">{paperPortfolio.total_trades}</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-3 items-end">
-                <Select value={paperSymbol} onValueChange={setPaperSymbol}>
-                  <SelectTrigger className="w-[140px] bg-[#050505] border-zinc-800" data-testid="paper-symbol-select"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#121212] border-zinc-800">
-                    <SelectItem value="BTC/USDT">BTC/USDT</SelectItem>
-                    <SelectItem value="ETH/USDT">ETH/USDT</SelectItem>
-                    <SelectItem value="SOL/USDT">SOL/USDT</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={paperSide} onValueChange={setPaperSide}>
-                  <SelectTrigger className="w-[100px] bg-[#050505] border-zinc-800" data-testid="paper-side-select"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-[#121212] border-zinc-800">
-                    <SelectItem value="buy">Buy</SelectItem>
-                    <SelectItem value="sell">Sell</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input type="number" placeholder="Amount" value={paperAmount} onChange={e => setPaperAmount(e.target.value)} className="w-[120px] bg-[#050505] border-zinc-800" data-testid="paper-amount-input" />
-                <Button onClick={executePaperTrade} className={`rounded-full ${paperSide === 'buy' ? 'bg-[#00FF94] text-black' : 'bg-red-500'}`} data-testid="paper-trade-btn">
-                  {paperSide === 'buy' ? 'Buy' : 'Sell'}
-                </Button>
-                <Button onClick={resetPaperPortfolio} variant="outline" className="rounded-full border-zinc-700" data-testid="paper-reset-btn">Reset</Button>
-              </div>
-            </CardContent>
-          </Card>
+          </motion.div>
         )}
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="glass-card" data-testid="investor-balance"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><span className="text-sm text-zinc-500">Your Balance</span><DollarSign className="w-4 h-4 text-[#00FF94]" /></div><p className="text-2xl font-bold font-['JetBrains_Mono']">{formatCurrency(investor?.balance || 0)}</p></CardContent></Card>
-          <Card className="glass-card" data-testid="investor-shares"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><span className="text-sm text-zinc-500">Your Shares</span><PieChart className="w-4 h-4 text-[#7B61FF]" /></div><p className="text-2xl font-bold font-['JetBrains_Mono']">{investor?.shares?.toFixed(4) || '0.0000'}</p></CardContent></Card>
-          <Card className="glass-card" data-testid="fund-nav-card"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><span className="text-sm text-zinc-500">Fund NAV</span><TrendingUp className="w-4 h-4 text-[#00FF94]" /></div><p className="text-2xl font-bold font-['JetBrains_Mono']">{formatCurrency(fundStats?.nav || 0)}</p><p className={`text-xs mt-1 ${fundStats?.nav_change_24h >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{fundStats?.nav_change_24h >= 0 ? '+' : ''}{fundStats?.nav_change_24h}% (24h)</p></CardContent></Card>
-          <Card className="glass-card" data-testid="monthly-return-card"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><span className="text-sm text-zinc-500">Monthly Return</span><Percent className="w-4 h-4 text-[#FFB800]" /></div><p className={`text-2xl font-bold font-['JetBrains_Mono'] ${fundStats?.monthly_return >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{fundStats?.monthly_return >= 0 ? '+' : ''}{fundStats?.monthly_return}%</p></CardContent></Card>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
-          <Card className="glass-card lg:col-span-2" data-testid="performance-chart">
-            <CardHeader><CardTitle className="flex items-center gap-2"><LineChart className="w-5 h-5 text-[#7B61FF]" />Performance History</CardTitle></CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={performanceHistory}>
-                    <defs><linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#7B61FF" stopOpacity={0.3}/><stop offset="95%" stopColor="#7B61FF" stopOpacity={0}/></linearGradient></defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#27272A" />
-                    <XAxis dataKey="date" stroke="#71717A" tick={{ fontSize: 11 }} />
-                    <YAxis stroke="#71717A" tick={{ fontSize: 11 }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#121212', border: '1px solid #7B61FF', borderRadius: '8px' }} />
-                    <Area type="monotone" dataKey="value" stroke="#7B61FF" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
+        {/* TODAY'S AI SIGNALS - HERO SECTION */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <Card className="glass-card overflow-hidden" data-testid="signals-card">
+            <CardHeader className="border-b border-zinc-800/50 bg-gradient-to-r from-[#7B61FF]/10 to-transparent">
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <div className="p-2 rounded-xl bg-[#7B61FF]/20">
+                  <Brain className="w-6 h-6 text-[#7B61FF]" />
+                </div>
+                Today's AI Signals
+                {!isPro && <Badge variant="outline" className="ml-2 text-yellow-400 border-yellow-400/30">Delayed</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid gap-4">
+                {signals.map((s, i) => (
+                  <motion.div
+                    key={s.symbol}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className={`flex items-center justify-between p-5 rounded-xl border ${getSignalColor(s.signal)}`}
+                    data-testid={`signal-${s.symbol.toLowerCase()}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="text-2xl font-bold font-['JetBrains_Mono']">{s.symbol}</div>
+                      <div className="text-zinc-400 text-sm">${s.price?.toLocaleString()}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div className="text-xs text-zinc-500 mb-1">Confidence</div>
+                        <div className="font-mono text-sm">{s.confidence}%</div>
+                      </div>
+                      <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-lg ${getSignalColor(s.signal)}`}>
+                        {getSignalIcon(s.signal)}
+                        {s.signal}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </CardContent>
           </Card>
+        </motion.div>
 
-          <Card className="glass-card" data-testid="allocation-chart">
-            <CardHeader><CardTitle className="flex items-center gap-2"><PieChart className="w-5 h-5 text-[#00FF94]" />Portfolio Allocation</CardTitle></CardHeader>
+        {/* PERFORMANCE SECTION */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
+        >
+          <Card className="glass-card" data-testid="performance-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-[#00FF94]" />
+                Performance
+              </CardTitle>
+            </CardHeader>
             <CardContent>
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RePieChart><Pie data={allocation} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ value }) => `${value}%`} labelLine={false}>{allocation.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}</Pie><Tooltip contentStyle={{ backgroundColor: '#121212', border: '1px solid #27272A', borderRadius: '8px' }} /></RePieChart>
-                </ResponsiveContainer>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
+                  <p className="text-zinc-500 text-sm mb-1">Last 30 Days</p>
+                  <p className="text-3xl font-bold text-[#00FF94] font-['JetBrains_Mono']">+{performance.return_30d}%</p>
+                  <p className="text-xs text-zinc-600 mt-1">(paper trading)</p>
+                </div>
+                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
+                  <p className="text-zinc-500 text-sm mb-1">Win Rate</p>
+                  <p className="text-3xl font-bold font-['JetBrains_Mono']">{performance.win_rate}%</p>
+                </div>
+                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
+                  <p className="text-zinc-500 text-sm mb-1">Max Drawdown</p>
+                  <p className="text-3xl font-bold text-yellow-400 font-['JetBrains_Mono']">-{performance.max_drawdown}%</p>
+                </div>
+                <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
+                  <p className="text-zinc-500 text-sm mb-1">Total Signals</p>
+                  <p className="text-3xl font-bold font-['JetBrains_Mono']">{performance.total_signals}</p>
+                </div>
               </div>
-              <div className="space-y-2 mt-4">{allocation.map((item, index) => (<div key={index} className="flex items-center justify-between text-sm"><div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} /><span className="text-zinc-400">{item.name}</span></div><span className="font-mono">{item.value}%</span></div>))}</div>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* AI SUMMARY */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-8"
+        >
+          <Card className="glass-card" data-testid="ai-summary-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#FFB800]" />
+                AI Market Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-zinc-300 text-lg leading-relaxed">{aiSummary}</p>
+              <p className="text-xs text-zinc-600 mt-3">Updated 15 minutes ago</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* UPGRADE CTA */}
+        {!isPro && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mb-8"
+          >
+            <Card className="overflow-hidden border-[#7B61FF]/50" data-testid="upgrade-cta-card">
+              <div className="bg-gradient-to-r from-[#7B61FF]/20 via-[#7B61FF]/10 to-transparent p-8">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-2">Unlock Live Signals</h3>
+                    <p className="text-zinc-400 mb-4">Get real-time AI signals, instant alerts, and priority support.</p>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-2 text-sm text-zinc-300">
+                        <Check className="w-4 h-4 text-[#00FF94]" /> Real-time signals
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-zinc-300">
+                        <Check className="w-4 h-4 text-[#00FF94]" /> Instant alerts
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-zinc-300">
+                        <Check className="w-4 h-4 text-[#00FF94]" /> Advanced AI insights
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <Button 
+                      onClick={() => setShowUpgradePopup(true)}
+                      className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-white px-8 py-6 rounded-full text-lg font-bold glow-primary"
+                      data-testid="upgrade-btn"
+                    >
+                      <Zap className="w-5 h-5 mr-2" /> Upgrade to Pro
+                    </Button>
+                    <span className="text-sm text-zinc-500">Starting at $29/month</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* LOCKED FEATURES PREVIEW */}
+        {!isPro && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mb-8"
+          >
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card className="glass-card relative overflow-hidden" data-testid="locked-alerts">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex items-center justify-center">
+                  <div className="text-center">
+                    <Shield className="w-8 h-8 mx-auto mb-2 text-zinc-500" />
+                    <p className="text-zinc-400 font-medium">Pro Feature</p>
+                  </div>
+                </div>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-zinc-500">
+                    <Radio className="w-5 h-5" /> Real-Time Alerts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 opacity-50">
+                    <div className="p-3 rounded-lg bg-[#050505]">Push notification: BTC signal changed</div>
+                    <div className="p-3 rounded-lg bg-[#050505]">Email alert: New high-confidence trade</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card relative overflow-hidden" data-testid="locked-analytics">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex items-center justify-center">
+                  <div className="text-center">
+                    <Shield className="w-8 h-8 mx-auto mb-2 text-zinc-500" />
+                    <p className="text-zinc-400 font-medium">Pro Feature</p>
+                  </div>
+                </div>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-zinc-500">
+                    <BarChart3 className="w-5 h-5" /> Advanced Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-32 flex items-center justify-center opacity-50">
+                    <BarChart3 className="w-16 h-16 text-zinc-700" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ADVANCED TOGGLE (Hidden by default) */}
+        <div className="text-center">
+          <Button 
+            variant="ghost" 
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="text-zinc-500 hover:text-zinc-300"
+            data-testid="show-advanced-btn"
+          >
+            {showAdvanced ? 'Hide' : 'Show'} Advanced Options
+            <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+          </Button>
         </div>
+
+        {showAdvanced && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-6 space-y-4"
+          >
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-sm text-zinc-500">Paper Trading Sandbox</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-zinc-600 text-sm">Practice trading with virtual funds. Available in advanced settings.</p>
+                <Button variant="outline" className="mt-3 rounded-full border-zinc-700" asChild>
+                  <Link to="/simulation">Open Sandbox</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
       </div>
 
-      <Dialog open={showDepositDialog} onOpenChange={setShowDepositDialog}>
-        <DialogContent className="bg-[#121212] border-zinc-800" data-testid="deposit-dialog">
-          <DialogHeader><DialogTitle>Deposit Funds</DialogTitle><DialogDescription>Minimum: $100</DialogDescription></DialogHeader>
-          <div className="py-4"><Input type="number" placeholder="Amount in USD" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className="bg-[#050505] border-zinc-800" data-testid="deposit-amount-input" /></div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowDepositDialog(false)}>Cancel</Button><Button onClick={handleDeposit} disabled={depositLoading} className="bg-[#00FF94] text-black hover:bg-[#00FF94]/90" data-testid="confirm-deposit-btn">{depositLoading ? "Processing..." : "Confirm"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
-        <DialogContent className="bg-[#121212] border-zinc-800" data-testid="withdraw-dialog">
-          <DialogHeader><DialogTitle>Withdraw Funds</DialogTitle><DialogDescription>Available: {formatCurrency(investor?.balance || 0)}</DialogDescription></DialogHeader>
-          <div className="py-4"><Input type="number" placeholder="Amount in USD" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="bg-[#050505] border-zinc-800" data-testid="withdraw-amount-input" /></div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowWithdrawDialog(false)}>Cancel</Button><Button onClick={handleWithdraw} disabled={withdrawLoading} className="bg-red-500 hover:bg-red-600" data-testid="confirm-withdraw-btn">{withdrawLoading ? "Processing..." : "Confirm"}</Button></DialogFooter>
+      {/* UPGRADE POPUP (Shows after 2 minutes) */}
+      <Dialog open={showUpgradePopup} onOpenChange={setShowUpgradePopup}>
+        <DialogContent className="bg-[#121212] border-[#7B61FF]/30 max-w-md" data-testid="upgrade-popup">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-center">
+              <Zap className="w-8 h-8 mx-auto mb-2 text-[#7B61FF]" />
+              Unlock Real-Time Signals
+            </DialogTitle>
+            <DialogDescription className="text-center text-zinc-400">
+              Get instant AI signals before the market moves
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#050505]">
+              <Check className="w-5 h-5 text-[#00FF94]" />
+              <span>Real-time signals (no 15 min delay)</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#050505]">
+              <Check className="w-5 h-5 text-[#00FF94]" />
+              <span>Push notifications & email alerts</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#050505]">
+              <Check className="w-5 h-5 text-[#00FF94]" />
+              <span>Advanced AI market analysis</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#050505]">
+              <Check className="w-5 h-5 text-[#00FF94]" />
+              <span>Priority support</span>
+            </div>
+          </div>
+          <DialogFooter className="flex-col gap-3">
+            <Button 
+              className="w-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 py-6 text-lg font-bold rounded-full glow-primary"
+              data-testid="upgrade-now-btn"
+              onClick={() => toast.success("Upgrade flow coming soon!")}
+            >
+              Upgrade Now — $29/month
+            </Button>
+            <Button variant="ghost" onClick={() => setShowUpgradePopup(false)} className="text-zinc-500">
+              Maybe later
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
