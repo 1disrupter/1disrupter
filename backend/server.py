@@ -3870,3 +3870,28 @@ app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.envi
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+@api_router.get("/marketing/ads-v2")
+async def list_hc_ads():
+    """List high-converting ad variations v2"""
+    ads_dir = Path(__file__).parent / "marketing_assets" / "ads_v2"
+    ads = []
+    if ads_dir.exists():
+        for f in sorted(ads_dir.iterdir()):
+            if f.suffix.lower() == '.mp4':
+                ads.append({
+                    "name": f.stem,
+                    "url": f"/api/marketing/ad-v2/{f.name}",
+                    "size_mb": round(f.stat().st_size / (1024 * 1024), 1),
+                    "has_voice": "voice" in f.name
+                })
+    return {"ads": ads, "count": len(ads)}
+
+@api_router.get("/marketing/ad-v2/{filename}")
+async def get_hc_ad(filename: str, request: Request):
+    """Get a high-converting ad video v2"""
+    ads_dir = Path(__file__).parent / "marketing_assets" / "ads_v2"
+    filepath = ads_dir / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Ad not found")
+    return FileResponse(path=str(filepath), media_type="video/mp4")
