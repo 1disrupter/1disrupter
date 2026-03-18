@@ -1,9 +1,9 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 7 Complete - Project Export Ready
+## Current Status: Phase 8 Complete - High-Conversion Dashboard
 
 ### Overview
-AlphaAI is a decentralized AI-powered hedge fund platform that allows investors to deposit capital into a vault managed by autonomous AI trading agents. The platform includes a marketplace for external developers to launch their own trading agents.
+AlphaAI is a decentralized AI-powered hedge fund platform repositioned as a B2C/SaaS tool for "AI crypto signals + automated trading insights". The platform allows users to view AI-generated trading signals, track performance, and access advanced features via a Pro subscription.
 
 **Copyright © 2026 Martin Maughan. All rights reserved. AlphaAI Platform.**
 
@@ -37,55 +37,54 @@ AlphaAI is a decentralized AI-powered hedge fund platform that allows investors 
 - New Agent Addition
 
 **Phase 5 - Enhanced Simulation (March 2026)** ✅
-- **100x Time Acceleration**: Simulate months of trading in seconds
-- **Historical Data Loading**: Load BTC/ETH price data for backtesting
-- **4 Specialized Trading Agents**:
-  - Arbitrage Agent (25% allocation)
-  - Momentum Agent (25% allocation)
-  - Funding Rate Agent (25% allocation)
-  - AI Research Lab (25% allocation, auto-generates strategies)
-- **Stress Testing Scenarios**:
-  - BTC 30% Drop (24h simulation)
-  - ETH Flash Crash 50% (12h simulation)
-  - Market Panic Sell 40% (6h simulation)
-  - Liquidity Crisis 25% (48h simulation)
-- **Real-time Agent Performance Tracking**
-- **Export Results** (PDF, CSV, JSON)
-- **Risk Management Integration**: Auto-stop at 5% drawdown, position reduction
+- 100x Time Acceleration
+- Historical Data Loading for backtesting
+- 4 Specialized Trading Agents
+- Stress Testing Scenarios
+- Real-time Agent Performance Tracking
+- Export Results (PDF, CSV, JSON)
+- Risk Management Integration
 
 **Phase 6 - Smart Contract & Live Data (March 2026)** ✅
-- **AlphaAIManager.sol Contract**: Full Solidity smart contract for on-chain operations
-- **MetaMask Integration**: Real wallet connectivity via ethers.js
-- **Live Price Feed**: Real-time crypto prices from Kraken API
-- **Event-Driven Agents**: Agents that react to smart contract events automatically
-- **Contract Features**:
-  - Investor deposit/withdraw functions
-  - Strategy management (add, allocate, deallocate)
-  - On-chain balance tracking
-  - Emergency withdrawal (owner only)
+- AlphaAIManager.sol Contract
+- MetaMask Integration via ethers.js
+- Live Price Feed from Kraken API
+- Event-Driven Agents
 
-**Phase 7 - Comprehensive Project Export (March 2026)** ✅ NEW
-- **Full Technical Documentation PDF**: 43+ page PDF with complete system details
-- **7-Point Export Structure**:
-  1. Full project overview and concept
-  2. All pages and website content
-  3. AI agent logic, workflows, and automations
-  4. Trading strategies, signal logic, and rules
-  5. Backend structure and system architecture
-  6. All prompts, configurations, and code
-  7. End-to-end system workflow breakdown
-- **API Endpoints**:
-  - `GET /api/export/comprehensive-pdf` - Download the complete documentation
-  - `POST /api/export/regenerate-pdf` - Regenerate the documentation
+**Phase 7 - Marketing Assets (March 2026)** ✅
+- Full Technical Documentation PDF (43+ pages)
+- AI-Powered Image Generation (Gemini Nano Banana)
+- AI-Powered Video Generation (Sora 2)
+- AI Voiceover Generation (OpenAI TTS)
+- High-Converting Viral Ads (9:16 format for TikTok/Reels)
+
+**Phase 8 - High-Conversion Dashboard (March 2026)** ✅ NEW
+- **Conversion-Focused Dashboard Redesign**:
+  - Demo Mode (try without wallet)
+  - Demo Mode Banner (purple)
+  - Delayed Signals Warning (yellow, 15 min delay)
+  - Today's AI Signals (BTC, ETH, SOL with live prices)
+  - Performance Section (+12.4% return, 68% win rate, etc.)
+  - AI Market Summary
+  - Upgrade CTA with "Unlock Live Signals" ($29/month)
+  - Locked Pro Features Preview (Real-Time Alerts, Advanced Analytics)
+  - 2-Minute Upgrade Popup Modal
+  - Show/Hide Advanced Options toggle
+- **Live Price Integration**: Real-time prices from Kraken API
+- **Testing**: 100% pass rate (14/14 UI elements, 12/12 API tests)
 
 ### API Endpoints Summary
 
 ```
+Dashboard & Prices:
+- GET /api/live-prices (alias for market/live-prices)
+- GET /api/market/live-prices
+
 Simulation:
 - POST /api/simulation/start
 - POST /api/simulation/stop
 - POST /api/simulation/run-cycle
-- POST /api/simulation/switch-mode?mode=X&live_capital=Y
+- POST /api/simulation/switch-mode
 - GET /api/simulation/stats
 - GET /api/simulation/logs
 - GET /api/simulation/agent-interactions
@@ -94,6 +93,7 @@ Reports:
 - GET /api/reports/daily
 - GET /api/reports/weekly
 - GET /api/reports/history
+- GET /api/report/download (PDF)
 
 Strategy Lab:
 - GET /api/lab/strategies
@@ -102,7 +102,6 @@ Strategy Lab:
 - POST /api/lab/strategies/{id}/sandbox
 - POST /api/lab/strategies/{id}/deploy
 - POST /api/lab/auto-deploy-top
-- POST /api/strategies/add-batch?count=N
 
 Risk:
 - GET /api/risk/config
@@ -114,20 +113,11 @@ Capital:
 - GET /api/capital/allocations
 - POST /api/capital/rebalance
 
-Execution:
-- GET /api/execution/stats
-- POST /api/execution/simulate  (NEW)
-
-Market:
-- GET /api/market/top-coins  (NEW)
-- GET /api/market/chart/{symbol}  (NEW)
-
 Investors:
 - POST /api/investors/register
 - GET /api/investors/{wallet}
 - POST /api/investors/deposit
 - POST /api/investors/withdraw
-- POST /api/investors/toggle-paper-trading/{wallet}  (NEW)
 
 Fund:
 - GET /api/fund/stats
@@ -142,41 +132,46 @@ Trading:
 - GET /api/trades
 - POST /api/paper/trade
 - GET /api/paper/portfolio/{wallet}
-- POST /api/paper/reset/{wallet}
 
-Analytics:
-- GET /api/analytics/overview
-- GET /api/analytics/strategies
-
-AI:
-- POST /api/ai/analyze
-
-Marketplace:
-- GET /api/marketplace/agents
-- POST /api/marketplace/agents
+Marketing Assets:
+- GET /api/marketing/image/{filename}
+- GET /api/marketing/video/{filename}
+- GET /api/marketing/ads-v2/preview
+- GET /api/marketing/preview
 ```
 
 ### Test Results (March 2026)
-- Backend: 93% pass rate
-- Frontend: 95% pass rate
-- Stress Testing: 100% (20 cycles, 10 strategy generations)
-- Edge Cases: 100% handled correctly
+- Backend: 100% pass rate (12/12 API tests)
+- Frontend: 100% pass rate (14/14 UI elements verified)
+- Dashboard Elements Verified:
+  - Demo Mode button and banner
+  - Delayed signals warning
+  - AI Signals section with live prices
+  - Performance metrics
+  - AI Market Summary
+  - Upgrade CTA card
+  - Locked Pro features
+  - Upgrade popup modal
+  - Advanced options toggle
 
 ### Technical Stack
 - **Backend**: FastAPI (Python 3.11+)
 - **Frontend**: React 18 with Shadcn/UI components
 - **Database**: MongoDB (motor async driver)
-- **AI Integration**: OpenAI GPT-5.2 (via Emergent LLM Key)
+- **AI Integration**: OpenAI GPT-5.2, Sora 2, TTS (via Emergent LLM Key)
+- **Image Generation**: Gemini Nano Banana (via Emergent LLM Key)
 - **Market Data**: Kraken API (live prices)
 - **Web3**: ethers.js (frontend), web3.py (backend)
 - **Smart Contract**: Solidity 0.8.20+
 - **PDF Generation**: ReportLab
+- **Video Processing**: ffmpeg
 
 ### Next Action Items (P0)
 1. Deploy AlphaAIManager.sol smart contract to Sepolia testnet
 2. Implement JWT-based user authentication
 3. Integrate with real DEX (Uniswap V3) for live trade execution
 4. Implement real blockchain event listeners (Web3.py subscriptions)
+5. Add Stripe integration for Pro subscription payments
 
 ### Future Tasks (P1-P3)
 - Security audit of smart contract before mainnet
@@ -186,23 +181,47 @@ Marketplace:
 - Mobile optimization and responsive design overhaul
 - Fiat on-ramp integration (MoonPay)
 
+### Refactoring Needed (Technical Debt)
+- Extract React components from App.js (3200+ lines) into separate files
+- Break down server.py (3900+ lines) into FastAPI routers
+- Created but not integrated:
+  - `/app/frontend/src/contexts/WalletContext.jsx`
+  - `/app/frontend/src/pages/Dashboard.jsx`
+
 ### Known Limitations
 - Trading is currently simulated (paper trading mode)
 - Smart contract interactions are simulated until contract is deployed
-- User authentication not implemented
+- User authentication not implemented (wallet-based only)
 - Real DEX execution not integrated
+- Pro subscription payment not integrated
 
 ### Files Structure
 ```
 /app/
 ├── backend/
-│   ├── server.py                    # Main FastAPI app (~3,400 lines)
-│   ├── generate_comprehensive_report.py  # PDF export generator
+│   ├── server.py                    # Main FastAPI app (~3,900 lines)
 │   ├── contracts/AlphaAIManager.sol # Smart contract
 │   ├── data/                        # Historical CSV data
-│   └── reports/                     # Generated PDF reports
+│   ├── reports/                     # Generated PDF reports
+│   ├── marketing_assets/            # Marketing images, videos, ads
+│   └── tests/                       # Backend tests
 ├── frontend/
-│   └── src/App.js                   # Main React app (~3,100 lines)
+│   └── src/
+│       ├── App.js                   # Main React app (~3,200 lines)
+│       ├── contexts/WalletContext.jsx  # Extracted wallet context (new)
+│       └── pages/Dashboard.jsx      # Extracted dashboard (new)
 └── memory/
     └── PRD.md                       # This document
 ```
+
+### 3rd Party Integrations
+- **Kraken API**: Live cryptocurrency price data
+- **OpenAI GPT-5.2**: AI market analysis (via Emergent LLM Key)
+- **OpenAI Sora 2**: Video generation (via Emergent LLM Key)
+- **OpenAI TTS**: Text-to-speech voiceover (via Emergent LLM Key)
+- **Gemini Nano Banana**: Image generation (via Emergent LLM Key)
+- **ethers.js**: Frontend MetaMask integration
+- **web3.py**: Backend smart contract interaction
+
+---
+Last Updated: March 18, 2026
