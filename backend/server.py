@@ -3684,25 +3684,6 @@ async def video_preview_page():
 </body>
 </html>'''
     return HTMLResponse(content=html)
-                margin-bottom: 10px;
-            }}
-            .subtitle {{
-                text-align: center;
-                color: #888;
-                margin-bottom: 40px;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🎬 AlphaAI Marketing Videos</h1>
-            <p class="subtitle">Generated with Sora 2 AI • Ready for social media</p>
-            {video_cards if videos else '<p style="text-align:center; color:#666;">No videos generated yet.</p>'}
-        </div>
-    </body>
-    </html>
-    '''
-    return HTMLResponse(content=html)
 
 # Include router and middleware
 app.include_router(api_router)
