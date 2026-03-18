@@ -3597,6 +3597,184 @@ async def generate_marketing_video(video_name: str, background_tasks: Background
         "video_name": video_name
     }
 
+# ============= VIRAL ADS ENDPOINTS =============
+
+@api_router.get("/marketing/ads")
+async def list_viral_ads():
+    """List all viral ad variations"""
+    ads_dir = Path(__file__).parent / "marketing_assets" / "ads"
+    ads = []
+    if ads_dir.exists():
+        for f in ads_dir.iterdir():
+            if f.suffix.lower() == '.mp4':
+                ads.append({
+                    "name": f.stem.replace("_", " ").title(),
+                    "filename": f.name,
+                    "url": f"/api/marketing/ad/{f.name}",
+                    "size_mb": round(f.stat().st_size / (1024 * 1024), 1)
+                })
+    return {"ads": ads, "count": len(ads)}
+
+@api_router.get("/marketing/ad/{filename}")
+async def get_viral_ad(filename: str, request: Request):
+    """Get a specific viral ad video"""
+    ads_dir = Path(__file__).parent / "marketing_assets" / "ads"
+    filepath = ads_dir / filename
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Ad not found")
+    
+    file_size = filepath.stat().st_size
+    range_header = request.headers.get("range")
+    
+    if range_header:
+        range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
+        if range_match:
+            start = int(range_match.group(1))
+            end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+            end = min(end, file_size - 1)
+            content_length = end - start + 1
+            
+            def iter_file_range():
+                with open(filepath, "rb") as f:
+                    f.seek(start)
+                    remaining = content_length
+                    while remaining > 0:
+                        chunk = min(8192, remaining)
+                        data = f.read(chunk)
+                        if not data:
+                            break
+                        remaining -= len(data)
+                        yield data
+            
+            from starlette.responses import StreamingResponse
+            return StreamingResponse(
+                iter_file_range(),
+                status_code=206,
+                media_type="video/mp4",
+                headers={
+                    "Content-Range": f"bytes {start}-{end}/{file_size}",
+                    "Accept-Ranges": "bytes",
+                    "Content-Length": str(content_length),
+                }
+            )
+    
+    return FileResponse(path=str(filepath), media_type="video/mp4")
+
+@api_router.get("/marketing/ads/preview")
+async def ads_preview_page():
+    """HTML page to preview viral ads"""
+    from fastapi.responses import HTMLResponse
+    
+    ads_dir = Path(__file__).parent / "marketing_assets" / "ads"
+    ads = []
+    if ads_dir.exists():
+        # Sort by name to show main first
+        for f in sorted(ads_dir.iterdir()):
+            if f.suffix.lower() == '.mp4':
+                ads.append({
+                    "name": f.stem.replace("_", " ").title().replace("Alphaai Ad ", ""),
+                    "filename": f.name,
+                    "url": f"/api/marketing/ad/{f.name}",
+                    "size_mb": round(f.stat().st_size / (1024 * 1024), 1)
+                })
+    
+    ad_cards = ""
+    for ad in ads:
+        highlight = "border: 2px solid #00FF94;" if "voice" in ad["filename"] else ""
+        label = "⭐ WITH VOICEOVER" if "voice" in ad["filename"] else ""
+        ad_cards += f'''
+        <div class="ad-card" style="{highlight}">
+            <h3>{ad["name"]} {label}</h3>
+            <p class="size">{ad["size_mb"]} MB</p>
+            <video controls preload="auto" playsinline>
+                <source src="{ad["url"]}" type="video/mp4">
+            </video>
+            <a href="{ad["url"]}" download="{ad["filename"]}" class="btn">⬇️ Download</a>
+        </div>
+        '''
+    
+    html = f'''<!DOCTYPE html>
+<html>
+<head>
+    <title>AlphaAI Viral Ads - TikTok/Reels Ready</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {{ box-sizing: border-box; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a15, #1a1033);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }}
+        .container {{ max-width: 1200px; margin: 0 auto; }}
+        h1 {{ color: #7B61FF; text-align: center; margin-bottom: 5px; }}
+        .subtitle {{ text-align: center; color: #00FF94; margin-bottom: 30px; font-size: 14px; }}
+        .ads-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }}
+        .ad-card {{
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }}
+        .ad-card h3 {{ color: #fff; margin: 0 0 5px 0; font-size: 14px; }}
+        .ad-card .size {{ color: #888; margin: 0 0 10px 0; font-size: 12px; }}
+        video {{
+            width: 100%;
+            max-height: 350px;
+            border-radius: 8px;
+            background: #000;
+        }}
+        .btn {{
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #7B61FF;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+        }}
+        .specs {{ 
+            background: rgba(0,255,148,0.1); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px;
+            text-align: center;
+        }}
+        .specs span {{ 
+            display: inline-block; 
+            margin: 0 15px; 
+            color: #00FF94;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 AlphaAI Viral Ads</h1>
+        <p class="subtitle">TikTok • Instagram Reels • YouTube Shorts Ready</p>
+        
+        <div class="specs">
+            <span>📐 9:16 Vertical</span>
+            <span>⏱️ 16 seconds</span>
+            <span>📱 720x1280</span>
+            <span>🎯 4 Hook Variations</span>
+        </div>
+        
+        <div class="ads-grid">
+            {ad_cards if ads else '<p>No ads generated yet</p>'}
+        </div>
+    </div>
+</body>
+</html>'''
+    return HTMLResponse(content=html)
+
 @api_router.get("/marketing/preview")
 async def video_preview_page():
     """HTML page to preview all marketing videos"""
