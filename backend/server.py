@@ -3510,17 +3510,28 @@ async def list_marketing_videos():
 
 @api_router.get("/marketing/video/{filename}")
 async def get_marketing_video(filename: str):
-    """Get a specific marketing video"""
+    """Get a specific marketing video - streams for inline playback"""
     videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
     filepath = videos_dir / filename
     
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Video not found")
     
-    return FileResponse(
-        path=str(filepath), 
+    # Use StreamingResponse for better video playback
+    from starlette.responses import StreamingResponse
+    import mimetypes
+    
+    def iterfile():
+        with open(filepath, mode="rb") as file:
+            yield from file
+    
+    return StreamingResponse(
+        iterfile(),
         media_type="video/mp4",
-        filename=filename
+        headers={
+            "Accept-Ranges": "bytes",
+            "Content-Disposition": f"inline; filename={filename}"
+        }
     )
 
 @api_router.post("/marketing/generate-video/{video_name}")
