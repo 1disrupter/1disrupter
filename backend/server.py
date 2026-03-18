@@ -1866,6 +1866,12 @@ async def get_live_prices():
         "source": "fallback"
     }
 
+# Alias for /market/live-prices - used by dashboard
+@api_router.get("/live-prices")
+async def get_live_prices_alias():
+    """Alias endpoint for /market/live-prices - used by dashboard signals"""
+    return await get_live_prices()
+
 # ============= AGENTS ROUTES =============
 
 @api_router.get("/agents", response_model=List[TradingAgent])

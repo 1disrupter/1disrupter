@@ -603,6 +603,7 @@ const LandingPage = () => {
 // Dashboard Page with Paper Trading
 const DashboardPage = () => {
   const { wallet, investor, refreshInvestor } = useWallet();
+  const [demoMode, setDemoMode] = useState(false);
   const [signals, setSignals] = useState([
     { symbol: 'BTC', signal: 'BUY', confidence: 87, price: 67432 },
     { symbol: 'ETH', signal: 'HOLD', confidence: 72, price: 3521 },
@@ -650,7 +651,7 @@ const DashboardPage = () => {
     return <Activity className="w-6 h-6" />;
   };
 
-  if (!wallet) {
+  if (!wallet && !demoMode) {
     return (
       <div className="min-h-screen pt-24 px-4 flex items-center justify-center">
         <Card className="glass-card max-w-md w-full" data-testid="connect-wallet-prompt">
@@ -658,7 +659,17 @@ const DashboardPage = () => {
             <Wallet className="w-16 h-16 mx-auto mb-4 text-[#7B61FF]" />
             <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
             <p className="text-zinc-400 mb-6">Connect to view your AI signals dashboard</p>
-            <WalletConnectButton />
+            <div className="flex flex-col gap-3">
+              <WalletConnectButton />
+              <Button 
+                variant="outline" 
+                onClick={() => setDemoMode(true)}
+                className="rounded-full border-zinc-700 hover:border-[#7B61FF] hover:text-[#7B61FF]"
+                data-testid="try-demo-btn"
+              >
+                <Eye className="w-4 h-4 mr-2" /> Try Demo Mode
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -669,6 +680,22 @@ const DashboardPage = () => {
     <div className="min-h-screen pt-24 px-4 pb-12">
       <div className="max-w-4xl mx-auto">
         
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-[#7B61FF]/10 border border-[#7B61FF]/30 flex items-center justify-between"
+            data-testid="demo-mode-banner"
+          >
+            <div className="flex items-center gap-3">
+              <Eye className="w-5 h-5 text-[#7B61FF]" />
+              <span className="text-[#7B61FF] font-medium">Demo Mode - Connect wallet for full features</span>
+            </div>
+            <WalletConnectButton />
+          </motion.div>
+        )}
+
         {/* Delayed Signals Warning */}
         {!isPro && (
           <motion.div 
