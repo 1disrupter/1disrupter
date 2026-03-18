@@ -3615,10 +3615,14 @@ async def video_preview_page():
     
     video_cards = ""
     for v in videos:
+        # Check for thumbnail
+        thumb_name = v["name"].lower().replace(" ", "_") + "_thumb.jpg"
+        thumb_url = f"/api/marketing/image/{thumb_name}"
+        
         video_cards += f'''
         <div style="background: #1a1a2e; border-radius: 12px; padding: 20px; margin: 15px 0;">
             <h3 style="color: #00FF94; margin-bottom: 15px;">{v["name"]} ({v["size_mb"]} MB)</h3>
-            <video width="100%" controls style="border-radius: 8px; max-height: 400px;">
+            <video width="100%" controls preload="metadata" playsinline style="border-radius: 8px; max-height: 400px; background: #000;">
                 <source src="{v["url"]}" type="video/mp4">
                 Your browser does not support video.
             </video>
