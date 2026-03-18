@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-AlphaAI Viral Ad Generator
-Creates high-converting short-form ads for TikTok/Instagram/YouTube Shorts
+AlphaAI Viral Ad Generator - Simplified Version
+Creates high-converting short-form vertical ads for TikTok/Instagram/YouTube Shorts
 """
 
 import subprocess
@@ -12,81 +12,19 @@ OUTPUT_DIR = Path(__file__).parent / "marketing_assets" / "ads"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 VIDEO_DIR = Path(__file__).parent / "marketing_assets" / "videos"
-AUDIO_DIR = Path(__file__).parent / "marketing_assets" / "audio"
 
 # Hooks for different variations
 HOOKS = {
-    "main": "This AI trades crypto for you 24/7",
-    "v1": "I built an AI that trades crypto for me...",
-    "v2": "This bot never sleeps...",
-    "v3": "Stop trading manually..."
+    "main": "This AI trades crypto\\nfor you 24/7",
+    "v1": "I built an AI that\\ntrades crypto for me",
+    "v2": "This bot\\nnever sleeps",
+    "v3": "Stop trading\\nmanually"
 }
 
-# Text overlays with timestamps (start, end, text, position)
-# Position: "top", "center", "bottom"
-TEXT_OVERLAYS = [
-    # HOOK (0-2s)
-    (0, 2, "{hook}", "center", "large"),
-    
-    # PROBLEM (2-5s)
-    (2, 5, "Most people lose money trading...", "center", "medium"),
-    
-    # SOLUTION (5-9s)
-    (5, 7, "AlphaAI uses multiple AI agents", "top", "medium"),
-    (7, 9, "to scan markets and find trades automatically", "top", "medium"),
-    
-    # PROOF (9-13s)
-    (9, 11, "+12% last month (paper trading)", "center", "large"),
-    (11, 13, "Live signals. Real data.", "center", "medium"),
-    
-    # CTA (13-16s)
-    (13, 16, "Try it free — link in bio", "center", "large"),
-]
-
-
-def create_drawtext_filter(text, start, end, position, size):
-    """Create ffmpeg drawtext filter for text overlay"""
-    
-    # Font sizes
-    sizes = {
-        "large": 56,
-        "medium": 42,
-        "small": 32
-    }
-    fontsize = sizes.get(size, 42)
-    
-    # Position calculations for 720x1280 vertical video
-    if position == "top":
-        y_pos = "h*0.12"
-    elif position == "center":
-        y_pos = "(h-text_h)/2"
-    else:  # bottom
-        y_pos = "h*0.82"
-    
-    # Escape special characters for ffmpeg
-    escaped_text = text.replace("'", "'\\''").replace(":", "\\:")
-    
-    # Create drawtext filter with fade in/out
-    filter_str = (
-        f"drawtext=text='{escaped_text}':"
-        f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
-        f"fontsize={fontsize}:"
-        f"fontcolor=white:"
-        f"borderw=3:"
-        f"bordercolor=black:"
-        f"x=(w-text_w)/2:"
-        f"y={y_pos}:"
-        f"enable='between(t,{start},{end})':"
-        f"alpha='if(lt(t,{start}+0.3),t-{start},if(gt(t,{end}-0.3),{end}-t,1))*3'"
-    )
-    
-    return filter_str
-
-
 def create_viral_ad(hook_key, hook_text, output_name):
-    """Create a single viral ad video"""
+    """Create a single viral ad video with text overlays"""
     print(f"\n🎬 Creating: {output_name}")
-    print(f"   Hook: {hook_text}")
+    print(f"   Hook: {hook_text.replace(chr(92)+'n', ' ')}")
     
     input_video = VIDEO_DIR / "agents_showcase.mp4"
     output_video = OUTPUT_DIR / f"{output_name}.mp4"
@@ -95,53 +33,53 @@ def create_viral_ad(hook_key, hook_text, output_name):
         print(f"   ❌ Source video not found: {input_video}")
         return None
     
-    # Build text overlay filters
-    text_filters = []
-    for start, end, text, pos, size in TEXT_OVERLAYS:
-        # Replace {hook} placeholder with actual hook text
-        actual_text = text.replace("{hook}", hook_text)
-        text_filters.append(create_drawtext_filter(actual_text, start, end, pos, size))
+    # Build complex filter with all text overlays
+    # Text timing: Hook(0-2), Problem(2-5), Solution(5-9), Proof(9-13), CTA(13-16)
     
-    # Combine all text filters
-    text_filter_chain = ",".join(text_filters)
-    
-    # Complete filter chain:
-    # 1. Scale and crop to 9:16 (720x1280) - crop center of landscape video
-    # 2. Add subtle zoom effect
-    # 3. Add all text overlays
-    filter_complex = (
-        # Crop center to approximate 9:16 from 16:9, then scale
-        "[0:v]scale=1280:720,crop=405:720:437:0,scale=720:1280,"
-        # Add slight zoom pulse effect
-        "zoompan=z='1+0.02*sin(2*PI*t/4)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=720x1280:fps=30,"
-        # Add all text overlays
-        f"{text_filter_chain}"
-        "[outv]"
-    )
+    filter_complex = f'''
+[0:v]
+scale=1280:720,
+crop=405:720:437:0,
+scale=720:1280,
+drawtext=text='{hook_text}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=52:fontcolor=white:borderw=4:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,0,2)',
+drawtext=text='Most people lose money\\ntrading...':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=44:fontcolor=white:borderw=3:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,2,5)',
+drawtext=text='AlphaAI uses multiple\\nAI agents to scan markets':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=38:fontcolor=white:borderw=3:bordercolor=black:x=(w-text_w)/2:y=h*0.15:enable='between(t,5,7.5)',
+drawtext=text='and find trades\\nautomatically':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=38:fontcolor=white:borderw=3:bordercolor=black:x=(w-text_w)/2:y=h*0.15:enable='between(t,7.5,9)',
+drawtext=text='+12%% last month':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=56:fontcolor=#00FF94:borderw=4:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2-50:enable='between(t,9,11)',
+drawtext=text='(paper trading)':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:fontsize=32:fontcolor=white:borderw=2:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2+30:enable='between(t,9,11)',
+drawtext=text='Live signals. Real data.':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=40:fontcolor=white:borderw=3:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,11,13)',
+drawtext=text='Try it free':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=52:fontcolor=#00FF94:borderw=4:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2-40:enable='between(t,13,16)',
+drawtext=text='link in bio':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=36:fontcolor=white:borderw=3:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2+40:enable='between(t,13,16)'
+[outv]
+'''.replace('\n', '')
     
     # FFmpeg command
     cmd = [
-        "ffmpeg", "-y",
+        "/usr/bin/ffmpeg", "-y",
         "-i", str(input_video),
         "-filter_complex", filter_complex,
         "-map", "[outv]",
         "-c:v", "libx264",
-        "-preset", "medium",
+        "-preset", "fast",
         "-crf", "23",
-        "-t", "16",  # 16 seconds
+        "-t", "16",
         "-r", "30",
         str(output_video)
     ]
     
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
         if result.returncode == 0:
             size_mb = os.path.getsize(output_video) / (1024 * 1024)
-            print(f"   ✅ Created: {output_video} ({size_mb:.1f} MB)")
+            print(f"   ✅ Created: {output_video.name} ({size_mb:.1f} MB)")
             return str(output_video)
         else:
-            print(f"   ❌ FFmpeg error: {result.stderr[-500:]}")
+            print(f"   ❌ FFmpeg error")
+            print(f"   {result.stderr[-800:]}")
             return None
+    except subprocess.TimeoutExpired:
+        print(f"   ❌ Timeout")
+        return None
     except Exception as e:
         print(f"   ❌ Error: {str(e)}")
         return None
@@ -151,7 +89,7 @@ def create_all_ads():
     """Create all ad variations"""
     print("=" * 60)
     print("🚀 AlphaAI Viral Ad Generator")
-    print("   Creating high-converting TikTok/Reels ads")
+    print("   Creating TikTok/Reels vertical ads (720x1280)")
     print("=" * 60)
     
     results = []
@@ -170,7 +108,7 @@ def create_all_ads():
     print(f"\n✅ Created {len(successful)}/{len(results)} ads")
     
     for r in successful:
-        print(f"   - {r['name']}: \"{r['hook'][:30]}...\"")
+        print(f"   - {r['name']}")
     
     print(f"\n📁 Output: {OUTPUT_DIR}")
     return results
