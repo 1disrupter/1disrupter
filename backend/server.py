@@ -3863,13 +3863,7 @@ async def video_preview_page():
 </html>'''
     return HTMLResponse(content=html)
 
-# Include router and middleware
-app.include_router(api_router)
-app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+# ============= HIGH-CONVERTING ADS V2 =============
 
 @api_router.get("/marketing/ads-v2")
 async def list_hc_ads():
@@ -3895,3 +3889,11 @@ async def get_hc_ad(filename: str, request: Request):
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Ad not found")
     return FileResponse(path=str(filepath), media_type="video/mp4")
+
+# Include router and middleware
+app.include_router(api_router)
+app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    client.close()
