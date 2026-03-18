@@ -3605,53 +3605,85 @@ async def video_preview_page():
     videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
     videos = []
     if videos_dir.exists():
-        for f in videos_dir.iterdir():
-            if f.suffix.lower() == '.mp4':
+        # Sort to show main promo first
+        files = sorted(videos_dir.iterdir(), key=lambda x: x.stat().st_size, reverse=True)
+        for f in files:
+            if f.suffix.lower() == '.mp4' and 'outro_clip' not in f.name:
                 videos.append({
                     "name": f.stem.replace("_", " ").title(),
+                    "filename": f.name,
                     "url": f"/api/marketing/video/{f.name}",
                     "size_mb": round(f.stat().st_size / (1024 * 1024), 1)
                 })
     
     video_cards = ""
     for v in videos:
-        # Check for thumbnail
-        thumb_name = v["name"].lower().replace(" ", "_") + "_thumb.jpg"
-        thumb_url = f"/api/marketing/image/{thumb_name}"
-        
         video_cards += f'''
-        <div style="background: #1a1a2e; border-radius: 12px; padding: 20px; margin: 15px 0;">
-            <h3 style="color: #00FF94; margin-bottom: 15px;">{v["name"]} ({v["size_mb"]} MB)</h3>
-            <video width="100%" controls preload="metadata" playsinline style="border-radius: 8px; max-height: 400px; background: #000;">
+        <div class="video-card">
+            <h3>{v["name"]} ({v["size_mb"]} MB)</h3>
+            <video controls preload="auto" playsinline>
                 <source src="{v["url"]}" type="video/mp4">
-                Your browser does not support video.
             </video>
-            <a href="{v["url"]}" download style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: #7B61FF; color: white; text-decoration: none; border-radius: 6px;">⬇️ Download</a>
+            <div class="buttons">
+                <a href="{v["url"]}" download="{v["filename"]}" class="btn download">⬇️ Download MP4</a>
+            </div>
         </div>
         '''
     
-    html = f'''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>AlphaAI Marketing Videos</title>
-        <style>
-            body {{
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
-                color: white;
-                min-height: 100vh;
-                margin: 0;
-                padding: 40px;
-            }}
-            .container {{
-                max-width: 900px;
-                margin: 0 auto;
-            }}
-            h1 {{
-                color: #7B61FF;
-                text-align: center;
-                font-size: 2.5em;
+    html = f'''<!DOCTYPE html>
+<html>
+<head>
+    <title>AlphaAI Marketing Videos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {{ box-sizing: border-box; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a15;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }}
+        .container {{ max-width: 1000px; margin: 0 auto; }}
+        h1 {{ color: #7B61FF; text-align: center; margin-bottom: 10px; }}
+        .subtitle {{ text-align: center; color: #888; margin-bottom: 30px; }}
+        .video-card {{
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #333;
+        }}
+        .video-card h3 {{ color: #00FF94; margin: 0 0 15px 0; }}
+        video {{
+            width: 100%;
+            max-height: 500px;
+            border-radius: 8px;
+            background: #000;
+            display: block;
+        }}
+        .buttons {{ margin-top: 15px; }}
+        .btn {{
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-right: 10px;
+        }}
+        .download {{ background: #7B61FF; color: white; }}
+        .download:hover {{ background: #6B51EF; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 AlphaAI Marketing Videos</h1>
+        <p class="subtitle">Click play button to watch • Click download to save</p>
+        {video_cards if videos else '<p style="text-align:center">No videos available</p>'}
+    </div>
+</body>
+</html>'''
+    return HTMLResponse(content=html)
                 margin-bottom: 10px;
             }}
             .subtitle {{
