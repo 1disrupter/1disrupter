@@ -4323,6 +4323,28 @@ async def regenerate_documentation():
     
     return {"message": "Documentation regenerated successfully", "path": "/api/documentation/download"}
 
+@api_router.get("/documentation/business")
+async def download_business_pdf():
+    """Download the business-focused PDF for investors"""
+    pdf_path = ROOT_DIR / "reports" / "AlphaAI_Business_Overview.pdf"
+    
+    if not pdf_path.exists():
+        import subprocess
+        subprocess.run(["python", str(ROOT_DIR / "generate_business_documentation.py")], cwd=str(ROOT_DIR))
+    
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="Business PDF not found")
+    
+    return FileResponse(
+        path=str(pdf_path),
+        media_type="application/pdf",
+        filename="AlphaAI_Business_Overview.pdf",
+        headers={
+            "Content-Disposition": "attachment; filename=AlphaAI_Business_Overview.pdf",
+            "Cache-Control": "no-cache"
+        }
+    )
+
 # ============= A/B TESTING & CONVERSION ANALYTICS =============
 
 class AnalyticsEvent(BaseModel):
