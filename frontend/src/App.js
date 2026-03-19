@@ -781,32 +781,49 @@ const DashboardPage = () => {
             data-testid="demo-mode-banner"
           >
             <div className="flex items-center gap-3">
-              <Eye className="w-5 h-5 text-[#7B61FF]" />
-              <span className="text-[#7B61FF] font-medium">Demo Mode - Connect wallet for full features</span>
+              <Zap className="w-5 h-5 text-[#7B61FF]" />
+              <span className="text-[#7B61FF] font-medium">Upgrade to unlock full features</span>
             </div>
-            <WalletConnectButton />
+            <Button 
+              onClick={() => setShowUpgradePopup(true)}
+              className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 rounded-full px-6"
+              data-testid="upgrade-demo-btn"
+            >
+              <Zap className="w-4 h-4 mr-2" /> Upgrade Now
+            </Button>
           </motion.div>
         )}
 
-        {/* Delayed Signals Warning */}
+        {/* Delayed Signals Warning - Enhanced Urgency */}
         {!isPro && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-between"
+            className="mb-6 p-5 rounded-xl bg-gradient-to-r from-yellow-500/20 to-orange-500/10 border border-yellow-500/40 flex flex-col md:flex-row md:items-center justify-between gap-4"
             data-testid="delayed-signals-warning"
           >
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-yellow-400" />
-              <span className="text-yellow-400 font-medium">You are viewing delayed signals (15 min)</span>
+            <div className="flex items-start md:items-center gap-3">
+              <div className="p-2 rounded-full bg-yellow-500/20 animate-pulse">
+                <Clock className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <span className="text-yellow-400 font-semibold block">Live signals update every minute</span>
+                <span className="text-yellow-400/70 text-sm">You are viewing a 15 minute delay</span>
+              </div>
             </div>
-            <Button 
-              onClick={() => setShowUpgradePopup(true)} 
-              className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 rounded-full text-sm"
-              data-testid="unlock-live-btn"
-            >
-              <Zap className="w-4 h-4 mr-1" /> Unlock Live
-            </Button>
+            <div className="flex flex-col items-center gap-2">
+              <Button 
+                onClick={() => setShowUpgradePopup(true)} 
+                className="bg-gradient-to-r from-[#7B61FF] to-[#9D4EDD] hover:from-[#6B51EF] hover:to-[#8D3ECD] rounded-full px-8 py-6 text-lg font-bold shadow-lg shadow-[#7B61FF]/30 glow-primary"
+                data-testid="unlock-live-btn"
+              >
+                <Zap className="w-5 h-5 mr-2" /> Unlock Live Signals
+              </Button>
+              <div className="flex flex-col items-center text-xs text-zinc-400 mt-1">
+                <span className="font-medium text-zinc-300">Unlock:</span>
+                <span>Real-time signals • Instant alerts • Full AI analysis</span>
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -853,6 +870,27 @@ const DashboardPage = () => {
                     </div>
                   </motion.div>
                 ))}
+              </div>
+              
+              {/* Performance Summary Under Signals */}
+              <div className="mt-6 pt-6 border-t border-zinc-800/50">
+                <p className="text-sm text-zinc-500 mb-3 font-medium">Last 30 Days Performance:</p>
+                <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-[#00FF94]" />
+                    <span className="text-2xl font-bold text-[#00FF94] font-['JetBrains_Mono']">+{performance.return_30d}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-zinc-400" />
+                    <span className="text-lg font-semibold text-white">{performance.win_rate}%</span>
+                    <span className="text-sm text-zinc-500">win rate</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-zinc-400" />
+                    <span className="text-lg font-semibold text-white">{performance.max_drawdown}%</span>
+                    <span className="text-sm text-zinc-500">max drawdown</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
