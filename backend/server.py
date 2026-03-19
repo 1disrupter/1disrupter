@@ -4300,7 +4300,11 @@ async def download_documentation():
     return FileResponse(
         path=str(pdf_path),
         media_type="application/pdf",
-        filename="AlphaAI_Complete_Documentation.pdf"
+        filename="AlphaAI_Complete_Documentation.pdf",
+        headers={
+            "Content-Disposition": "attachment; filename=AlphaAI_Complete_Documentation.pdf",
+            "Cache-Control": "no-cache"
+        }
     )
 
 @api_router.get("/documentation/regenerate")
