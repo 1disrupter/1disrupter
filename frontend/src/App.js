@@ -829,21 +829,83 @@ const DashboardPage = () => {
     };
   }, [isPro, exitPopupShown]);
 
-  // Fetch signals from backend
+  // Fetch signals from tiered backend API
   useEffect(() => {
-    axios.get(`${API}/live-prices`).then(res => {
-      if (res.data.prices) {
-        const btcPrice = res.data.prices.find(p => p.symbol === 'BTC')?.price || 67432;
-        const ethPrice = res.data.prices.find(p => p.symbol === 'ETH')?.price || 3521;
-        const solPrice = res.data.prices.find(p => p.symbol === 'SOL')?.price || 142;
-        setSignals([
-          { symbol: 'BTC', signal: 'BUY', confidence: 87, price: btcPrice },
-          { symbol: 'ETH', signal: 'HOLD', confidence: 72, price: ethPrice },
-          { symbol: 'SOL', signal: 'SELL', confidence: 65, price: solPrice },
-        ]);
+    const fetchSignals = async () => {
+      try {
+        // Use tiered endpoint with wallet if available
+        const endpoint = wallet 
+          ? `${API}/signals/tiered?wallet_address=${wallet}`
+          : `${API}/signals/free`;
+        
+        const res = await axios.get(endpoint);
+        
+        if (res.data.signals && res.data.signals.length > 0) {
+          // Update signals from backend
+          const newSignals = res.data.signals.map(s => ({
+            symbol: s.symbol,
+            signal: s.signal_type,
+            confidence: s.confidence,
+            price: s.price_at_signal,
+            analysis: s.analysis,
+            isDelayed: s.is_delayed,
+            generatedAt: s.generated_at
+          }));
+          setSignals(newSignals);
+          
+          // Update Pro status based on response
+          if (res.data.tier !== 'free') {
+            setIsPro(true);
+          }
+        }
+        
+        // Update refresh timer based on tier
+        const refreshRate = res.data.refresh_rate_seconds || 300;
+        setNextUpdateTimer(refreshRate);
+        
+      } catch (error) {
+        console.error("Signal fetch error:", error);
+        // Fallback to live prices
+        try {
+          const priceRes = await axios.get(`${API}/live-prices`);
+          if (priceRes.data.prices) {
+            const btcPrice = priceRes.data.prices.find(p => p.symbol === 'BTC')?.price || 67432;
+            const ethPrice = priceRes.data.prices.find(p => p.symbol === 'ETH')?.price || 3521;
+            const solPrice = priceRes.data.prices.find(p => p.symbol === 'SOL')?.price || 142;
+            setSignals([
+              { symbol: 'BTC', signal: 'BUY', confidence: 87, price: btcPrice },
+              { symbol: 'ETH', signal: 'HOLD', confidence: 72, price: ethPrice },
+              { symbol: 'SOL', signal: 'SELL', confidence: 65, price: solPrice },
+            ]);
+          }
+        } catch (e) {
+          console.error("Fallback price fetch error:", e);
+        }
       }
-    }).catch(console.error);
-  }, []);
+    };
+
+    fetchSignals();
+    
+    // Set up polling based on tier (Pro: 1min, Free: 5min)
+    const pollInterval = isPro ? 60000 : 300000;
+    const interval = setInterval(fetchSignals, pollInterval);
+    
+    return () => clearInterval(interval);
+  }, [wallet, isPro]);
+
+  // Check Pro status from backend on wallet connect
+  useEffect(() => {
+    if (wallet) {
+      axios.get(`${API}/subscription/tier?wallet_address=${wallet}`)
+        .then(res => {
+          if (res.data.tier === 'pro' || res.data.tier === 'elite') {
+            setIsPro(true);
+            toast.success(`Welcome back, ${res.data.tier.charAt(0).toUpperCase() + res.data.tier.slice(1)} user!`);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [wallet]);
 
   const getSignalColor = (signal) => {
     if (signal === 'BUY') return 'text-[#00FF94] bg-[#00FF94]/10 border-[#00FF94]/30';

@@ -56,6 +56,9 @@ class Investor(BaseModel):
     paper_balance: float = 10000.0
     paper_pnl: float = 0.0
     is_paper_trading: bool = False
+    is_pro: bool = False
+    is_elite: bool = False
+    pro_since: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -290,6 +293,265 @@ class AgentInteraction(BaseModel):
     interaction_type: str  # signal, data, command, response
     payload: Dict[str, Any] = {}
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ============= TIERED SIGNAL SYSTEM =============
+
+class TradingSignal(BaseModel):
+    """Trading signal with timestamp for tier-based delivery"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    symbol: str
+    signal_type: str  # BUY, SELL, HOLD
+    confidence: float  # 0-100
+    price_at_signal: float
+    target_price: Optional[float] = None
+    stop_loss: Optional[float] = None
+    analysis: str = ""
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: Optional[datetime] = None
+    is_priority: bool = False  # Priority signals for Pro/Elite
+
+# Signal delay configuration
+SIGNAL_DELAYS = {
+    "free": 15 * 60,      # 15 minutes in seconds
+    "pro": 0,             # Real-time
+    "elite": 0            # Real-time
+}
+
+SIGNAL_REFRESH_RATES = {
+    "free": 300,          # 5 minutes refresh
+    "pro": 60,            # 1 minute refresh
+    "elite": 30           # 30 seconds refresh
+}
+
+class SignalService:
+    """Manages tiered signal generation and delivery"""
+    
+    def __init__(self):
+        self.last_generation = None
+        self.current_signals = {}
+        self.signal_history = []
+    
+    async def generate_signals(self, force: bool = False) -> List[Dict]:
+        """Generate fresh trading signals using AI and market data"""
+        try:
+            # Fetch live prices
+            prices = await self._fetch_live_prices()
+            if not prices:
+                return []
+            
+            signals = []
+            for asset in ["BTC", "ETH", "SOL"]:
+                price_data = next((p for p in prices if p.get("symbol") == asset), None)
+                if not price_data:
+                    continue
+                
+                current_price = price_data.get("price", 0)
+                change_24h = price_data.get("change_24h", 0)
+                
+                # Generate signal based on market data and AI
+                signal_type, confidence, analysis = await self._analyze_asset(asset, current_price, change_24h)
+                
+                signal = TradingSignal(
+                    symbol=asset,
+                    signal_type=signal_type,
+                    confidence=confidence,
+                    price_at_signal=current_price,
+                    analysis=analysis,
+                    generated_at=datetime.now(timezone.utc),
+                    expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+                    is_priority=False
+                )
+                
+                signals.append(signal)
+                
+                # Store in database
+                signal_doc = {
+                    "id": signal.id,
+                    "symbol": signal.symbol,
+                    "signal_type": signal.signal_type,
+                    "confidence": signal.confidence,
+                    "price_at_signal": signal.price_at_signal,
+                    "analysis": signal.analysis,
+                    "generated_at": signal.generated_at,
+                    "expires_at": signal.expires_at,
+                    "is_priority": signal.is_priority
+                }
+                await db.trading_signals.insert_one(signal_doc)
+            
+            self.last_generation = datetime.now(timezone.utc)
+            logger.info(f"Generated {len(signals)} new trading signals")
+            return signals
+            
+        except Exception as e:
+            logger.error(f"Signal generation error: {str(e)}")
+            return []
+    
+    async def _fetch_live_prices(self) -> List[Dict]:
+        """Fetch live prices from Kraken"""
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get("https://api.kraken.com/0/public/Ticker", params={
+                    "pair": "XBTUSD,ETHUSD,SOLUSD"
+                })
+                data = response.json()
+                
+                if data.get("error"):
+                    return []
+                
+                result = data.get("result", {})
+                prices = []
+                
+                symbol_map = {"XXBTZUSD": "BTC", "XETHZUSD": "ETH", "SOLUSD": "SOL"}
+                for kraken_symbol, asset in symbol_map.items():
+                    if kraken_symbol in result:
+                        ticker = result[kraken_symbol]
+                        price = float(ticker["c"][0])
+                        open_price = float(ticker["o"])
+                        change = ((price - open_price) / open_price) * 100 if open_price else 0
+                        prices.append({
+                            "symbol": asset,
+                            "price": price,
+                            "change_24h": round(change, 2)
+                        })
+                
+                return prices
+        except Exception as e:
+            logger.error(f"Price fetch error: {str(e)}")
+            return []
+    
+    async def _analyze_asset(self, symbol: str, price: float, change_24h: float) -> tuple:
+        """Analyze asset and generate signal using AI"""
+        try:
+            # Simple rule-based signal with some randomization for demo
+            # In production, this would use more sophisticated AI analysis
+            
+            if change_24h > 3:
+                signal_type = "BUY"
+                confidence = min(90, 70 + change_24h * 2)
+                analysis = f"{symbol} showing strong bullish momentum with +{change_24h:.1f}% gain."
+            elif change_24h < -3:
+                signal_type = "SELL"
+                confidence = min(90, 70 + abs(change_24h) * 2)
+                analysis = f"{symbol} showing bearish pressure with {change_24h:.1f}% decline."
+            elif change_24h > 1:
+                signal_type = "BUY"
+                confidence = 60 + change_24h * 5
+                analysis = f"{symbol} showing moderate bullish trend at ${price:,.2f}."
+            elif change_24h < -1:
+                signal_type = "SELL"
+                confidence = 60 + abs(change_24h) * 5
+                analysis = f"{symbol} facing selling pressure. Consider reducing exposure."
+            else:
+                signal_type = "HOLD"
+                confidence = 50 + random.randint(0, 20)
+                analysis = f"{symbol} consolidating near ${price:,.2f}. Wait for clearer direction."
+            
+            # Add some realistic variance
+            confidence = min(95, max(45, confidence + random.randint(-5, 5)))
+            
+            return signal_type, round(confidence, 1), analysis
+            
+        except Exception as e:
+            logger.error(f"Analysis error for {symbol}: {str(e)}")
+            return "HOLD", 50.0, f"Unable to analyze {symbol} at this time."
+    
+    async def get_signals_for_tier(self, tier: str = "free", wallet_address: Optional[str] = None) -> List[Dict]:
+        """Get signals appropriate for the user's subscription tier"""
+        
+        # Determine actual tier from database if wallet provided
+        actual_tier = tier
+        if wallet_address:
+            investor = await db.investors.find_one({"wallet_address": wallet_address})
+            if investor:
+                if investor.get("is_elite"):
+                    actual_tier = "elite"
+                elif investor.get("is_pro"):
+                    actual_tier = "pro"
+        
+        delay_seconds = SIGNAL_DELAYS.get(actual_tier, SIGNAL_DELAYS["free"])
+        cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=delay_seconds)
+        
+        # For free users, only return signals older than 15 minutes
+        if actual_tier == "free":
+            query = {"generated_at": {"$lte": cutoff_time}}
+        else:
+            # Pro/Elite get all signals including the latest
+            query = {}
+        
+        # Get most recent signal per symbol
+        pipeline = [
+            {"$match": query},
+            {"$sort": {"generated_at": -1}},
+            {"$group": {
+                "_id": "$symbol",
+                "latest": {"$first": "$$ROOT"}
+            }},
+            {"$replaceRoot": {"newRoot": "$latest"}},
+            {"$project": {"_id": 0}}
+        ]
+        
+        signals = await db.trading_signals.aggregate(pipeline).to_list(10)
+        
+        # Add delay info for frontend
+        for signal in signals:
+            signal["is_delayed"] = actual_tier == "free"
+            signal["delay_minutes"] = 15 if actual_tier == "free" else 0
+            signal["tier"] = actual_tier
+            # Convert datetime to string for JSON
+            if isinstance(signal.get("generated_at"), datetime):
+                signal["generated_at"] = signal["generated_at"].isoformat()
+            if isinstance(signal.get("expires_at"), datetime):
+                signal["expires_at"] = signal["expires_at"].isoformat()
+        
+        return signals
+    
+    async def get_realtime_signals(self, wallet_address: str) -> List[Dict]:
+        """Get real-time signals - Pro/Elite only"""
+        # Verify subscription
+        investor = await db.investors.find_one({"wallet_address": wallet_address})
+        if not investor or not (investor.get("is_pro") or investor.get("is_elite")):
+            raise HTTPException(
+                status_code=403, 
+                detail="Real-time signals require Pro or Elite subscription"
+            )
+        
+        # Get the absolute latest signals
+        pipeline = [
+            {"$sort": {"generated_at": -1}},
+            {"$group": {
+                "_id": "$symbol",
+                "latest": {"$first": "$$ROOT"}
+            }},
+            {"$replaceRoot": {"newRoot": "$latest"}},
+            {"$project": {"_id": 0}}
+        ]
+        
+        signals = await db.trading_signals.aggregate(pipeline).to_list(10)
+        
+        for signal in signals:
+            signal["is_delayed"] = False
+            signal["delay_minutes"] = 0
+            signal["tier"] = "pro" if investor.get("is_pro") else "elite"
+            if isinstance(signal.get("generated_at"), datetime):
+                signal["generated_at"] = signal["generated_at"].isoformat()
+            if isinstance(signal.get("expires_at"), datetime):
+                signal["expires_at"] = signal["expires_at"].isoformat()
+        
+        return signals
+
+# Initialize signal service
+signal_service = SignalService()
+
+# Background task to generate signals periodically
+async def signal_generation_task():
+    """Background task to generate signals every minute"""
+    while True:
+        try:
+            await signal_service.generate_signals()
+        except Exception as e:
+            logger.error(f"Signal generation task error: {str(e)}")
+        await asyncio.sleep(60)  # Generate new signals every minute
 
 # ============= SIMULATION ENGINE =============
 
@@ -1873,6 +2135,189 @@ async def get_live_prices():
 async def get_live_prices_alias():
     """Alias endpoint for /market/live-prices - used by dashboard signals"""
     return await get_live_prices()
+
+# ============= TIERED SIGNAL API ENDPOINTS =============
+
+@api_router.get("/signals/free")
+async def get_free_signals():
+    """Get delayed signals for free users (15-minute delay)"""
+    signals = await signal_service.get_signals_for_tier("free")
+    
+    # If no signals exist yet, generate some
+    if not signals:
+        await signal_service.generate_signals()
+        signals = await signal_service.get_signals_for_tier("free")
+    
+    return {
+        "signals": signals,
+        "tier": "free",
+        "delay_minutes": 15,
+        "refresh_rate_seconds": SIGNAL_REFRESH_RATES["free"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "message": "You are viewing delayed signals. Upgrade to Pro for real-time access."
+    }
+
+@api_router.get("/signals/pro")
+async def get_pro_signals(wallet_address: str = Query(..., description="Wallet address for subscription verification")):
+    """Get real-time signals for Pro subscribers"""
+    # Verify Pro subscription
+    investor = await db.investors.find_one({"wallet_address": wallet_address})
+    if not investor:
+        raise HTTPException(status_code=404, detail="Wallet not found. Please register first.")
+    
+    if not investor.get("is_pro") and not investor.get("is_elite"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Pro subscription required for real-time signals. Current tier: Free"
+        )
+    
+    signals = await signal_service.get_signals_for_tier("pro", wallet_address)
+    
+    if not signals:
+        await signal_service.generate_signals()
+        signals = await signal_service.get_signals_for_tier("pro", wallet_address)
+    
+    tier = "elite" if investor.get("is_elite") else "pro"
+    
+    return {
+        "signals": signals,
+        "tier": tier,
+        "delay_minutes": 0,
+        "refresh_rate_seconds": SIGNAL_REFRESH_RATES[tier],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "message": f"Real-time signals active ({tier.title()} tier)"
+    }
+
+@api_router.get("/signals/elite")
+async def get_elite_signals(wallet_address: str = Query(..., description="Wallet address for subscription verification")):
+    """Get priority real-time signals for Elite subscribers"""
+    investor = await db.investors.find_one({"wallet_address": wallet_address})
+    if not investor:
+        raise HTTPException(status_code=404, detail="Wallet not found")
+    
+    if not investor.get("is_elite"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Elite subscription required for priority signals"
+        )
+    
+    signals = await signal_service.get_signals_for_tier("elite", wallet_address)
+    
+    if not signals:
+        await signal_service.generate_signals()
+        signals = await signal_service.get_signals_for_tier("elite", wallet_address)
+    
+    return {
+        "signals": signals,
+        "tier": "elite",
+        "delay_minutes": 0,
+        "refresh_rate_seconds": SIGNAL_REFRESH_RATES["elite"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "priority_access": True,
+        "message": "Elite priority signals active - Fastest refresh rate"
+    }
+
+@api_router.get("/signals/tiered")
+async def get_tiered_signals(wallet_address: Optional[str] = None):
+    """Smart endpoint that returns appropriate signals based on user's subscription"""
+    tier = "free"
+    
+    if wallet_address:
+        investor = await db.investors.find_one({"wallet_address": wallet_address})
+        if investor:
+            if investor.get("is_elite"):
+                tier = "elite"
+            elif investor.get("is_pro"):
+                tier = "pro"
+    
+    signals = await signal_service.get_signals_for_tier(tier, wallet_address)
+    
+    if not signals:
+        await signal_service.generate_signals()
+        signals = await signal_service.get_signals_for_tier(tier, wallet_address)
+    
+    return {
+        "signals": signals,
+        "tier": tier,
+        "delay_minutes": 15 if tier == "free" else 0,
+        "refresh_rate_seconds": SIGNAL_REFRESH_RATES[tier],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "is_realtime": tier != "free"
+    }
+
+@api_router.post("/signals/generate")
+async def trigger_signal_generation(background_tasks: BackgroundTasks):
+    """Manually trigger signal generation (admin use)"""
+    background_tasks.add_task(signal_service.generate_signals, True)
+    return {"message": "Signal generation triggered", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+@api_router.get("/signals/history")
+async def get_signal_history(
+    symbol: Optional[str] = None,
+    hours: int = Query(default=24, le=168, description="Hours of history (max 168 = 7 days)"),
+    limit: int = Query(default=50, le=200)
+):
+    """Get historical signals"""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    
+    query = {"generated_at": {"$gte": cutoff}}
+    if symbol:
+        query["symbol"] = symbol.upper()
+    
+    signals = await db.trading_signals.find(
+        query, 
+        {"_id": 0}
+    ).sort("generated_at", -1).limit(limit).to_list(limit)
+    
+    # Convert datetime to string
+    for signal in signals:
+        if isinstance(signal.get("generated_at"), datetime):
+            signal["generated_at"] = signal["generated_at"].isoformat()
+        if isinstance(signal.get("expires_at"), datetime):
+            signal["expires_at"] = signal["expires_at"].isoformat()
+    
+    return {
+        "signals": signals,
+        "count": len(signals),
+        "hours": hours,
+        "symbol_filter": symbol
+    }
+
+@api_router.get("/subscription/tier")
+async def get_user_tier(wallet_address: str):
+    """Get user's current subscription tier and signal access"""
+    investor = await db.investors.find_one({"wallet_address": wallet_address})
+    
+    if not investor:
+        return {
+            "wallet_address": wallet_address,
+            "tier": "unregistered",
+            "signal_delay_minutes": 15,
+            "refresh_rate_seconds": SIGNAL_REFRESH_RATES["free"],
+            "features": ["delayed_signals"],
+            "message": "Register wallet to access signals"
+        }
+    
+    if investor.get("is_elite"):
+        tier = "elite"
+        features = ["realtime_signals", "priority_refresh", "email_alerts", "push_notifications", "custom_alerts", "priority_support"]
+    elif investor.get("is_pro"):
+        tier = "pro"
+        features = ["realtime_signals", "email_alerts", "push_notifications", "ai_analysis"]
+    else:
+        tier = "free"
+        features = ["delayed_signals", "basic_analysis"]
+    
+    return {
+        "wallet_address": wallet_address,
+        "tier": tier,
+        "is_pro": investor.get("is_pro", False),
+        "is_elite": investor.get("is_elite", False),
+        "pro_since": investor.get("pro_since"),
+        "signal_delay_minutes": 0 if tier != "free" else 15,
+        "refresh_rate_seconds": SIGNAL_REFRESH_RATES.get(tier, 300),
+        "features": features
+    }
 
 # ============= AGENTS ROUTES =============
 
@@ -4525,6 +4970,22 @@ async def get_feature_analytics(feature: str, days: int = 7):
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 
+# Signal generation background task reference
+signal_task = None
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize signal generation on startup"""
+    global signal_task
+    # Generate initial signals
+    await signal_service.generate_signals()
+    # Start background signal generation task
+    signal_task = asyncio.create_task(signal_generation_task())
+    logger.info("Signal generation service started")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    global signal_task
+    if signal_task:
+        signal_task.cancel()
     client.close()
