@@ -4284,6 +4284,41 @@ async def get_pro_status(wallet_address: str):
         "wallet_address": wallet_address
     }
 
+@api_router.get("/documentation/download")
+async def download_documentation():
+    """Download the complete platform documentation PDF"""
+    pdf_path = ROOT_DIR / "reports" / "AlphaAI_Complete_Documentation.pdf"
+    
+    if not pdf_path.exists():
+        # Generate if not exists
+        import subprocess
+        subprocess.run(["python", str(ROOT_DIR / "generate_platform_documentation.py")], cwd=str(ROOT_DIR))
+    
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="Documentation PDF not found")
+    
+    return FileResponse(
+        path=str(pdf_path),
+        media_type="application/pdf",
+        filename="AlphaAI_Complete_Documentation.pdf"
+    )
+
+@api_router.get("/documentation/regenerate")
+async def regenerate_documentation():
+    """Regenerate the platform documentation PDF"""
+    import subprocess
+    result = subprocess.run(
+        ["python", str(ROOT_DIR / "generate_platform_documentation.py")], 
+        cwd=str(ROOT_DIR),
+        capture_output=True,
+        text=True
+    )
+    
+    if result.returncode != 0:
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {result.stderr}")
+    
+    return {"message": "Documentation regenerated successfully", "path": "/api/documentation/download"}
+
 # Include router and middleware
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
