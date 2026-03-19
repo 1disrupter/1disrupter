@@ -614,6 +614,98 @@ const DashboardPage = () => {
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState('pro_monthly');
+
+  // Check for payment return and poll status
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    const paymentStatus = urlParams.get('payment');
+    
+    if (sessionId && paymentStatus === 'success') {
+      pollPaymentStatus(sessionId);
+      // Clean URL
+      window.history.replaceState({}, '', '/dashboard');
+    } else if (paymentStatus === 'cancelled') {
+      toast.info("Payment cancelled. You can upgrade anytime.");
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, []);
+
+  // Check Pro status on mount
+  useEffect(() => {
+    if (wallet) {
+      axios.get(`${API}/users/pro-status/${wallet}`).then(res => {
+        if (res.data.is_pro) {
+          setIsPro(true);
+          toast.success("Welcome back, Pro user!");
+        }
+      }).catch(console.error);
+    }
+  }, [wallet]);
+
+  const pollPaymentStatus = async (sessionId, attempts = 0) => {
+    const maxAttempts = 10;
+    const pollInterval = 2000;
+
+    if (attempts >= maxAttempts) {
+      toast.error("Payment verification timed out. Please refresh the page.");
+      setIsProcessingPayment(false);
+      return;
+    }
+
+    try {
+      setIsProcessingPayment(true);
+      const response = await axios.get(`${API}/payments/status/${sessionId}`);
+      
+      if (response.data.payment_status === 'paid') {
+        setIsPro(true);
+        setShowUpgradePopup(false);
+        setIsProcessingPayment(false);
+        toast.success("Welcome to AlphaAI Pro! You now have access to real-time signals.");
+        return;
+      } else if (response.data.status === 'expired') {
+        toast.error("Payment session expired. Please try again.");
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // Continue polling
+      setTimeout(() => pollPaymentStatus(sessionId, attempts + 1), pollInterval);
+    } catch (error) {
+      console.error("Error checking payment status:", error);
+      if (attempts < maxAttempts - 1) {
+        setTimeout(() => pollPaymentStatus(sessionId, attempts + 1), pollInterval);
+      } else {
+        toast.error("Error verifying payment. Please contact support.");
+        setIsProcessingPayment(false);
+      }
+    }
+  };
+
+  const handleUpgradeClick = async () => {
+    try {
+      setIsProcessingPayment(true);
+      const originUrl = window.location.origin;
+      
+      const response = await axios.post(`${API}/payments/checkout`, {
+        package_id: selectedPackage,
+        origin_url: originUrl,
+        wallet_address: wallet || null
+      });
+      
+      if (response.data.checkout_url) {
+        window.location.href = response.data.checkout_url;
+      } else {
+        throw new Error("No checkout URL received");
+      }
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      toast.error("Failed to start checkout. Please try again.");
+      setIsProcessingPayment(false);
+    }
+  };
 
   // Show upgrade popup after 2 minutes
   useEffect(() => {
@@ -981,16 +1073,58 @@ const DashboardPage = () => {
               <Check className="w-5 h-5 text-[#00FF94]" />
               <span>Priority support</span>
             </div>
+            
+            {/* Package Selection */}
+            <div className="pt-4 space-y-3">
+              <div 
+                className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedPackage === 'pro_monthly' ? 'border-[#7B61FF] bg-[#7B61FF]/10' : 'border-zinc-700 hover:border-zinc-600'}`}
+                onClick={() => setSelectedPackage('pro_monthly')}
+                data-testid="package-monthly"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold">Monthly</p>
+                    <p className="text-sm text-zinc-400">Billed monthly</p>
+                  </div>
+                  <p className="text-xl font-bold">$29<span className="text-sm text-zinc-400">/mo</span></p>
+                </div>
+              </div>
+              <div 
+                className={`p-4 rounded-lg border cursor-pointer transition-all relative ${selectedPackage === 'pro_yearly' ? 'border-[#7B61FF] bg-[#7B61FF]/10' : 'border-zinc-700 hover:border-zinc-600'}`}
+                onClick={() => setSelectedPackage('pro_yearly')}
+                data-testid="package-yearly"
+              >
+                <Badge className="absolute -top-2 right-3 bg-[#00FF94] text-black">Save $99</Badge>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold">Yearly</p>
+                    <p className="text-sm text-zinc-400">2 months FREE</p>
+                  </div>
+                  <p className="text-xl font-bold">$249<span className="text-sm text-zinc-400">/yr</span></p>
+                </div>
+              </div>
+            </div>
           </div>
           <DialogFooter className="flex-col gap-3">
             <Button 
               className="w-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 py-6 text-lg font-bold rounded-full glow-primary"
               data-testid="upgrade-now-btn"
-              onClick={() => toast.success("Upgrade flow coming soon!")}
+              onClick={handleUpgradeClick}
+              disabled={isProcessingPayment}
             >
-              Upgrade Now — $29/month
+              {isProcessingPayment ? (
+                <>
+                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5 mr-2" />
+                  {selectedPackage === 'pro_monthly' ? 'Upgrade Now — $29/month' : 'Upgrade Now — $249/year'}
+                </>
+              )}
             </Button>
-            <Button variant="ghost" onClick={() => setShowUpgradePopup(false)} className="text-zinc-500">
+            <Button variant="ghost" onClick={() => setShowUpgradePopup(false)} className="text-zinc-500" disabled={isProcessingPayment}>
               Maybe later
             </Button>
           </DialogFooter>
