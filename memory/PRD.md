@@ -1,6 +1,6 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 11 Complete - Full Authentication System
+## Current Status: Phase 12 Complete - Advanced Performance Metrics
 
 ### Overview
 AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals, execute trades (paper or live via Uniswap V3), and track portfolio performance.
@@ -9,55 +9,42 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 
 ---
 
-### Latest Feature: Full Authentication System (March 2026)
+### Latest Feature: Advanced Performance Metrics (March 2026)
 
-**Authentication Features:**
-- **Email/Password Registration & Login** with JWT tokens
-- **Email Verification** for new signups (token-based)
-- **Optional 2FA (TOTP)** with QR code and backup codes
-- **Password Reset Flow** with secure tokens
-- **Wallet Linking** - Connect Web3 wallet to account
+**Performance Metrics Features:**
+- **Paper vs Live Separation** - Clear distinction between simulated and real trading results
+- **Equity Curve Charts** - Daily overview + trade-by-trade detail
+- **Sharpe Ratio** with BTC Buy-and-Hold benchmark comparison
+- **Sortino Ratio** (downside-only volatility)
+- **Calmar Ratio** (return/max drawdown)
+- **Daily PnL** breakdown with winning/losing days
+- **Compliance Labels** - "PAPER TRADING" (purple) / "LIVE TRADING" (red) badges
+- **Expandable Disclaimers** with full risk warnings
 
-**Auth API Endpoints:**
-- `POST /api/auth/register` - Register with email/password
-- `POST /api/auth/login` - Login (supports 2FA)
-- `POST /api/auth/refresh` - Refresh JWT tokens
-- `POST /api/auth/logout` - Logout (revoke tokens)
-- `GET /api/auth/me` - Get current user profile
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password with token
-- `POST /api/auth/verify-email` - Verify email with token
-- `POST /api/auth/2fa/enable` - Enable 2FA (returns QR code)
-- `POST /api/auth/2fa/verify` - Verify 2FA setup
-- `POST /api/auth/2fa/disable` - Disable 2FA
-- `POST /api/auth/link-wallet` - Link Web3 wallet
+**Metrics API Endpoints:**
+- `GET /api/metrics/compliance/{mode}` - Get compliance labels and disclaimers
+- `GET /api/metrics/summary` - Complete performance summary
+- `GET /api/metrics/equity-curve/daily` - Daily equity curve data
+- `GET /api/metrics/equity-curve/trades` - Trade-level equity changes
+- `GET /api/metrics/sharpe` - Sharpe/Sortino/Calmar with benchmark
+- `GET /api/metrics/daily-pnl` - Daily PnL breakdown
+- `GET /api/metrics/combined` - Paper + Live side-by-side comparison
 
-**WebSocket Real-Time Updates:**
-- `WS /ws/signals/{client_id}` - Real-time signals for Pro/Elite
-- `GET /api/ws/status` - WebSocket connection statistics
-
-**Frontend Auth Pages:**
-- Login page with email/password and 2FA support
-- Register page with password strength indicator
-- Forgot password page
-- Reset password page (token-based)
-- Email verification page
+**Frontend Dashboard:**
+- Side-by-side Paper vs Live performance cards
+- Tabbed navigation: Overview | Equity Curves | Risk Metrics | Daily P&L
+- Period selector (7D, 30D, 90D)
+- Interactive charts with tooltips
+- Compliance badges and expandable disclaimers
 
 ---
 
-### Phase 10: Live Trading System
-- Paper trading with simulated execution
-- Uniswap V3 live trading preparation
-- Trade execution from signals
-- Portfolio and PnL tracking
-
-**Trading API Endpoints:**
-- `POST /api/trading/execute` - Execute trade (paper or live)
-- `GET /api/trading/positions` - Get open positions
-- `GET /api/trading/portfolio` - Get portfolio with PnL
-- `GET /api/trading/history` - Get trade history
-- `GET/POST /api/trading/mode` - Get/set trading mode
-- `GET /api/trading/supported-tokens` - List supported tokens
+### Phase 11: Full Authentication System
+- Email/Password JWT authentication
+- Email verification for signups
+- Optional 2FA (TOTP) with QR code
+- Password reset flow
+- WebSocket endpoint for Pro users
 
 ---
 
@@ -73,81 +60,70 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 **Phase 9**: Stripe Pro Subscription
 - Monthly ($29) and Yearly ($249) plans
 - Stripe Checkout integration
-- Pro status activation
 
 **Phase 10**: Live Trading System
 - Paper trading with simulated execution
 - Uniswap V3 live trading preparation
 
-**Phase 11**: Full Authentication System ✅ NEW
+**Phase 11**: Full Authentication System ✅
 - Email/Password JWT authentication
-- Email verification for signups
-- Optional 2FA (TOTP) with QR code
-- Password reset flow
-- WebSocket endpoint for Pro users
+- Email verification, 2FA, password reset
+
+**Phase 12**: Advanced Performance Metrics ✅ NEW
+- Paper vs Live trading separation
+- Equity curves, Sharpe ratio, Daily PnL
+- Compliance badges and disclaimers
 
 ---
 
 ### API Summary
 
 ```
+Performance Metrics:
+- GET /api/metrics/compliance/{mode}
+- GET /api/metrics/summary
+- GET /api/metrics/equity-curve/daily
+- GET /api/metrics/equity-curve/trades
+- GET /api/metrics/sharpe
+- GET /api/metrics/daily-pnl
+- GET /api/metrics/combined
+
 Authentication:
 - POST /api/auth/register
 - POST /api/auth/login
 - POST /api/auth/refresh
-- POST /api/auth/logout
 - GET /api/auth/me
-- POST /api/auth/forgot-password
-- POST /api/auth/reset-password
-- POST /api/auth/verify-email
-- POST /api/auth/2fa/enable
-- POST /api/auth/2fa/verify
-- POST /api/auth/2fa/disable
-- POST /api/auth/link-wallet
-
-WebSocket:
-- WS /ws/signals/{client_id}
-- GET /api/ws/status
+- POST /api/auth/2fa/enable|verify|disable
 
 Trading:
 - POST /api/trading/execute
 - GET /api/trading/positions
-- GET /api/trading/portfolio  
-- GET /api/trading/history
-- GET/POST /api/trading/mode
-- GET /api/trading/supported-tokens
+- GET /api/trading/portfolio
 
-Signals (Tiered):
-- GET /api/signals/free (15-min delay)
-- GET /api/signals/pro (real-time)
-- GET /api/signals/tiered (auto-detect tier)
-- GET /api/signals/history
+Signals:
+- GET /api/signals/tiered
+- GET /api/signals/free
+- GET /api/signals/pro
 
 Payments:
 - POST /api/payments/checkout
 - GET /api/payments/status/{session_id}
-- GET /api/payments/packages
-
-Analytics:
-- POST /api/analytics/track
-- GET /api/analytics/summary
-- GET /api/analytics/daily
 ```
 
 ---
 
 ### Test Results (March 2026)
+- **Metrics Backend**: 100% (22/22 tests)
+- **Metrics Frontend**: 100% (All UI tests)
 - **Auth Backend**: 100% (26/26 tests)
-- **Auth Frontend**: 100% (8/8 UI tests)
-- **Trading Backend**: 100% (16/16 tests)
-- **Trading Frontend**: 100% (6/6 UI tests)
+- **Auth Frontend**: 100% (8/8 tests)
 - **Overall**: All systems operational
 
 ---
 
 ### Technical Stack
 - **Backend**: FastAPI (Python 3.11+)
-- **Frontend**: React 18 + Shadcn/UI
+- **Frontend**: React 18 + Shadcn/UI + Recharts
 - **Database**: MongoDB
 - **Auth**: JWT (python-jose) + TOTP (pyotp)
 - **Payments**: Stripe
@@ -158,14 +134,14 @@ Analytics:
 ---
 
 ### Next Action Items (P0)
-1. Implement email sending for verification/reset (currently logged)
+1. Implement email sending for verification/reset
 2. Deploy smart contract to Sepolia mainnet
-3. Enable live Uniswap V3 execution
+3. Create sample trades for metrics demo data
 
 ### Upcoming Tasks (P1)
 - Add email notifications for trades and Pro signal alerts
 - Implement stop-loss/take-profit orders
-- Complete WebSocket frontend integration for live price updates
+- Complete WebSocket frontend integration
 
 ### Future Tasks (P2-P3)
 - Copy trading feature
@@ -178,8 +154,7 @@ Analytics:
 ### Known Limitations
 - Email sending is mocked (tokens logged to console)
 - Live trading is prepared but uses testnet
-- Paper trading is simulated (no real execution)
-- SOL trades use ETH as proxy (SOL not on Ethereum)
+- Metrics show 0% return for demo (need trades executed)
 
 ---
 Last Updated: March 21, 2026
