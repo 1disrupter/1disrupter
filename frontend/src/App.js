@@ -11,7 +11,7 @@ import {
   RefreshCw, ExternalLink, Copy, Sparkles, FlaskConical, Play,
   Pause, TestTube, Rocket, StopCircle, Gauge, Scale, Split,
   Beaker, Trophy, FileCode, Radio, CircleDot, Terminal, ScrollText,
-  Plus, Minus, ArrowDown, Eye
+  Plus, Minus, ArrowDown, Eye, PlayCircle
 } from "lucide-react";
 import {
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -768,6 +768,101 @@ const DashboardPage = () => {
     { symbol: 'ETH', action: 'BUY', result: '+2.4%', time: '12h ago' }
   ]);
 
+  // === TRADING STATE ===
+  const [tradingMode, setTradingMode] = useState('simulation'); // 'simulation' or 'live'
+  const [showTradeModal, setShowTradeModal] = useState(false);
+  const [selectedSignal, setSelectedSignal] = useState(null);
+  const [tradeAmount, setTradeAmount] = useState(100);
+  const [isExecutingTrade, setIsExecutingTrade] = useState(false);
+  const [portfolio, setPortfolio] = useState(null);
+  const [positions, setPositions] = useState([]);
+
+  // Fetch trading mode and portfolio
+  useEffect(() => {
+    if (wallet) {
+      // Get trading mode
+      axios.get(`${API}/trading/mode?wallet_address=${wallet}`)
+        .then(res => setTradingMode(res.data.mode || 'simulation'))
+        .catch(console.error);
+      
+      // Get portfolio
+      axios.get(`${API}/trading/portfolio?wallet_address=${wallet}&is_live=false`)
+        .then(res => setPortfolio(res.data))
+        .catch(console.error);
+      
+      // Get positions
+      axios.get(`${API}/trading/positions?wallet_address=${wallet}&is_live=false`)
+        .then(res => setPositions(res.data.positions || []))
+        .catch(console.error);
+    }
+  }, [wallet]);
+
+  const handleExecuteTradeClick = (signal) => {
+    if (!wallet && !demoMode) {
+      toast.error("Connect wallet to trade");
+      return;
+    }
+    setSelectedSignal(signal);
+    setShowTradeModal(true);
+  };
+
+  const executeTrade = async () => {
+    if (!selectedSignal) return;
+    
+    setIsExecutingTrade(true);
+    try {
+      const response = await axios.post(`${API}/trading/execute`, {
+        wallet_address: wallet || 'demo_user',
+        symbol: selectedSignal.symbol,
+        side: selectedSignal.signal,
+        amount_usd: tradeAmount,
+        is_live: tradingMode === 'live'
+      });
+      
+      if (response.data.success) {
+        toast.success(`${selectedSignal.signal} ${selectedSignal.symbol} executed at $${response.data.executed_price?.toLocaleString()}`);
+        setShowTradeModal(false);
+        
+        // Refresh portfolio
+        const portfolioRes = await axios.get(`${API}/trading/portfolio?wallet_address=${wallet || 'demo_user'}&is_live=${tradingMode === 'live'}`);
+        setPortfolio(portfolioRes.data);
+        
+        // Refresh positions
+        const posRes = await axios.get(`${API}/trading/positions?wallet_address=${wallet || 'demo_user'}&is_live=${tradingMode === 'live'}`);
+        setPositions(posRes.data.positions || []);
+        
+        trackEvent('conversion', 'trade_executed', { symbol: selectedSignal.symbol, side: selectedSignal.signal, amount: tradeAmount });
+      } else {
+        toast.error(response.data.error || "Trade failed");
+      }
+    } catch (error) {
+      console.error("Trade error:", error);
+      toast.error(error.response?.data?.detail || "Trade execution failed");
+    }
+    setIsExecutingTrade(false);
+  };
+
+  const toggleTradingMode = async () => {
+    const newMode = tradingMode === 'simulation' ? 'live' : 'simulation';
+    
+    if (newMode === 'live' && !wallet) {
+      toast.error("Connect wallet to enable live trading");
+      return;
+    }
+    
+    if (newMode === 'live') {
+      toast.warning("Live trading enabled. Real funds will be used!", { duration: 5000 });
+    }
+    
+    try {
+      await axios.post(`${API}/trading/mode?wallet_address=${wallet}&mode=${newMode}`);
+      setTradingMode(newMode);
+      toast.success(`Switched to ${newMode} mode`);
+    } catch (error) {
+      toast.error("Failed to switch mode");
+    }
+  };
+
   // Active users randomizer (updates every 30s)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1041,6 +1136,25 @@ const DashboardPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
+              {/* Trading Mode Toggle */}
+              <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-[#050505] border border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-zinc-400" />
+                  <span className="text-sm text-zinc-400">Trading Mode:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm ${tradingMode === 'simulation' ? 'text-[#7B61FF]' : 'text-zinc-500'}`}>Simulation</span>
+                  <button 
+                    onClick={toggleTradingMode}
+                    className={`w-12 h-6 rounded-full p-1 transition-colors ${tradingMode === 'live' ? 'bg-[#00FF94]' : 'bg-zinc-700'}`}
+                    data-testid="trading-mode-toggle"
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${tradingMode === 'live' ? 'translate-x-6' : ''}`} />
+                  </button>
+                  <span className={`text-sm ${tradingMode === 'live' ? 'text-[#00FF94]' : 'text-zinc-500'}`}>Live</span>
+                </div>
+              </div>
+
               <div className="grid gap-4">
                 {signals.map((s, i) => (
                   <motion.div
@@ -1065,6 +1179,21 @@ const DashboardPage = () => {
                           {getSignalIcon(s.signal)}
                           {s.signal}
                         </div>
+                        {/* Execute Trade Button */}
+                        {s.signal !== 'HOLD' && (
+                          <Button
+                            onClick={() => handleExecuteTradeClick(s)}
+                            className={`ml-2 rounded-full px-4 py-2 text-sm font-bold ${
+                              s.signal === 'BUY' 
+                                ? 'bg-[#00FF94]/20 text-[#00FF94] hover:bg-[#00FF94]/30 border border-[#00FF94]/50' 
+                                : 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/50'
+                            }`}
+                            data-testid={`execute-${s.symbol.toLowerCase()}`}
+                          >
+                            <PlayCircle className="w-4 h-4 mr-1" />
+                            Execute
+                          </Button>
+                        )}
                       </div>
                     </div>
                     {/* MISSED TRADE TRIGGER - FOMO */}
@@ -1305,6 +1434,58 @@ const DashboardPage = () => {
           </motion.div>
         )}
 
+        {/* OPEN POSITIONS */}
+        {positions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="mb-8"
+          >
+            <Card className="glass-card" data-testid="positions-card">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-[#7B61FF]" />
+                    Open Positions
+                    <Badge variant="outline" className="ml-2 text-xs">{tradingMode}</Badge>
+                  </div>
+                  {portfolio && (
+                    <span className={`font-mono text-sm ${portfolio.net_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                      {portfolio.net_pnl >= 0 ? '+' : ''}{portfolio.net_pnl?.toFixed(2)} USD
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {positions.map((pos, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <div className="font-bold">{pos.symbol}</div>
+                          <div className="text-xs text-zinc-500">{pos.side}</div>
+                        </div>
+                        <div className="text-sm text-zinc-400">
+                          {pos.amount?.toFixed(6)} @ ${pos.entry_price?.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`font-mono font-bold ${pos.unrealized_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                          {pos.unrealized_pnl >= 0 ? '+' : ''}{pos.unrealized_pnl?.toFixed(2)} USD
+                        </div>
+                        <div className={`text-xs ${pos.unrealized_pnl_percent >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                          {pos.unrealized_pnl_percent >= 0 ? '+' : ''}{pos.unrealized_pnl_percent?.toFixed(2)}%
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* ADVANCED TOGGLE (Hidden by default) */}
         <div className="text-center">
           <Button 
@@ -1476,6 +1657,146 @@ const DashboardPage = () => {
               setShowExitPopup(false);
             }} className="text-zinc-500 text-sm">
               No thanks, I'll miss out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* TRADE CONFIRMATION MODAL */}
+      <Dialog open={showTradeModal} onOpenChange={setShowTradeModal}>
+        <DialogContent className="bg-[#121212] border-zinc-800 max-w-md" data-testid="trade-modal">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              {selectedSignal?.signal === 'BUY' ? (
+                <ArrowUpRight className="w-6 h-6 text-[#00FF94]" />
+              ) : (
+                <ArrowDownRight className="w-6 h-6 text-red-400" />
+              )}
+              {selectedSignal?.signal} {selectedSignal?.symbol}
+            </DialogTitle>
+            <DialogDescription>
+              Execute trade based on AI signal
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedSignal && (
+            <div className="space-y-4 py-4">
+              {/* Mode Indicator */}
+              <div className={`p-3 rounded-lg ${tradingMode === 'live' ? 'bg-red-500/10 border border-red-500/30' : 'bg-[#7B61FF]/10 border border-[#7B61FF]/30'}`}>
+                <div className="flex items-center gap-2">
+                  {tradingMode === 'live' ? (
+                    <>
+                      <AlertTriangle className="w-4 h-4 text-red-400" />
+                      <span className="text-red-400 font-medium">LIVE TRADING - Real funds will be used</span>
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="w-4 h-4 text-[#7B61FF]" />
+                      <span className="text-[#7B61FF] font-medium">Paper Trading Mode</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Signal Details */}
+              <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-zinc-400">Asset</span>
+                  <span className="font-bold text-lg">{selectedSignal.symbol}</span>
+                </div>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-zinc-400">Current Price</span>
+                  <span className="font-mono">${selectedSignal.price?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-zinc-400">Signal</span>
+                  <span className={`font-bold ${selectedSignal.signal === 'BUY' ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                    {selectedSignal.signal}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-400">Confidence</span>
+                  <span className="font-mono">{selectedSignal.confidence}%</span>
+                </div>
+              </div>
+
+              {/* Trade Amount */}
+              <div>
+                <label className="text-sm text-zinc-400 block mb-2">Trade Amount (USD)</label>
+                <div className="flex gap-2">
+                  {[50, 100, 250, 500].map(amt => (
+                    <button
+                      key={amt}
+                      onClick={() => setTradeAmount(amt)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        tradeAmount === amt 
+                          ? 'bg-[#7B61FF] text-white' 
+                          : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                      }`}
+                    >
+                      ${amt}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  value={tradeAmount}
+                  onChange={(e) => setTradeAmount(Number(e.target.value))}
+                  className="w-full mt-2 p-3 rounded-lg bg-[#050505] border border-zinc-800 text-white font-mono"
+                  placeholder="Custom amount"
+                />
+              </div>
+
+              {/* Estimated Output */}
+              <div className="p-3 rounded-lg bg-zinc-900 border border-zinc-800">
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-500">Estimated {selectedSignal.symbol}</span>
+                  <span className="font-mono">{(tradeAmount / selectedSignal.price).toFixed(6)} {selectedSignal.symbol}</span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-zinc-500">Est. Fee</span>
+                  <span className="font-mono text-zinc-400">~$5-10</span>
+                </div>
+              </div>
+
+              {/* Portfolio Quick View */}
+              {portfolio && (
+                <div className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
+                  <div className="text-xs text-zinc-500 mb-1">Your Portfolio</div>
+                  <div className="flex justify-between text-sm">
+                    <span>Paper Balance:</span>
+                    <span className="font-mono text-[#00FF94]">${portfolio.total_invested?.toLocaleString() || '10,000'}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="flex-col gap-2">
+            <Button
+              onClick={executeTrade}
+              disabled={isExecutingTrade || tradeAmount <= 0}
+              className={`w-full py-6 rounded-full font-bold text-lg ${
+                selectedSignal?.signal === 'BUY'
+                  ? 'bg-[#00FF94] hover:bg-[#00FF94]/90 text-black'
+                  : 'bg-red-500 hover:bg-red-500/90 text-white'
+              }`}
+              data-testid="confirm-trade-btn"
+            >
+              {isExecutingTrade ? (
+                <>
+                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                  Executing...
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="w-5 h-5 mr-2" />
+                  Confirm {selectedSignal?.signal} ${tradeAmount}
+                </>
+              )}
+            </Button>
+            <Button variant="ghost" onClick={() => setShowTradeModal(false)} className="text-zinc-500">
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>

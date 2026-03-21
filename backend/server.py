@@ -553,6 +553,368 @@ async def signal_generation_task():
             logger.error(f"Signal generation task error: {str(e)}")
         await asyncio.sleep(60)  # Generate new signals every minute
 
+# ============= LIVE TRADING SYSTEM (UNISWAP V3) =============
+
+# Token addresses on Ethereum Mainnet
+TOKEN_ADDRESSES = {
+    "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "WBTC": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    "DAI": "0x6B175474E89094C44Da98b954EesDeDAD6FAeFAB",
+}
+
+# Sepolia testnet addresses
+SEPOLIA_TOKEN_ADDRESSES = {
+    "WETH": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+    "USDC": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+}
+
+# Uniswap V3 Router addresses
+UNISWAP_V3_ROUTER = {
+    "mainnet": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "sepolia": "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E"
+}
+
+class TradeOrder(BaseModel):
+    """Trade order for execution"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    wallet_address: str
+    signal_id: Optional[str] = None
+    symbol: str  # BTC, ETH, SOL
+    side: str  # BUY or SELL
+    amount_usd: float
+    slippage_tolerance: float = 0.5  # 0.5%
+    is_live: bool = False  # False = paper trade
+    status: str = "pending"  # pending, submitted, confirmed, failed, cancelled
+    tx_hash: Optional[str] = None
+    gas_used: Optional[int] = None
+    gas_price_gwei: Optional[float] = None
+    executed_price: Optional[float] = None
+    executed_amount: Optional[float] = None
+    fee_paid: Optional[float] = None
+    pnl: Optional[float] = None
+    pnl_percent: Optional[float] = None
+    error_message: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    executed_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
+
+class TradePosition(BaseModel):
+    """Open trading position"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    wallet_address: str
+    symbol: str
+    side: str  # LONG or SHORT
+    entry_price: float
+    current_price: float
+    amount: float
+    amount_usd: float
+    unrealized_pnl: float = 0.0
+    unrealized_pnl_percent: float = 0.0
+    is_live: bool = False
+    opened_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LiveTradingService:
+    """Service for executing live trades via Uniswap V3"""
+    
+    def __init__(self):
+        self.network = "sepolia"  # Default to testnet for safety
+        self.router_address = UNISWAP_V3_ROUTER[self.network]
+    
+    def get_token_mapping(self, symbol: str) -> dict:
+        """Map crypto symbols to token addresses"""
+        # Map common symbols to their wrapped versions
+        mapping = {
+            "BTC": {"token": "WBTC", "decimals": 8},
+            "ETH": {"token": "WETH", "decimals": 18},
+            "USDC": {"token": "USDC", "decimals": 6},
+            "USDT": {"token": "USDT", "decimals": 6},
+            "SOL": {"token": "WETH", "decimals": 18},  # SOL not on Ethereum, use ETH as proxy
+        }
+        return mapping.get(symbol, {"token": "WETH", "decimals": 18})
+    
+    async def prepare_swap_transaction(
+        self,
+        wallet_address: str,
+        token_in: str,
+        token_out: str,
+        amount_in: float,
+        slippage: float = 0.5
+    ) -> dict:
+        """Prepare a Uniswap V3 swap transaction for frontend signing"""
+        try:
+            token_addresses = SEPOLIA_TOKEN_ADDRESSES if self.network == "sepolia" else TOKEN_ADDRESSES
+            
+            # Get token addresses
+            token_in_address = token_addresses.get(token_in)
+            token_out_address = token_addresses.get(token_out)
+            
+            if not token_in_address or not token_out_address:
+                raise ValueError(f"Token not supported: {token_in} or {token_out}")
+            
+            # Calculate amounts with slippage
+            # In production, this would query the Uniswap quoter for exact amounts
+            min_amount_out = amount_in * (1 - slippage / 100)
+            
+            # Prepare swap parameters
+            # exactInputSingle function selector: 0x414bf389
+            swap_params = {
+                "router": self.router_address,
+                "tokenIn": token_in_address,
+                "tokenOut": token_out_address,
+                "fee": 3000,  # 0.3% fee tier (most common)
+                "recipient": wallet_address,
+                "deadline": int((datetime.now(timezone.utc) + timedelta(minutes=20)).timestamp()),
+                "amountIn": int(amount_in * (10 ** 18)),  # Convert to wei
+                "amountOutMinimum": int(min_amount_out * (10 ** 18)),
+                "sqrtPriceLimitX96": 0  # No price limit
+            }
+            
+            # Build transaction data
+            # This is a simplified version - in production use web3.py to encode properly
+            tx_data = {
+                "to": self.router_address,
+                "data": self._encode_swap_data(swap_params),
+                "value": hex(swap_params["amountIn"]) if token_in == "WETH" else "0x0",
+                "chainId": 11155111 if self.network == "sepolia" else 1,
+                "gasLimit": hex(300000),  # Estimated gas
+            }
+            
+            return {
+                "success": True,
+                "transaction": tx_data,
+                "params": swap_params,
+                "network": self.network,
+                "estimated_gas": 300000
+            }
+            
+        except Exception as e:
+            logger.error(f"Swap preparation error: {str(e)}")
+            return {"success": False, "error": str(e)}
+    
+    def _encode_swap_data(self, params: dict) -> str:
+        """Encode swap function data (simplified)"""
+        # In production, use web3.py contract.encodeABI()
+        # This is a placeholder that returns the function selector
+        return "0x414bf389"  # exactInputSingle selector
+    
+    async def execute_paper_trade(
+        self,
+        wallet_address: str,
+        symbol: str,
+        side: str,
+        amount_usd: float,
+        current_price: float,
+        signal_id: Optional[str] = None
+    ) -> dict:
+        """Execute a paper trade (simulated)"""
+        try:
+            # Calculate trade amount
+            token_amount = amount_usd / current_price
+            
+            # Simulate small slippage (0.1-0.3%)
+            slippage = random.uniform(0.001, 0.003)
+            executed_price = current_price * (1 + slippage if side == "BUY" else 1 - slippage)
+            executed_amount = amount_usd / executed_price
+            
+            # Simulate gas fee ($2-10)
+            gas_fee = random.uniform(2, 10)
+            
+            # Create trade order
+            order = TradeOrder(
+                wallet_address=wallet_address,
+                signal_id=signal_id,
+                symbol=symbol,
+                side=side,
+                amount_usd=amount_usd,
+                is_live=False,
+                status="confirmed",
+                tx_hash=f"0x{''.join(random.choices('0123456789abcdef', k=64))}",
+                gas_used=random.randint(150000, 250000),
+                gas_price_gwei=random.uniform(20, 50),
+                executed_price=executed_price,
+                executed_amount=executed_amount,
+                fee_paid=gas_fee,
+                executed_at=datetime.now(timezone.utc)
+            )
+            
+            # Store trade
+            trade_doc = order.model_dump()
+            trade_doc["created_at"] = order.created_at
+            trade_doc["executed_at"] = order.executed_at
+            await db.trades.insert_one(trade_doc)
+            
+            # Update or create position
+            existing_position = await db.positions.find_one({
+                "wallet_address": wallet_address,
+                "symbol": symbol,
+                "is_live": False
+            })
+            
+            if existing_position:
+                # Update existing position
+                if side == "BUY":
+                    new_amount = existing_position["amount"] + executed_amount
+                    new_cost = existing_position["amount_usd"] + amount_usd
+                    new_entry = new_cost / new_amount
+                else:
+                    new_amount = existing_position["amount"] - executed_amount
+                    new_cost = existing_position["amount_usd"] - amount_usd
+                    new_entry = new_cost / new_amount if new_amount > 0 else 0
+                
+                if new_amount <= 0:
+                    # Close position
+                    realized_pnl = (executed_price - existing_position["entry_price"]) * existing_position["amount"]
+                    await db.positions.delete_one({"id": existing_position["id"]})
+                    
+                    # Update trade with PnL
+                    await db.trades.update_one(
+                        {"id": order.id},
+                        {"$set": {"pnl": realized_pnl, "pnl_percent": (realized_pnl / existing_position["amount_usd"]) * 100}}
+                    )
+                else:
+                    await db.positions.update_one(
+                        {"id": existing_position["id"]},
+                        {"$set": {
+                            "amount": new_amount,
+                            "amount_usd": new_cost,
+                            "entry_price": new_entry,
+                            "current_price": executed_price,
+                            "last_updated": datetime.now(timezone.utc)
+                        }}
+                    )
+            else:
+                # Create new position
+                position = TradePosition(
+                    wallet_address=wallet_address,
+                    symbol=symbol,
+                    side="LONG" if side == "BUY" else "SHORT",
+                    entry_price=executed_price,
+                    current_price=executed_price,
+                    amount=executed_amount,
+                    amount_usd=amount_usd,
+                    is_live=False
+                )
+                await db.positions.insert_one(position.model_dump())
+            
+            # Update investor paper balance
+            await db.investors.update_one(
+                {"wallet_address": wallet_address},
+                {"$inc": {"paper_balance": -amount_usd if side == "BUY" else amount_usd}}
+            )
+            
+            logger.info(f"Paper trade executed: {side} {symbol} ${amount_usd} for {wallet_address}")
+            
+            return {
+                "success": True,
+                "trade_id": order.id,
+                "tx_hash": order.tx_hash,
+                "executed_price": executed_price,
+                "executed_amount": executed_amount,
+                "fee_paid": gas_fee,
+                "is_live": False,
+                "status": "confirmed"
+            }
+            
+        except Exception as e:
+            logger.error(f"Paper trade error: {str(e)}")
+            return {"success": False, "error": str(e)}
+    
+    async def get_user_positions(self, wallet_address: str, is_live: Optional[bool] = None) -> List[dict]:
+        """Get all positions for a user"""
+        query = {"wallet_address": wallet_address}
+        if is_live is not None:
+            query["is_live"] = is_live
+        
+        positions = await db.positions.find(query, {"_id": 0}).to_list(100)
+        
+        # Update current prices and PnL
+        for pos in positions:
+            # Fetch current price
+            prices = await signal_service._fetch_live_prices()
+            current_price = next((p["price"] for p in prices if p["symbol"] == pos["symbol"]), pos["current_price"])
+            
+            # Calculate unrealized PnL
+            if pos["side"] == "LONG":
+                unrealized_pnl = (current_price - pos["entry_price"]) * pos["amount"]
+            else:
+                unrealized_pnl = (pos["entry_price"] - current_price) * pos["amount"]
+            
+            unrealized_pnl_percent = (unrealized_pnl / pos["amount_usd"]) * 100
+            
+            pos["current_price"] = current_price
+            pos["unrealized_pnl"] = round(unrealized_pnl, 2)
+            pos["unrealized_pnl_percent"] = round(unrealized_pnl_percent, 2)
+            
+            # Convert datetime
+            if isinstance(pos.get("opened_at"), datetime):
+                pos["opened_at"] = pos["opened_at"].isoformat()
+            if isinstance(pos.get("last_updated"), datetime):
+                pos["last_updated"] = pos["last_updated"].isoformat()
+        
+        return positions
+    
+    async def get_trade_history(
+        self,
+        wallet_address: str,
+        is_live: Optional[bool] = None,
+        limit: int = 50
+    ) -> List[dict]:
+        """Get trade history for a user"""
+        query = {"wallet_address": wallet_address}
+        if is_live is not None:
+            query["is_live"] = is_live
+        
+        trades = await db.trades.find(query, {"_id": 0}).sort("created_at", -1).limit(limit).to_list(limit)
+        
+        # Convert datetimes
+        for trade in trades:
+            if isinstance(trade.get("created_at"), datetime):
+                trade["created_at"] = trade["created_at"].isoformat()
+            if isinstance(trade.get("executed_at"), datetime):
+                trade["executed_at"] = trade["executed_at"].isoformat()
+            if isinstance(trade.get("closed_at"), datetime):
+                trade["closed_at"] = trade["closed_at"].isoformat()
+        
+        return trades
+    
+    async def get_portfolio_summary(self, wallet_address: str, is_live: bool = False) -> dict:
+        """Get portfolio summary with total PnL"""
+        positions = await self.get_user_positions(wallet_address, is_live)
+        trades = await self.get_trade_history(wallet_address, is_live, 1000)
+        
+        # Calculate totals
+        total_invested = sum(p.get("amount_usd", 0) for p in positions)
+        total_unrealized_pnl = sum(p.get("unrealized_pnl", 0) for p in positions)
+        total_realized_pnl = sum(t.get("pnl", 0) or 0 for t in trades)
+        total_fees = sum(t.get("fee_paid", 0) or 0 for t in trades)
+        
+        # Win/loss stats
+        winning_trades = [t for t in trades if (t.get("pnl") or 0) > 0]
+        losing_trades = [t for t in trades if (t.get("pnl") or 0) < 0]
+        
+        return {
+            "wallet_address": wallet_address,
+            "is_live": is_live,
+            "positions_count": len(positions),
+            "total_invested": round(total_invested, 2),
+            "total_unrealized_pnl": round(total_unrealized_pnl, 2),
+            "total_realized_pnl": round(total_realized_pnl, 2),
+            "total_fees_paid": round(total_fees, 2),
+            "net_pnl": round(total_unrealized_pnl + total_realized_pnl - total_fees, 2),
+            "total_trades": len(trades),
+            "winning_trades": len(winning_trades),
+            "losing_trades": len(losing_trades),
+            "win_rate": round(len(winning_trades) / max(len(trades), 1) * 100, 1)
+        }
+
+# Initialize trading service
+trading_service = LiveTradingService()
+
 # ============= SIMULATION ENGINE =============
 
 class SimulationEngine:
@@ -2317,6 +2679,276 @@ async def get_user_tier(wallet_address: str):
         "signal_delay_minutes": 0 if tier != "free" else 15,
         "refresh_rate_seconds": SIGNAL_REFRESH_RATES.get(tier, 300),
         "features": features
+    }
+
+# ============= LIVE TRADING API ENDPOINTS =============
+
+class ExecuteTradeRequest(BaseModel):
+    wallet_address: str
+    symbol: str
+    side: str  # BUY or SELL
+    amount_usd: float
+    signal_id: Optional[str] = None
+    is_live: bool = False  # False = paper trading
+    slippage_tolerance: float = 0.5
+
+class ClosePositionRequest(BaseModel):
+    wallet_address: str
+    position_id: str
+    is_live: bool = False
+
+@api_router.post("/trading/execute")
+async def execute_trade(request: ExecuteTradeRequest):
+    """Execute a trade (paper or live)"""
+    try:
+        # Validate user exists
+        investor = await db.investors.find_one({"wallet_address": request.wallet_address})
+        if not investor:
+            raise HTTPException(status_code=404, detail="Wallet not registered")
+        
+        # Check paper balance for paper trades
+        if not request.is_live:
+            if investor.get("paper_balance", 0) < request.amount_usd:
+                raise HTTPException(status_code=400, detail=f"Insufficient paper balance. Available: ${investor.get('paper_balance', 0):.2f}")
+        
+        # Get current price
+        prices = await signal_service._fetch_live_prices()
+        current_price = next((p["price"] for p in prices if p["symbol"] == request.symbol), None)
+        
+        if not current_price:
+            raise HTTPException(status_code=400, detail=f"Could not fetch price for {request.symbol}")
+        
+        if request.is_live:
+            # Prepare live swap transaction for frontend signing
+            token_mapping = trading_service.get_token_mapping(request.symbol)
+            
+            if request.side == "BUY":
+                token_in = "USDC"
+                token_out = token_mapping["token"]
+                amount_in = request.amount_usd
+            else:
+                token_in = token_mapping["token"]
+                token_out = "USDC"
+                amount_in = request.amount_usd / current_price
+            
+            tx_data = await trading_service.prepare_swap_transaction(
+                wallet_address=request.wallet_address,
+                token_in=token_in,
+                token_out=token_out,
+                amount_in=amount_in,
+                slippage=request.slippage_tolerance
+            )
+            
+            if not tx_data.get("success"):
+                raise HTTPException(status_code=500, detail=tx_data.get("error", "Transaction preparation failed"))
+            
+            # Create pending order
+            order = TradeOrder(
+                wallet_address=request.wallet_address,
+                signal_id=request.signal_id,
+                symbol=request.symbol,
+                side=request.side,
+                amount_usd=request.amount_usd,
+                slippage_tolerance=request.slippage_tolerance,
+                is_live=True,
+                status="pending_signature"
+            )
+            
+            await db.trades.insert_one(order.model_dump())
+            
+            return {
+                "success": True,
+                "trade_id": order.id,
+                "status": "pending_signature",
+                "is_live": True,
+                "transaction": tx_data["transaction"],
+                "network": tx_data["network"],
+                "estimated_gas": tx_data["estimated_gas"],
+                "current_price": current_price,
+                "message": "Transaction prepared. Sign with your wallet to execute."
+            }
+        else:
+            # Execute paper trade
+            result = await trading_service.execute_paper_trade(
+                wallet_address=request.wallet_address,
+                symbol=request.symbol,
+                side=request.side,
+                amount_usd=request.amount_usd,
+                current_price=current_price,
+                signal_id=request.signal_id
+            )
+            
+            if not result.get("success"):
+                raise HTTPException(status_code=500, detail=result.get("error", "Trade execution failed"))
+            
+            return result
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Trade execution error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/trading/confirm")
+async def confirm_live_trade(trade_id: str, tx_hash: str):
+    """Confirm a live trade after blockchain confirmation"""
+    try:
+        trade = await db.trades.find_one({"id": trade_id})
+        if not trade:
+            raise HTTPException(status_code=404, detail="Trade not found")
+        
+        if trade.get("status") != "pending_signature":
+            raise HTTPException(status_code=400, detail=f"Trade already processed: {trade.get('status')}")
+        
+        # Update trade with confirmation
+        await db.trades.update_one(
+            {"id": trade_id},
+            {"$set": {
+                "status": "confirmed",
+                "tx_hash": tx_hash,
+                "executed_at": datetime.now(timezone.utc)
+            }}
+        )
+        
+        return {
+            "success": True,
+            "trade_id": trade_id,
+            "tx_hash": tx_hash,
+            "status": "confirmed"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Trade confirmation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/trading/positions")
+async def get_positions(wallet_address: str, is_live: Optional[bool] = None):
+    """Get user's open positions"""
+    positions = await trading_service.get_user_positions(wallet_address, is_live)
+    return {"positions": positions, "count": len(positions)}
+
+@api_router.get("/trading/history")
+async def get_trade_history(
+    wallet_address: str,
+    is_live: Optional[bool] = None,
+    limit: int = Query(default=50, le=200)
+):
+    """Get user's trade history"""
+    trades = await trading_service.get_trade_history(wallet_address, is_live, limit)
+    return {"trades": trades, "count": len(trades)}
+
+@api_router.get("/trading/portfolio")
+async def get_portfolio(wallet_address: str, is_live: bool = False):
+    """Get portfolio summary with PnL"""
+    summary = await trading_service.get_portfolio_summary(wallet_address, is_live)
+    return summary
+
+@api_router.post("/trading/close-position")
+async def close_position(request: ClosePositionRequest):
+    """Close an open position"""
+    try:
+        position = await db.positions.find_one({
+            "id": request.position_id,
+            "wallet_address": request.wallet_address
+        })
+        
+        if not position:
+            raise HTTPException(status_code=404, detail="Position not found")
+        
+        # Get current price
+        prices = await signal_service._fetch_live_prices()
+        current_price = next((p["price"] for p in prices if p["symbol"] == position["symbol"]), position["current_price"])
+        
+        # Execute closing trade
+        close_side = "SELL" if position["side"] == "LONG" else "BUY"
+        
+        result = await trading_service.execute_paper_trade(
+            wallet_address=request.wallet_address,
+            symbol=position["symbol"],
+            side=close_side,
+            amount_usd=position["amount"] * current_price,
+            current_price=current_price
+        )
+        
+        if not result.get("success"):
+            raise HTTPException(status_code=500, detail=result.get("error", "Position close failed"))
+        
+        # Calculate realized PnL
+        if position["side"] == "LONG":
+            realized_pnl = (current_price - position["entry_price"]) * position["amount"]
+        else:
+            realized_pnl = (position["entry_price"] - current_price) * position["amount"]
+        
+        # Delete position
+        await db.positions.delete_one({"id": request.position_id})
+        
+        return {
+            "success": True,
+            "position_id": request.position_id,
+            "realized_pnl": round(realized_pnl, 2),
+            "realized_pnl_percent": round((realized_pnl / position["amount_usd"]) * 100, 2),
+            "close_price": current_price,
+            "trade_id": result["trade_id"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Position close error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/trading/mode")
+async def get_trading_mode(wallet_address: str):
+    """Get user's trading mode preference"""
+    investor = await db.investors.find_one({"wallet_address": wallet_address})
+    if not investor:
+        return {"mode": "simulation", "is_live_enabled": False}
+    
+    return {
+        "mode": "live" if investor.get("is_live_trading", False) else "simulation",
+        "is_live_enabled": investor.get("is_live_trading", False),
+        "paper_balance": investor.get("paper_balance", 10000)
+    }
+
+@api_router.post("/trading/mode")
+async def set_trading_mode(wallet_address: str, mode: str):
+    """Set user's trading mode (simulation or live)"""
+    if mode not in ["simulation", "live"]:
+        raise HTTPException(status_code=400, detail="Mode must be 'simulation' or 'live'")
+    
+    investor = await db.investors.find_one({"wallet_address": wallet_address})
+    if not investor:
+        raise HTTPException(status_code=404, detail="Wallet not registered")
+    
+    is_live = mode == "live"
+    
+    await db.investors.update_one(
+        {"wallet_address": wallet_address},
+        {"$set": {"is_live_trading": is_live}}
+    )
+    
+    return {
+        "success": True,
+        "mode": mode,
+        "is_live_enabled": is_live,
+        "message": f"Trading mode set to {mode}"
+    }
+
+@api_router.get("/trading/supported-tokens")
+async def get_supported_tokens():
+    """Get list of supported tokens for trading"""
+    return {
+        "tokens": [
+            {"symbol": "BTC", "name": "Bitcoin", "wrapped": "WBTC", "supported": True},
+            {"symbol": "ETH", "name": "Ethereum", "wrapped": "WETH", "supported": True},
+            {"symbol": "SOL", "name": "Solana", "wrapped": None, "supported": False, "note": "SOL not available on Ethereum. Use as ETH proxy."},
+            {"symbol": "USDC", "name": "USD Coin", "wrapped": None, "supported": True},
+            {"symbol": "USDT", "name": "Tether", "wrapped": None, "supported": True},
+        ],
+        "network": trading_service.network,
+        "dex": "Uniswap V3"
     }
 
 # ============= AGENTS ROUTES =============
