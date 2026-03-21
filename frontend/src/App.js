@@ -39,6 +39,7 @@ import "@/App.css";
 import { ethers } from "ethers";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./pages/AuthPages";
+import PerformanceMetrics from "./components/PerformanceMetrics";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -1319,6 +1320,16 @@ const DashboardPage = () => {
               </div>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* ADVANCED PERFORMANCE METRICS - Paper vs Live */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+          className="mb-8"
+        >
+          <PerformanceMetrics walletAddress={wallet || 'demo_user'} />
         </motion.div>
 
         {/* RECENT SIGNALS - TRUST BUILDER */}

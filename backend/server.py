@@ -5878,12 +5878,15 @@ async def websocket_status():
 
 # Include auth router
 from routes.auth import router as auth_router, init_db as init_auth_db
+from routes.metrics import router as metrics_router, init_db as init_metrics_db
 
 # Initialize auth database
 init_auth_db(db)
+init_metrics_db(db)
 
 # Include router and middleware
 app.include_router(auth_router)
+app.include_router(metrics_router)
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 
