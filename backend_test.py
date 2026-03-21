@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class AlphaAIAPITester:
-    def __init__(self, base_url="https://alpha-signals-18.preview.emergentagent.com"):
+    def __init__(self, base_url="https://trading-signals-lab-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0

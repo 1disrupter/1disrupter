@@ -11,7 +11,7 @@ import {
   RefreshCw, ExternalLink, Copy, Sparkles, FlaskConical, Play,
   Pause, TestTube, Rocket, StopCircle, Gauge, Scale, Split,
   Beaker, Trophy, FileCode, Radio, CircleDot, Terminal, ScrollText,
-  Plus, Minus, ArrowDown, Eye, PlayCircle
+  Plus, Minus, ArrowDown, Eye, PlayCircle, LogIn, LogOut, User
 } from "lucide-react";
 import {
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -37,6 +37,8 @@ import {
 } from "./components/ui/select";
 import "@/App.css";
 import { ethers } from "ethers";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./pages/AuthPages";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -249,7 +251,8 @@ const formatAddress = (address) => {
 
 // Navigation
 const Navigation = () => {
-  const { wallet, connectWallet, disconnectWallet, loading, chainId, ethBalance, switchToSepolia } = useWallet();
+  const { wallet, connectWallet, disconnectWallet, loading: walletLoading, chainId, ethBalance, switchToSepolia } = useWallet();
+  const { user, isAuthenticated, logout, isPro } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -297,59 +300,94 @@ const Navigation = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {wallet ? (
+            {/* User Authentication Status */}
+            {isAuthenticated ? (
               <>
-                {/* Network Badge */}
-                {chainId && (
-                  <Badge 
-                    className={`${isOnSepolia ? 'bg-[#00FF94]/20 text-[#00FF94]' : 'bg-[#FFB800]/20 text-[#FFB800] cursor-pointer'}`}
-                    onClick={!isOnSepolia ? switchToSepolia : undefined}
-                    data-testid="network-badge"
-                  >
-                    {isOnSepolia ? '⚡ Sepolia' : '⚠️ Wrong Network'}
+                {/* Pro Badge */}
+                {isPro && (
+                  <Badge className="bg-gradient-to-r from-[#7B61FF] to-[#00FF94] text-white" data-testid="pro-badge">
+                    PRO
                   </Badge>
                 )}
                 
-                {/* ETH Balance */}
-                {ethBalance && (
-                  <div className="hidden sm:flex items-center gap-1 px-3 py-1 rounded-full bg-zinc-800/50 border border-zinc-700">
-                    <span className="text-xs text-zinc-400">ETH</span>
-                    <span className="text-sm font-mono font-bold text-white">{parseFloat(ethBalance).toFixed(4)}</span>
-                  </div>
+                {/* Wallet Section (if connected) */}
+                {wallet && (
+                  <>
+                    {chainId && (
+                      <Badge 
+                        className={`${isOnSepolia ? 'bg-[#00FF94]/20 text-[#00FF94]' : 'bg-[#FFB800]/20 text-[#FFB800] cursor-pointer'}`}
+                        onClick={!isOnSepolia ? switchToSepolia : undefined}
+                        data-testid="network-badge"
+                      >
+                        {isOnSepolia ? '⚡ Sepolia' : '⚠️ Wrong Network'}
+                      </Badge>
+                    )}
+                    
+                    {ethBalance && (
+                      <div className="hidden sm:flex items-center gap-1 px-3 py-1 rounded-full bg-zinc-800/50 border border-zinc-700">
+                        <span className="text-xs text-zinc-400">ETH</span>
+                        <span className="text-sm font-mono font-bold text-white">{parseFloat(ethBalance).toFixed(4)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
                 
+                {/* User Menu Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="rounded-full border-[#7B61FF]/30 hover:border-[#7B61FF] bg-[#7B61FF]/10" data-testid="wallet-dropdown">
-                      <Wallet className="w-4 h-4 mr-2 text-[#7B61FF]" />
-                      {formatAddress(wallet)}
+                    <Button variant="outline" className="rounded-full border-[#7B61FF]/30 hover:border-[#7B61FF] bg-[#7B61FF]/10" data-testid="user-dropdown">
+                      <User className="w-4 h-4 mr-2 text-[#7B61FF]" />
+                      {user?.name?.split(' ')[0] || 'User'}
                       <ChevronDown className="w-4 h-4 ml-2" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-[#121212] border-zinc-800">
-                    <DropdownMenuItem onClick={() => navigator.clipboard.writeText(wallet)}>
-                      <Copy className="w-4 h-4 mr-2" />Copy Address
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => window.open(`https://sepolia.etherscan.io/address/${wallet}`, '_blank')}>
-                      <ExternalLink className="w-4 h-4 mr-2" />View on Etherscan
-                    </DropdownMenuItem>
-                    {!isOnSepolia && (
-                      <DropdownMenuItem onClick={switchToSepolia} className="text-[#FFB800]">
-                        <Zap className="w-4 h-4 mr-2" />Switch to Sepolia
+                  <DropdownMenuContent align="end" className="bg-[#121212] border-zinc-800 w-56">
+                    <div className="px-3 py-2 border-b border-zinc-800">
+                      <p className="text-sm font-medium">{user?.name}</p>
+                      <p className="text-xs text-zinc-500">{user?.email}</p>
+                    </div>
+                    
+                    {wallet ? (
+                      <>
+                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(wallet)}>
+                          <Copy className="w-4 h-4 mr-2" />Copy Wallet
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.open(`https://sepolia.etherscan.io/address/${wallet}`, '_blank')}>
+                          <ExternalLink className="w-4 h-4 mr-2" />View on Etherscan
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={disconnectWallet} className="text-[#FFB800]">
+                          <Wallet className="w-4 h-4 mr-2" />Disconnect Wallet
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <DropdownMenuItem onClick={connectWallet}>
+                        <Wallet className="w-4 h-4 mr-2" />Connect Wallet
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={disconnectWallet} className="text-red-400">
-                      <X className="w-4 h-4 mr-2" />Disconnect
+                    
+                    <DropdownMenuItem onClick={logout} className="text-red-400">
+                      <LogOut className="w-4 h-4 mr-2" />Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
             ) : (
-              <Button onClick={connectWallet} disabled={loading} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 glow-primary" data-testid="connect-wallet-btn">
-                <Wallet className="w-4 h-4 mr-2" />
-                {loading ? "Connecting..." : "Connect Wallet"}
-              </Button>
+              <>
+                {/* Not logged in - show login/register */}
+                <Link to="/login">
+                  <Button variant="ghost" className="rounded-full text-zinc-400 hover:text-white" data-testid="login-nav-btn">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 glow-primary" data-testid="register-nav-btn">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
             )}
+            
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} data-testid="mobile-menu-btn">
               <Menu className="w-5 h-5" />
             </Button>
@@ -364,6 +402,17 @@ const Navigation = () => {
                   <item.icon className="w-5 h-5" />{item.label}
                 </Link>
               ))}
+              {/* Mobile Auth Links */}
+              {!isAuthenticated && (
+                <div className="mt-4 pt-4 border-t border-zinc-800 space-y-2">
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400">
+                    <LogIn className="w-5 h-5" />Sign In
+                  </Link>
+                  <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#7B61FF] text-white">
+                    <User className="w-5 h-5" />Get Started
+                  </Link>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -4221,27 +4270,35 @@ const SimulationPage = () => {
 // Main App
 function App() {
   return (
-    <WalletProvider>
-      <div className="App min-h-screen bg-[#050505]">
-        <BrowserRouter>
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/simulation" element={<SimulationPage />} />
-            <Route path="/research" element={<ResearchEnginePage />} />
-            <Route path="/agents" element={<AgentsPage />} />
-            <Route path="/events" element={<EventAgentsPage />} />
-            <Route path="/lab" element={<StrategyLabPage />} />
-            <Route path="/marketplace" element={<MarketplacePage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/conversion-analytics" element={<ConversionAnalyticsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Routes>
-        </BrowserRouter>
-        <Toaster position="bottom-right" theme="dark" />
-      </div>
-    </WalletProvider>
+    <AuthProvider>
+      <WalletProvider>
+        <div className="App min-h-screen bg-[#050505]">
+          <BrowserRouter>
+            <Navigation />
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/simulation" element={<SimulationPage />} />
+              <Route path="/research" element={<ResearchEnginePage />} />
+              <Route path="/agents" element={<AgentsPage />} />
+              <Route path="/events" element={<EventAgentsPage />} />
+              <Route path="/lab" element={<StrategyLabPage />} />
+              <Route path="/marketplace" element={<MarketplacePage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/conversion-analytics" element={<ConversionAnalyticsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              {/* Auth Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+            </Routes>
+          </BrowserRouter>
+          <Toaster position="bottom-right" theme="dark" />
+        </div>
+      </WalletProvider>
+    </AuthProvider>
   );
 }
 

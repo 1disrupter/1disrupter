@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, BackgroundTasks, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, BackgroundTasks, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -7,13 +8,14 @@ import re
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
 import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
 import random
 import json
 import asyncio
+from collections import defaultdict
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
@@ -33,6 +35,143 @@ api_router = APIRouter(prefix="/api")
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("AlphaAI")
+
+# ============= WEBSOCKET CONNECTION MANAGER =============
+
+class ConnectionManager:
+    """Manages WebSocket connections for real-time updates"""
+    
+    def __init__(self):
+        # Active connections grouped by tier and wallet
+        self.active_connections: Dict[str, Dict[str, WebSocket]] = {
+            "pro": {},      # wallet_address -> WebSocket
+            "elite": {},    # wallet_address -> WebSocket
+        }
+        # Track connection metadata
+        self.connection_metadata: Dict[str, Dict] = {}
+        # Subscription channels
+        self.subscriptions: Dict[str, Set[str]] = defaultdict(set)  # channel -> set of wallet_addresses
+        # Lock for thread-safe operations
+        self._lock = asyncio.Lock()
+    
+    async def connect(self, websocket: WebSocket, wallet_address: str, tier: str) -> bool:
+        """Accept and register a WebSocket connection"""
+        if tier not in ["pro", "elite"]:
+            await websocket.close(code=4003, reason="WebSocket requires Pro or Elite subscription")
+            return False
+        
+        await websocket.accept()
+        
+        async with self._lock:
+            # Close existing connection if any
+            if wallet_address in self.active_connections[tier]:
+                try:
+                    await self.active_connections[tier][wallet_address].close()
+                except:
+                    pass
+            
+            self.active_connections[tier][wallet_address] = websocket
+            self.connection_metadata[wallet_address] = {
+                "tier": tier,
+                "connected_at": datetime.now(timezone.utc).isoformat(),
+                "subscriptions": set()
+            }
+            
+            # Auto-subscribe to default channels
+            self.subscriptions["signals"].add(wallet_address)
+            self.subscriptions["prices"].add(wallet_address)
+            self.connection_metadata[wallet_address]["subscriptions"] = {"signals", "prices"}
+        
+        logger.info(f"WebSocket connected: {wallet_address} (tier: {tier})")
+        return True
+    
+    async def disconnect(self, wallet_address: str):
+        """Remove a WebSocket connection"""
+        async with self._lock:
+            for tier in ["pro", "elite"]:
+                if wallet_address in self.active_connections[tier]:
+                    del self.active_connections[tier][wallet_address]
+            
+            # Remove from all subscriptions
+            for channel in self.subscriptions:
+                self.subscriptions[channel].discard(wallet_address)
+            
+            if wallet_address in self.connection_metadata:
+                del self.connection_metadata[wallet_address]
+        
+        logger.info(f"WebSocket disconnected: {wallet_address}")
+    
+    async def subscribe(self, wallet_address: str, channel: str):
+        """Subscribe to a specific channel"""
+        async with self._lock:
+            self.subscriptions[channel].add(wallet_address)
+            if wallet_address in self.connection_metadata:
+                self.connection_metadata[wallet_address]["subscriptions"].add(channel)
+    
+    async def unsubscribe(self, wallet_address: str, channel: str):
+        """Unsubscribe from a channel"""
+        async with self._lock:
+            self.subscriptions[channel].discard(wallet_address)
+            if wallet_address in self.connection_metadata:
+                self.connection_metadata[wallet_address]["subscriptions"].discard(channel)
+    
+    async def send_personal(self, wallet_address: str, message: dict):
+        """Send a message to a specific connection"""
+        for tier in ["pro", "elite"]:
+            if wallet_address in self.active_connections[tier]:
+                try:
+                    await self.active_connections[tier][wallet_address].send_json(message)
+                    return True
+                except Exception as e:
+                    logger.error(f"Error sending to {wallet_address}: {e}")
+                    await self.disconnect(wallet_address)
+        return False
+    
+    async def broadcast_to_channel(self, channel: str, message: dict):
+        """Broadcast a message to all subscribers of a channel"""
+        subscribers = list(self.subscriptions.get(channel, set()))
+        tasks = []
+        
+        for wallet_address in subscribers:
+            tasks.append(self.send_personal(wallet_address, message))
+        
+        if tasks:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            success_count = sum(1 for r in results if r is True)
+            logger.debug(f"Broadcast to {channel}: {success_count}/{len(tasks)} delivered")
+    
+    async def broadcast_to_tier(self, tier: str, message: dict):
+        """Broadcast a message to all connections of a specific tier"""
+        if tier not in self.active_connections:
+            return
+        
+        connections = list(self.active_connections[tier].items())
+        for wallet_address, websocket in connections:
+            try:
+                await websocket.send_json(message)
+            except Exception as e:
+                logger.error(f"Error broadcasting to {wallet_address}: {e}")
+                await self.disconnect(wallet_address)
+    
+    async def broadcast_all(self, message: dict):
+        """Broadcast to all Pro and Elite connections"""
+        await self.broadcast_to_tier("pro", message)
+        await self.broadcast_to_tier("elite", message)
+    
+    def get_connection_count(self) -> dict:
+        """Get count of active connections"""
+        return {
+            "pro": len(self.active_connections["pro"]),
+            "elite": len(self.active_connections["elite"]),
+            "total": len(self.active_connections["pro"]) + len(self.active_connections["elite"])
+        }
+    
+    def get_channel_subscribers(self, channel: str) -> int:
+        """Get number of subscribers for a channel"""
+        return len(self.subscriptions.get(channel, set()))
+
+# Initialize WebSocket manager
+ws_manager = ConnectionManager()
 
 # ============= MODELS =============
 
@@ -545,13 +684,49 @@ signal_service = SignalService()
 
 # Background task to generate signals periodically
 async def signal_generation_task():
-    """Background task to generate signals every minute"""
+    """Background task to generate signals every minute and broadcast via WebSocket"""
     while True:
         try:
-            await signal_service.generate_signals()
+            signals = await signal_service.generate_signals()
+            
+            # Broadcast new signals to Pro/Elite WebSocket connections
+            if signals:
+                signal_data = []
+                for s in signals:
+                    signal_data.append({
+                        "symbol": s.symbol,
+                        "signal_type": s.signal_type,
+                        "confidence": s.confidence,
+                        "price": s.price_at_signal,
+                        "analysis": s.analysis,
+                        "generated_at": s.generated_at.isoformat() if hasattr(s.generated_at, 'isoformat') else str(s.generated_at)
+                    })
+                
+                await ws_manager.broadcast_to_channel("signals", {
+                    "type": "signals_update",
+                    "data": signal_data,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                })
+                
         except Exception as e:
             logger.error(f"Signal generation task error: {str(e)}")
         await asyncio.sleep(60)  # Generate new signals every minute
+
+# Background task for price updates (more frequent for WebSocket)
+async def price_broadcast_task():
+    """Broadcast live prices every 5 seconds to WebSocket connections"""
+    while True:
+        try:
+            prices = await signal_service._fetch_live_prices()
+            if prices:
+                await ws_manager.broadcast_to_channel("prices", {
+                    "type": "price_update",
+                    "data": prices,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                })
+        except Exception as e:
+            logger.error(f"Price broadcast error: {str(e)}")
+        await asyncio.sleep(5)  # Broadcast prices every 5 seconds for Pro/Elite
 
 # ============= LIVE TRADING SYSTEM (UNISWAP V3) =============
 
@@ -5598,7 +5773,117 @@ async def get_feature_analytics(feature: str, days: int = 7):
         logger.error(f"Feature analytics error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ============= WEBSOCKET ENDPOINT =============
+
+@app.websocket("/ws/signals/{client_id}")
+async def websocket_signals_endpoint(websocket: WebSocket, client_id: str):
+    """
+    WebSocket endpoint for real-time signal updates.
+    Requires Pro or Elite tier.
+    
+    client_id format: {user_id}:{tier} (e.g., "abc123:pro")
+    """
+    try:
+        # Parse client_id to get user_id and tier
+        parts = client_id.split(":")
+        if len(parts) != 2:
+            await websocket.close(code=4000, reason="Invalid client_id format")
+            return
+        
+        user_id, tier = parts
+        tier = tier.lower()
+        
+        if tier not in ["pro", "elite"]:
+            await websocket.close(code=4003, reason="WebSocket requires Pro or Elite subscription")
+            return
+        
+        # Connect using the connection manager
+        connected = await ws_manager.connect(websocket, user_id, tier)
+        if not connected:
+            return
+        
+        # Send welcome message
+        await websocket.send_json({
+            "type": "connected",
+            "message": f"Connected to AlphaAI real-time signals ({tier})",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+        # Send current signals immediately
+        signals = await signal_service.get_realtime_signals(user_id)
+        await websocket.send_json({
+            "type": "signals",
+            "data": signals,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+        # Keep connection alive and handle incoming messages
+        while True:
+            try:
+                data = await websocket.receive_json()
+                
+                # Handle subscription requests
+                if data.get("action") == "subscribe":
+                    channel = data.get("channel")
+                    if channel:
+                        await ws_manager.subscribe(user_id, channel)
+                        await websocket.send_json({
+                            "type": "subscribed",
+                            "channel": channel
+                        })
+                
+                elif data.get("action") == "unsubscribe":
+                    channel = data.get("channel")
+                    if channel:
+                        await ws_manager.unsubscribe(user_id, channel)
+                        await websocket.send_json({
+                            "type": "unsubscribed",
+                            "channel": channel
+                        })
+                
+                elif data.get("action") == "ping":
+                    await websocket.send_json({
+                        "type": "pong",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    })
+                    
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                logger.error(f"WebSocket message error: {e}")
+                break
+    
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.error(f"WebSocket connection error: {e}")
+    finally:
+        await ws_manager.disconnect(user_id)
+        logger.info(f"WebSocket disconnected: {user_id}")
+
+# WebSocket status endpoint
+@api_router.get("/ws/status")
+async def websocket_status():
+    """Get WebSocket connection statistics"""
+    counts = ws_manager.get_connection_count()
+    return {
+        "status": "active",
+        "connections": counts,
+        "channels": {
+            "signals": ws_manager.get_channel_subscribers("signals"),
+            "prices": ws_manager.get_channel_subscribers("prices"),
+            "trades": ws_manager.get_channel_subscribers("trades")
+        }
+    }
+
+# Include auth router
+from routes.auth import router as auth_router, init_db as init_auth_db
+
+# Initialize auth database
+init_auth_db(db)
+
 # Include router and middleware
+app.include_router(auth_router)
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 
