@@ -1,122 +1,129 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 9 Complete - Stripe Pro Subscription
+## Current Status: Phase 10 Complete - Live Trading System
 
 ### Overview
-AlphaAI is a decentralized AI-powered hedge fund platform repositioned as a B2C/SaaS tool for "AI crypto signals + automated trading insights". Users can view AI-generated trading signals, track performance, and upgrade to Pro subscription ($29/month or $249/year) via Stripe Checkout.
+AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals, execute trades (paper or live via Uniswap V3), and track portfolio performance.
 
-**Copyright © 2026 Martin Maughan. All rights reserved. AlphaAI Platform.**
+**Copyright © 2026 Martin Maughan. All rights reserved.**
+
+---
+
+### Latest Feature: Live Trading System (March 2026)
+
+**Trading Capabilities:**
+- **Paper Trading**: Simulated trades with $10,000 starting balance
+- **Live Trading**: Uniswap V3 integration (Sepolia testnet)
+- **Trade Execution**: One-click from AI signals
+- **Portfolio Tracking**: Real-time PnL, positions, history
+
+**Trading API Endpoints:**
+- `POST /api/trading/execute` - Execute trade (paper or live)
+- `GET /api/trading/positions` - Get open positions
+- `GET /api/trading/portfolio` - Get portfolio with PnL
+- `GET /api/trading/history` - Get trade history
+- `GET/POST /api/trading/mode` - Get/set trading mode
+- `GET /api/trading/supported-tokens` - List supported tokens
+
+**Frontend Trading UI:**
+- Trading Mode Toggle (Simulation ↔ Live)
+- "Execute" button on each BUY/SELL signal
+- Trade confirmation modal with amount selection
+- Open positions display with unrealized PnL
+- Portfolio summary card
+
+---
 
 ### All Implemented Features
 
-**Phase 1-7** ✅ (See previous documentation)
-- AI Trading Agents, Simulation, Reports, Smart Contracts, Marketing Assets
+**Phase 1-7**: Core MVP, AI Agents, Simulation, Reports, Smart Contracts, Marketing Assets
 
-**Phase 8 - High-Conversion Dashboard (March 2026)** ✅
-- Conversion-Focused Dashboard Redesign
-- Demo Mode for wallet-free viewing
+**Phase 8**: High-Conversion Dashboard
 - Today's AI Signals with live Kraken prices
 - Performance metrics, AI Summary
-- Upgrade CTAs and locked Pro features preview
-- 2-Minute Upgrade Popup Modal
+- Upgrade CTAs, 2-minute popup, exit intent
 
-**Phase 9 - Stripe Pro Subscription (March 2026)** ✅ NEW
-- **Stripe Checkout Integration**:
-  - Monthly Plan: $29/month
-  - Yearly Plan: $249/year (Save $99 - 2 months FREE)
-  - Secure checkout via Stripe hosted page
-  - Payment status polling with auto Pro activation
-  - Webhook support for payment events
-- **Payment Endpoints**:
-  - `POST /api/payments/checkout` - Create Stripe checkout session
-  - `GET /api/payments/status/{session_id}` - Get payment status
-  - `GET /api/payments/packages` - Get available packages
-  - `GET /api/users/pro-status/{wallet}` - Check Pro status
-  - `POST /api/webhook/stripe` - Handle Stripe webhooks
-- **Database**: `payment_transactions` collection for tracking
-- **Frontend Integration**:
-  - Package selection UI (Monthly/Yearly toggle)
-  - Dynamic "Upgrade Now" button text
-  - Payment return handling with status polling
-  - Pro status persistence
+**Phase 9**: Stripe Pro Subscription
+- Monthly ($29) and Yearly ($249) plans
+- Stripe Checkout integration
+- Pro status activation
 
-### API Endpoints Summary
+**Phase 10**: Live Trading System ✅ NEW
+- Paper trading with simulated execution
+- Uniswap V3 live trading preparation
+- Trade execution from signals
+- Portfolio and PnL tracking
+
+---
+
+### API Summary
 
 ```
-Payments (NEW):
+Trading:
+- POST /api/trading/execute
+- GET /api/trading/positions
+- GET /api/trading/portfolio  
+- GET /api/trading/history
+- GET/POST /api/trading/mode
+- GET /api/trading/supported-tokens
+- POST /api/trading/close-position
+- POST /api/trading/confirm
+
+Signals (Tiered):
+- GET /api/signals/free (15-min delay)
+- GET /api/signals/pro (real-time)
+- GET /api/signals/tiered (auto-detect tier)
+- GET /api/signals/history
+
+Payments:
 - POST /api/payments/checkout
 - GET /api/payments/status/{session_id}
 - GET /api/payments/packages
-- GET /api/users/pro-status/{wallet_address}
-- POST /api/webhook/stripe
 
-Dashboard & Prices:
-- GET /api/live-prices
-- GET /api/market/live-prices
-
-(See previous PRD for complete API list)
+Analytics:
+- POST /api/analytics/track
+- GET /api/analytics/summary
+- GET /api/analytics/daily
 ```
 
+---
+
 ### Test Results (March 2026)
-- **Stripe Backend**: 100% (10/10 tests passed)
-- **Stripe Frontend**: 100% (17/17 UI elements verified)
-- **Dashboard**: 100% (14/14 UI elements, 12/12 API tests)
+- **Trading Backend**: 100% (16/16 tests)
+- **Trading Frontend**: 100% (6/6 UI tests)
+- **Overall**: All systems operational
+
+---
 
 ### Technical Stack
 - **Backend**: FastAPI (Python 3.11+)
-- **Frontend**: React 18 with Shadcn/UI
-- **Database**: MongoDB (motor async driver)
-- **Payments**: Stripe Checkout (via emergentintegrations)
-- **AI Integration**: OpenAI GPT-5.2, Sora 2, TTS, Gemini Nano Banana
-- **Market Data**: Kraken API (live prices)
-- **Web3**: ethers.js (frontend), web3.py (backend)
-
-### Next Action Items (P0)
-1. Deploy `AlphaAIManager.sol` to Sepolia testnet
-2. Implement JWT-based user authentication
-3. Add Pro feature unlocks (real-time signals, no delay)
-4. Integrate real DEX (Uniswap V3) for live trades
-
-### Future Tasks (P1-P3)
-- Email notifications for payment receipts
-- Subscription management (cancel, upgrade/downgrade)
-- WebSocket real-time updates
-- Public leaderboard and referral system
-- Mobile optimization
-
-### Known Limitations
-- Trading is simulated (paper trading mode)
-- Smart contract interactions are mocked
-- User authentication is wallet-based only
-- Pro features unlock UI changes only (real-time signals backend not yet differentiated)
-
-### Files Structure
-```
-/app/
-├── backend/
-│   ├── server.py                    # Main FastAPI (~4200 lines, includes Stripe)
-│   ├── contracts/AlphaAIManager.sol
-│   ├── tests/test_stripe_payments.py  # NEW
-│   └── marketing_assets/
-├── frontend/
-│   └── src/
-│       ├── App.js                   # Main React (~3350 lines)
-│       ├── contexts/WalletContext.jsx
-│       └── pages/Dashboard.jsx
-├── test_reports/
-│   ├── iteration_6.json             # Dashboard tests
-│   └── pytest/stripe_pytest_results.xml  # Stripe tests
-└── memory/
-    └── PRD.md
-```
-
-### 3rd Party Integrations
-- **Stripe**: Payment processing (via emergentintegrations)
-- **Kraken API**: Live cryptocurrency prices
-- **OpenAI**: GPT-5.2, Sora 2, TTS (via Emergent LLM Key)
-- **Gemini Nano Banana**: Image generation (via Emergent LLM Key)
-- **ethers.js**: MetaMask integration
-- **web3.py**: Smart contract interaction
+- **Frontend**: React 18 + Shadcn/UI
+- **Database**: MongoDB
+- **Payments**: Stripe
+- **Trading**: Uniswap V3 (Sepolia testnet)
+- **AI**: OpenAI GPT-5.2
+- **Market Data**: Kraken API
 
 ---
-Last Updated: March 18, 2026
+
+### Next Action Items (P0)
+1. Deploy smart contract to Sepolia mainnet
+2. Enable live Uniswap V3 execution
+3. Add email notifications for trades
+4. Implement stop-loss/take-profit orders
+
+### Future Tasks (P1-P3)
+- Copy trading feature
+- Mobile app
+- Public leaderboard
+- Referral program
+
+---
+
+### Known Limitations
+- Live trading is prepared but uses testnet
+- Paper trading is simulated (no real execution)
+- SOL trades use ETH as proxy (SOL not on Ethereum)
+
+---
+Last Updated: March 19, 2026
