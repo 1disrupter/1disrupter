@@ -20,6 +20,7 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - **Daily PnL** breakdown with winning/losing days
 - **Compliance Labels** - "PAPER TRADING" (purple) / "LIVE TRADING" (red) badges
 - **Expandable Disclaimers** with full risk warnings
+- **Demo Data Generator** - Populates realistic 30-day paper trading history
 
 **Metrics API Endpoints:**
 - `GET /api/metrics/compliance/{mode}` - Get compliance labels and disclaimers
@@ -29,6 +30,9 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - `GET /api/metrics/sharpe` - Sharpe/Sortino/Calmar with benchmark
 - `GET /api/metrics/daily-pnl` - Daily PnL breakdown
 - `GET /api/metrics/combined` - Paper + Live side-by-side comparison
+- `POST /api/demo/generate-trades` - Generate realistic demo trading data
+- `DELETE /api/demo/clear-trades` - Clear demo data
+- `GET /api/demo/status` - Check demo data status
 
 **Frontend Dashboard:**
 - Side-by-side Paper vs Live performance cards
