@@ -40,6 +40,7 @@ import { ethers } from "ethers";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./pages/AuthPages";
 import PerformanceMetrics from "./components/PerformanceMetrics";
+import ReferralDashboard from "./components/ReferralDashboard";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -266,7 +267,7 @@ const Navigation = () => {
     { path: "/events", label: "Event Agents", icon: Eye },
     { path: "/lab", label: "Strategy Lab", icon: FlaskConical },
     { path: "/marketplace", label: "Marketplace", icon: Store },
-    { path: "/conversion-analytics", label: "Conversions", icon: TrendingUp },
+    { path: "/referrals", label: "Referrals", icon: Users },
     { path: "/admin", label: "Admin", icon: Shield },
   ];
 
@@ -4278,6 +4279,17 @@ const SimulationPage = () => {
   );
 };
 
+// Referral Page
+const ReferralPage = () => {
+  return (
+    <div className="min-h-screen pt-24 pb-12 px-4">
+      <div className="max-w-6xl mx-auto">
+        <ReferralDashboard />
+      </div>
+    </div>
+  );
+};
+
 // Main App
 function App() {
   return (
@@ -4304,6 +4316,8 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
+              {/* Referral */}
+              <Route path="/referrals" element={<ReferralPage />} />
             </Routes>
           </BrowserRouter>
           <Toaster position="bottom-right" theme="dark" />
