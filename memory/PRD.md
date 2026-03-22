@@ -1,15 +1,57 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 12 Complete - Advanced Performance Metrics
+## Current Status: Phase 15 Complete - AI Signal Intelligence
 
 ### Overview
-AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals, execute trades (paper or live via Uniswap V3), and track portfolio performance.
+AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals with AI-powered explanations, execute trades (paper or live via Uniswap V3), and track portfolio performance.
 
 **Copyright © 2026 Martin Maughan. All rights reserved.**
 
 ---
 
-### Latest Feature: Advanced Performance Metrics (March 2026)
+### Latest Feature: AI Signal Intelligence (March 2026)
+
+**AI Signal Intelligence Features:**
+- **GPT-5.2 Powered Explanations** - Each signal includes detailed AI-generated analysis
+- **Trend Analysis** - Direction (bullish/bearish/neutral), strength, timeframe, description
+- **Market Sentiment** - Overall sentiment score (-100 to +100), contributing factors, news impact
+- **Key Technical Indicators** - RSI, MACD, Moving Averages, Volume analysis, Support/Resistance levels
+- **Risk Assessment** - Risk level (low/medium/high), confidence factors
+- **Actionable Insights** - Potential catalysts, suggested actions for traders
+
+**Signal Intelligence Service:**
+- `SignalIntelligenceService` in `/app/backend/services/signal_intelligence.py`
+- GPT-5.2 integration via `emergentintegrations` library
+- Fallback rule-based explanation generation when LLM unavailable
+- Comprehensive JSON response with structured analysis
+
+**Frontend UI Enhancement:**
+- AI explanation summary displayed under each signal with Brain icon
+- "View Full AI Analysis" expandable section
+- Trend Analysis panel (direction, strength, timeframe)
+- Market Sentiment panel (score bar, factors list)
+- Key Indicators panel (RSI, MACD, MAs, Volume, S/R levels)
+- Risk & Action panel (risk level badge, confidence factors, suggested action)
+- Potential Catalysts tags
+
+**API Response Fields Added to Signals:**
+```json
+{
+  "explanation": "One-line summary",
+  "reasoning": "Detailed reasoning paragraph",
+  "trend_analysis": { "direction", "strength", "timeframe", "description" },
+  "market_sentiment": { "overall", "score", "factors", "news_impact" },
+  "key_indicators": { "rsi", "macd", "moving_averages", "volume", "support_resistance" },
+  "risk_level": "low|medium|high",
+  "confidence_factors": ["factor1", "factor2"],
+  "potential_catalysts": ["catalyst1", "catalyst2"],
+  "suggested_action": "Actionable trading advice"
+}
+```
+
+---
+
+### Phase 12: Advanced Performance Metrics (March 2026)
 
 **Performance Metrics Features:**
 - **Paper vs Live Separation** - Clear distinction between simulated and real trading results
@@ -78,13 +120,19 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - Equity curves, Sharpe ratio, Daily PnL
 - Compliance badges and disclaimers
 
-**Phase 14**: Mobile API v1 ✅ NEW
+**Phase 14**: Mobile API v1 ✅
 - Versioned API (`/api/v1/` prefix)
 - Balanced optimization (pagination, field selection, ETag caching)
 - Cross-platform JWT auth with `expires_in`
 - Push notification hooks (Expo/FCM/APNs ready)
 - Device registration and notification preferences
 - Mobile-optimized trading execution
+
+**Phase 15**: AI Signal Intelligence ✅ NEW
+- GPT-5.2 powered signal explanations
+- Trend analysis, market sentiment, key indicators
+- Risk assessment and actionable insights
+- Expandable UI for full AI analysis
 
 ---
 
@@ -153,6 +201,7 @@ Payments:
 ---
 
 ### Test Results (March 2026)
+- **AI Signal Intelligence**: 100% (16/16 tests)
 - **Mobile API v1**: 100% (34/34 tests)
 - **Referral Backend**: 100% (19/19 tests)
 - **Metrics Backend**: 100% (22/22 tests)
@@ -168,7 +217,7 @@ Payments:
 - **Auth**: JWT (python-jose) + TOTP (pyotp)
 - **Payments**: Stripe
 - **Trading**: Uniswap V3 (Sepolia testnet)
-- **AI**: OpenAI GPT-5.2
+- **AI**: OpenAI GPT-5.2 (via emergentintegrations)
 - **Market Data**: Kraken API
 
 ---
@@ -176,8 +225,9 @@ Payments:
 ### Next Action Items (P0)
 1. ~~Execute sample trades to populate metrics demo data~~ ✅ DONE
 2. ~~Implement email sending for auth verification/reset~~ ✅ DONE (Resend integration)
-3. Deploy smart contract to Sepolia mainnet
-4. Configure production Resend API key for live emails
+3. ~~Enhance AI Signal Intelligence~~ ✅ DONE (GPT-5.2 explanations)
+4. Deploy smart contract to Sepolia mainnet
+5. Configure production Resend API key for live emails
 
 ### Upcoming Tasks (P1)
 - Add email notifications for trades and Pro signal alerts
@@ -187,7 +237,6 @@ Payments:
 ### Future Tasks (P2-P3)
 - Copy trading feature
 - Public leaderboard
-- Referral program
 - Mobile app optimization
 
 ---
@@ -195,7 +244,7 @@ Payments:
 ### Known Limitations
 - ~~Email sending is mocked (tokens logged to console)~~ Now uses Resend (requires API key)
 - Live trading is prepared but uses testnet
-- Metrics show 0% return for demo (need trades executed)
+- Free tier users see 15-minute delayed signals (AI explanations visible once signals age)
 
 ---
-Last Updated: March 21, 2026
+Last Updated: March 22, 2026
