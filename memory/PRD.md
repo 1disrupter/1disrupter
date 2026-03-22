@@ -9,7 +9,32 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 
 ---
 
-### Latest Feature: AI Signal Intelligence (March 2026)
+### Latest Feature: Push Notifications for High-Confidence Signals (March 2026)
+
+**Push Notification Features:**
+- **High-Confidence Signal Alerts** - Pro/Elite users receive instant notifications for signals with 75%+ confidence
+- **Notification Preferences** - Users can customize which alerts they receive
+- **Alert Types** - Signal alerts, trade confirmations, price alerts, daily summary, weekly reports
+- **Quiet Hours** - Configurable do-not-disturb time window
+- **Test Notifications** - Verify push setup is working
+
+**Backend Implementation:**
+- `PushNotificationService` in `/app/backend/services/push_notifications.py`
+- `notify_pro_users_high_confidence_signal()` - Sends to all Pro/Elite users
+- API endpoints: `/api/notifications/config`, `/api/notifications/preferences`, `/api/notifications/test`
+- Integration with signal generation triggers notifications automatically
+
+**Frontend UI:**
+- `NotificationSettings` component in dashboard
+- Toggle switches for each notification type
+- PRO badge indicating feature availability
+- Quiet Hours time picker
+
+**Note:** Push delivery is MOCKED (logged to console). Configure FCM/APNs/Expo keys for real delivery.
+
+---
+
+### Previous Feature: AI Signal Intelligence (March 2026)
 
 **AI Signal Intelligence Features:**
 - **GPT-5.2 Powered Explanations** - Each signal includes detailed AI-generated analysis
@@ -128,11 +153,17 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - Device registration and notification preferences
 - Mobile-optimized trading execution
 
-**Phase 15**: AI Signal Intelligence ✅ NEW
+**Phase 15**: AI Signal Intelligence ✅
 - GPT-5.2 powered signal explanations
 - Trend analysis, market sentiment, key indicators
 - Risk assessment and actionable insights
 - Expandable UI for full AI analysis
+
+**Phase 16**: Push Notifications ✅ NEW
+- High-confidence signal alerts (75%+ threshold)
+- Notification preferences management
+- Quiet hours configuration
+- Pro/Elite user targeting
 
 ---
 
@@ -201,6 +232,7 @@ Payments:
 ---
 
 ### Test Results (March 2026)
+- **Push Notifications**: 100% (22/22 tests)
 - **AI Signal Intelligence**: 100% (16/16 tests)
 - **Mobile API v1**: 100% (34/34 tests)
 - **Referral Backend**: 100% (19/19 tests)
@@ -226,11 +258,12 @@ Payments:
 1. ~~Execute sample trades to populate metrics demo data~~ ✅ DONE
 2. ~~Implement email sending for auth verification/reset~~ ✅ DONE (Resend integration)
 3. ~~Enhance AI Signal Intelligence~~ ✅ DONE (GPT-5.2 explanations)
-4. Deploy smart contract to Sepolia mainnet
-5. Configure production Resend API key for live emails
+4. ~~Add push notifications for high-confidence signals~~ ✅ DONE
+5. Deploy smart contract to Sepolia mainnet
+6. Configure production Resend API key for live emails
+7. Configure FCM/APNs/Expo for real push notifications
 
 ### Upcoming Tasks (P1)
-- Add email notifications for trades and Pro signal alerts
 - Implement stop-loss/take-profit orders
 - Complete WebSocket frontend integration
 
@@ -243,6 +276,7 @@ Payments:
 
 ### Known Limitations
 - ~~Email sending is mocked (tokens logged to console)~~ Now uses Resend (requires API key)
+- Push notifications are MOCKED (logged to console) - Configure FCM/APNs/Expo for real delivery
 - Live trading is prepared but uses testnet
 - Free tier users see 15-minute delayed signals (AI explanations visible once signals age)
 
