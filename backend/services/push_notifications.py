@@ -22,6 +22,7 @@ def init_db(database):
 
 class NotificationType(str, Enum):
     SIGNAL_ALERT = "signal_alert"
+    HIGH_CONFIDENCE_SIGNAL = "high_confidence_signal"  # NEW: For high-confidence AI signals
     TRADE_EXECUTED = "trade_executed"
     TRADE_CLOSED = "trade_closed"
     PRICE_ALERT = "price_alert"
@@ -31,6 +32,9 @@ class NotificationType(str, Enum):
     REFERRAL_CONVERSION = "referral_conversion"
     PRO_UPGRADE = "pro_upgrade"
     SYSTEM = "system"
+
+# High confidence threshold for notifications
+HIGH_CONFIDENCE_THRESHOLD = 75  # Signals with 75%+ confidence trigger notifications
 
 class PushNotificationService:
     """
@@ -71,6 +75,7 @@ class PushNotificationService:
             # Check specific notification type preferences
             type_pref_map = {
                 NotificationType.SIGNAL_ALERT: "signal_alerts",
+                NotificationType.HIGH_CONFIDENCE_SIGNAL: "high_confidence_alerts",
                 NotificationType.TRADE_EXECUTED: "trade_confirmations",
                 NotificationType.TRADE_CLOSED: "trade_confirmations",
                 NotificationType.PRICE_ALERT: "price_alerts",
@@ -290,6 +295,106 @@ class PushNotificationService:
             sound="default"
         )
     
+    async def send_high_confidence_signal(
+        self,
+        user_id: str,
+        symbol: str,
+        signal_type: str,
+        confidence: float,
+        price: float,
+        explanation: str = None,
+        suggested_action: str = None,
+        risk_level: str = None
+    ):
+        """Send high-confidence AI signal alert to Pro/Elite users"""
+        emoji = "🚀" if signal_type == "BUY" else "⚠️" if signal_type == "SELL" else "📊"
+        
+        # Build notification body
+        body_parts = [f"{confidence:.0f}% confidence at ${price:,.2f}"]
+        if risk_level:
+            body_parts.append(f"Risk: {risk_level.upper()}")
+        
+        return await self.send_to_user(
+            user_id=user_id,
+            title=f"{emoji} HIGH CONFIDENCE: {signal_type} {symbol}",
+            body=" | ".join(body_parts),
+            data={
+                "type": "high_confidence_signal",
+                "symbol": symbol,
+                "signal_type": signal_type,
+                "confidence": confidence,
+                "price": price,
+                "explanation": explanation,
+                "suggested_action": suggested_action,
+                "risk_level": risk_level,
+                "screen": "dashboard"
+            },
+            notification_type=NotificationType.HIGH_CONFIDENCE_SIGNAL,
+            sound="default"
+        )
+    
+    async def notify_pro_users_high_confidence_signal(
+        self,
+        symbol: str,
+        signal_type: str,
+        confidence: float,
+        price: float,
+        explanation: str = None,
+        suggested_action: str = None,
+        risk_level: str = None
+    ) -> Dict[str, Any]:
+        """
+        Send high-confidence signal notifications to all Pro/Elite users.
+        Only triggers for signals with confidence >= HIGH_CONFIDENCE_THRESHOLD
+        """
+        if confidence < HIGH_CONFIDENCE_THRESHOLD:
+            return {"success": False, "reason": f"Confidence {confidence}% below threshold {HIGH_CONFIDENCE_THRESHOLD}%"}
+        
+        # Get all Pro/Elite users
+        pro_users = await db.investors.find({
+            "$or": [
+                {"is_pro": True},
+                {"is_elite": True}
+            ]
+        }).to_list(1000)
+        
+        if not pro_users:
+            logger.info("No Pro/Elite users to notify")
+            return {"success": True, "notified": 0, "reason": "No Pro/Elite users"}
+        
+        results = []
+        for user in pro_users:
+            user_id = user.get("wallet_address") or user.get("id")
+            if user_id:
+                result = await self.send_high_confidence_signal(
+                    user_id=user_id,
+                    symbol=symbol,
+                    signal_type=signal_type,
+                    confidence=confidence,
+                    price=price,
+                    explanation=explanation,
+                    suggested_action=suggested_action,
+                    risk_level=risk_level
+                )
+                results.append({
+                    "user_id": user_id,
+                    **result
+                })
+        
+        successes = sum(1 for r in results if r.get("success"))
+        logger.info(f"High-confidence signal notification sent to {successes}/{len(results)} Pro/Elite users")
+        
+        return {
+            "success": True,
+            "notified": successes,
+            "total_pro_users": len(pro_users),
+            "signal": {
+                "symbol": symbol,
+                "type": signal_type,
+                "confidence": confidence
+            }
+        }
+    
     async def send_trade_executed(
         self,
         user_id: str,
@@ -430,6 +535,6 @@ class PushNotificationService:
 # Singleton instance
 push_service = PushNotificationService()
 
-async def get_push_service() -> PushNotificationService:
+def get_push_service() -> PushNotificationService:
     """Get push notification service instance"""
     return push_service
