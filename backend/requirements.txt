@@ -125,3 +125,4 @@ passlib==1.7.4
 pyotp==2.9.0
 python-jose==3.5.0
 qrcode==8.2
+resend==2.26.0

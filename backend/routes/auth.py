@@ -23,6 +23,13 @@ import base64
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 
+# Import email service
+from services.email_service import (
+    send_verification_email,
+    send_password_reset_email,
+    send_2fa_enabled_email
+)
+
 # Setup
 logger = logging.getLogger("AlphaAI.Auth")
 
@@ -34,6 +41,9 @@ JWT_SECRET = os.environ.get("JWT_SECRET", secrets.token_hex(32))
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 REFRESH_TOKEN_EXPIRE_DAYS = 30
+
+# App URL for email links
+APP_URL = os.environ.get("APP_URL", "https://alphaai.com")
 
 # MongoDB connection - will be initialized in main server
 db = None
@@ -221,9 +231,15 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks):
     
     await db.users.insert_one(new_user)
     
-    # TODO: Send verification email (background task)
-    # background_tasks.add_task(send_verification_email, user_data.email, verification_token)
-    logger.info(f"User registered: {user_data.email} (verification token: {verification_token})")
+    # Send verification email (background task)
+    background_tasks.add_task(
+        send_verification_email,
+        user_data.email,
+        user_data.name,
+        verification_token,
+        APP_URL
+    )
+    logger.info(f"User registered: {user_data.email} (verification email queued)")
     
     # Generate tokens
     access_token = create_access_token({"sub": user_id, "email": user_data.email.lower()})
@@ -397,8 +413,15 @@ async def resend_verification(user: dict = Depends(get_current_user), background
         }
     )
     
-    # TODO: Send verification email
-    logger.info(f"Verification email resent: {user['email']} (token: {verification_token})")
+    # Send verification email
+    background_tasks.add_task(
+        send_verification_email,
+        user["email"],
+        user["name"],
+        verification_token,
+        APP_URL
+    )
+    logger.info(f"Verification email resent: {user['email']}")
     
     return {"message": "Verification email sent"}
 
@@ -425,8 +448,15 @@ async def forgot_password(data: PasswordResetRequest, background_tasks: Backgrou
         }
     )
     
-    # TODO: Send password reset email
-    logger.info(f"Password reset requested: {user['email']} (token: {reset_token})")
+    # Send password reset email
+    background_tasks.add_task(
+        send_password_reset_email,
+        user["email"],
+        user["name"],
+        reset_token,
+        APP_URL
+    )
+    logger.info(f"Password reset email sent: {user['email']}")
     
     return {"message": "If an account exists with this email, a reset link has been sent"}
 
@@ -560,7 +590,7 @@ async def enable_2fa(user: dict = Depends(get_current_user)):
     )
 
 @router.post("/2fa/verify")
-async def verify_2fa_setup(data: Verify2FARequest, user: dict = Depends(get_current_user)):
+async def verify_2fa_setup(data: Verify2FARequest, user: dict = Depends(get_current_user), background_tasks: BackgroundTasks = None):
     """Verify 2FA setup with TOTP code"""
     # Get pending secret
     full_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
@@ -588,6 +618,14 @@ async def verify_2fa_setup(data: Verify2FARequest, user: dict = Depends(get_curr
             }
         }
     )
+    
+    # Send 2FA enabled confirmation email
+    if background_tasks:
+        background_tasks.add_task(
+            send_2fa_enabled_email,
+            user["email"],
+            user["name"]
+        )
     
     logger.info(f"2FA enabled: {user['email']}")
     return {"message": "2FA enabled successfully"}

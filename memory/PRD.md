@@ -138,9 +138,10 @@ Payments:
 ---
 
 ### Next Action Items (P0)
-1. Implement email sending for verification/reset
-2. Deploy smart contract to Sepolia mainnet
-3. Create sample trades for metrics demo data
+1. ~~Execute sample trades to populate metrics demo data~~ ✅ DONE
+2. ~~Implement email sending for auth verification/reset~~ ✅ DONE (Resend integration)
+3. Deploy smart contract to Sepolia mainnet
+4. Configure production Resend API key for live emails
 
 ### Upcoming Tasks (P1)
 - Add email notifications for trades and Pro signal alerts
@@ -156,7 +157,7 @@ Payments:
 ---
 
 ### Known Limitations
-- Email sending is mocked (tokens logged to console)
+- ~~Email sending is mocked (tokens logged to console)~~ Now uses Resend (requires API key)
 - Live trading is prepared but uses testnet
 - Metrics show 0% return for demo (need trades executed)
 
