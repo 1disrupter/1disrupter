@@ -668,6 +668,7 @@ const DashboardPage = () => {
   const [isPro, setIsPro] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState('pro_monthly');
+  const [expandedSignal, setExpandedSignal] = useState(null); // Track which signal's AI explanation is expanded
 
   // Check for payment return and poll status
   useEffect(() => {
@@ -987,7 +988,7 @@ const DashboardPage = () => {
         const res = await axios.get(endpoint);
         
         if (res.data.signals && res.data.signals.length > 0) {
-          // Update signals from backend
+          // Update signals from backend with AI explanations
           const newSignals = res.data.signals.map(s => ({
             symbol: s.symbol,
             signal: s.signal_type,
@@ -995,7 +996,17 @@ const DashboardPage = () => {
             price: s.price_at_signal,
             analysis: s.analysis,
             isDelayed: s.is_delayed,
-            generatedAt: s.generated_at
+            generatedAt: s.generated_at,
+            // AI Signal Intelligence fields
+            explanation: s.explanation,
+            reasoning: s.reasoning,
+            trendAnalysis: s.trend_analysis,
+            marketSentiment: s.market_sentiment,
+            keyIndicators: s.key_indicators,
+            riskLevel: s.risk_level,
+            confidenceFactors: s.confidence_factors,
+            potentialCatalysts: s.potential_catalysts,
+            suggestedAction: s.suggested_action
           }));
           setSignals(newSignals);
           
@@ -1216,36 +1227,273 @@ const DashboardPage = () => {
                     className="relative"
                     data-testid={`signal-${s.symbol.toLowerCase()}`}
                   >
-                    <div className={`flex items-center justify-between p-5 rounded-xl border ${getSignalColor(s.signal)}`}>
-                      <div className="flex items-center gap-4">
-                        <div className="text-2xl font-bold font-['JetBrains_Mono']">{s.symbol}</div>
-                        <div className="text-zinc-400 text-sm">${s.price?.toLocaleString()}</div>
+                    <div className={`p-5 rounded-xl border ${getSignalColor(s.signal)}`}>
+                      {/* Signal Header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="text-2xl font-bold font-['JetBrains_Mono']">{s.symbol}</div>
+                          <div className="text-zinc-400 text-sm">${s.price?.toLocaleString()}</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="text-xs text-zinc-500 mb-1">Confidence</div>
+                            <div className="font-mono text-sm">{s.confidence}%</div>
+                          </div>
+                          <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-lg ${getSignalColor(s.signal)}`}>
+                            {getSignalIcon(s.signal)}
+                            {s.signal}
+                          </div>
+                          {/* Execute Trade Button */}
+                          {s.signal !== 'HOLD' && (
+                            <Button
+                              onClick={() => handleExecuteTradeClick(s)}
+                              className={`ml-2 rounded-full px-4 py-2 text-sm font-bold ${
+                                s.signal === 'BUY' 
+                                  ? 'bg-[#00FF94]/20 text-[#00FF94] hover:bg-[#00FF94]/30 border border-[#00FF94]/50' 
+                                  : 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/50'
+                              }`}
+                              data-testid={`execute-${s.symbol.toLowerCase()}`}
+                            >
+                              <PlayCircle className="w-4 h-4 mr-1" />
+                              Execute
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <div className="text-xs text-zinc-500 mb-1">Confidence</div>
-                          <div className="font-mono text-sm">{s.confidence}%</div>
-                        </div>
-                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-lg ${getSignalColor(s.signal)}`}>
-                          {getSignalIcon(s.signal)}
-                          {s.signal}
-                        </div>
-                        {/* Execute Trade Button */}
-                        {s.signal !== 'HOLD' && (
-                          <Button
-                            onClick={() => handleExecuteTradeClick(s)}
-                            className={`ml-2 rounded-full px-4 py-2 text-sm font-bold ${
-                              s.signal === 'BUY' 
-                                ? 'bg-[#00FF94]/20 text-[#00FF94] hover:bg-[#00FF94]/30 border border-[#00FF94]/50' 
-                                : 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/50'
-                            }`}
-                            data-testid={`execute-${s.symbol.toLowerCase()}`}
+                      
+                      {/* AI Explanation Summary */}
+                      {s.explanation && (
+                        <div className="mt-4 pt-4 border-t border-zinc-800/50">
+                          <div className="flex items-start gap-3">
+                            <Brain className="w-5 h-5 text-[#7B61FF] mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm text-zinc-300">{s.explanation}</p>
+                              {s.reasoning && (
+                                <p className="text-xs text-zinc-500 mt-1">{s.reasoning}</p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Expand/Collapse Button */}
+                          <button
+                            onClick={() => setExpandedSignal(expandedSignal === s.symbol ? null : s.symbol)}
+                            className="mt-3 flex items-center gap-1 text-xs text-[#7B61FF] hover:text-[#7B61FF]/80 transition-colors"
+                            data-testid={`expand-analysis-${s.symbol.toLowerCase()}`}
                           >
-                            <PlayCircle className="w-4 h-4 mr-1" />
-                            Execute
-                          </Button>
-                        )}
-                      </div>
+                            <Sparkles className="w-3 h-3" />
+                            {expandedSignal === s.symbol ? 'Hide AI Analysis' : 'View Full AI Analysis'}
+                            <ChevronDown className={`w-3 h-3 transition-transform ${expandedSignal === s.symbol ? 'rotate-180' : ''}`} />
+                          </button>
+                          
+                          {/* Expanded AI Analysis */}
+                          <AnimatePresence>
+                            {expandedSignal === s.symbol && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                  {/* Trend Analysis */}
+                                  {s.trendAnalysis && (
+                                    <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800" data-testid={`trend-analysis-${s.symbol.toLowerCase()}`}>
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <TrendingUp className="w-4 h-4 text-[#7B61FF]" />
+                                        <span className="text-sm font-semibold">Trend Analysis</span>
+                                      </div>
+                                      <div className="space-y-2 text-xs">
+                                        <div className="flex justify-between">
+                                          <span className="text-zinc-500">Direction</span>
+                                          <span className={`font-medium ${
+                                            s.trendAnalysis.direction === 'bullish' ? 'text-[#00FF94]' : 
+                                            s.trendAnalysis.direction === 'bearish' ? 'text-red-400' : 'text-yellow-400'
+                                          }`}>
+                                            {s.trendAnalysis.direction?.toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-zinc-500">Strength</span>
+                                          <span className="text-zinc-300">{s.trendAnalysis.strength}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-zinc-500">Timeframe</span>
+                                          <span className="text-zinc-300">{s.trendAnalysis.timeframe}</span>
+                                        </div>
+                                        {s.trendAnalysis.description && (
+                                          <p className="text-zinc-400 mt-2 pt-2 border-t border-zinc-800">{s.trendAnalysis.description}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Market Sentiment */}
+                                  {s.marketSentiment && (
+                                    <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800" data-testid={`market-sentiment-${s.symbol.toLowerCase()}`}>
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <Activity className="w-4 h-4 text-[#00D4FF]" />
+                                        <span className="text-sm font-semibold">Market Sentiment</span>
+                                      </div>
+                                      <div className="space-y-2 text-xs">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-zinc-500">Overall</span>
+                                          <span className={`font-medium ${
+                                            s.marketSentiment.overall === 'bullish' ? 'text-[#00FF94]' : 
+                                            s.marketSentiment.overall === 'bearish' ? 'text-red-400' : 'text-yellow-400'
+                                          }`}>
+                                            {s.marketSentiment.overall?.toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-zinc-500">Score</span>
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-16 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                                              <div 
+                                                className={`h-full rounded-full ${s.marketSentiment.score > 0 ? 'bg-[#00FF94]' : 'bg-red-400'}`}
+                                                style={{ width: `${Math.abs(s.marketSentiment.score)}%` }}
+                                              />
+                                            </div>
+                                            <span className={`font-mono ${s.marketSentiment.score > 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                                              {s.marketSentiment.score > 0 ? '+' : ''}{s.marketSentiment.score}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        {s.marketSentiment.factors && s.marketSentiment.factors.length > 0 && (
+                                          <div className="mt-2 pt-2 border-t border-zinc-800">
+                                            <p className="text-zinc-500 mb-1">Key Factors:</p>
+                                            <ul className="space-y-1">
+                                              {s.marketSentiment.factors.slice(0, 3).map((factor, idx) => (
+                                                <li key={idx} className="text-zinc-400 flex items-start gap-1">
+                                                  <span className="text-[#7B61FF]">•</span> {factor}
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Key Indicators */}
+                                  {s.keyIndicators && (
+                                    <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800" data-testid={`key-indicators-${s.symbol.toLowerCase()}`}>
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <BarChart3 className="w-4 h-4 text-[#FFB800]" />
+                                        <span className="text-sm font-semibold">Key Indicators</span>
+                                      </div>
+                                      <div className="space-y-2 text-xs">
+                                        {s.keyIndicators.rsi && (
+                                          <div className="flex justify-between">
+                                            <span className="text-zinc-500">RSI</span>
+                                            <span className={`font-mono ${
+                                              s.keyIndicators.rsi.signal === 'overbought' ? 'text-red-400' :
+                                              s.keyIndicators.rsi.signal === 'oversold' ? 'text-[#00FF94]' : 'text-zinc-300'
+                                            }`}>
+                                              {s.keyIndicators.rsi.value} ({s.keyIndicators.rsi.signal})
+                                            </span>
+                                          </div>
+                                        )}
+                                        {s.keyIndicators.macd && (
+                                          <div className="flex justify-between">
+                                            <span className="text-zinc-500">MACD</span>
+                                            <span className={`font-mono ${
+                                              s.keyIndicators.macd.signal === 'bullish' ? 'text-[#00FF94]' :
+                                              s.keyIndicators.macd.signal === 'bearish' ? 'text-red-400' : 'text-zinc-300'
+                                            }`}>
+                                              {s.keyIndicators.macd.signal} ({s.keyIndicators.macd.histogram})
+                                            </span>
+                                          </div>
+                                        )}
+                                        {s.keyIndicators.volume && (
+                                          <div className="flex justify-between">
+                                            <span className="text-zinc-500">Volume</span>
+                                            <span className="text-zinc-300">
+                                              {s.keyIndicators.volume.trend} ({s.keyIndicators.volume.significance})
+                                            </span>
+                                          </div>
+                                        )}
+                                        {s.keyIndicators.support_resistance && (
+                                          <div className="mt-2 pt-2 border-t border-zinc-800">
+                                            <div className="flex justify-between">
+                                              <span className="text-zinc-500">Support</span>
+                                              <span className="text-[#00FF94] font-mono">
+                                                ${s.keyIndicators.support_resistance.nearest_support?.toLocaleString()}
+                                              </span>
+                                            </div>
+                                            <div className="flex justify-between mt-1">
+                                              <span className="text-zinc-500">Resistance</span>
+                                              <span className="text-red-400 font-mono">
+                                                ${s.keyIndicators.support_resistance.nearest_resistance?.toLocaleString()}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Risk & Action */}
+                                  <div className="p-4 rounded-lg bg-[#050505] border border-zinc-800" data-testid={`risk-action-${s.symbol.toLowerCase()}`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Shield className="w-4 h-4 text-[#FF61DC]" />
+                                      <span className="text-sm font-semibold">Risk & Action</span>
+                                    </div>
+                                    <div className="space-y-2 text-xs">
+                                      {s.riskLevel && (
+                                        <div className="flex justify-between">
+                                          <span className="text-zinc-500">Risk Level</span>
+                                          <Badge className={`text-xs ${
+                                            s.riskLevel === 'high' ? 'bg-red-500/20 text-red-400' :
+                                            s.riskLevel === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                            'bg-[#00FF94]/20 text-[#00FF94]'
+                                          }`}>
+                                            {s.riskLevel.toUpperCase()}
+                                          </Badge>
+                                        </div>
+                                      )}
+                                      {s.confidenceFactors && s.confidenceFactors.length > 0 && (
+                                        <div className="mt-2">
+                                          <p className="text-zinc-500 mb-1">Confidence Factors:</p>
+                                          <div className="flex flex-wrap gap-1">
+                                            {s.confidenceFactors.slice(0, 3).map((factor, idx) => (
+                                              <span key={idx} className="px-2 py-0.5 rounded-full bg-[#7B61FF]/10 text-[#7B61FF] text-xs">
+                                                {factor}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {s.suggestedAction && (
+                                        <div className="mt-3 pt-2 border-t border-zinc-800">
+                                          <p className="text-zinc-500 mb-1">Suggested Action:</p>
+                                          <p className="text-[#00FF94] font-medium">{s.suggestedAction}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Potential Catalysts */}
+                                {s.potentialCatalysts && s.potentialCatalysts.length > 0 && (
+                                  <div className="mt-4 p-3 rounded-lg bg-[#7B61FF]/5 border border-[#7B61FF]/20">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Zap className="w-4 h-4 text-[#7B61FF]" />
+                                      <span className="text-sm font-semibold text-[#7B61FF]">Potential Catalysts</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {s.potentialCatalysts.map((catalyst, idx) => (
+                                        <span key={idx} className="px-2 py-1 rounded-full bg-[#7B61FF]/10 text-zinc-300 text-xs">
+                                          {catalyst}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
                     </div>
                     {/* MISSED TRADE TRIGGER - FOMO */}
                     {!isPro && missedTrades[s.symbol] && (

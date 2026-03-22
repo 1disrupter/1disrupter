@@ -1584,7 +1584,7 @@ SEPOLIA_RPC_URL=https://rpc.sepolia.org
 ALPHA_AI_CONTRACT_ADDRESS=  # Set after deployment
 
 # Frontend .env (/app/frontend/.env)
-REACT_APP_BACKEND_URL=https://trading-signals-lab-1.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://ai-signals-v1.preview.emergentagent.com
 WDS_SOCKET_PORT=443
 ENABLE_HEALTH_CHECK=false
     """

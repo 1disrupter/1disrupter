@@ -18,6 +18,7 @@ import asyncio
 from collections import defaultdict
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from services.signal_intelligence import signal_intelligence, SignalExplanation
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -449,6 +450,16 @@ class TradingSignal(BaseModel):
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
     is_priority: bool = False  # Priority signals for Pro/Elite
+    # AI Signal Intelligence fields
+    explanation: Optional[str] = None  # Summary explanation
+    reasoning: Optional[str] = None  # Why this signal was generated
+    trend_analysis: Optional[Dict[str, Any]] = None  # Trend direction, strength, timeframe
+    market_sentiment: Optional[Dict[str, Any]] = None  # Overall sentiment, score, factors
+    key_indicators: Optional[Dict[str, Any]] = None  # RSI, MACD, MAs, Volume, S/R
+    risk_level: Optional[str] = None  # low, medium, high
+    confidence_factors: Optional[List[str]] = None  # What contributed to confidence
+    potential_catalysts: Optional[List[str]] = None  # Upcoming events
+    suggested_action: Optional[str] = None  # Actionable advice
 
 # Signal delay configuration
 SIGNAL_DELAYS = {
@@ -487,24 +498,62 @@ class SignalService:
                 
                 current_price = price_data.get("price", 0)
                 change_24h = price_data.get("change_24h", 0)
+                volume_24h = price_data.get("volume_24h")
+                market_cap = price_data.get("market_cap")
                 
-                # Generate signal based on market data and AI
+                # Generate basic signal based on market data
                 signal_type, confidence, analysis = await self._analyze_asset(asset, current_price, change_24h)
                 
-                signal = TradingSignal(
-                    symbol=asset,
-                    signal_type=signal_type,
-                    confidence=confidence,
-                    price_at_signal=current_price,
-                    analysis=analysis,
-                    generated_at=datetime.now(timezone.utc),
-                    expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
-                    is_priority=False
-                )
+                # Generate AI-powered explanation using Signal Intelligence Service
+                try:
+                    ai_explanation = await signal_intelligence.generate_signal_explanation(
+                        symbol=asset,
+                        signal_type=signal_type,
+                        confidence=confidence,
+                        current_price=current_price,
+                        change_24h=change_24h,
+                        volume_24h=volume_24h,
+                        market_cap=market_cap
+                    )
+                    
+                    # Create signal with AI explanations
+                    signal = TradingSignal(
+                        symbol=asset,
+                        signal_type=signal_type,
+                        confidence=confidence,
+                        price_at_signal=current_price,
+                        analysis=analysis,
+                        generated_at=datetime.now(timezone.utc),
+                        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+                        is_priority=False,
+                        # AI Signal Intelligence fields
+                        explanation=ai_explanation.summary,
+                        reasoning=ai_explanation.reasoning,
+                        trend_analysis=ai_explanation.trend_analysis.model_dump() if ai_explanation.trend_analysis else None,
+                        market_sentiment=ai_explanation.market_sentiment.model_dump() if ai_explanation.market_sentiment else None,
+                        key_indicators=ai_explanation.key_indicators.model_dump() if ai_explanation.key_indicators else None,
+                        risk_level=ai_explanation.risk_level,
+                        confidence_factors=ai_explanation.confidence_factors,
+                        potential_catalysts=ai_explanation.potential_catalysts,
+                        suggested_action=ai_explanation.suggested_action
+                    )
+                    logger.info(f"Generated AI explanation for {asset}: {ai_explanation.summary[:50]}...")
+                except Exception as ai_err:
+                    logger.warning(f"AI explanation failed for {asset}, using basic signal: {ai_err}")
+                    signal = TradingSignal(
+                        symbol=asset,
+                        signal_type=signal_type,
+                        confidence=confidence,
+                        price_at_signal=current_price,
+                        analysis=analysis,
+                        generated_at=datetime.now(timezone.utc),
+                        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+                        is_priority=False
+                    )
                 
                 signals.append(signal)
                 
-                # Store in database
+                # Store in database with AI explanations
                 signal_doc = {
                     "id": signal.id,
                     "symbol": signal.symbol,
@@ -514,12 +563,22 @@ class SignalService:
                     "analysis": signal.analysis,
                     "generated_at": signal.generated_at,
                     "expires_at": signal.expires_at,
-                    "is_priority": signal.is_priority
+                    "is_priority": signal.is_priority,
+                    # AI explanation fields
+                    "explanation": signal.explanation,
+                    "reasoning": signal.reasoning,
+                    "trend_analysis": signal.trend_analysis,
+                    "market_sentiment": signal.market_sentiment,
+                    "key_indicators": signal.key_indicators,
+                    "risk_level": signal.risk_level,
+                    "confidence_factors": signal.confidence_factors,
+                    "potential_catalysts": signal.potential_catalysts,
+                    "suggested_action": signal.suggested_action
                 }
                 await db.trading_signals.insert_one(signal_doc)
             
             self.last_generation = datetime.now(timezone.utc)
-            logger.info(f"Generated {len(signals)} new trading signals")
+            logger.info(f"Generated {len(signals)} new trading signals with AI intelligence")
             return signals
             
         except Exception as e:
