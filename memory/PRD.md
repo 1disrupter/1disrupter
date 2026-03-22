@@ -78,11 +78,32 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - Equity curves, Sharpe ratio, Daily PnL
 - Compliance badges and disclaimers
 
+**Phase 13**: Referral System ✅ NEW
+- Unique referral codes per user (8-char, e.g., VGHG2FAH)
+- Tiered commission: Bronze (20%) → Silver (25%) → Gold (30%) → Platinum (35%)
+- 7 days free Pro for both referrer and referee
+- Referral tracking (clicks, signups, conversions)
+- Earnings dashboard with payout requests ($25 min)
+- Leaderboard for top referrers
+
 ---
 
 ### API Summary
 
 ```
+Referrals:
+- GET /api/referrals/config
+- POST /api/referrals/create-code
+- GET /api/referrals/stats
+- GET /api/referrals/activity
+- GET /api/referrals/earnings
+- GET /api/referrals/validate-code
+- POST /api/referrals/track-click
+- POST /api/referrals/track-signup
+- POST /api/referrals/track-conversion
+- GET /api/referrals/leaderboard
+- POST /api/referrals/request-payout
+
 Performance Metrics:
 - GET /api/metrics/compliance/{mode}
 - GET /api/metrics/summary
@@ -117,10 +138,10 @@ Payments:
 ---
 
 ### Test Results (March 2026)
+- **Referral Backend**: 100% (19/19 tests)
+- **Referral Frontend**: 100% (All UI tests)
 - **Metrics Backend**: 100% (22/22 tests)
-- **Metrics Frontend**: 100% (All UI tests)
 - **Auth Backend**: 100% (26/26 tests)
-- **Auth Frontend**: 100% (8/8 tests)
 - **Overall**: All systems operational
 
 ---
