@@ -78,19 +78,34 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - Equity curves, Sharpe ratio, Daily PnL
 - Compliance badges and disclaimers
 
-**Phase 13**: Referral System ✅ NEW
-- Unique referral codes per user (8-char, e.g., VGHG2FAH)
-- Tiered commission: Bronze (20%) → Silver (25%) → Gold (30%) → Platinum (35%)
-- 7 days free Pro for both referrer and referee
-- Referral tracking (clicks, signups, conversions)
-- Earnings dashboard with payout requests ($25 min)
-- Leaderboard for top referrers
+**Phase 14**: Mobile API v1 ✅ NEW
+- Versioned API (`/api/v1/` prefix)
+- Balanced optimization (pagination, field selection, ETag caching)
+- Cross-platform JWT auth with `expires_in`
+- Push notification hooks (Expo/FCM/APNs ready)
+- Device registration and notification preferences
+- Mobile-optimized trading execution
 
 ---
 
 ### API Summary
 
 ```
+Mobile API v1 (/api/v1/):
+- GET /health, /ping, /config
+- POST /auth/login, /auth/refresh
+- GET /auth/me?fields=id,name
+- GET /signals?page=1&limit=20&fields=id,symbol
+- GET /signals/latest
+- GET /portfolio/summary
+- GET /portfolio/positions?status=open
+- POST /trading/execute
+- POST /devices/register
+- GET /devices
+- PUT /devices/{id}/token
+- GET/PUT /notifications/preferences
+- GET /metrics/summary
+
 Referrals:
 - GET /api/referrals/config
 - POST /api/referrals/create-code
@@ -138,8 +153,8 @@ Payments:
 ---
 
 ### Test Results (March 2026)
+- **Mobile API v1**: 100% (34/34 tests)
 - **Referral Backend**: 100% (19/19 tests)
-- **Referral Frontend**: 100% (All UI tests)
 - **Metrics Backend**: 100% (22/22 tests)
 - **Auth Backend**: 100% (26/26 tests)
 - **Overall**: All systems operational
