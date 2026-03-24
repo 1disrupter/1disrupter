@@ -375,8 +375,14 @@ async def verify_email(data: VerifyEmailRequest):
     if user.get("is_verified"):
         return {"message": "Email already verified"}
     
-    if datetime.now(timezone.utc) > user.get("verification_token_expires", datetime.now(timezone.utc)):
-        raise HTTPException(status_code=400, detail="Verification token expired")
+    # Handle timezone-aware datetime comparison
+    token_expires = user.get("verification_token_expires")
+    if token_expires:
+        # Make sure both datetimes are timezone-aware
+        if token_expires.tzinfo is None:
+            token_expires = token_expires.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > token_expires:
+            raise HTTPException(status_code=400, detail="Verification token expired")
     
     await db.users.update_one(
         {"id": user["id"]},
