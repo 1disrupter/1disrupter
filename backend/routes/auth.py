@@ -477,8 +477,13 @@ async def reset_password(data: PasswordResetConfirm):
     if not user:
         raise HTTPException(status_code=400, detail="Invalid reset token")
     
-    if datetime.now(timezone.utc) > user.get("reset_token_expires", datetime.now(timezone.utc)):
-        raise HTTPException(status_code=400, detail="Reset token expired")
+    # Handle timezone-aware datetime comparison
+    token_expires = user.get("reset_token_expires")
+    if token_expires:
+        if token_expires.tzinfo is None:
+            token_expires = token_expires.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > token_expires:
+            raise HTTPException(status_code=400, detail="Reset token expired")
     
     await db.users.update_one(
         {"id": user["id"]},
