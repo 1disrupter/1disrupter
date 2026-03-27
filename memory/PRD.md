@@ -1,6 +1,6 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 21 Complete - Free Tier System + Pricing
+## Current Status: Phase 21 Complete - Free Tier System + Splash Screen Enhancement
 
 ### Overview
 AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals with AI-powered explanations, execute trades (paper or live via Uniswap V3), track portfolio performance, copy trades from top traders, and choose between Free, Pro, and Elite subscription tiers.
