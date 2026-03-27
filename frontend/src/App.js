@@ -607,156 +607,134 @@ const LivePriceTicker = ({ compact = false }) => {
 };
 
 // Landing Page
-// Hero AI Signal Visualization — SVG-based neural grid with animated signals
+// Hero "Late vs Early" Chart Visualization
 const HeroVisualization = () => {
+  // Candlestick data: x, open, close, high, low (normalized 0-400 viewBox)
+  const candles = [
+    { x: 40, o: 310, c: 295, h: 285, l: 320 },
+    { x: 60, o: 295, c: 305, h: 285, l: 315 },
+    { x: 80, o: 305, c: 290, h: 280, l: 310 },
+    { x: 100, o: 290, c: 300, h: 278, l: 308 },
+    { x: 120, o: 300, c: 280, h: 270, l: 305 },
+    { x: 140, o: 280, c: 260, h: 250, l: 285 }, // AlphaAI flags here
+    { x: 160, o: 260, c: 240, h: 230, l: 268 },
+    { x: 180, o: 240, c: 210, h: 200, l: 248 },
+    { x: 200, o: 210, c: 180, h: 170, l: 218 },
+    { x: 220, o: 180, c: 155, h: 145, l: 188 },
+    { x: 240, o: 155, c: 140, h: 130, l: 162 },
+    { x: 260, o: 140, c: 125, h: 118, l: 148 }, // You enter here (late)
+    { x: 280, o: 125, c: 135, h: 140, l: 120 },
+    { x: 300, o: 135, c: 150, h: 155, l: 128 },
+    { x: 320, o: 150, c: 142, h: 158, l: 138 },
+    { x: 340, o: 142, c: 148, h: 155, l: 135 },
+    { x: 360, o: 148, c: 138, h: 152, l: 132 },
+  ];
+  const alphaY = 270; // AlphaAI entry line
+  const youY = 132;   // Your entry line
+
   return (
-    <div className="relative w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] lg:w-[480px] lg:h-[480px]" data-testid="hero-visualization">
+    <div className="relative w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] lg:w-[500px] lg:h-[440px]" data-testid="hero-visualization">
       {/* Ambient glow */}
-      <div className="absolute inset-0 rounded-full bg-[#7B61FF]/8 blur-[60px] scale-110" />
-      
-      <svg viewBox="0 0 400 400" className="w-full h-full relative z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Grid circles */}
-        <circle cx="200" cy="200" r="160" stroke="#7B61FF" strokeOpacity="0.08" strokeWidth="1" />
-        <circle cx="200" cy="200" r="120" stroke="#7B61FF" strokeOpacity="0.1" strokeWidth="1" />
-        <circle cx="200" cy="200" r="80" stroke="#7B61FF" strokeOpacity="0.12" strokeWidth="1" />
-        <circle cx="200" cy="200" r="40" stroke="#7B61FF" strokeOpacity="0.15" strokeWidth="1" />
-        
-        {/* Cross-hairs */}
-        <line x1="200" y1="30" x2="200" y2="370" stroke="#7B61FF" strokeOpacity="0.06" strokeWidth="0.5" />
-        <line x1="30" y1="200" x2="370" y2="200" stroke="#7B61FF" strokeOpacity="0.06" strokeWidth="0.5" />
-        <line x1="80" y1="80" x2="320" y2="320" stroke="#7B61FF" strokeOpacity="0.04" strokeWidth="0.5" />
-        <line x1="320" y1="80" x2="80" y2="320" stroke="#7B61FF" strokeOpacity="0.04" strokeWidth="0.5" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-[#7B61FF]/6 blur-[80px]" />
 
-        {/* Signal waveform path */}
-        <path
-          d="M40,200 Q80,180 120,210 T200,170 T280,220 T360,190"
-          stroke="url(#waveGradient)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          opacity="0.6"
-        >
-          <animate attributeName="d" dur="4s" repeatCount="indefinite" values="
-            M40,200 Q80,180 120,210 T200,170 T280,220 T360,190;
-            M40,190 Q80,220 120,180 T200,210 T280,170 T360,205;
-            M40,210 Q80,170 120,200 T200,180 T280,210 T360,185;
-            M40,200 Q80,180 120,210 T200,170 T280,220 T360,190"
-          />
-        </path>
-        
-        {/* Secondary waveform */}
-        <path
-          d="M40,220 Q100,200 160,240 T280,200 T360,230"
-          stroke="url(#cyanGradient)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          opacity="0.3"
-        >
-          <animate attributeName="d" dur="5s" repeatCount="indefinite" values="
-            M40,220 Q100,200 160,240 T280,200 T360,230;
-            M40,230 Q100,240 160,200 T280,230 T360,210;
-            M40,210 Q100,220 160,230 T280,210 T360,225;
-            M40,220 Q100,200 160,240 T280,200 T360,230"
-          />
-        </path>
-
-        {/* Neural nodes */}
-        {[
-          { cx: 200, cy: 200, r: 6, delay: 0 },
-          { cx: 120, cy: 160, r: 4, delay: 0.5 },
-          { cx: 280, cy: 170, r: 4, delay: 1.0 },
-          { cx: 150, cy: 260, r: 3.5, delay: 1.5 },
-          { cx: 260, cy: 250, r: 3.5, delay: 2.0 },
-          { cx: 100, cy: 220, r: 3, delay: 0.8 },
-          { cx: 300, cy: 210, r: 3, delay: 1.3 },
-          { cx: 200, cy: 120, r: 3, delay: 0.3 },
-          { cx: 200, cy: 280, r: 3, delay: 1.8 },
-        ].map((n, i) => (
-          <g key={i}>
-            {/* Node glow */}
-            <circle cx={n.cx} cy={n.cy} r={n.r * 3} fill="#7B61FF" opacity="0.06">
-              <animate attributeName="opacity" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="0.04;0.1;0.04" />
-            </circle>
-            {/* Node core */}
-            <circle cx={n.cx} cy={n.cy} r={n.r} fill="#7B61FF">
-              <animate attributeName="opacity" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="0.4;0.9;0.4" />
-            </circle>
-            {/* Node ring */}
-            <circle cx={n.cx} cy={n.cy} r={n.r + 2} stroke="#7B61FF" strokeWidth="0.5" fill="none" opacity="0.3">
-              <animate attributeName="r" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="${n.r + 2};${n.r + 5};${n.r + 2}" />
-              <animate attributeName="opacity" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="0.3;0.1;0.3" />
-            </circle>
-          </g>
+      <svg viewBox="0 0 400 380" className="w-full h-full relative z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Grid lines */}
+        {[100, 150, 200, 250, 300].map(y => (
+          <line key={y} x1="30" y1={y} x2="375" y2={y} stroke="#ffffff" strokeOpacity="0.04" strokeWidth="0.5" />
         ))}
 
-        {/* Neural connections */}
-        {[
-          [200, 200, 120, 160], [200, 200, 280, 170], [200, 200, 150, 260], [200, 200, 260, 250],
-          [200, 200, 200, 120], [200, 200, 200, 280], [120, 160, 100, 220], [280, 170, 300, 210],
-          [150, 260, 100, 220], [260, 250, 300, 210], [120, 160, 200, 120], [280, 170, 200, 120],
-        ].map(([x1, y1, x2, y2], i) => (
-          <line key={`c${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#7B61FF" strokeWidth="0.5" opacity="0.12">
-            <animate attributeName="opacity" dur="4s" begin={`${i * 0.3}s`} repeatCount="indefinite" values="0.06;0.18;0.06" />
-          </line>
-        ))}
+        {/* Candlesticks */}
+        {candles.map((c, i) => {
+          const bullish = c.c < c.o; // price went up (lower close = higher price in inverted y)
+          const color = bullish ? '#00FF94' : '#ef4444';
+          const bodyTop = Math.min(c.o, c.c);
+          const bodyH = Math.abs(c.o - c.c);
+          return (
+            <g key={i}>
+              <line x1={c.x} y1={c.h} x2={c.x} y2={c.l} stroke={color} strokeWidth="1" strokeOpacity="0.5" />
+              <rect x={c.x - 6} y={bodyTop} width="12" height={Math.max(bodyH, 2)} fill={color} fillOpacity={i >= 5 && i <= 11 ? 0.8 : 0.35} rx="1" />
+            </g>
+          );
+        })}
 
-        {/* Scanning pulse ring */}
-        <circle cx="200" cy="200" r="40" stroke="#7B61FF" strokeWidth="1" fill="none" opacity="0.2">
-          <animate attributeName="r" dur="3s" repeatCount="indefinite" values="40;160;40" />
-          <animate attributeName="opacity" dur="3s" repeatCount="indefinite" values="0.25;0;0.25" />
-        </circle>
+        {/* AlphaAI entry dashed line (green, low = early) */}
+        <line x1="30" y1={alphaY} x2="375" y2={alphaY} stroke="#00FF94" strokeWidth="1" strokeDasharray="6 4" strokeOpacity="0.5" />
 
-        {/* Center brain icon placeholder circle */}
-        <circle cx="200" cy="200" r="28" fill="#7B61FF" fillOpacity="0.15" stroke="#7B61FF" strokeWidth="1" strokeOpacity="0.3" />
-        <circle cx="200" cy="200" r="20" fill="url(#centerGradient)" />
+        {/* Your entry dashed line (red, high = late) */}
+        <line x1="30" y1={youY} x2="375" y2={youY} stroke="#ef4444" strokeWidth="1" strokeDasharray="6 4" strokeOpacity="0.5" />
 
-        {/* Gradients */}
+        {/* Pulsing gap zone between the two lines */}
+        <rect x="30" y={youY} width="345" height={alphaY - youY} fill="url(#gapGradient)">
+          <animate attributeName="opacity" dur="3s" repeatCount="indefinite" values="0.03;0.08;0.03" />
+        </rect>
+
+        {/* AlphaAI marker arrow */}
+        <g>
+          <circle cx="140" cy={alphaY} r="5" fill="#00FF94" fillOpacity="0.9">
+            <animate attributeName="r" dur="2.5s" repeatCount="indefinite" values="5;8;5" />
+            <animate attributeName="fillOpacity" dur="2.5s" repeatCount="indefinite" values="0.9;0.4;0.9" />
+          </circle>
+          <circle cx="140" cy={alphaY} r="3" fill="#00FF94" />
+        </g>
+
+        {/* Your entry marker */}
+        <g>
+          <circle cx="260" cy={youY} r="5" fill="#ef4444" fillOpacity="0.9">
+            <animate attributeName="r" dur="2.5s" repeatCount="indefinite" values="5;8;5" />
+            <animate attributeName="fillOpacity" dur="2.5s" repeatCount="indefinite" values="0.9;0.4;0.9" />
+          </circle>
+          <circle cx="260" cy={youY} r="3" fill="#ef4444" />
+        </g>
+
+        {/* Vertical connector between the two entries */}
+        <line x1="200" y1={youY + 8} x2="200" y2={alphaY - 8} stroke="#7B61FF" strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.25" />
+        <polygon points="197,{youY + 8} 203,{youY + 8} 200,{youY + 2}" fill="#ef4444" fillOpacity="0.5" />
+        <polygon points={`197,${alphaY - 8} 203,${alphaY - 8} 200,${alphaY - 2}`} fill="#00FF94" fillOpacity="0.5" />
+
+        {/* Gap label */}
+        <text x="210" y={(alphaY + youY) / 2 + 4} fill="#7B61FF" fontSize="11" fontFamily="monospace" opacity="0.6">
+          +4.2% gap
+        </text>
+
         <defs>
-          <linearGradient id="waveGradient" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#7B61FF" stopOpacity="0.1" />
-            <stop offset="50%" stopColor="#7B61FF" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#00FF94" stopOpacity="0.1" />
+          <linearGradient id="gapGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ef4444" stopOpacity="0.15" />
+            <stop offset="50%" stopColor="#7B61FF" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#00FF94" stopOpacity="0.15" />
           </linearGradient>
-          <linearGradient id="cyanGradient" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#00FF94" stopOpacity="0.1" />
-            <stop offset="50%" stopColor="#00FF94" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#7B61FF" stopOpacity="0.1" />
-          </linearGradient>
-          <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#7B61FF" />
-            <stop offset="100%" stopColor="#5A3FE0" />
-          </radialGradient>
         </defs>
       </svg>
 
-      {/* Central Brain icon overlay */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-        <Brain className="w-7 h-7 text-white opacity-90" />
-      </div>
+      {/* AlphaAI label */}
+      <motion.div
+        className="absolute left-[4%] px-3 py-1.5 rounded-md bg-[#00FF94]/10 border border-[#00FF94]/25 backdrop-blur-sm"
+        style={{ top: '62%' }}
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+      >
+        <span className="text-[11px] font-mono font-medium text-[#00FF94]">AlphaAI flagged here</span>
+      </motion.div>
 
-      {/* Floating data labels */}
+      {/* Your entry label */}
       <motion.div
-        className="absolute top-[12%] right-[8%] px-2.5 py-1 rounded-md bg-[#0B0B0F]/80 border border-[#7B61FF]/20 backdrop-blur-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0.5, 0.9, 0.5] }}
-        transition={{ duration: 3, repeat: Infinity }}
+        className="absolute right-[3%] px-3 py-1.5 rounded-md bg-[#ef4444]/10 border border-[#ef4444]/25 backdrop-blur-sm"
+        style={{ top: '25%' }}
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.9, duration: 0.5 }}
       >
-        <span className="text-[10px] font-mono text-[#00FF94]">BTC +2.4%</span>
+        <span className="text-[11px] font-mono font-medium text-[#ef4444]">You entered here</span>
       </motion.div>
+
+      {/* Time delta label */}
       <motion.div
-        className="absolute bottom-[15%] left-[5%] px-2.5 py-1 rounded-md bg-[#0B0B0F]/80 border border-[#7B61FF]/20 backdrop-blur-sm"
+        className="absolute bottom-[4%] left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-[#0B0B0F]/80 border border-zinc-800 backdrop-blur-sm"
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0.4, 0.8, 0.4] }}
-        transition={{ duration: 3.5, repeat: Infinity, delay: 1 }}
+        animate={{ opacity: 0.7 }}
+        transition={{ delay: 1.2, duration: 0.5 }}
       >
-        <span className="text-[10px] font-mono text-[#7B61FF]">Signal: BUY 87%</span>
-      </motion.div>
-      <motion.div
-        className="absolute top-[55%] right-[3%] px-2.5 py-1 rounded-md bg-[#0B0B0F]/80 border border-[#00FF94]/15 backdrop-blur-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0.3, 0.7, 0.3] }}
-        transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
-      >
-        <span className="text-[10px] font-mono text-zinc-400">ETH $3,521</span>
+        <span className="text-[10px] font-mono text-zinc-500">15 min late</span>
       </motion.div>
     </div>
   );
@@ -800,21 +778,21 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                <Badge className="mb-6 bg-[#7B61FF]/15 text-[#7B61FF] border-[#7B61FF]/25 px-4 py-1.5" data-testid="hero-badge">
-                  <Sparkles className="w-3 h-3 mr-1.5" />AI-Powered Trading Signals
+                <Badge className="mb-6 bg-zinc-800/60 text-zinc-400 border-zinc-700/50 px-4 py-1.5" data-testid="hero-badge">
+                  <Activity className="w-3 h-3 mr-1.5" />Signal Intelligence System
                 </Badge>
               </motion.div>
 
               <motion.h1
-                className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 font-['Outfit'] tracking-tight leading-[1.1]"
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 font-['Outfit'] tracking-tight leading-[1.08]"
                 data-testid="hero-title"
                 initial={{ opacity: 0, y: 30, filter: 'blur(6px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                <span className="text-white">AI&#8209;Powered Signal</span><br />
-                <span className="text-white">Intelligence for</span><br />
-                <span className="bg-gradient-to-r from-[#7B61FF] via-[#9D8AFF] to-[#00FF94] bg-clip-text text-transparent">Modern Traders</span>
+                <span className="text-white">You&apos;re Not Bad</span><br />
+                <span className="text-white">at Trading.</span><br />
+                <span className="text-[#ef4444]">You&apos;re Late.</span>
               </motion.h1>
 
               <motion.p
@@ -824,7 +802,7 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                Real&#8209;time signals, automated copy trading, and institutional&#8209;grade analytics — all in one platform.
+                The setup was there 15 minutes ago. You just didn&apos;t see it yet. AlphaAI did.
               </motion.p>
 
               {/* CTA Buttons */}
@@ -834,14 +812,14 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.45, duration: 0.6 }}
               >
-                <Link to="/register">
+                <Link to="/dashboard">
                   <Button size="lg" className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 px-8 h-12 text-base shadow-[0_0_30px_rgba(123,97,255,0.3)] hover:shadow-[0_0_40px_rgba(123,97,255,0.45)] transition-shadow" data-testid="hero-get-started-btn">
-                    Get Started<ArrowUpRight className="w-5 h-5 ml-2" />
+                    See the Entries You&apos;re Missing<ArrowUpRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Link to="/dashboard">
+                <Link to="/pricing">
                   <Button size="lg" variant="outline" className="rounded-full border-zinc-700 hover:border-[#7B61FF]/50 px-8 h-12 text-base transition-colors" data-testid="hero-view-signals-btn">
-                    <Activity className="w-5 h-5 mr-2" />View Signals
+                    View Plans
                   </Button>
                 </Link>
               </motion.div>
@@ -855,12 +833,12 @@ const LandingPage = () => {
                 data-testid="trust-indicators"
               >
                 <span className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#7B61FF]" />
-                  Powered by AlphaAI Signal Intelligence
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]" />
+                  Avg. 15-min earlier than manual entries
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]" />
-                  Used by traders in 40+ countries
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#7B61FF]" />
+                  Traders in 40+ countries
                 </span>
                 <span className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#FFB800]" />
