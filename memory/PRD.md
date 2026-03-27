@@ -1,34 +1,53 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 19 Complete - Brand Identity Integration
+## Current Status: Phase 20 Complete - Copy Trading System
 
 ### Overview
-AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals with AI-powered explanations, execute trades (paper or live via Uniswap V3), and track portfolio performance.
+AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals with AI-powered explanations, execute trades (paper or live via Uniswap V3), track portfolio performance, and now copy trades from top traders.
 
 **Copyright © 2026 Martin Maughan. All rights reserved.**
 
 ---
 
-### Latest Feature: Brand Identity Integration - "Signal Intelligence System" (March 2026)
+### Latest Feature: Copy Trading System (March 2026)
 
-**Brand Identity Changes:**
-1. **Auth Pages** (Login, Register, Forgot Password, Reset Password) - AuthBrandLockup component with Brain icon + "AlphaAI" + "SIGNAL INTELLIGENCE SYSTEM" subtitle
-2. **Navigation Header** - BrandLockup component with Outfit font
-3. **Landing Page** - Hero section stacked BrandLockup, footer with BrandLockup + PoweredByTag
-4. **Dashboard/Trading View** - "Powered by the AlphaAI Signal Intelligence System" tag
-5. **Email Templates** - All 4 templates (verification, password reset, welcome pro, 2FA) updated with "Signal Intelligence System" subtitle and "Powered by" footer
-6. **Admin Header** - Updated with BrandLockup
+**Copy Trading Features:**
+1. **Follow/Unfollow Traders** - Pro/Elite users can follow any public trader on the leaderboard
+2. **Auto-Copy Mode** - Trades are immediately replicated using allocation percentage
+3. **Manual Approval Mode** - Trades are queued for user approval before execution
+4. **Copy Settings** - Configure mode, allocation % (1-100), max per trade limit
+5. **Pause/Resume** - Temporarily pause copying without unfollowing
+6. **Safety Checks** - Circular copying prevention, balance validation, duplicate detection
+7. **Trade Mirroring** - Trades are scaled based on follower's allocation percentage
 
-**Components:**
-- `BrandLockup` (App.js) - Supports `small`, `default`, `large`, `hero` sizes and `default`, `stacked`, `inline` variants
-- `AuthBrandLockup` (AuthPages.jsx) - Centered stacked variant for auth screens
-- `PoweredByTag` (App.js) - Subtle "Powered by the AlphaAI Signal Intelligence System" footer tag
+**Backend Implementation:**
+- `CopyTradingService` in `/app/backend/services/copy_trading_service.py`
+- API routes in `/app/backend/routes/copy_trading.py` (7 endpoints)
+- Trade execution hook in `server.py` triggers copy trades automatically
+- Collections: `copy_relationships`, `pending_copy_trades`
 
-**Design System:**
-- Primary: #7B61FF (purple)
-- Accent: #00FF94 (neon cyan)
-- Font: Outfit (brand), system fonts (body)
-- Dark mode with glassmorphism aesthetic
+**API Endpoints:**
+- `POST /api/copy/follow` - Follow a trader
+- `DELETE /api/copy/unfollow/{id}` - Unfollow a trader
+- `PUT /api/copy/settings` - Update mode, allocation %, max_per_trade, status
+- `GET /api/copy/following` - List traders user follows
+- `GET /api/copy/followers` - List followers
+- `GET /api/copy/pending` - Get pending manual copy trades
+- `POST /api/copy/approve/{trade_id}` - Approve pending trade
+- `POST /api/copy/reject/{trade_id}` - Reject pending trade
+
+**Frontend UI:**
+- `/copy-trading` page with stats cards, Following/Pending/Followers tabs
+- FollowTraderModal with mode selection, allocation slider, max per trade
+- EditSettingsModal for updating copy settings
+- "Copy" button on leaderboard trader rows and profile dialogs
+- Upgrade gate for free users
+- Navigation link added
+
+**Access Control:**
+- Only Pro/Elite users can follow traders
+- Free users see upgrade prompt
+- Self-follow and circular copying prevented
 
 ---
 
@@ -327,19 +346,19 @@ Payments:
 3. ~~Enhance AI Signal Intelligence~~ DONE (GPT-5.2 explanations)
 4. ~~Add push notifications for high-confidence signals~~ DONE
 5. ~~Brand Identity Integration ("Signal Intelligence System")~~ DONE
-6. Deploy smart contract to Sepolia mainnet
-7. Configure production Resend API key for live emails
-8. Configure FCM/APNs/Expo for real push notifications
+6. ~~Copy Trading System~~ DONE
+7. Deploy smart contract to Sepolia mainnet
+8. Configure production Resend API key for live emails
+9. Configure FCM/APNs/Expo for real push notifications
 
 ### Upcoming Tasks (P1)
-- Copy Trading System - Users mirror trades of top leaderboard traders (free, no commissions)
+- Biometric Authentication for Mobile (Face ID / Touch ID)
+- Refactor App.js (~6000+ lines) and server.py (~6100+ lines) into smaller modules
 
 ### Future Tasks (P2-P3)
-- Biometric Authentication for Mobile (Face ID / Touch ID)
 - Mobile App API Optimization (React Native)
 - Webhook Delivery Testing via Stripe Dashboard
 - Deploy AlphaAIManager.sol Smart Contract to Sepolia
-- Refactor App.js (~6000+ lines) and server.py (~6100+ lines) into smaller modules
 
 ---
 

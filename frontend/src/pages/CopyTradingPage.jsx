@@ -215,6 +215,9 @@ const EditSettingsModal = ({ open, onOpenChange, relationship, token, onSuccess 
             <Settings className="w-5 h-5 text-[#7B61FF]" />
             Copy Settings
           </DialogTitle>
+          <DialogDescription className="text-zinc-500">
+            Adjust how trades are copied from this trader
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
