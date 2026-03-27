@@ -12,7 +12,7 @@ import {
   Pause, TestTube, Rocket, StopCircle, Gauge, Scale, Split,
   Beaker, Trophy, FileCode, Radio, CircleDot, Terminal, ScrollText,
   Plus, Minus, ArrowDown, Eye, PlayCircle, LogIn, LogOut, User,
-  Bell, BellRing, Moon, Sun
+  Bell, BellRing, Moon, Sun, Lock, Crown
 } from "lucide-react";
 import {
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -43,6 +43,7 @@ import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyE
 import PerformanceMetrics from "./components/PerformanceMetrics";
 import ReferralDashboard from "./components/ReferralDashboard";
 import CopyTradingPage, { FollowTraderModal } from "./pages/CopyTradingPage";
+import PricingPage, { TierBadge, FeatureLock, UpgradeBanner, PaperTradingBadge, InlineUpgradeCTA } from "./pages/PricingPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -332,6 +333,8 @@ const Navigation = () => {
     { path: "/marketplace", label: "Marketplace", icon: Store },
     { path: "/referrals", label: "Referrals", icon: Users },
     { path: "/copy-trading", label: "Copy Trading", icon: Copy },
+    { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { path: "/pricing", label: "Pricing", icon: Crown },
     { path: "/admin", label: "Admin", icon: Shield },
   ];
 
@@ -406,7 +409,10 @@ const Navigation = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-[#121212] border-zinc-800 w-56">
                     <div className="px-3 py-2 border-b border-zinc-800">
-                      <p className="text-sm font-medium">{user?.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{user?.name}</p>
+                        <TierBadge tier={user?.user_tier || 'free'} />
+                      </div>
                       <p className="text-xs text-zinc-500">{user?.email}</p>
                     </div>
                     
@@ -926,6 +932,7 @@ const NotificationSettings = ({ walletAddress, isPro }) => {
 // Dashboard Page with Paper Trading
 const DashboardPage = () => {
   const { wallet, investor, refreshInvestor } = useWallet();
+  const { user: authUser } = useAuth();
   const [demoMode, setDemoMode] = useState(false);
   const [signals, setSignals] = useState([
     { symbol: 'BTC', signal: 'BUY', confidence: 87, price: 67432 },
@@ -940,6 +947,14 @@ const DashboardPage = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState('pro_monthly');
   const [expandedSignal, setExpandedSignal] = useState(null); // Track which signal's AI explanation is expanded
+  const userTier = authUser?.user_tier || (isPro ? 'pro' : 'free');
+
+  // Sync isPro from auth context
+  useEffect(() => {
+    if (authUser?.user_tier && authUser.user_tier !== 'free') {
+      setIsPro(true);
+    }
+  }, [authUser?.user_tier]);
 
   // Check for payment return and poll status
   useEffect(() => {
@@ -1455,6 +1470,17 @@ const DashboardPage = () => {
     <div className="min-h-screen pt-24 px-4 pb-12">
       <div className="max-w-4xl mx-auto">
         
+        {/* Free Tier Upgrade Banner */}
+        <UpgradeBanner className="mb-4" />
+        
+        {/* Paper Trading Mode Badge */}
+        {!isPro && (
+          <div className="mb-4 flex items-center gap-2">
+            <PaperTradingBadge />
+            <span className="text-xs text-zinc-600">Paper trades only. Upgrade for live trading.</span>
+          </div>
+        )}
+        
         {/* SOCIAL PROOF: Active Users + Live Timer */}
         {!isPro && (
           <motion.div 
@@ -1556,14 +1582,21 @@ const DashboardPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-sm ${tradingMode === 'simulation' ? 'text-[#7B61FF]' : 'text-zinc-500'}`}>Simulation</span>
-                  <button 
-                    onClick={toggleTradingMode}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors ${tradingMode === 'live' ? 'bg-[#00FF94]' : 'bg-zinc-700'}`}
-                    data-testid="trading-mode-toggle"
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${tradingMode === 'live' ? 'translate-x-6' : ''}`} />
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={isPro ? toggleTradingMode : undefined}
+                      className={`w-12 h-6 rounded-full p-1 transition-colors ${tradingMode === 'live' ? 'bg-[#00FF94]' : 'bg-zinc-700'} ${!isPro ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      data-testid="trading-mode-toggle"
+                      disabled={!isPro}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${tradingMode === 'live' ? 'translate-x-6' : ''}`} />
+                    </button>
+                    {!isPro && (
+                      <Lock className="w-3 h-3 text-zinc-500 absolute -top-1 -right-1" />
+                    )}
+                  </div>
                   <span className={`text-sm ${tradingMode === 'live' ? 'text-[#00FF94]' : 'text-zinc-500'}`}>Live</span>
+                  {!isPro && <span className="text-xs text-zinc-600 ml-1">(Pro)</span>}
                 </div>
               </div>
 
@@ -5725,7 +5758,7 @@ const LeaderboardPage = () => {
   const [followModalOpen, setFollowModalOpen] = useState(false);
   const [followTarget, setFollowTarget] = useState(null);
 
-  const userTier = user?.is_elite ? 'elite' : user?.is_pro ? 'pro' : 'free';
+  const userTier = user?.user_tier || (user?.is_elite ? 'elite' : user?.is_pro ? 'pro' : 'free');
   const isPro = userTier !== 'free';
 
   useEffect(() => {
@@ -5968,11 +6001,14 @@ const LeaderboardPage = () => {
             )}
 
             {!isPro && traders.length >= 10 && (
-              <div className="p-4 border-t border-zinc-800 bg-[#7B61FF]/5 text-center">
-                <p className="text-sm text-zinc-400">
-                  <Shield className="inline w-4 h-4 mr-1 text-[#7B61FF]" />
-                  Upgrade to Pro to see the full leaderboard and detailed trader stats
+              <div className="p-4 border-t border-zinc-800 bg-[#7B61FF]/5 text-center" data-testid="leaderboard-upgrade-cta">
+                <Lock className="inline w-4 h-4 mr-1 text-[#7B61FF]" />
+                <p className="text-sm text-zinc-400 inline">
+                  Free users can only see the Top 10. 
                 </p>
+                <Button asChild size="sm" variant="link" className="text-[#7B61FF] p-0 ml-1">
+                  <Link to="/pricing">Upgrade to Pro</Link>
+                </Button>
               </div>
             )}
           </CardContent>
@@ -6172,6 +6208,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/copy-trading" element={<CopyTradingPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/simulation" element={<SimulationPage />} />
               <Route path="/research" element={<ResearchEnginePage />} />
               <Route path="/agents" element={<AgentsPage />} />

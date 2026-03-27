@@ -2963,6 +2963,13 @@ async def execute_trade(request: ExecuteTradeRequest):
         if not investor:
             raise HTTPException(status_code=404, detail="Wallet not registered")
         
+        # Tier check: Free users cannot execute live trades
+        if request.is_live:
+            user = await db.users.find_one({"wallet_address": request.wallet_address}, {"_id": 0, "user_tier": 1, "is_pro": 1, "is_elite": 1})
+            is_pro = (user and (user.get("is_pro") or user.get("is_elite") or user.get("user_tier") in ("pro", "elite"))) or investor.get("is_pro") or investor.get("is_elite")
+            if not is_pro:
+                raise HTTPException(status_code=403, detail="Live trading requires Pro or Elite subscription. Free users can only paper trade.")
+        
         # Check paper balance for paper trades
         if not request.is_live:
             if investor.get("paper_balance", 0) < request.amount_usd:
@@ -5391,14 +5398,17 @@ async def hc_ads_preview_page():
 
 # Pro subscription pricing
 PRO_SUBSCRIPTION_PACKAGES = {
-    "pro_monthly": {"amount": 29.00, "currency": "usd", "name": "AlphaAI Pro Monthly", "period": "month"},
-    "pro_yearly": {"amount": 249.00, "currency": "usd", "name": "AlphaAI Pro Yearly", "period": "year"}
+    "pro_monthly": {"amount": 29.00, "currency": "usd", "name": "AlphaAI Pro Monthly", "period": "month", "tier": "pro"},
+    "pro_yearly": {"amount": 249.00, "currency": "usd", "name": "AlphaAI Pro Yearly", "period": "year", "tier": "pro"},
+    "elite_monthly": {"amount": 79.00, "currency": "usd", "name": "AlphaAI Elite Monthly", "period": "month", "tier": "elite"},
+    "elite_yearly": {"amount": 699.00, "currency": "usd", "name": "AlphaAI Elite Yearly", "period": "year", "tier": "elite"},
 }
 
 class CreateCheckoutRequest(BaseModel):
     package_id: str = "pro_monthly"
     origin_url: str
     wallet_address: Optional[str] = None
+    user_email: Optional[str] = None
 
 @api_router.post("/payments/checkout")
 async def create_checkout_session(request: CreateCheckoutRequest, http_request: Request):
@@ -5426,7 +5436,9 @@ async def create_checkout_session(request: CreateCheckoutRequest, http_request: 
             "package_id": request.package_id,
             "package_name": package["name"],
             "wallet_address": request.wallet_address or "demo_user",
-            "subscription_period": package["period"]
+            "subscription_period": package["period"],
+            "target_tier": package.get("tier", "pro"),
+            "user_email": request.user_email or ""
         }
         
         # Create checkout session
@@ -5511,12 +5523,25 @@ async def get_payment_status(session_id: str, http_request: Request):
         if is_pro:
             update_data["pro_activated_at"] = datetime.now(timezone.utc)
             
-            # Update investor record to mark as Pro
+            # Determine tier from package
+            pkg = PRO_SUBSCRIPTION_PACKAGES.get(transaction.get("package_id"), {})
+            target_tier = pkg.get("tier", "pro")
+            is_elite_pkg = target_tier == "elite"
+            
+            # Update investor record
             wallet_address = transaction.get("wallet_address")
             if wallet_address and wallet_address != "demo_user":
                 await db.investors.update_one(
                     {"wallet_address": wallet_address},
-                    {"$set": {"is_pro": True, "pro_since": datetime.now(timezone.utc)}}
+                    {"$set": {"is_pro": True, "is_elite": is_elite_pkg, "pro_since": datetime.now(timezone.utc)}}
+                )
+            
+            # Update user record with user_tier
+            user_email = transaction.get("metadata", {}).get("user_email")
+            if user_email:
+                await db.users.update_one(
+                    {"email": user_email},
+                    {"$set": {"is_pro": True, "is_elite": is_elite_pkg, "user_tier": target_tier, "pro_since": datetime.now(timezone.utc)}}
                 )
         
         await db.payment_transactions.update_one(
@@ -5565,14 +5590,25 @@ async def stripe_webhook(request: Request):
             if webhook_response.payment_status == "paid":
                 update_data["pro_activated_at"] = datetime.now(timezone.utc)
                 
-                # Get transaction to find wallet address
+                # Get transaction to find wallet address and tier
                 transaction = await db.payment_transactions.find_one({"session_id": webhook_response.session_id})
                 if transaction:
+                    pkg = PRO_SUBSCRIPTION_PACKAGES.get(transaction.get("package_id"), {})
+                    target_tier = pkg.get("tier", "pro")
+                    is_elite_pkg = target_tier == "elite"
+                    
                     wallet_address = transaction.get("wallet_address")
                     if wallet_address and wallet_address != "demo_user":
                         await db.investors.update_one(
                             {"wallet_address": wallet_address},
-                            {"$set": {"is_pro": True, "pro_since": datetime.now(timezone.utc)}}
+                            {"$set": {"is_pro": True, "is_elite": is_elite_pkg, "pro_since": datetime.now(timezone.utc)}}
+                        )
+                    
+                    user_email = transaction.get("metadata", {}).get("user_email")
+                    if user_email:
+                        await db.users.update_one(
+                            {"email": user_email},
+                            {"$set": {"is_pro": True, "is_elite": is_elite_pkg, "user_tier": target_tier, "pro_since": datetime.now(timezone.utc)}}
                         )
             
             await db.payment_transactions.update_one(
@@ -5595,28 +5631,57 @@ async def get_subscription_packages():
             {
                 "id": "pro_monthly",
                 "name": "AlphaAI Pro Monthly",
+                "tier": "pro",
                 "price": 29.00,
                 "currency": "usd",
                 "period": "month",
                 "features": [
                     "Real-time AI signals (no delay)",
-                    "Push notifications & email alerts",
-                    "Advanced AI market analysis",
-                    "Priority support"
+                    "Live trading enabled",
+                    "Copy Trading access",
+                    "Full leaderboard access",
+                    "Advanced analytics",
+                    "Push notifications & email alerts"
                 ]
             },
             {
                 "id": "pro_yearly",
                 "name": "AlphaAI Pro Yearly",
+                "tier": "pro",
                 "price": 249.00,
                 "currency": "usd",
                 "period": "year",
                 "savings": "Save $99/year",
                 "features": [
-                    "Real-time AI signals (no delay)",
-                    "Push notifications & email alerts",
-                    "Advanced AI market analysis",
-                    "Priority support",
+                    "Everything in Pro Monthly",
+                    "2 months FREE"
+                ]
+            },
+            {
+                "id": "elite_monthly",
+                "name": "AlphaAI Elite Monthly",
+                "tier": "elite",
+                "price": 79.00,
+                "currency": "usd",
+                "period": "month",
+                "features": [
+                    "Everything in Pro",
+                    "Priority signal delivery",
+                    "Early access to new features",
+                    "Higher rate limits",
+                    "Advanced research tools"
+                ]
+            },
+            {
+                "id": "elite_yearly",
+                "name": "AlphaAI Elite Yearly",
+                "tier": "elite",
+                "price": 699.00,
+                "currency": "usd",
+                "period": "year",
+                "savings": "Save $249/year",
+                "features": [
+                    "Everything in Elite Monthly",
                     "2 months FREE"
                 ]
             }
@@ -5625,13 +5690,21 @@ async def get_subscription_packages():
 
 @api_router.get("/users/pro-status/{wallet_address}")
 async def get_pro_status(wallet_address: str):
-    """Check if a user has Pro subscription"""
+    """Check if a user has Pro/Elite subscription"""
     investor = await db.investors.find_one({"wallet_address": wallet_address})
     if not investor:
-        return {"is_pro": False, "wallet_address": wallet_address}
+        return {"is_pro": False, "is_elite": False, "user_tier": "free", "wallet_address": wallet_address}
+    
+    user_tier = "free"
+    if investor.get("is_elite"):
+        user_tier = "elite"
+    elif investor.get("is_pro"):
+        user_tier = "pro"
     
     return {
         "is_pro": investor.get("is_pro", False),
+        "is_elite": investor.get("is_elite", False),
+        "user_tier": user_tier,
         "pro_since": investor.get("pro_since"),
         "wallet_address": wallet_address
     }

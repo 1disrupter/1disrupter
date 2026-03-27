@@ -77,6 +77,7 @@ class UserResponse(BaseModel):
     is_pro: bool
     is_elite: bool
     has_2fa: bool
+    user_tier: str = "free"
     wallet_address: Optional[str] = None
     created_at: datetime
 
@@ -182,14 +183,22 @@ async def get_current_user(request: Request) -> dict:
 
 def format_user_response(user: dict) -> UserResponse:
     """Format user dict into UserResponse"""
+    # Derive user_tier from booleans for backward compat
+    user_tier = user.get("user_tier", "free")
+    if user_tier == "free":
+        if user.get("is_elite"):
+            user_tier = "elite"
+        elif user.get("is_pro"):
+            user_tier = "pro"
     return UserResponse(
         id=user["id"],
         email=user["email"],
         name=user["name"],
         is_verified=user.get("is_verified", False),
-        is_pro=user.get("is_pro", False),
-        is_elite=user.get("is_elite", False),
+        is_pro=user.get("is_pro", False) or user_tier in ("pro", "elite"),
+        is_elite=user.get("is_elite", False) or user_tier == "elite",
         has_2fa=user.get("has_2fa", False),
+        user_tier=user_tier,
         wallet_address=user.get("wallet_address"),
         created_at=user.get("created_at", datetime.now(timezone.utc))
     )
@@ -217,6 +226,7 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks):
         "is_verified": False,
         "is_pro": False,
         "is_elite": False,
+        "user_tier": "free",
         "has_2fa": False,
         "totp_secret": None,
         "backup_codes": [],
