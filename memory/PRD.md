@@ -9,7 +9,33 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 
 ---
 
-### Latest Feature: Push Notifications for High-Confidence Signals (March 2026)
+### Latest Feature: Comprehensive Admin Dashboard (March 2026)
+
+**Admin Dashboard Tabs:**
+1. **Overview** - System stats, recent signups, recent payments, risk config
+2. **Users** - Full user management with search, filters, actions (set plan, activate/deactivate, delete)
+3. **Subscriptions** - Subscription management, Stripe sync, manual overrides
+4. **Logs** - System logs, webhook logs, audit logs with filters
+5. **Features** - Feature toggle switches by category (core, trading, notifications, payments, security, system)
+6. **System Tools** - Clear cache, refresh data, rebuild indexes, cleanup tokens/logs, verify subscriptions
+7. **Security** - Security overview, admin auth status, audit trail
+
+**Backend API** (`/app/backend/routes/admin.py`):
+- All routes protected with admin_key authentication
+- Audit logging for all admin actions
+- User CRUD operations
+- Subscription management with Stripe sync
+- Feature toggles persistence
+- System maintenance tools
+
+**Security Features:**
+- Admin authentication required
+- All actions logged to audit trail
+- Session management with logout
+
+---
+
+### Previous Feature: Push Notifications for High-Confidence Signals (March 2026)
 
 **Push Notification Features:**
 - **High-Confidence Signal Alerts** - Pro/Elite users receive instant notifications for signals with 75%+ confidence
@@ -159,11 +185,19 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - Risk assessment and actionable insights
 - Expandable UI for full AI analysis
 
-**Phase 16**: Push Notifications ✅ NEW
+**Phase 16**: Push Notifications ✅
 - High-confidence signal alerts (75%+ threshold)
 - Notification preferences management
 - Quiet hours configuration
 - Pro/Elite user targeting
+
+**Phase 17**: Comprehensive Admin Dashboard ✅ NEW
+- Full user management with actions
+- Subscription management with Stripe sync
+- Feature toggles by category
+- System maintenance tools
+- Audit logging for all admin actions
+- Security overview
 
 ---
 

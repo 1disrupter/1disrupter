@@ -6078,6 +6078,7 @@ from routes.metrics import router as metrics_router, init_db as init_metrics_db
 from routes.demo import router as demo_router, init_db as init_demo_db
 from routes.referrals import router as referrals_router, init_db as init_referrals_db
 from routes.mobile_v1 import router as mobile_v1_router, init_db as init_mobile_db
+from routes.admin import router as admin_router, init_db as init_admin_db
 from services.push_notifications import push_service, init_db as init_push_db, HIGH_CONFIDENCE_THRESHOLD
 
 # Initialize auth database
@@ -6086,6 +6087,7 @@ init_metrics_db(db)
 init_demo_db(db)
 init_referrals_db(db)
 init_mobile_db(db)
+init_admin_db(db)
 init_push_db(db)  # Initialize push notification service
 
 # Include router and middleware
@@ -6094,6 +6096,7 @@ app.include_router(metrics_router)
 app.include_router(demo_router)
 app.include_router(referrals_router)
 app.include_router(mobile_v1_router)
+app.include_router(admin_router)
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 
