@@ -607,6 +607,161 @@ const LivePriceTicker = ({ compact = false }) => {
 };
 
 // Landing Page
+// Hero AI Signal Visualization — SVG-based neural grid with animated signals
+const HeroVisualization = () => {
+  return (
+    <div className="relative w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] lg:w-[480px] lg:h-[480px]" data-testid="hero-visualization">
+      {/* Ambient glow */}
+      <div className="absolute inset-0 rounded-full bg-[#7B61FF]/8 blur-[60px] scale-110" />
+      
+      <svg viewBox="0 0 400 400" className="w-full h-full relative z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Grid circles */}
+        <circle cx="200" cy="200" r="160" stroke="#7B61FF" strokeOpacity="0.08" strokeWidth="1" />
+        <circle cx="200" cy="200" r="120" stroke="#7B61FF" strokeOpacity="0.1" strokeWidth="1" />
+        <circle cx="200" cy="200" r="80" stroke="#7B61FF" strokeOpacity="0.12" strokeWidth="1" />
+        <circle cx="200" cy="200" r="40" stroke="#7B61FF" strokeOpacity="0.15" strokeWidth="1" />
+        
+        {/* Cross-hairs */}
+        <line x1="200" y1="30" x2="200" y2="370" stroke="#7B61FF" strokeOpacity="0.06" strokeWidth="0.5" />
+        <line x1="30" y1="200" x2="370" y2="200" stroke="#7B61FF" strokeOpacity="0.06" strokeWidth="0.5" />
+        <line x1="80" y1="80" x2="320" y2="320" stroke="#7B61FF" strokeOpacity="0.04" strokeWidth="0.5" />
+        <line x1="320" y1="80" x2="80" y2="320" stroke="#7B61FF" strokeOpacity="0.04" strokeWidth="0.5" />
+
+        {/* Signal waveform path */}
+        <path
+          d="M40,200 Q80,180 120,210 T200,170 T280,220 T360,190"
+          stroke="url(#waveGradient)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          opacity="0.6"
+        >
+          <animate attributeName="d" dur="4s" repeatCount="indefinite" values="
+            M40,200 Q80,180 120,210 T200,170 T280,220 T360,190;
+            M40,190 Q80,220 120,180 T200,210 T280,170 T360,205;
+            M40,210 Q80,170 120,200 T200,180 T280,210 T360,185;
+            M40,200 Q80,180 120,210 T200,170 T280,220 T360,190"
+          />
+        </path>
+        
+        {/* Secondary waveform */}
+        <path
+          d="M40,220 Q100,200 160,240 T280,200 T360,230"
+          stroke="url(#cyanGradient)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          opacity="0.3"
+        >
+          <animate attributeName="d" dur="5s" repeatCount="indefinite" values="
+            M40,220 Q100,200 160,240 T280,200 T360,230;
+            M40,230 Q100,240 160,200 T280,230 T360,210;
+            M40,210 Q100,220 160,230 T280,210 T360,225;
+            M40,220 Q100,200 160,240 T280,200 T360,230"
+          />
+        </path>
+
+        {/* Neural nodes */}
+        {[
+          { cx: 200, cy: 200, r: 6, delay: 0 },
+          { cx: 120, cy: 160, r: 4, delay: 0.5 },
+          { cx: 280, cy: 170, r: 4, delay: 1.0 },
+          { cx: 150, cy: 260, r: 3.5, delay: 1.5 },
+          { cx: 260, cy: 250, r: 3.5, delay: 2.0 },
+          { cx: 100, cy: 220, r: 3, delay: 0.8 },
+          { cx: 300, cy: 210, r: 3, delay: 1.3 },
+          { cx: 200, cy: 120, r: 3, delay: 0.3 },
+          { cx: 200, cy: 280, r: 3, delay: 1.8 },
+        ].map((n, i) => (
+          <g key={i}>
+            {/* Node glow */}
+            <circle cx={n.cx} cy={n.cy} r={n.r * 3} fill="#7B61FF" opacity="0.06">
+              <animate attributeName="opacity" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="0.04;0.1;0.04" />
+            </circle>
+            {/* Node core */}
+            <circle cx={n.cx} cy={n.cy} r={n.r} fill="#7B61FF">
+              <animate attributeName="opacity" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="0.4;0.9;0.4" />
+            </circle>
+            {/* Node ring */}
+            <circle cx={n.cx} cy={n.cy} r={n.r + 2} stroke="#7B61FF" strokeWidth="0.5" fill="none" opacity="0.3">
+              <animate attributeName="r" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="${n.r + 2};${n.r + 5};${n.r + 2}" />
+              <animate attributeName="opacity" dur="3s" begin={`${n.delay}s`} repeatCount="indefinite" values="0.3;0.1;0.3" />
+            </circle>
+          </g>
+        ))}
+
+        {/* Neural connections */}
+        {[
+          [200, 200, 120, 160], [200, 200, 280, 170], [200, 200, 150, 260], [200, 200, 260, 250],
+          [200, 200, 200, 120], [200, 200, 200, 280], [120, 160, 100, 220], [280, 170, 300, 210],
+          [150, 260, 100, 220], [260, 250, 300, 210], [120, 160, 200, 120], [280, 170, 200, 120],
+        ].map(([x1, y1, x2, y2], i) => (
+          <line key={`c${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#7B61FF" strokeWidth="0.5" opacity="0.12">
+            <animate attributeName="opacity" dur="4s" begin={`${i * 0.3}s`} repeatCount="indefinite" values="0.06;0.18;0.06" />
+          </line>
+        ))}
+
+        {/* Scanning pulse ring */}
+        <circle cx="200" cy="200" r="40" stroke="#7B61FF" strokeWidth="1" fill="none" opacity="0.2">
+          <animate attributeName="r" dur="3s" repeatCount="indefinite" values="40;160;40" />
+          <animate attributeName="opacity" dur="3s" repeatCount="indefinite" values="0.25;0;0.25" />
+        </circle>
+
+        {/* Center brain icon placeholder circle */}
+        <circle cx="200" cy="200" r="28" fill="#7B61FF" fillOpacity="0.15" stroke="#7B61FF" strokeWidth="1" strokeOpacity="0.3" />
+        <circle cx="200" cy="200" r="20" fill="url(#centerGradient)" />
+
+        {/* Gradients */}
+        <defs>
+          <linearGradient id="waveGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#7B61FF" stopOpacity="0.1" />
+            <stop offset="50%" stopColor="#7B61FF" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#00FF94" stopOpacity="0.1" />
+          </linearGradient>
+          <linearGradient id="cyanGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#00FF94" stopOpacity="0.1" />
+            <stop offset="50%" stopColor="#00FF94" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#7B61FF" stopOpacity="0.1" />
+          </linearGradient>
+          <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#7B61FF" />
+            <stop offset="100%" stopColor="#5A3FE0" />
+          </radialGradient>
+        </defs>
+      </svg>
+
+      {/* Central Brain icon overlay */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+        <Brain className="w-7 h-7 text-white opacity-90" />
+      </div>
+
+      {/* Floating data labels */}
+      <motion.div
+        className="absolute top-[12%] right-[8%] px-2.5 py-1 rounded-md bg-[#0B0B0F]/80 border border-[#7B61FF]/20 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0.5, 0.9, 0.5] }}
+        transition={{ duration: 3, repeat: Infinity }}
+      >
+        <span className="text-[10px] font-mono text-[#00FF94]">BTC +2.4%</span>
+      </motion.div>
+      <motion.div
+        className="absolute bottom-[15%] left-[5%] px-2.5 py-1 rounded-md bg-[#0B0B0F]/80 border border-[#7B61FF]/20 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0.4, 0.8, 0.4] }}
+        transition={{ duration: 3.5, repeat: Infinity, delay: 1 }}
+      >
+        <span className="text-[10px] font-mono text-[#7B61FF]">Signal: BUY 87%</span>
+      </motion.div>
+      <motion.div
+        className="absolute top-[55%] right-[3%] px-2.5 py-1 rounded-md bg-[#0B0B0F]/80 border border-[#00FF94]/15 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0.3, 0.7, 0.3] }}
+        transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
+      >
+        <span className="text-[10px] font-mono text-zinc-400">ETH $3,521</span>
+      </motion.div>
+    </div>
+  );
+};
+
 const LandingPage = () => {
   const { connectWallet, wallet, loading } = useWallet();
   const [fundStats, setFundStats] = useState(null);
@@ -620,64 +775,126 @@ const LandingPage = () => {
       {/* Live Price Ticker */}
       <LivePriceTicker compact={true} />
       
-      <section className="relative px-4 py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 grid-pattern opacity-50" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7B61FF]/20 rounded-full blur-[120px]" />
+      <section className="relative px-4 pt-16 pb-12 md:pt-24 md:pb-20 overflow-hidden" data-testid="hero-section">
+        {/* Cinematic background layers */}
+        <div className="absolute inset-0 bg-[#0B0B0F]" />
+        <div className="absolute inset-0 grid-pattern opacity-30" />
+        <div className="absolute top-[20%] left-[15%] w-[500px] h-[500px] bg-[#7B61FF]/10 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-[#00FF94]/5 rounded-full blur-[120px] pointer-events-none" />
+        
+        {/* Noise texture */}
+        <div
+          className="absolute inset-0 opacity-[0.025] pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            backgroundSize: '128px 128px',
+          }}
+        />
         
         <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center max-w-4xl mx-auto">
-            {/* Brand Lockup - Hero Version */}
-            <div className="flex justify-center mb-8">
-              <BrandLockup size="hero" variant="stacked" showSubtitle={true} />
-            </div>
-            
-            <Badge className="mb-6 bg-[#7B61FF]/20 text-[#7B61FF] border-[#7B61FF]/30" data-testid="hero-badge">
-              <Sparkles className="w-3 h-3 mr-1" />AI-Powered Trading Signals
-            </Badge>
-            
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 font-['Outfit'] tracking-tight" data-testid="hero-title">
-              <span className="text-gradient">Intelligent Signals</span><br />
-              <span className="text-gradient-primary">Powered by AI</span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto" data-testid="hero-description">
-              Advanced AI analyzes markets 24/7, delivering high-confidence trading signals with real-time execution and automated risk management.
-            </p>
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[70vh]">
+            {/* Left: Text Content */}
+            <div className="order-2 lg:order-1">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Badge className="mb-6 bg-[#7B61FF]/15 text-[#7B61FF] border-[#7B61FF]/25 px-4 py-1.5" data-testid="hero-badge">
+                  <Sparkles className="w-3 h-3 mr-1.5" />AI-Powered Trading Signals
+                </Badge>
+              </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {wallet ? (
-                <Link to="/dashboard">
-                  <Button size="lg" className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 px-8 glow-primary btn-hover-lift" data-testid="go-to-dashboard-btn">
-                    Go to Dashboard<ArrowUpRight className="w-5 h-5 ml-2" />
+              <motion.h1
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 font-['Outfit'] tracking-tight leading-[1.1]"
+                data-testid="hero-title"
+                initial={{ opacity: 0, y: 30, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <span className="text-white">AI&#8209;Powered Signal</span><br />
+                <span className="text-white">Intelligence for</span><br />
+                <span className="bg-gradient-to-r from-[#7B61FF] via-[#9D8AFF] to-[#00FF94] bg-clip-text text-transparent">Modern Traders</span>
+              </motion.h1>
+
+              <motion.p
+                className="text-base sm:text-lg text-zinc-400 mb-10 max-w-lg leading-relaxed"
+                data-testid="hero-description"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                Real&#8209;time signals, automated copy trading, and institutional&#8209;grade analytics — all in one platform.
+              </motion.p>
+
+              {/* CTA Buttons */}
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 mb-12"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.6 }}
+              >
+                <Link to="/register">
+                  <Button size="lg" className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 px-8 h-12 text-base shadow-[0_0_30px_rgba(123,97,255,0.3)] hover:shadow-[0_0_40px_rgba(123,97,255,0.45)] transition-shadow" data-testid="hero-get-started-btn">
+                    Get Started<ArrowUpRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-              ) : (
-                <Button size="lg" onClick={connectWallet} disabled={loading} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 px-8 glow-primary btn-hover-lift" data-testid="hero-connect-wallet-btn">
-                  <Wallet className="w-5 h-5 mr-2" />{loading ? "Connecting..." : "Connect Wallet"}
-                </Button>
-              )}
-              <Link to="/lab">
-                <Button size="lg" variant="outline" className="rounded-full border-zinc-700 hover:border-zinc-600 px-8 btn-hover-lift" data-testid="explore-lab-btn">
-                  <FlaskConical className="w-5 h-5 mr-2" />Strategy Lab
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+                <Link to="/dashboard">
+                  <Button size="lg" variant="outline" className="rounded-full border-zinc-700 hover:border-[#7B61FF]/50 px-8 h-12 text-base transition-colors" data-testid="hero-view-signals-btn">
+                    <Activity className="w-5 h-5 mr-2" />View Signals
+                  </Button>
+                </Link>
+              </motion.div>
 
+              {/* Trust Indicators */}
+              <motion.div
+                className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-zinc-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                data-testid="trust-indicators"
+              >
+                <span className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#7B61FF]" />
+                  Powered by AlphaAI Signal Intelligence
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]" />
+                  Used by traders in 40+ countries
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#FFB800]" />
+                  Backtested accuracy engine
+                </span>
+              </motion.div>
+            </div>
+
+            {/* Right: AI Signal Visualization */}
+            <motion.div
+              className="order-1 lg:order-2 flex justify-center lg:justify-end"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
+            >
+              <HeroVisualization />
+            </motion.div>
+          </div>
+
+          {/* Fund Stats */}
           {fundStats && (
-            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20">
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 lg:mt-16">
               <Card className="glass-card card-hover" data-testid="stat-nav">
-                <CardContent className="p-6 text-center">
-                  <p className="text-sm text-zinc-500 mb-2">Fund NAV</p>
-                  <p className="text-2xl md:text-3xl font-bold text-white font-['JetBrains_Mono']">{formatCurrency(fundStats.nav)}</p>
-                  <p className={`text-sm mt-1 flex items-center justify-center gap-1 ${fundStats.nav_change_24h >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                <CardContent className="p-5 text-center">
+                  <p className="text-xs text-zinc-500 mb-1.5">Fund NAV</p>
+                  <p className="text-xl md:text-2xl font-bold text-white font-['JetBrains_Mono']">{formatCurrency(fundStats.nav)}</p>
+                  <p className={`text-xs mt-1 flex items-center justify-center gap-1 ${fundStats.nav_change_24h >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
                     {fundStats.nav_change_24h >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}{fundStats.nav_change_24h}%
                   </p>
                 </CardContent>
               </Card>
-              <Card className="glass-card card-hover" data-testid="stat-aum"><CardContent className="p-6 text-center"><p className="text-sm text-zinc-500 mb-2">Total AUM</p><p className="text-2xl md:text-3xl font-bold text-white font-['JetBrains_Mono']">{formatCurrency(fundStats.total_aum)}</p></CardContent></Card>
-              <Card className="glass-card card-hover" data-testid="stat-sharpe"><CardContent className="p-6 text-center"><p className="text-sm text-zinc-500 mb-2">Sharpe Ratio</p><p className="text-2xl md:text-3xl font-bold text-[#7B61FF] font-['JetBrains_Mono']">{fundStats.sharpe_ratio}</p></CardContent></Card>
-              <Card className="glass-card card-hover" data-testid="stat-return"><CardContent className="p-6 text-center"><p className="text-sm text-zinc-500 mb-2">Monthly Return</p><p className={`text-2xl md:text-3xl font-bold font-['JetBrains_Mono'] ${fundStats.monthly_return >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{fundStats.monthly_return >= 0 ? '+' : ''}{fundStats.monthly_return}%</p></CardContent></Card>
+              <Card className="glass-card card-hover" data-testid="stat-aum"><CardContent className="p-5 text-center"><p className="text-xs text-zinc-500 mb-1.5">Total AUM</p><p className="text-xl md:text-2xl font-bold text-white font-['JetBrains_Mono']">{formatCurrency(fundStats.total_aum)}</p></CardContent></Card>
+              <Card className="glass-card card-hover" data-testid="stat-sharpe"><CardContent className="p-5 text-center"><p className="text-xs text-zinc-500 mb-1.5">Sharpe Ratio</p><p className="text-xl md:text-2xl font-bold text-[#7B61FF] font-['JetBrains_Mono']">{fundStats.sharpe_ratio}</p></CardContent></Card>
+              <Card className="glass-card card-hover" data-testid="stat-return"><CardContent className="p-5 text-center"><p className="text-xs text-zinc-500 mb-1.5">Monthly Return</p><p className={`text-xl md:text-2xl font-bold font-['JetBrains_Mono'] ${fundStats.monthly_return >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{fundStats.monthly_return >= 0 ? '+' : ''}{fundStats.monthly_return}%</p></CardContent></Card>
             </motion.div>
           )}
         </div>
