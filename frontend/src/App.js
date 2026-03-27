@@ -46,6 +46,67 @@ import ReferralDashboard from "./components/ReferralDashboard";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// ============= BRAND IDENTITY =============
+// AlphaAI - Signal Intelligence System
+// Brand Lockup Component with optional subtitle toggle
+
+const BrandLockup = ({ 
+  showSubtitle = false, 
+  size = 'default', // 'small', 'default', 'large', 'hero'
+  variant = 'default', // 'default', 'stacked', 'inline'
+  className = ''
+}) => {
+  const sizes = {
+    small: { icon: 'w-8 h-8', iconInner: 'w-4 h-4', title: 'text-lg', subtitle: 'text-[10px]' },
+    default: { icon: 'w-10 h-10', iconInner: 'w-6 h-6', title: 'text-xl', subtitle: 'text-xs' },
+    large: { icon: 'w-12 h-12', iconInner: 'w-7 h-7', title: 'text-2xl', subtitle: 'text-sm' },
+    hero: { icon: 'w-16 h-16', iconInner: 'w-10 h-10', title: 'text-4xl', subtitle: 'text-base' }
+  };
+  
+  const s = sizes[size] || sizes.default;
+  
+  if (variant === 'stacked') {
+    return (
+      <div className={`flex flex-col items-center ${className}`} data-testid="brand-lockup-stacked">
+        <div className={`${s.icon} rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center mb-2`}>
+          <Brain className={`${s.iconInner} text-white`} />
+        </div>
+        <span className={`${s.title} font-bold font-['Outfit'] tracking-tight`}>AlphaAI</span>
+        {showSubtitle && (
+          <span className={`${s.subtitle} text-zinc-400 font-light tracking-[0.2em] uppercase mt-1`}>
+            Signal Intelligence System
+          </span>
+        )}
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`flex items-center gap-3 ${className}`} data-testid="brand-lockup">
+      <div className={`${s.icon} rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center`}>
+        <Brain className={`${s.iconInner} text-white`} />
+      </div>
+      <div className="flex flex-col">
+        <span className={`${s.title} font-bold font-['Outfit'] tracking-tight leading-none`}>AlphaAI</span>
+        {showSubtitle && (
+          <span className={`${s.subtitle} text-zinc-400 font-light tracking-[0.15em] uppercase`}>
+            Signal Intelligence System
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Powered By Footer Tag
+const PoweredByTag = ({ className = '' }) => (
+  <div className={`flex items-center justify-center gap-2 text-xs text-zinc-500 ${className}`} data-testid="powered-by-tag">
+    <span className="opacity-60">Powered by the</span>
+    <span className="text-[#7B61FF] font-medium">AlphaAI</span>
+    <span className="opacity-60">Signal Intelligence System</span>
+  </div>
+);
+
 // Sepolia Chain Config
 const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111 in hex
 const SEPOLIA_CONFIG = {
@@ -279,10 +340,7 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto">
         <div className="glass rounded-2xl px-6 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3" data-testid="nav-logo">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold font-['Outfit']">AlphaAI</span>
+            <BrandLockup size="default" showSubtitle={false} />
           </Link>
 
           <div className="hidden md:flex items-center gap-1">
@@ -559,17 +617,22 @@ const LandingPage = () => {
         
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center max-w-4xl mx-auto">
+            {/* Brand Lockup - Hero Version */}
+            <div className="flex justify-center mb-8">
+              <BrandLockup size="hero" variant="stacked" showSubtitle={true} />
+            </div>
+            
             <Badge className="mb-6 bg-[#7B61FF]/20 text-[#7B61FF] border-[#7B61FF]/30" data-testid="hero-badge">
-              <Sparkles className="w-3 h-3 mr-1" />AI-Powered Hedge Fund
+              <Sparkles className="w-3 h-3 mr-1" />AI-Powered Trading Signals
             </Badge>
             
             <h1 className="text-5xl md:text-7xl font-bold mb-6 font-['Outfit'] tracking-tight" data-testid="hero-title">
-              <span className="text-gradient">Autonomous Trading</span><br />
+              <span className="text-gradient">Intelligent Signals</span><br />
               <span className="text-gradient-primary">Powered by AI</span>
             </h1>
             
             <p className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto" data-testid="hero-description">
-              Deploy capital into our AI-managed vault. Multi-agent trading system analyzes markets 24/7, executing optimal strategies across DeFi.
+              Advanced AI analyzes markets 24/7, delivering high-confidence trading signals with real-time execution and automated risk management.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -644,9 +707,10 @@ const LandingPage = () => {
       </section>
 
       <footer className="px-4 py-8 border-t border-zinc-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2"><Brain className="w-5 h-5 text-[#7B61FF]" /><span className="font-semibold">AlphaAI Platform</span></div>
-          <p className="text-sm text-zinc-500">© 2026 Martin Maughan. All rights reserved. AlphaAI Platform.</p>
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
+          <BrandLockup size="small" showSubtitle={true} />
+          <p className="text-sm text-zinc-500">© 2026 Martin Maughan. All rights reserved.</p>
+          <PoweredByTag />
         </div>
       </footer>
     </div>
@@ -2125,6 +2189,11 @@ const DashboardPage = () => {
         )}
       </div>
 
+      {/* Powered By Footer */}
+      <div className="mt-8 mb-4 px-4">
+        <PoweredByTag />
+      </div>
+
       {/* UPGRADE POPUP (Shows after 2 minutes) */}
       <Dialog open={showUpgradePopup} onOpenChange={setShowUpgradePopup}>
         <DialogContent className="bg-[#121212] border-[#7B61FF]/30 max-w-md" data-testid="upgrade-popup">
@@ -3539,13 +3608,17 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen pt-24 px-4 pb-12">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header with Brand Identity */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold font-['Outfit']" data-testid="admin-title">
-              System Admin
-            </h1>
-            <p className="text-zinc-400 mt-1">Full administrative access to AlphaAI</p>
+          <div className="flex items-center gap-6">
+            <BrandLockup size="large" showSubtitle={true} />
+            <div className="h-10 w-px bg-zinc-800" />
+            <div>
+              <h1 className="text-2xl font-bold font-['Outfit']" data-testid="admin-title">
+                System Admin
+              </h1>
+              <p className="text-zinc-500 text-sm">Administrative Console</p>
+            </div>
           </div>
           <Button variant="outline" onClick={() => { setIsAuthenticated(false); localStorage.removeItem('adminKey'); }} className="border-zinc-700">
             <LogOut className="w-4 h-4 mr-2" /> Logout

@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ai-signals-v1.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://signal-intelligence-5.preview.emergentagent.com').rstrip('/')
 
 class TestDashboardAPIs:
     """Dashboard-related API endpoint tests"""

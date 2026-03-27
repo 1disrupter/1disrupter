@@ -15,6 +15,21 @@ import {
   Sparkles, Shield, Zap, Check, AlertCircle, Loader2
 } from 'lucide-react';
 
+// Brand Lockup Component for Auth Pages
+const AuthBrandLockup = ({ showSubtitle = true }) => (
+  <div className="flex flex-col items-center" data-testid="auth-brand-lockup">
+    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center mb-3">
+      <Brain className="w-8 h-8 text-white" />
+    </div>
+    <span className="text-2xl font-bold font-['Outfit'] tracking-tight">AlphaAI</span>
+    {showSubtitle && (
+      <span className="text-xs text-zinc-400 font-light tracking-[0.2em] uppercase mt-1">
+        Signal Intelligence System
+      </span>
+    )}
+  </div>
+);
+
 // Login Page
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -54,17 +69,14 @@ export const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20" data-testid="login-page">
       <div className="w-full max-w-md">
-        {/* Logo */}
+        {/* Brand Lockup */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <Link to="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center">
-              <Brain className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-2xl font-bold font-['Outfit']">AlphaAI</span>
+          <Link to="/">
+            <AuthBrandLockup showSubtitle={true} />
           </Link>
         </motion.div>
 
@@ -297,17 +309,14 @@ export const RegisterPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20" data-testid="register-page">
       <div className="w-full max-w-md">
-        {/* Logo */}
+        {/* Brand Lockup */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <Link to="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center">
-              <Brain className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-2xl font-bold font-['Outfit']">AlphaAI</span>
+          <Link to="/">
+            <AuthBrandLockup showSubtitle={true} />
           </Link>
         </motion.div>
 
@@ -486,11 +495,8 @@ export const ForgotPasswordPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <Link to="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center">
-              <Brain className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-2xl font-bold font-['Outfit']">AlphaAI</span>
+          <Link to="/">
+            <AuthBrandLockup showSubtitle={true} />
           </Link>
         </motion.div>
 
@@ -649,11 +655,8 @@ export const ResetPasswordPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <Link to="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center">
-              <Brain className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-2xl font-bold font-['Outfit']">AlphaAI</span>
+          <Link to="/">
+            <AuthBrandLockup showSubtitle={true} />
           </Link>
         </motion.div>
 

@@ -50,6 +50,7 @@ def get_verification_email_html(name: str, verification_url: str) -> str:
                                     <span style="font-size: 28px; color: white;">⚡</span>
                                 </div>
                                 <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Welcome to {APP_NAME}</h1>
+                                <p style="color: #a1a1aa; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin: 6px 0 0 0; font-weight: 300;">Signal Intelligence System</p>
                             </td>
                         </tr>
                         
@@ -91,6 +92,9 @@ def get_verification_email_html(name: str, verification_url: str) -> str:
                                 <p style="color: #52525b; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
                                     If you didn't create an account with {APP_NAME}, you can safely ignore this email.
                                 </p>
+                                <p style="color: #52525b; font-size: 11px; margin: 10px 0 0 0; text-align: center;">
+                                    Powered by the <span style="color: #7B61FF;">{APP_NAME}</span> Signal Intelligence System
+                                </p>
                             </td>
                         </tr>
                     </table>
@@ -121,6 +125,7 @@ def get_password_reset_email_html(name: str, reset_url: str) -> str:
                                     <span style="font-size: 28px; line-height: 60px;">🔐</span>
                                 </div>
                                 <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Reset Your Password</h1>
+                                <p style="color: #a1a1aa; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin: 6px 0 0 0; font-weight: 300;">Signal Intelligence System</p>
                             </td>
                         </tr>
                         
@@ -173,6 +178,9 @@ def get_password_reset_email_html(name: str, reset_url: str) -> str:
                                 <p style="color: #52525b; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
                                     If you didn't request a password reset, you can safely ignore this email.
                                 </p>
+                                <p style="color: #52525b; font-size: 11px; margin: 10px 0 0 0; text-align: center;">
+                                    Powered by the <span style="color: #7B61FF;">{APP_NAME}</span> Signal Intelligence System
+                                </p>
                             </td>
                         </tr>
                     </table>
@@ -201,6 +209,7 @@ def get_welcome_pro_email_html(name: str, plan: str) -> str:
                             <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, rgba(123, 97, 255, 0.1), rgba(0, 255, 148, 0.1)); border-radius: 16px 16px 0 0;">
                                 <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
                                 <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Welcome to {APP_NAME} Pro!</h1>
+                                <p style="color: #a1a1aa; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin: 6px 0 0 0; font-weight: 300;">Signal Intelligence System</p>
                                 <p style="color: #7B61FF; font-size: 14px; margin: 8px 0 0 0; font-weight: 500;">{plan}</p>
                             </td>
                         </tr>
@@ -278,6 +287,9 @@ def get_welcome_pro_email_html(name: str, plan: str) -> str:
                                 <p style="color: #52525b; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
                                     Questions? Reply to this email or contact support@alphaai.com
                                 </p>
+                                <p style="color: #52525b; font-size: 11px; margin: 10px 0 0 0; text-align: center;">
+                                    Powered by the <span style="color: #7B61FF;">{APP_NAME}</span> Signal Intelligence System
+                                </p>
                             </td>
                         </tr>
                     </table>
@@ -308,6 +320,7 @@ def get_2fa_enabled_email_html(name: str) -> str:
                                     <span style="font-size: 28px; line-height: 60px;">🛡️</span>
                                 </div>
                                 <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">2FA Enabled Successfully</h1>
+                                <p style="color: #a1a1aa; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin: 6px 0 0 0; font-weight: 300;">Signal Intelligence System</p>
                             </td>
                         </tr>
                         
@@ -334,6 +347,9 @@ def get_2fa_enabled_email_html(name: str) -> str:
                             <td style="padding: 20px 40px; border-top: 1px solid #27272a;">
                                 <p style="color: #52525b; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
                                     If you didn't enable 2FA, please contact support immediately.
+                                </p>
+                                <p style="color: #52525b; font-size: 11px; margin: 10px 0 0 0; text-align: center;">
+                                    Powered by the <span style="color: #7B61FF;">{APP_NAME}</span> Signal Intelligence System
                                 </p>
                             </td>
                         </tr>
