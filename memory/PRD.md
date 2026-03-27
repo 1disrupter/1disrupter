@@ -1,53 +1,39 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 20 Complete - Copy Trading System + Splash Screen
+## Current Status: Phase 21 Complete - Free Tier System + Pricing
 
 ### Overview
-AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals with AI-powered explanations, execute trades (paper or live via Uniswap V3), track portfolio performance, and now copy trades from top traders.
+AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals with AI-powered explanations, execute trades (paper or live via Uniswap V3), track portfolio performance, copy trades from top traders, and choose between Free, Pro, and Elite subscription tiers.
 
 **Copyright © 2026 Martin Maughan. All rights reserved.**
 
 ---
 
-### Latest Feature: Copy Trading System (March 2026)
+### Latest Feature: Free Tier System with Pricing (March 2026)
 
-**Copy Trading Features:**
-1. **Follow/Unfollow Traders** - Pro/Elite users can follow any public trader on the leaderboard
-2. **Auto-Copy Mode** - Trades are immediately replicated using allocation percentage
-3. **Manual Approval Mode** - Trades are queued for user approval before execution
-4. **Copy Settings** - Configure mode, allocation % (1-100), max per trade limit
-5. **Pause/Resume** - Temporarily pause copying without unfollowing
-6. **Safety Checks** - Circular copying prevention, balance validation, duplicate detection
-7. **Trade Mirroring** - Trades are scaled based on follower's allocation percentage
+**Tier System:**
+- **Free** ($0): Paper trading only, 15-min signal delay, top 10 leaderboard, no copy trading, no live trades, no advanced analytics
+- **Pro** ($29/mo or $249/yr): Real-time signals, live trading, copy trading, full leaderboard, follow & be followed, full analytics, push notifications
+- **Elite** ($79/mo or $699/yr): Everything in Pro + priority signal delivery, early access to features, higher rate limits, advanced research tools, dedicated support
 
 **Backend Implementation:**
-- `CopyTradingService` in `/app/backend/services/copy_trading_service.py`
-- API routes in `/app/backend/routes/copy_trading.py` (7 endpoints)
-- Trade execution hook in `server.py` triggers copy trades automatically
-- Collections: `copy_relationships`, `pending_copy_trades`
+- `user_tier` field added to user model (default "free")
+- Tier derived from `is_pro`/`is_elite` booleans for backward compatibility
+- Live trading blocked for free users (HTTP 403)
+- Leaderboard limited to top 10 for free users
+- Copy trading requires Pro/Elite
+- 4 Stripe packages: pro_monthly, pro_yearly, elite_monthly, elite_yearly
+- Payment flow updates user_tier on successful checkout
 
-**API Endpoints:**
-- `POST /api/copy/follow` - Follow a trader
-- `DELETE /api/copy/unfollow/{id}` - Unfollow a trader
-- `PUT /api/copy/settings` - Update mode, allocation %, max_per_trade, status
-- `GET /api/copy/following` - List traders user follows
-- `GET /api/copy/followers` - List followers
-- `GET /api/copy/pending` - Get pending manual copy trades
-- `POST /api/copy/approve/{trade_id}` - Approve pending trade
-- `POST /api/copy/reject/{trade_id}` - Reject pending trade
-
-**Frontend UI:**
-- `/copy-trading` page with stats cards, Following/Pending/Followers tabs
-- FollowTraderModal with mode selection, allocation slider, max per trade
-- EditSettingsModal for updating copy settings
-- "Copy" button on leaderboard trader rows and profile dialogs
-- Upgrade gate for free users
-- Navigation link added
-
-**Access Control:**
-- Only Pro/Elite users can follow traders
-- Free users see upgrade prompt
-- Self-follow and circular copying prevented
+**Frontend Implementation:**
+- `/pricing` page with Free/Pro/Elite cards, monthly/yearly toggle
+- `TierBadge` component in user dropdown and navigation
+- `UpgradeBanner` on dashboard for free users
+- `PaperTradingBadge` for free users
+- `FeatureLock` overlay for restricted features
+- `InlineUpgradeCTA` for in-context upgrade prompts
+- Trading mode toggle locked for free users (shows lock icon + "Pro" label)
+- Leaderboard shows "Top 10 only" upgrade CTA for free users
 
 ---
 
@@ -347,9 +333,10 @@ Payments:
 4. ~~Add push notifications for high-confidence signals~~ DONE
 5. ~~Brand Identity Integration ("Signal Intelligence System")~~ DONE
 6. ~~Copy Trading System~~ DONE
-7. Deploy smart contract to Sepolia mainnet
-8. Configure production Resend API key for live emails
-9. Configure FCM/APNs/Expo for real push notifications
+7. ~~Free Tier System with Pricing~~ DONE
+8. Deploy smart contract to Sepolia mainnet
+9. Configure production Resend API key for live emails
+10. Configure FCM/APNs/Expo for real push notifications
 
 ### Upcoming Tasks (P1)
 - Biometric Authentication for Mobile (Face ID / Touch ID)
