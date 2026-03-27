@@ -3038,6 +3038,24 @@ async def execute_trade(request: ExecuteTradeRequest):
             if not result.get("success"):
                 raise HTTPException(status_code=500, detail=result.get("error", "Trade execution failed"))
             
+            # Trigger copy trading for followers
+            try:
+                from services.copy_trading_service import process_trader_trade
+                # Find user_id from wallet address
+                user_record = await db.users.find_one({"wallet_address": request.wallet_address}, {"id": 1, "_id": 0})
+                if user_record:
+                    trade_data = {
+                        "trade_id": result.get("trade_id", ""),
+                        "symbol": request.symbol,
+                        "side": request.side,
+                        "amount_usd": request.amount_usd,
+                        "executed_price": result.get("executed_price", current_price),
+                        "is_live": False
+                    }
+                    asyncio.create_task(process_trader_trade(user_record["id"], trade_data))
+            except Exception as copy_err:
+                logger.warning(f"Copy trade trigger error (non-blocking): {copy_err}")
+            
             return result
             
     except HTTPException:
@@ -6086,6 +6104,7 @@ from routes.mobile_v1 import router as mobile_v1_router, init_db as init_mobile_
 from routes.admin import router as admin_router, init_db as init_admin_db
 from routes.orders import router as orders_router, init_db as init_orders_db
 from routes.leaderboard import router as leaderboard_router, init_db as init_leaderboard_db
+from routes.copy_trading import router as copy_trading_router, init_db as init_copy_trading_db
 from services.push_notifications import push_service, init_db as init_push_db, HIGH_CONFIDENCE_THRESHOLD
 
 # Initialize auth database
@@ -6097,6 +6116,7 @@ init_mobile_db(db)
 init_admin_db(db)
 init_orders_db(db)
 init_leaderboard_db(db)
+init_copy_trading_db(db)
 init_push_db(db)  # Initialize push notification service
 
 # Include router and middleware
@@ -6108,6 +6128,7 @@ app.include_router(mobile_v1_router)
 app.include_router(admin_router)
 app.include_router(orders_router)
 app.include_router(leaderboard_router)
+app.include_router(copy_trading_router)
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 

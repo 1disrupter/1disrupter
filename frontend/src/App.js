@@ -42,6 +42,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./pages/AuthPages";
 import PerformanceMetrics from "./components/PerformanceMetrics";
 import ReferralDashboard from "./components/ReferralDashboard";
+import CopyTradingPage, { FollowTraderModal } from "./pages/CopyTradingPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -330,6 +331,7 @@ const Navigation = () => {
     { path: "/lab", label: "Strategy Lab", icon: FlaskConical },
     { path: "/marketplace", label: "Marketplace", icon: Store },
     { path: "/referrals", label: "Referrals", icon: Users },
+    { path: "/copy-trading", label: "Copy Trading", icon: Copy },
     { path: "/admin", label: "Admin", icon: Shield },
   ];
 
@@ -5711,7 +5713,7 @@ const ReferralPage = () => {
 
 // Leaderboard Page
 const LeaderboardPage = () => {
-  const { user } = useAuth();
+  const { user, tokens } = useAuth();
   const [traders, setTraders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('all_time');
@@ -5720,6 +5722,8 @@ const LeaderboardPage = () => {
   const [topPerformers, setTopPerformers] = useState(null);
   const [selectedTrader, setSelectedTrader] = useState(null);
   const [traderDetailOpen, setTraderDetailOpen] = useState(false);
+  const [followModalOpen, setFollowModalOpen] = useState(false);
+  const [followTarget, setFollowTarget] = useState(null);
 
   const userTier = user?.is_elite ? 'elite' : user?.is_pro ? 'pro' : 'free';
   const isPro = userTier !== 'free';
@@ -5942,9 +5946,19 @@ const LeaderboardPage = () => {
                           {trader.stats?.total_trades || 0}
                         </td>
                         <td className="p-4 text-right">
-                          <Button size="sm" variant="outline" onClick={() => viewTraderProfile(trader.user_id)} className="border-zinc-700">
-                            View
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            {isPro && trader.user_id !== user?.id && (
+                              <Button size="sm" onClick={() => { setFollowTarget(trader); setFollowModalOpen(true); }}
+                                className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-xs"
+                                data-testid={`follow-btn-${trader.user_id}`}
+                              >
+                                <Copy className="w-3 h-3 mr-1" /> Copy
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline" onClick={() => viewTraderProfile(trader.user_id)} className="border-zinc-700">
+                              View
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -6036,10 +6050,32 @@ const LeaderboardPage = () => {
                     </p>
                   </div>
                 )}
+
+                {isPro && selectedTrader.user_id !== user?.id && (
+                  <Button
+                    onClick={() => { setFollowTarget(selectedTrader); setFollowModalOpen(true); setTraderDetailOpen(false); }}
+                    className="w-full bg-[#7B61FF] hover:bg-[#7B61FF]/90"
+                    data-testid="follow-from-profile-btn"
+                  >
+                    <Copy className="w-4 h-4 mr-2" /> Copy This Trader
+                  </Button>
+                )}
               </div>
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Follow Trader Modal */}
+        {followTarget && (
+          <FollowTraderModal
+            open={followModalOpen}
+            onOpenChange={setFollowModalOpen}
+            traderId={followTarget.user_id}
+            traderName={followTarget.display_name || `Trader_${followTarget.user_id?.slice(0,6)}`}
+            token={tokens?.access_token}
+            onSuccess={() => toast.success('Navigate to Copy Trading to manage your follows')}
+          />
+        )}
       </div>
     </div>
   );
@@ -6057,6 +6093,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/copy-trading" element={<CopyTradingPage />} />
               <Route path="/simulation" element={<SimulationPage />} />
               <Route path="/research" element={<ResearchEnginePage />} />
               <Route path="/agents" element={<AgentsPage />} />
