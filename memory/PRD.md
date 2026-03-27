@@ -191,13 +191,23 @@ AlphaAI is an AI-powered crypto signals platform with full trading capabilities.
 - Quiet hours configuration
 - Pro/Elite user targeting
 
-**Phase 17**: Comprehensive Admin Dashboard ✅ NEW
+**Phase 17**: Comprehensive Admin Dashboard ✅
 - Full user management with actions
 - Subscription management with Stripe sync
 - Feature toggles by category
 - System maintenance tools
 - Audit logging for all admin actions
 - Security overview
+
+**Phase 18**: Stop-Loss/Take-Profit + Public Leaderboard ✅ NEW
+- Stop-Loss orders trigger automatically at price threshold
+- Take-Profit orders trigger automatically at price threshold
+- Paper and Live trading support
+- Order monitoring runs every 5 seconds
+- Public Leaderboard with Daily/Weekly/Monthly/All-time tabs
+- Sort by P&L, Win Rate, ROI, Total Trades
+- Free users see top 10, Pro/Elite see full leaderboard
+- Trader profiles with recent trades (Pro/Elite only)
 
 ---
 
