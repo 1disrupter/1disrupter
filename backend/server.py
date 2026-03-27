@@ -801,6 +801,11 @@ async def price_broadcast_task():
                     "data": prices,
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 })
+                
+                # Update order manager with current prices for SL/TP monitoring
+                from services.order_manager import order_manager
+                price_dict = {p["symbol"]: p["price"] for p in prices if "symbol" in p and "price" in p}
+                await order_manager.update_prices(price_dict)
         except Exception as e:
             logger.error(f"Price broadcast error: {str(e)}")
         await asyncio.sleep(5)  # Broadcast prices every 5 seconds for Pro/Elite
@@ -6079,6 +6084,8 @@ from routes.demo import router as demo_router, init_db as init_demo_db
 from routes.referrals import router as referrals_router, init_db as init_referrals_db
 from routes.mobile_v1 import router as mobile_v1_router, init_db as init_mobile_db
 from routes.admin import router as admin_router, init_db as init_admin_db
+from routes.orders import router as orders_router, init_db as init_orders_db
+from routes.leaderboard import router as leaderboard_router, init_db as init_leaderboard_db
 from services.push_notifications import push_service, init_db as init_push_db, HIGH_CONFIDENCE_THRESHOLD
 
 # Initialize auth database
@@ -6088,6 +6095,8 @@ init_demo_db(db)
 init_referrals_db(db)
 init_mobile_db(db)
 init_admin_db(db)
+init_orders_db(db)
+init_leaderboard_db(db)
 init_push_db(db)  # Initialize push notification service
 
 # Include router and middleware
@@ -6097,21 +6106,29 @@ app.include_router(demo_router)
 app.include_router(referrals_router)
 app.include_router(mobile_v1_router)
 app.include_router(admin_router)
+app.include_router(orders_router)
+app.include_router(leaderboard_router)
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 
 # Signal generation background task reference
 signal_task = None
+order_monitoring_task = None
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize signal generation on startup"""
-    global signal_task
+    """Initialize signal generation and order monitoring on startup"""
+    global signal_task, order_monitoring_task
     # Generate initial signals
     await signal_service.generate_signals()
     # Start background signal generation task
     signal_task = asyncio.create_task(signal_generation_task())
     logger.info("Signal generation service started")
+    
+    # Start order monitoring
+    from services.order_manager import order_manager
+    await order_manager.start_monitoring()
+    logger.info("Order monitoring service started")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
