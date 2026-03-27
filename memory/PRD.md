@@ -1,6 +1,6 @@
 # AlphaAI Fund Platform - Product Requirements Document
 
-## Current Status: Phase 20 Complete - Copy Trading System
+## Current Status: Phase 20 Complete - Copy Trading System + Splash Screen
 
 ### Overview
 AlphaAI is an AI-powered crypto signals platform with full trading capabilities. Users can view signals with AI-powered explanations, execute trades (paper or live via Uniswap V3), track portfolio performance, and now copy trades from top traders.

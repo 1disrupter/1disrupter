@@ -6081,11 +6081,89 @@ const LeaderboardPage = () => {
   );
 };
 
+// ============= SPLASH SCREEN =============
+const SplashScreen = ({ onComplete }) => {
+  return (
+    <motion.div
+      className="fixed inset-0 z-[100] bg-[#050505] flex items-center justify-center"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      transition={{ delay: 1.8, duration: 0.5, ease: "easeInOut" }}
+      onAnimationComplete={onComplete}
+      data-testid="splash-screen"
+    >
+      {/* Ambient glow */}
+      <motion.div
+        className="absolute w-[300px] h-[300px] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(123,97,255,0.15) 0%, transparent 70%)" }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: [0, 1.6, 1.2], opacity: [0, 0.8, 0.4] }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      />
+
+      <div className="flex flex-col items-center relative">
+        {/* Icon */}
+        <motion.div
+          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center mb-5"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+        >
+          <Brain className="w-12 h-12 text-white" />
+        </motion.div>
+
+        {/* Title */}
+        <motion.span
+          className="text-4xl font-bold font-['Outfit'] tracking-tight"
+          initial={{ opacity: 0, y: 15, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+        >
+          AlphaAI
+        </motion.span>
+
+        {/* Subtitle with line reveal */}
+        <motion.div className="mt-2 overflow-hidden">
+          <motion.span
+            className="block text-sm text-zinc-400 font-light tracking-[0.25em] uppercase"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.75, duration: 0.5, ease: "easeOut" }}
+          >
+            Signal Intelligence System
+          </motion.span>
+        </motion.div>
+
+        {/* Accent line */}
+        <motion.div
+          className="mt-4 h-[1px] bg-gradient-to-r from-transparent via-[#7B61FF] to-transparent"
+          initial={{ width: 0 }}
+          animate={{ width: 160 }}
+          transition={{ delay: 1.0, duration: 0.6, ease: "easeOut" }}
+        />
+      </div>
+    </motion.div>
+  );
+};
+
 // Main App
 function App() {
+  const [showSplash, setShowSplash] = useState(() => {
+    if (sessionStorage.getItem('alphaai_splash_shown')) return false;
+    return true;
+  });
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem('alphaai_splash_shown', '1');
+    setShowSplash(false);
+  };
+
   return (
     <AuthProvider>
       <WalletProvider>
+        <AnimatePresence>
+          {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+        </AnimatePresence>
         <div className="App min-h-screen bg-[#050505]">
           <BrowserRouter>
             <Navigation />
