@@ -6,7 +6,7 @@ import {
   Activity, AlertTriangle, ArrowUpRight, BarChart3, Bot,
   ChevronDown, CircleDot, Cpu, FileCode, Gauge,
   Play, Radio, RefreshCw, Rocket, Scale, ScrollText,
-  Shield, Sparkles, StopCircle, Target, TrendingUp, Zap
+  Shield, Sparkles, StopCircle, Target, Terminal, TrendingUp, Zap
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
