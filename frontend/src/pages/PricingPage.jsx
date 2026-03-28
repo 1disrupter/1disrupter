@@ -179,8 +179,8 @@ const PricingPage = () => {
     {
       id: 'pro',
       name: 'Pro',
-      monthlyPrice: 29,
-      yearlyPrice: 249,
+      monthlyPrice: 49,
+      yearlyPrice: 419,
       monthlyPkgId: 'pro_monthly',
       yearlyPkgId: 'pro_yearly',
       popular: true,
