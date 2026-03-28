@@ -355,15 +355,83 @@ const CopyTradingPage = () => {
   if (!isPro) {
     return (
       <div className="min-h-screen pt-24 pb-12 px-4" data-testid="copy-trading-page">
-        <div className="max-w-2xl mx-auto text-center">
-          <Shield className="w-16 h-16 mx-auto text-[#7B61FF] mb-4" />
-          <h1 className="text-3xl font-bold font-['Outfit'] mb-3">Copy Trading</h1>
-          <p className="text-zinc-400 mb-6">
-            Automatically mirror trades from top-performing traders. Available for Pro and Elite members.
-          </p>
-          <Button asChild className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 rounded-full px-8">
-            <Link to="/dashboard" data-testid="upgrade-cta-btn">Upgrade to Pro</Link>
-          </Button>
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-[#7B61FF]/10">
+                <Copy className="w-6 h-6 text-[#7B61FF]" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold font-['Outfit'] tracking-tight">Copy Trading</h1>
+              <Badge className="bg-[#7B61FF]/20 text-[#7B61FF] border border-[#7B61FF]/30 text-xs">Pro</Badge>
+            </div>
+            <p className="text-zinc-500 text-sm md:text-base ml-0 md:ml-14">Mirror trades from top-performing traders automatically</p>
+          </motion.div>
+
+          {/* Stats Preview */}
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+              { label: 'Top Traders', value: '48', sub: 'Available to follow' },
+              { label: 'Avg Win Rate', value: '72%', sub: 'Top 10 traders' },
+              { label: 'Total Copied', value: '$2.4M', sub: 'This month' },
+              { label: 'Avg Return', value: '+11.2%', sub: 'Monthly' },
+            ].map((s, i) => (
+              <Card key={i} className="bg-[#0A0A0A] border-zinc-800/50">
+                <CardContent className="p-5">
+                  <p className="text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">{s.label}</p>
+                  <p className="text-xl font-bold font-['JetBrains_Mono'] text-white/40">{s.value}</p>
+                  <p className="text-[11px] text-zinc-700 mt-1">{s.sub}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </motion.div>
+
+          {/* Top Traders Preview */}
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
+            <h3 className="text-sm text-zinc-600 uppercase tracking-wider mb-4">Top Traders Preview</h3>
+            <div className="space-y-3 opacity-50">
+              {[
+                { name: 'CryptoWhale', winRate: '76%', pnl: '+$48.2K', followers: 342 },
+                { name: 'AlphaTrader', winRate: '71%', pnl: '+$32.1K', followers: 189 },
+                { name: 'SolanaSniper', winRate: '69%', pnl: '+$28.4K', followers: 267 },
+              ].map((t, i) => (
+                <Card key={i} className="bg-[#0A0A0A] border-zinc-800/50">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-[#7B61FF]/20 flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-[#7B61FF]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">{t.name}</p>
+                        <p className="text-xs text-zinc-600">{t.followers} followers</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm font-mono">
+                      <span className="text-zinc-400">{t.winRate} win</span>
+                      <span className="text-[#00FF94]/60">{t.pnl}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Upgrade CTA */}
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="bg-gradient-to-r from-[#7B61FF]/10 to-transparent border-[#7B61FF]/20">
+              <CardContent className="p-8 text-center">
+                <Shield className="w-10 h-10 mx-auto text-[#7B61FF] mb-3" />
+                <h2 className="text-lg font-bold font-['Outfit'] mb-2">Unlock Copy Trading</h2>
+                <p className="text-sm text-zinc-500 mb-5 max-w-md mx-auto">
+                  Upgrade to Pro to automatically mirror trades from top-performing traders in real time
+                </p>
+                <Button asChild className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 px-8">
+                  <Link to="/pricing" data-testid="upgrade-cta-btn">Upgrade to Pro — $49/mo</Link>
+                </Button>
+                <p className="text-[11px] text-zinc-600 mt-3">Cancel anytime. No lock-in.</p>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     );
