@@ -19,7 +19,7 @@ import os
 import random
 import string
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://signal-intelligence-5.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://alpha-signals-21.preview.emergentagent.com').rstrip('/')
 
 # Test wallet for investor operations
 TEST_WALLET = f"0xTEST{''.join(random.choices(string.hexdigits.lower(), k=36))}"

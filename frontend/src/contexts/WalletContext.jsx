@@ -2,12 +2,9 @@ import { useState, useEffect, createContext, useContext } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { ethers } from "ethers";
+import { API } from "../lib/constants";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-// Sepolia Chain Config
-const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111 in hex
+const SEPOLIA_CHAIN_ID = "0xaa36a7";
 const SEPOLIA_CONFIG = {
   chainId: SEPOLIA_CHAIN_ID,
   chainName: "Sepolia Testnet",
@@ -30,7 +27,6 @@ export const WalletProvider = ({ children }) => {
   const [ethBalance, setEthBalance] = useState(null);
   const [contractAddress, setContractAddress] = useState(null);
 
-  // Check if already connected on mount
   useEffect(() => {
     const checkConnection = async () => {
       if (typeof window.ethereum !== 'undefined') {
@@ -42,7 +38,6 @@ export const WalletProvider = ({ children }) => {
     };
     checkConnection();
 
-    // Listen for account changes
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts) => {
         if (accounts.length === 0) {
@@ -55,7 +50,6 @@ export const WalletProvider = ({ children }) => {
       window.ethereum.on('chainChanged', () => window.location.reload());
     }
 
-    // Fetch contract address
     axios.get(`${API}/contract/info`).then(res => {
       if (res.data.contract_address) setContractAddress(res.data.contract_address);
     }).catch(console.error);
@@ -101,11 +95,9 @@ export const WalletProvider = ({ children }) => {
     setLoading(true);
     try {
       if (typeof window.ethereum !== 'undefined') {
-        // Request accounts
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const address = accounts[0];
         
-        // Setup provider and signer
         const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
         const web3Signer = web3Provider.getSigner();
         const network = await web3Provider.getNetwork();
@@ -115,15 +107,12 @@ export const WalletProvider = ({ children }) => {
         setChainId(network.chainId);
         setWallet(address);
         
-        // Get ETH balance
         const balance = await web3Provider.getBalance(address);
         setEthBalance(ethers.utils.formatEther(balance));
         
-        // Register with backend
         const response = await axios.post(`${API}/investors/register`, { wallet_address: address });
         setInvestor(response.data);
         
-        // Check if on Sepolia
         if (network.chainId !== 11155111) {
           toast.warning("Please switch to Sepolia testnet for full functionality");
         } else {
@@ -168,7 +157,6 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
-  // Deposit ETH to contract
   const depositToContract = async (amountEth) => {
     if (!signer || !contractAddress) {
       toast.error("Wallet or contract not connected");
@@ -178,7 +166,7 @@ export const WalletProvider = ({ children }) => {
       const tx = await signer.sendTransaction({
         to: contractAddress,
         value: ethers.utils.parseEther(amountEth.toString()),
-        data: "0xd0e30db0" // deposit() selector
+        data: "0xd0e30db0"
       });
       toast.info(`Transaction sent: ${tx.hash.slice(0, 10)}...`);
       const receipt = await tx.wait();
@@ -201,5 +189,3 @@ export const WalletProvider = ({ children }) => {
     </WalletContext.Provider>
   );
 };
-
-export default WalletContext;

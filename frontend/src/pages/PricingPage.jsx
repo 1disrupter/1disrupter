@@ -222,13 +222,29 @@ const PricingPage = () => {
   return (
     <div className="min-h-screen pt-24 pb-16 px-4" data-testid="pricing-page">
       <div className="max-w-5xl mx-auto">
+        {/* Urgency Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8 text-center"
+          data-testid="pricing-urgency-banner"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#ef4444]/10 border border-[#ef4444]/20">
+            <div className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse" />
+            <span className="text-xs font-mono text-[#ef4444]/90">
+              Every 15 minutes without Pro, you miss another entry.
+            </span>
+          </div>
+        </motion.div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold font-['Outfit'] mb-3" data-testid="pricing-title">
-            Choose Your Plan
+            Choose Your Edge
           </h1>
           <p className="text-zinc-400 text-lg max-w-xl mx-auto">
-            Start free. Upgrade when you&apos;re ready for real-time signals and live trading.
+            Free users see signals 15 minutes late. Pro users are already positioned.
           </p>
 
           {/* Billing Toggle */}
