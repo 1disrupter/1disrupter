@@ -180,7 +180,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[70vh]">
             {/* Left: Text Content */}
-            <div className="order-2 lg:order-1">
+            <div className="order-1 lg:order-1">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -277,7 +277,7 @@ const LandingPage = () => {
 
             {/* Right: AI Signal Visualization */}
             <motion.div
-              className="order-1 lg:order-2 flex justify-center lg:justify-end"
+              className="order-2 lg:order-2 hidden sm:flex justify-center lg:justify-end"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}

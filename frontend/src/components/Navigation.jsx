@@ -24,7 +24,13 @@ const Navigation = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
+  const publicNavItems = [
+    { path: "/", label: "Home", icon: Home },
+    { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { path: "/pricing", label: "Pricing", icon: Crown },
+  ];
+
+  const authNavItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { path: "/simulation", label: "Simulation", icon: Radio },
@@ -39,6 +45,8 @@ const Navigation = () => {
     { path: "/pricing", label: "Pricing", icon: Crown },
     { path: "/admin", label: "Admin", icon: Shield },
   ];
+
+  const navItems = isAuthenticated ? authNavItems : publicNavItems;
 
   const isOnSepolia = chainId === 11155111;
 
