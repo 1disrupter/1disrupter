@@ -717,3 +717,47 @@ async def regenerate_backup_codes(data: Verify2FARequest, user: dict = Depends(g
     
     logger.info(f"Backup codes regenerated: {user['email']}")
     return {"backup_codes": new_backup_codes}
+
+
+# ============= TEMPORARY ADMIN CREATION =============
+
+class AdminCreateRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    role: Optional[str] = "admin"
+
+@router.post("/admin/create")
+async def create_admin(data: AdminCreateRequest):
+    """Create an admin user"""
+    existing = await get_user_by_email(data.email)
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+
+    admin_user = {
+        "id": user_id,
+        "email": data.email.lower(),
+        "name": "Admin",
+        "password_hash": hash_password(data.password),
+        "is_verified": True,
+        "is_pro": True,
+        "is_elite": True,
+        "user_tier": "elite",
+        "role": "admin",
+        "has_2fa": False,
+        "totp_secret": None,
+        "backup_codes": [],
+        "wallet_address": None,
+        "verification_token": None,
+        "verification_token_expires": None,
+        "paper_balance": 10000.0,
+        "paper_pnl": 0.0,
+        "created_at": now,
+        "updated_at": now
+    }
+
+    await db.users.insert_one(admin_user)
+    logger.info(f"Admin user created: {data.email}")
+    return {"success": True, "message": "Admin created"}
