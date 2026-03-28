@@ -1,218 +1,111 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
-  ArrowUpRight, Sparkles, RefreshCw, Trophy, TestTube,
-  Beaker, Rocket, StopCircle, FileCode
+  FlaskConical, Sparkles, ArrowUpRight, TrendingUp, Rocket
 } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "../components/ui/select";
-import { API } from "../lib/constants";
-import { formatCurrency } from "../lib/formatters";
+import { PageHeader, StatsRow, MockTable } from "../components/PlaceholderUI";
+import { mockStrategies } from "../lib/mockData";
 
 const StrategyLabPage = () => {
-  const [strategies, setStrategies] = useState([]);
-  const [rankings, setRankings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [generateType, setGenerateType] = useState('momentum');
-  const [generating, setGenerating] = useState(false);
+  const stats = [
+    { label: 'Generated', value: '3', change: 'Strategies', positive: true },
+    { label: 'Backtested', value: '2', change: 'Passed QA', positive: true },
+    { label: 'In Sandbox', value: '1', change: 'Paper testing', positive: true },
+    { label: 'Live', value: '0', change: 'Ready to deploy', positive: true },
+  ];
 
-  useEffect(() => {
-    Promise.all([
-      axios.get(`${API}/lab/strategies`),
-      axios.get(`${API}/lab/rankings`)
-    ]).then(([strategiesRes, rankingsRes]) => {
-      setStrategies(strategiesRes.data);
-      setRankings(rankingsRes.data);
-    }).catch(console.error).finally(() => setLoading(false));
-  }, []);
-
-  const generateStrategy = async () => {
-    setGenerating(true);
-    try {
-      const res = await axios.post(`${API}/lab/strategies/generate`, { strategy_type: generateType, risk_level: 'medium' });
-      toast.success(`Strategy "${res.data.strategy.name}" generated!`);
-      setStrategies([res.data.strategy, ...strategies]);
-    } catch (error) { toast.error("Generation failed"); }
-    setGenerating(false);
-  };
-
-  const backtestStrategy = async (strategyId) => {
-    try {
-      const res = await axios.post(`${API}/lab/strategies/${strategyId}/backtest`, { strategy_id: strategyId, initial_capital: 10000 });
-      toast.success(`Backtest complete! Return: ${res.data.results.total_return}%`);
-      setStrategies(strategies.map(s => s.id === strategyId ? { ...s, status: 'backtested', ...res.data.results } : s));
-    } catch (error) { toast.error("Backtest failed"); }
-  };
-
-  const startSandbox = async (strategyId) => {
-    try {
-      await axios.post(`${API}/lab/strategies/${strategyId}/sandbox`);
-      toast.success("Sandbox testing started!");
-      setStrategies(strategies.map(s => s.id === strategyId ? { ...s, status: 'sandbox' } : s));
-    } catch (error) { toast.error("Sandbox start failed"); }
-  };
-
-  const deployStrategy = async (strategyId) => {
-    try {
-      await axios.post(`${API}/lab/strategies/${strategyId}/deploy`, null, { params: { capital: 10000 } });
-      toast.success("Strategy deployed live!");
-      setStrategies(strategies.map(s => s.id === strategyId ? { ...s, status: 'live', is_active: true } : s));
-    } catch (error) { toast.error(error.response?.data?.detail || "Deployment failed"); }
-  };
-
-  const stopStrategy = async (strategyId) => {
-    try {
-      await axios.post(`${API}/lab/strategies/${strategyId}/stop`);
-      toast.success("Strategy stopped");
-      setStrategies(strategies.map(s => s.id === strategyId ? { ...s, status: 'stopped', is_active: false } : s));
-    } catch (error) { toast.error("Stop failed"); }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'live': return 'bg-[#00FF94]/20 text-[#00FF94]';
-      case 'sandbox': return 'bg-[#FFB800]/20 text-[#FFB800]';
-      case 'backtested': return 'bg-[#7B61FF]/20 text-[#7B61FF]';
-      case 'generated': return 'bg-zinc-700 text-zinc-400';
-      default: return 'bg-zinc-700 text-zinc-400';
-    }
+  const statusColors = {
+    generated: 'bg-zinc-600/15 text-zinc-400',
+    backtested: 'bg-[#7B61FF]/15 text-[#7B61FF]',
+    sandbox: 'bg-[#FFB800]/15 text-[#FFB800]',
+    live: 'bg-[#00FF94]/15 text-[#00FF94]',
   };
 
   return (
-    <div className="min-h-screen pt-24 px-4 pb-12">
+    <div className="min-h-screen pt-24 pb-12 px-4" data-testid="strategy-lab-page">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold font-['Outfit']" data-testid="lab-title">AI Strategy Lab</h1>
-            <p className="text-zinc-400 mt-1">Autonomous strategy generation, testing, and deployment</p>
-          </div>
-          <div className="flex gap-3">
-            <Select value={generateType} onValueChange={setGenerateType}>
-              <SelectTrigger className="w-[160px] bg-[#050505] border-zinc-800" data-testid="generate-type-select"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-[#121212] border-zinc-800">
-                <SelectItem value="momentum">Momentum</SelectItem>
-                <SelectItem value="arbitrage">Arbitrage</SelectItem>
-                <SelectItem value="yield">DeFi Yield</SelectItem>
-                <SelectItem value="mean_reversion">Mean Reversion</SelectItem>
-                <SelectItem value="funding">Funding Rate</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={generateStrategy} disabled={generating} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90" data-testid="generate-strategy-btn">
-              {generating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-              Generate Strategy
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          icon={FlaskConical}
+          title="Strategy Lab"
+          description="AI-generated strategies, backtesting, and autonomous deployment pipeline"
+          testId="strategy-lab-header"
+        />
 
-        {/* Strategy Pipeline */}
-        <Card className="glass-card mb-8" data-testid="strategy-pipeline">
-          <CardHeader><CardTitle>Strategy Pipeline</CardTitle><CardDescription>Strategies progress through: Generated → Backtested → Sandbox → Live</CardDescription></CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-4 gap-4 text-center">
-              {['generated', 'backtested', 'sandbox', 'live'].map((stage, i) => {
-                const count = strategies.filter(s => s.status === stage).length;
-                return (
-                  <div key={stage} className="p-4 rounded-xl bg-[#050505] border border-zinc-800">
-                    <p className="text-2xl font-bold font-['JetBrains_Mono']">{count}</p>
-                    <p className="text-sm text-zinc-500 capitalize">{stage}</p>
-                    {i < 3 && <ArrowUpRight className="w-4 h-4 mx-auto mt-2 text-zinc-600" />}
+        {/* Pipeline Progress */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
+          <Card className="bg-[#0A0A0A] border-zinc-800/50">
+            <CardContent className="p-5">
+              <p className="text-xs text-zinc-500 mb-4 uppercase tracking-wider">Strategy Pipeline</p>
+              <div className="flex items-center gap-2">
+                {['Generated', 'Backtested', 'Sandbox', 'Live'].map((stage, i) => (
+                  <div key={i} className="flex items-center gap-2 flex-1">
+                    <div className={`flex-1 h-2 rounded-full ${i < 2 ? 'bg-[#7B61FF]' : i === 2 ? 'bg-[#FFB800]/40' : 'bg-zinc-800'}`} />
+                    {i < 3 && <ArrowUpRight className="w-3 h-3 text-zinc-600 shrink-0" />}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+              <div className="flex justify-between mt-2 text-[10px] text-zinc-600 font-mono">
+                <span>Generated (3)</span><span>Backtested (2)</span><span>Sandbox (1)</span><span>Live (0)</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* Rankings Table */}
-        <Card className="glass-card mb-8" data-testid="strategy-rankings">
-          <CardHeader><CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5 text-[#FFB800]" />Strategy Rankings</CardTitle></CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-zinc-800">
-                    <th className="text-left p-3 text-zinc-500">Rank</th>
-                    <th className="text-left p-3 text-zinc-500">Strategy</th>
-                    <th className="text-left p-3 text-zinc-500">Type</th>
-                    <th className="text-left p-3 text-zinc-500">Status</th>
-                    <th className="text-right p-3 text-zinc-500">Sharpe</th>
-                    <th className="text-right p-3 text-zinc-500">Return</th>
-                    <th className="text-right p-3 text-zinc-500">Drawdown</th>
-                    <th className="text-right p-3 text-zinc-500">Capital</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rankings.slice(0, 10).map((s, i) => (
-                    <tr key={s.id} className="border-b border-zinc-800/50" data-testid={`ranking-row-${i}`}>
-                      <td className="p-3"><Badge variant="outline" className={i < 3 ? 'border-[#FFB800] text-[#FFB800]' : 'border-zinc-700'}>#{s.rank}</Badge></td>
-                      <td className="p-3 font-medium">{s.name}</td>
-                      <td className="p-3 text-zinc-400 capitalize">{s.type}</td>
-                      <td className="p-3"><Badge className={getStatusColor(s.status)}>{s.status}</Badge></td>
-                      <td className="p-3 text-right font-mono text-[#7B61FF]">{s.sharpe_ratio?.toFixed(2)}</td>
-                      <td className={`p-3 text-right font-mono ${s.total_return >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{s.total_return >= 0 ? '+' : ''}{s.total_return}%</td>
-                      <td className="p-3 text-right font-mono text-red-400">-{s.max_drawdown}%</td>
-                      <td className="p-3 text-right font-mono">{formatCurrency(s.capital_allocated)}</td>
+        <StatsRow stats={stats} />
+
+        {/* Strategy Rankings Table */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
+          <Card className="bg-[#0A0A0A] border-zinc-800/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-[#00FF94]" /> Strategy Rankings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-zinc-800/50">
+                      {['Strategy', 'Type', 'Status', 'Sharpe', 'Return', 'Drawdown', 'Capital'].map(h => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/30">
+                    {mockStrategies.map((s, i) => (
+                      <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-4 py-4 text-sm font-medium text-zinc-200">{s.name}</td>
+                        <td className="px-4 py-4 text-xs text-zinc-500">{s.type}</td>
+                        <td className="px-4 py-4"><Badge className={statusColors[s.status]}>{s.status}</Badge></td>
+                        <td className="px-4 py-4 text-sm font-mono text-zinc-300">{s.sharpe}</td>
+                        <td className="px-4 py-4 text-sm font-mono text-[#00FF94]">{s.returnPct}</td>
+                        <td className="px-4 py-4 text-sm font-mono text-red-400">{s.drawdown}</td>
+                        <td className="px-4 py-4 text-sm font-mono text-zinc-400">{s.capital}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* Strategy Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? Array(6).fill(0).map((_, i) => (<Card key={i} className="glass-card animate-pulse"><CardContent className="p-6 h-[250px]" /></Card>)) : (
-            strategies.map((strategy) => (
-              <Card key={strategy.id} className="glass-card card-hover" data-testid={`strategy-card-${strategy.id}`}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#7B61FF]/20 flex items-center justify-center">
-                      <FileCode className="w-5 h-5 text-[#7B61FF]" />
-                    </div>
-                    <Badge className={getStatusColor(strategy.status)}>{strategy.status}</Badge>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-1">{strategy.name}</h3>
-                  <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{strategy.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-                    <div><p className="text-zinc-500">Sharpe</p><p className="font-mono text-[#7B61FF]">{strategy.sharpe_ratio?.toFixed(2) || '—'}</p></div>
-                    <div><p className="text-zinc-500">Return</p><p className={`font-mono ${strategy.total_return >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{strategy.total_return ? `${strategy.total_return >= 0 ? '+' : ''}${strategy.total_return}%` : '—'}</p></div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    {strategy.status === 'generated' && (
-                      <Button size="sm" onClick={() => backtestStrategy(strategy.id)} className="flex-1 rounded-full bg-[#7B61FF]/20 text-[#7B61FF] hover:bg-[#7B61FF]/30" data-testid={`backtest-${strategy.id}`}>
-                        <TestTube className="w-3 h-3 mr-1" />Backtest
-                      </Button>
-                    )}
-                    {strategy.status === 'backtested' && (
-                      <Button size="sm" onClick={() => startSandbox(strategy.id)} className="flex-1 rounded-full bg-[#FFB800]/20 text-[#FFB800] hover:bg-[#FFB800]/30" data-testid={`sandbox-${strategy.id}`}>
-                        <Beaker className="w-3 h-3 mr-1" />Sandbox
-                      </Button>
-                    )}
-                    {strategy.status === 'sandbox' && (
-                      <Button size="sm" onClick={() => deployStrategy(strategy.id)} className="flex-1 rounded-full bg-[#00FF94]/20 text-[#00FF94] hover:bg-[#00FF94]/30" data-testid={`deploy-${strategy.id}`}>
-                        <Rocket className="w-3 h-3 mr-1" />Deploy
-                      </Button>
-                    )}
-                    {strategy.status === 'live' && (
-                      <Button size="sm" onClick={() => stopStrategy(strategy.id)} variant="outline" className="flex-1 rounded-full border-red-500/30 text-red-400 hover:bg-red-500/10" data-testid={`stop-${strategy.id}`}>
-                        <StopCircle className="w-3 h-3 mr-1" />Stop
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+        {/* Generate CTA */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card className="bg-[#0A0A0A] border-zinc-800/50 border-dashed">
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-300 mb-1">Generate New Strategy</h3>
+                <p className="text-xs text-zinc-600">AI will analyze market conditions and create an optimized trading strategy</p>
+              </div>
+              <Button disabled className="rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 border border-[#7B61FF]/10">
+                <Sparkles className="w-4 h-4 mr-2" /> Generate Strategy
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

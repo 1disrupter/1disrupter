@@ -1,96 +1,88 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { toast } from "sonner";
-import { Bot, Cpu } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { motion } from "framer-motion";
+import {
+  Store, Star, Users, Search, ShoppingCart
+} from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
-} from "../components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "../components/ui/select";
-import { useWallet } from "../contexts/WalletContext";
-import { API } from "../lib/constants";
+import { PageHeader, StatsRow } from "../components/PlaceholderUI";
+import { mockMarketplaceItems } from "../lib/mockData";
 
 const MarketplacePage = () => {
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
-  const { wallet } = useWallet();
-  const [newAgent, setNewAgent] = useState({ name: '', description: '', strategy: '', min_investment: 100 });
+  const stats = [
+    { label: 'Listed Items', value: '24', change: '+6 this month', positive: true },
+    { label: 'Active Users', value: '4.2K', change: '+12%', positive: true },
+    { label: 'Avg Rating', value: '4.7', change: 'out of 5', positive: true },
+    { label: 'Total Revenue', value: '$18.4K', change: 'Marketplace fees', positive: true },
+  ];
 
-  useEffect(() => {
-    axios.get(`${API}/marketplace/agents`).then(res => setAgents(res.data)).catch(console.error).finally(() => setLoading(false));
-  }, []);
-
-  const handleSubmitAgent = async () => {
-    if (!wallet) { toast.error("Connect wallet first"); return; }
-    try {
-      await axios.post(`${API}/marketplace/agents`, { ...newAgent, developer_address: wallet });
-      toast.success("Agent submitted for review!");
-      setShowSubmitDialog(false);
-    } catch (error) { toast.error("Failed to submit agent"); }
+  const categoryColors = {
+    'Trading Bot': 'bg-[#7B61FF]/15 text-[#7B61FF]',
+    'Signal Plugin': 'bg-[#00FF94]/15 text-[#00FF94]',
+    'Portfolio Tool': 'bg-[#FFB800]/15 text-[#FFB800]',
+    'On-chain': 'bg-blue-400/15 text-blue-400',
   };
 
   return (
-    <div className="min-h-screen pt-24 px-4 pb-12">
+    <div className="min-h-screen pt-24 pb-12 px-4" data-testid="marketplace-page">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-          <div><h1 className="text-3xl md:text-4xl font-bold font-['Outfit']" data-testid="marketplace-title">AI Agent Marketplace</h1><p className="text-zinc-400 mt-1">Discover and deploy community-built strategies</p></div>
-          <Button onClick={() => setShowSubmitDialog(true)} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90" data-testid="submit-agent-btn"><Cpu className="w-4 h-4 mr-2" />Submit Your Agent</Button>
-        </div>
+        <PageHeader
+          icon={Store}
+          title="Marketplace"
+          description="Browse and install trading bots, signal plugins, and portfolio tools"
+          testId="marketplace-header"
+        />
 
-        <Card className="glass-card mb-8 border-[#7B61FF]/30" data-testid="revenue-info">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center gap-6">
-              <div className="flex-1"><h3 className="text-lg font-semibold mb-2">Developer Revenue Model</h3><p className="text-zinc-400 text-sm">Deploy your AI trading agent and earn 90% of subscriber fees.</p></div>
-              <div className="flex gap-8">
-                <div className="text-center"><p className="text-3xl font-bold text-[#00FF94]">90%</p><p className="text-xs text-zinc-500">Developer Share</p></div>
-                <div className="text-center"><p className="text-3xl font-bold text-zinc-400">10%</p><p className="text-xs text-zinc-500">Platform Fee</p></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Search */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+            <Input
+              placeholder="Search bots, plugins, and tools..."
+              className="bg-[#0A0A0A] border-zinc-800/50 h-12 pl-11 rounded-xl text-sm"
+              data-testid="marketplace-search"
+            />
+          </div>
+        </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? Array(3).fill(0).map((_, i) => (<Card key={i} className="glass-card animate-pulse"><CardContent className="p-6 h-[250px]" /></Card>)) : agents.map((agent) => (
-            <Card key={agent.id} className="glass-card card-hover" data-testid={`marketplace-agent-${agent.id}`}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center"><Bot className="w-6 h-6 text-white" /></div>
-                  <Badge className="bg-[#00FF94]/20 text-[#00FF94]">{agent.total_subscribers} subscribers</Badge>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{agent.name}</h3>
-                <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{agent.description}</p>
-                <div className="flex items-center justify-between text-sm mb-4"><span className="text-zinc-500">30D Return</span><span className={`font-mono ${agent.performance_30d >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{agent.performance_30d >= 0 ? '+' : ''}{agent.performance_30d}%</span></div>
-                <Button className="w-full mt-4 rounded-full bg-[#7B61FF]/20 text-[#7B61FF] hover:bg-[#7B61FF]/30" data-testid={`subscribe-${agent.id}`}>Subscribe</Button>
-              </CardContent>
-            </Card>
+        <StatsRow stats={stats} />
+
+        {/* Marketplace Items */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {mockMarketplaceItems.map((item, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.08 }}>
+              <Card className="bg-[#0A0A0A] border-zinc-800/50 hover:border-zinc-700/50 transition-colors" data-testid={`marketplace-item-${i}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-zinc-200 mb-1">{item.name}</h3>
+                      <p className="text-xs text-zinc-600">by {item.creator}</p>
+                    </div>
+                    <Badge className={categoryColors[item.category]}>{item.category}</Badge>
+                  </div>
+
+                  <div className="flex items-center gap-4 mb-4 text-xs text-zinc-500">
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-[#FFB800]" /> {item.rating}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" /> {item.users.toLocaleString()} users
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-mono font-bold text-[#7B61FF]">{item.price}</span>
+                    <Button disabled size="sm" className="rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 text-xs">
+                      <ShoppingCart className="w-3 h-3 mr-1" /> Install
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>
-
-      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <DialogContent className="bg-[#121212] border-zinc-800" data-testid="submit-agent-dialog">
-          <DialogHeader><DialogTitle>Submit Your AI Agent</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input placeholder="Agent Name" value={newAgent.name} onChange={(e) => setNewAgent({ ...newAgent, name: e.target.value })} className="bg-[#050505] border-zinc-800" data-testid="agent-name-input" />
-            <Input placeholder="Description" value={newAgent.description} onChange={(e) => setNewAgent({ ...newAgent, description: e.target.value })} className="bg-[#050505] border-zinc-800" data-testid="agent-description-input" />
-            <Select value={newAgent.strategy} onValueChange={(v) => setNewAgent({ ...newAgent, strategy: v })}>
-              <SelectTrigger className="bg-[#050505] border-zinc-800" data-testid="agent-strategy-select"><SelectValue placeholder="Select strategy" /></SelectTrigger>
-              <SelectContent className="bg-[#121212] border-zinc-800">
-                <SelectItem value="Momentum Trading">Momentum Trading</SelectItem>
-                <SelectItem value="Arbitrage">Arbitrage</SelectItem>
-                <SelectItem value="Yield Farming">Yield Farming</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowSubmitDialog(false)}>Cancel</Button><Button onClick={handleSubmitAgent} className="bg-[#7B61FF] hover:bg-[#7B61FF]/90" data-testid="submit-agent-confirm-btn">Submit</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
