@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 
 class AlphaAIStressTester:
-    def __init__(self, base_url="https://alpha-signals-21.preview.emergentagent.com"):
+    def __init__(self, base_url="https://alpha-refactor-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
