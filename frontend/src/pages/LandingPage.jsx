@@ -471,7 +471,7 @@ const LandingPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-lg font-bold font-['Outfit']">Pro</span>
-                    <span className="text-xs text-[#7B61FF] font-mono">$29/mo</span>
+                    <span className="text-xs text-[#7B61FF] font-mono">$49/mo</span>
                     <Badge className="bg-[#7B61FF]/20 text-[#7B61FF] text-[10px] ml-auto">Real-time</Badge>
                   </div>
                   <div className="space-y-3 text-sm">

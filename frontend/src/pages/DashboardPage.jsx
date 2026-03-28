@@ -1181,7 +1181,7 @@ const DashboardPage = () => {
                     >
                       <Zap className="w-5 h-5 mr-2" /> Upgrade to Pro
                     </Button>
-                    <span className="text-sm text-zinc-500">Starting at $29/month</span>
+                    <span className="text-sm text-zinc-500">Starting at $49/month</span>
                   </div>
                 </div>
               </div>
@@ -1373,7 +1373,7 @@ const DashboardPage = () => {
                     <p className="font-semibold">Monthly</p>
                     <p className="text-sm text-zinc-400">Billed monthly</p>
                   </div>
-                  <p className="text-xl font-bold">$29<span className="text-sm text-zinc-400">/mo</span></p>
+                  <p className="text-xl font-bold">$49<span className="text-sm text-zinc-400">/mo</span></p>
                 </div>
               </div>
               <div 
@@ -1407,7 +1407,7 @@ const DashboardPage = () => {
               ) : (
                 <>
                   <Zap className="w-5 h-5 mr-2" />
-                  {selectedPackage === 'pro_monthly' ? 'Upgrade Now — $29/month' : 'Upgrade Now — $249/year'}
+                  {selectedPackage === 'pro_monthly' ? 'Upgrade Now — $49/month' : 'Upgrade Now — $419/year'}
                 </>
               )}
             </Button>
@@ -1461,7 +1461,7 @@ const DashboardPage = () => {
                 handleUpgradeClick('exit_popup');
               }}
             >
-              <Zap className="w-5 h-5 mr-2" /> Upgrade Now — $29/month
+              <Zap className="w-5 h-5 mr-2" /> Upgrade Now — $49/month
             </Button>
             <Button variant="ghost" onClick={() => {
               trackEvent('dismiss', 'exit_popup');
