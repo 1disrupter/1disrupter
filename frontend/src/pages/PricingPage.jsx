@@ -201,8 +201,8 @@ const PricingPage = () => {
     {
       id: 'elite',
       name: 'Elite',
-      monthlyPrice: 79,
-      yearlyPrice: 699,
+      monthlyPrice: 99,
+      yearlyPrice: 849,
       monthlyPkgId: 'elite_monthly',
       yearlyPkgId: 'elite_yearly',
       description: 'Maximum edge for serious traders',
