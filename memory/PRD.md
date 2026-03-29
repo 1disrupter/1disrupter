@@ -1,91 +1,79 @@
 # AlphaAI — Product Requirements Document
 
 ## Original Problem Statement
-Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conversion. Features include AI-powered trading signals, demo mode, admin analytics, referral system, multi-tier subscription with Stripe, strategy leaderboard, follow strategy with notifications, and pro-tier feature gating.
+AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion. The platform provides AI-powered research, backtesting, strategy management, and real-time trading signals.
 
-## Architecture
-- **Frontend**: React + Tailwind CSS + Shadcn UI + Framer Motion + Recharts
-- **Backend**: FastAPI + Motor (Async MongoDB) + Background Tasks
-- **Integrations**: OpenAI GPT-5.2 (Emergent LLM Key), Stripe (checkout/webhook/billing portal), Resend, CoinGecko (OHLC)
-- **Structure**: Modular backend (routes/, services/, models/), React SPA with contexts/hooks
+## User Personas
+- **Free Users**: Access limited features (1 strategy follow, delayed signals, basic leaderboard)
+- **Pro Users ($29/mo)**: Unlimited follows, real-time alerts, full backtesting, AI research
+- **Elite Users**: All Pro features + priority support, advanced analytics
+- **Demo Users**: Full preview via `?demo=true` URL parameter, no auth required
 
-## What's Been Implemented
+## Core Architecture
+- **Frontend**: React + Tailwind CSS + Shadcn UI + Recharts + Framer Motion
+- **Backend**: FastAPI + Motor (Async MongoDB) + WebSockets
+- **Integrations**: OpenAI GPT-5.2 (Emergent LLM Key), Stripe, CoinGecko Public API
 
-### Core Platform
-- Landing page, User auth (JWT), Wallet integration (MetaMask/Sepolia)
-- Multi-tier subscription (Free/Pro/Elite) with Stripe checkout/webhook/billing portal
-- Live price ticker, AI trading signals (GPT-5.2)
-- Dashboard with trade execution, SL/TP orders, portfolio tracking
+## Implemented Features (All Passing)
 
-### Demo Mode System
-- Global DemoModeContext with `?demo=true`, DemoModeBanner, Share Demo, useApiData hook
+### Phase 1: Core Platform
+- User authentication (JWT, 2FA, password reset, email verification)
+- Dashboard with portfolio stats, AI signals, chart
+- AI Agents management
+- Event Agents (news-driven)
+- Strategy Lab (create/run strategies)
+- Marketplace
+- Copy Trading
+- Referral system
+- Admin panel + analytics
+- Demo Mode (`?demo=true`) global bypass
 
-### Dashboard Pages — All Functional
-1. **Research Engine** — GPT-5.2 AI market analysis
-2. **Strategy Lab** — Generate + backtest with real CoinGecko OHLC, auto-push to leaderboard
-3. **AI Agents** — Configure modal, View Signals modal
-4. **Event Agents** — Pause/Resume, View Log, macro events
-5. **Marketplace** — Preview modal, performance chart, Install
-6. **Simulation** — Backtest with real CoinGecko OHLC, auto-push to leaderboard
+### Phase 2: Intelligence & Data
+- **GPT-5.2 Research Engine** — real AI-powered crypto research (`/api/research/ai-query`)
+- **CoinGecko OHLC Integration** — real historical data for backtesting (`services/market_data.py`)
+- **Backtest Engine** — Sharpe ratio, drawdown, win rate calculations (`services/backtest_engine.py`)
+- **Strategy Leaderboard** — ranked by Sharpe ratio with real data (`/leaderboard`)
+- **Follow Strategy System** — follow/unfollow with Pro gating (`/api/strategies/{id}/follow`)
+- **In-App Notifications** — inbox with read/unread (`/api/notifications/inbox`)
+- **Stripe Pro-Tier Gating** — checkout, subscription management, upgrade modal
+- **Real-Time Strategy Alerts (WebSocket)** — live signals for Pro users, demo mock streaming (`/api/ws/alerts/{client_id}`)
 
-### Strategy Leaderboard
-- Top-3 podium, sortable rankings table (Sharpe/Return/MaxDD/WinRate)
-- Strategy detail modal with equity curve
-- **Follow/Unfollow buttons** on every row and detail modal
+## Key Endpoints
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/login` | POST | User login |
+| `/api/auth/register` | POST | User registration |
+| `/api/research/ai-query` | POST | GPT-5.2 research |
+| `/api/simulation/backtest` | POST | CoinGecko backtests |
+| `/api/leaderboard/strategies` | GET | Strategy rankings |
+| `/api/strategies/{id}/follow` | POST | Follow strategy |
+| `/api/notifications/inbox` | GET | User notifications |
+| `/api/alerts/status` | GET | WebSocket connection stats |
+| `/api/alerts/test` | POST | Broadcast test alert |
+| `/api/ws/alerts/{client_id}` | WS | Real-time strategy alerts |
 
-### Follow Strategy System (Feb 2026)
-- POST /api/strategies/{id}/follow + /unfollow + GET /api/strategies/following
-- Free tier: 1 follow max, Pro: unlimited
-- Automatic notification on follow
-- Following page (/following) with strategy cards, metrics, Unfollow buttons
-- Demo mode: static mock following data
+## Database Schema
+- `users`: auth, profile, stripe IDs, subscription tier
+- `strategies`: parameters, metrics, timestamps
+- `strategy_leaderboard`: ranked strategies with Sharpe data
+- `followed_strategies`: user_id + strategy_id
+- `notifications_inbox`: user_id, message, type, read status
+- `research_queries`: AI research history
+- `simulations`: backtest results
 
-### In-App Notifications (Feb 2026)
-- NotificationBell component in nav with unread count badge
-- Dropdown showing recent notifications with mark-read support
-- GET /api/notifications/inbox + POST /{id}/read + POST /read-all
-- notify_followers() function for strategy signal broadcasts
-- Demo mode: static mock notifications
+## Demo Mode
+- URL param `?demo=true` activates globally
+- Bypasses auth, Stripe gating, and external API limits
+- Returns mock/static data for all features
+- WebSocket streams mock alerts every 10-20 seconds
 
-### Pro-Tier Feature Gating (Feb 2026)
-- Backend is_pro() helper checks user_tier
-- UpgradeModal component → Stripe checkout
-- 403 response with upgrade message for gated features
-- GET /api/user/pro-status returns tier info and follow limits
-- Demo mode bypasses all gating
+## Test Results
+- Iterations 25-30: All passing (100% success rate)
+- Backend: REST + WebSocket endpoints fully tested
+- Frontend: All UI flows verified
 
-### CoinGecko Integration
-- services/market_data.py: OHLC fetcher with 10-min TTL cache
-- services/backtest_engine.py: Momentum/mean_reversion/breakout strategies
-- Computes: Sharpe, max drawdown, win rate, return, profit factor, equity curve
-
-### Admin
-- Admin panel, Admin Analytics dashboard, Goal Tracker widget
-
-## Key API Endpoints
-- `POST /api/strategies/{id}/follow` + `/unfollow` — Follow system
-- `GET /api/strategies/following` — List followed strategies
-- `GET /api/notifications/inbox` — Notification inbox with unread count
-- `POST /api/notifications/{id}/read` + `/read-all` — Mark notifications
-- `GET /api/user/pro-status` — Pro tier check
-- `GET /api/leaderboard/strategies` — Ranked strategy list
-- `POST /api/simulation/backtest` — Real OHLC backtest
-- `POST /api/lab/strategies/{id}/backtest` — Strategy backtest
-- `POST /api/research/ai-query` — GPT-5.2 market analysis
-- `POST /api/payments/checkout` — Stripe checkout session
-
-## MongoDB Collections
-- users, strategies, strategy_leaderboard, followed_strategies, notifications_inbox, analytics_events, analytics_goals
-
-## Prioritized Backlog
-
-### P2 — Future Tasks
-- Phase 3: Biometric Authentication for Mobile
-- Phase 4: Mobile App API Optimization
+## Backlog (P2)
+- Biometric Authentication for Mobile (Face ID / Touch ID)
+- Mobile App API Optimization (React Native)
 - Webhook Delivery Testing via Stripe Dashboard
-- Deploy AlphaAIManager.sol to Sepolia mainnet
-
-## Credentials
-- Standard user (Pro): demo_test2@my-alpha-ai.com / NewPass1234!
-- Free tier user: test_free_user_iter29@my-alpha-ai.com / TestPass123!
-- Admin user: admin@my-alpha-ai.com / Admin1234! (admin_key: alphaai_admin_2026)
+- Deploy AlphaAIManager.sol Smart Contract to Sepolia
