@@ -243,12 +243,12 @@ async def get_strategy_leaderboard(
                 {"sharpe": "sharpe_ratio", "total_return": "total_return", "max_drawdown": "max_drawdown", "win_rate": "win_rate"}.get(sort_by, "sharpe_ratio"),
                 0,
             ),
-            reverse=(order == "desc" if sort_by != "max_drawdown" else order == "asc"),
+            reverse=(order == "desc"),
         )
         return {"success": True, "strategies": strategies[offset:offset + limit], "total": len(strategies), "data_source": "mock"}
 
     sort_field = SORT_FIELDS.get(sort_by, "metrics.sharpe_ratio")
-    sort_dir = -1 if (order == "desc" if sort_by != "max_drawdown" else order == "asc") else 1
+    sort_dir = -1 if order == "desc" else 1
 
     total = await db.strategy_leaderboard.count_documents({})
     entries = await db.strategy_leaderboard.find(
