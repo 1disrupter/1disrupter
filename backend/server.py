@@ -48,6 +48,7 @@ from routes.websocket import router as websocket_router
 from routes.notifications import router as notifications_router
 from routes.follow_notifications import router as follow_notif_router
 from routes.traffic import router as traffic_router, init_db as init_traffic_db
+from routes.mobile_optimization import router as mobile_opt_router, init_db as init_mobile_opt_db
 
 # ============= APP SETUP =============
 app = FastAPI(title="AlphaAI Fund Platform")
@@ -88,6 +89,7 @@ app.include_router(websocket_router)
 app.include_router(notifications_router)
 app.include_router(follow_notif_router)
 app.include_router(traffic_router)
+app.include_router(mobile_opt_router)
 
 
 # ============= BACKGROUND TASKS =============
@@ -178,6 +180,7 @@ async def startup_db_client():
     init_copy_db(db)
     init_traffic_db(db)
     init_rule_engine_db(db)
+    init_mobile_opt_db(db)
 
     # Create indexes
     await db.users.create_index("email", unique=True, sparse=True)

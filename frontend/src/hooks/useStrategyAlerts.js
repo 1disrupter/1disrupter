@@ -6,8 +6,8 @@ import { BACKEND_URL } from "../lib/constants";
 import { trackEvent } from "../lib/tracking";
 
 const MAX_ALERTS = 50;
-const RECONNECT_DELAY = 3000;
-const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_BASE_DELAY = 2000;
+const MAX_RECONNECT_ATTEMPTS = 8;
 
 const useStrategyAlerts = () => {
   const { isDemoMode } = useDemoMode();
@@ -22,7 +22,6 @@ const useStrategyAlerts = () => {
   const clearAlerts = useCallback(() => setAlerts([]), []);
 
   useEffect(() => {
-    // Determine connection parameters
     let clientId;
     if (isDemoMode) {
       clientId = `demo-${Date.now()}`;
@@ -30,7 +29,7 @@ const useStrategyAlerts = () => {
       const tier = user.user_tier || (user.is_pro || user.is_elite ? "pro" : "free");
       clientId = `${user.id}:${tier}`;
     } else {
-      return; // No connection without auth or demo
+      return;
     }
 
     const wsUrl = BACKEND_URL.replace("https://", "wss://").replace("http://", "ws://");
@@ -52,20 +51,9 @@ const useStrategyAlerts = () => {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-
-          if (data.type === "connected") {
-            // Connection confirmed
-            return;
-          }
-
-          if (data.type === "upgrade_required") {
-            setUpgradeRequired(true);
-            return;
-          }
-
-          if (data.type === "heartbeat" || data.type === "pong") {
-            return;
-          }
+          if (data.type === "connected") return;
+          if (data.type === "upgrade_required") { setUpgradeRequired(true); return; }
+          if (data.type === "heartbeat" || data.type === "pong") return;
 
           if (data.type === "strategy_alert") {
             setAlerts((prev) => [data, ...prev].slice(0, MAX_ALERTS));
@@ -76,7 +64,7 @@ const useStrategyAlerts = () => {
             });
           }
         } catch {
-          // Ignore malformed messages
+          // Ignore
         }
       };
 
@@ -85,37 +73,51 @@ const useStrategyAlerts = () => {
         wsRef.current = null;
         trackEvent("ws_disconnect", { endpoint: "alerts", code: event.code });
 
-        // Don't reconnect if intentionally closed or upgrade required
-        if (event.code === 4003) {
-          setUpgradeRequired(true);
-          return;
-        }
+        if (event.code === 4003) { setUpgradeRequired(true); return; }
 
-        // Reconnect with backoff
+        // Exponential backoff reconnect
         if (reconnectCount.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectCount.current += 1;
-          const delay = RECONNECT_DELAY * reconnectCount.current;
+          const delay = RECONNECT_BASE_DELAY * Math.pow(1.5, reconnectCount.current - 1);
           reconnectTimer.current = setTimeout(connect, delay);
         }
       };
 
-      ws.onerror = () => {
-        // onclose will handle reconnection
-      };
+      ws.onerror = () => {};
     };
 
     connect();
 
-    // Ping every 45 seconds to keep alive
+    // Ping every 45s
     const pingInterval = setInterval(() => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ action: "ping" }));
       }
     }, 45000);
 
+    // Reconnect on visibility change (app resume)
+    const visibilityHandler = () => {
+      if (!document.hidden && wsRef.current?.readyState !== WebSocket.OPEN) {
+        reconnectCount.current = 0;
+        connect();
+      }
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+
+    // Reconnect on network recovery
+    const onlineHandler = () => {
+      if (wsRef.current?.readyState !== WebSocket.OPEN) {
+        reconnectCount.current = 0;
+        connect();
+      }
+    };
+    window.addEventListener("online", onlineHandler);
+
     return () => {
       clearInterval(pingInterval);
       clearTimeout(reconnectTimer.current);
+      document.removeEventListener("visibilitychange", visibilityHandler);
+      window.removeEventListener("online", onlineHandler);
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;

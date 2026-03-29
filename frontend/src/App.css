@@ -1,3 +1,20 @@
+/* Mobile safe areas */
+.safe-area-top { padding-top: env(safe-area-inset-top, 0); }
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+/* Mobile bottom nav spacing */
+@media (max-width: 767px) {
+  .App { padding-bottom: 3.5rem; }
+}
+
+/* Compact mode */
+.compact-mode .p-4 { padding: 0.5rem; }
+.compact-mode .p-6 { padding: 1rem; }
+.compact-mode .gap-4 { gap: 0.5rem; }
+.compact-mode .mb-8 { margin-bottom: 1rem; }
+.compact-mode .pt-24 { padding-top: 4.5rem; }
+
+
 /* Additional app-specific styles */
 
 .App {

@@ -29,11 +29,25 @@ import ReferralPage from "./pages/ReferralPage";
 import FollowingPage from "./pages/FollowingPage";
 import AlertsPage from "./pages/AlertsPage";
 import AdminTrafficPage from "./pages/AdminTrafficPage";
+import MobileSettingsPage from "./pages/MobileSettingsPage";
+import MobileNetworkBanner from "./components/MobileNetworkBanner";
+import MobileBottomNav from "./components/MobileBottomNav";
+import useMobileOptimizations from "./hooks/useMobileOptimizations";
+import useStrategyAlerts from "./hooks/useStrategyAlerts";
 import useTracking from "./hooks/useTracking";
 
 function TrackingWrapper({ children }) {
   useTracking();
-  return children;
+  const { isOnline } = useMobileOptimizations();
+  const { connected: wsConnected } = useStrategyAlerts();
+
+  return (
+    <>
+      <MobileNetworkBanner isOnline={isOnline} wsConnected={wsConnected} />
+      {children}
+      <MobileBottomNav />
+    </>
+  );
 }
 
 function App() {
@@ -86,6 +100,7 @@ function App() {
               <Route path="/referrals" element={<ReferralPage />} />
               <Route path="/following" element={<FollowingPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
+              <Route path="/settings" element={<MobileSettingsPage />} />
             </Routes>
             </TrackingWrapper>
           </BrowserRouter>
