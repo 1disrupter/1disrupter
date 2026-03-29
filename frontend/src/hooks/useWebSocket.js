@@ -12,11 +12,12 @@ export const useSignalsWebSocket = () => {
   const { user, isPro, tokens } = useAuth();
   const [signals, setSignals] = useState([]);
   const [prices, setPrices] = useState([]);
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(null);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
+  const openedAtRef = useRef(0);
   const maxReconnectAttempts = 5;
 
   const connect = useCallback(() => {
@@ -38,7 +39,8 @@ export const useSignalsWebSocket = () => {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.debug('[WS Signals] Connected');
+        openedAtRef.current = Date.now();
         setConnected(true);
         setError(null);
         reconnectAttemptsRef.current = 0;
@@ -127,7 +129,7 @@ export const useSignalsWebSocket = () => {
       };
 
       ws.onclose = (event) => {
-        console.log('WebSocket closed:', event.code, event.reason);
+        console.debug('[WS Signals] Closed:', event.code, event.reason);
         setConnected(false);
         wsRef.current = null;
 
@@ -136,11 +138,13 @@ export const useSignalsWebSocket = () => {
           return;
         }
 
-        // Exponential backoff reconnection
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
+        // Detect rapid close — increase backoff
+        const lifespan = Date.now() - openedAtRef.current;
+        const baseDelay = lifespan < 500 ? 5000 : 1000;
+        const delay = Math.min(baseDelay * Math.pow(2, reconnectAttemptsRef.current), 30000);
         reconnectAttemptsRef.current++;
         
-        console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`);
+        console.debug(`[WS Signals] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`);
         reconnectTimeoutRef.current = setTimeout(connect, delay);
       };
     } catch (e) {

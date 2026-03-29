@@ -3,6 +3,7 @@ import { WifiOff, RefreshCw } from "lucide-react";
 
 const MobileNetworkBanner = ({ isOnline, wsConnected }) => {
   const showOffline = !isOnline;
+  // Only show reconnecting when WS was attempted (false), not when idle (null)
   const showReconnecting = isOnline && wsConnected === false;
 
   return (

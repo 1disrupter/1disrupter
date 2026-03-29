@@ -1,0 +1,96 @@
+{
+  "summary": "WebSocket Reconnect Loop Bug Fix Testing completed. Found and fixed a bug where the 'Reconnecting...' banner was showing for Pro users after login due to race condition in onclose handler. Also fixed infinite reconnect loop for Free users. All 9 backend tests pass, all 4 frontend UI tests pass.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Unauthenticated user on /leaderboard — NO reconnecting banner visible",
+    "Unauthenticated user on /dashboard — NO reconnecting banner visible",
+    "Unauthenticated user on / (homepage) — NO reconnecting banner visible",
+    "Demo mode (?demo=true) on /leaderboard — NO reconnecting banner, WS connected",
+    "Demo mode on /alerts — NO reconnecting banner, alerts streaming",
+    "Authenticated Pro user — WS connects, no reconnecting banner (after fix)",
+    "Authenticated Free user — upgrade prompt, no infinite reconnect loop (after fix)",
+    "GET /api/alerts/status returns connection stats",
+    "POST /api/alerts/test broadcasts test alert",
+    "GET /api/mobile/bootstrap?demo=true returns user and strategies",
+    "GET /api/leaderboard?demo=true returns data",
+    "Pro user login successful",
+    "Free user login successful",
+    "Pro user profile returns correct tier",
+    "Free user profile returns correct tier"
+  ],
+
+  "failed_tests": [],
+
+  "bugs_found_and_fixed": [
+    {
+      "bug": "Reconnecting banner showing for Pro users after login",
+      "root_cause": "In useStrategyAlerts.js onclose handler, setConnected(false) was called BEFORE checking for intentional close (code 1000). When effect cleanup ran, it closed WS with code 1000, which set connected=false, causing banner to show briefly.",
+      "fix": "Moved setConnected(false) AFTER the early return for code 1000 (intentional close)",
+      "file": "/app/frontend/src/hooks/useStrategyAlerts.js",
+      "lines": "91-102"
+    },
+    {
+      "bug": "Infinite reconnect loop for Free users",
+      "root_cause": "When Free user received code 4003 (upgrade required), the effect would re-run due to state changes, creating new WS connections that would also get rejected.",
+      "fix": "Added upgradeRequiredRef to track upgrade state and prevent reconnection. Also set connected=null instead of false for code 4003 to avoid showing reconnecting banner.",
+      "file": "/app/frontend/src/hooks/useStrategyAlerts.js",
+      "lines": "23, 45-49, 103-108"
+    }
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_websocket_reconnect.py",
+    "/app/test_reports/pytest/websocket_reconnect_results.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [],
+
+  "updated_files": [
+    "/app/frontend/src/hooks/useStrategyAlerts.js"
+  ],
+
+  "success_rate": {
+    "backend": "100% (9/9 tests)",
+    "frontend": "100% (4/4 UI tests)"
+  },
+
+  "test_credentials": {
+    "demo_mode": "?demo=true URL parameter",
+    "pro_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "free_user": "test_free_user_iter29@my-alpha-ai.com / TestPass123!",
+    "admin": "admin@my-alpha-ai.com / Admin1234!"
+  },
+
+  "seed_data_creation": "None - used existing test users",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "WebSocket reconnect loop bug has been fixed. Key changes in useStrategyAlerts.js: (1) setConnected(false) now only called for unexpected closes, not intentional closes (code 1000), (2) Added upgradeRequiredRef to prevent infinite reconnect for free users, (3) Free users get connected=null instead of false when upgrade required. The MobileNetworkBanner only shows 'Reconnecting...' when wsConnected===false, so null state skips the banner.",
+
+  "verified_features": {
+    "websocket_reconnect_fix": {
+      "unauthenticated_pages": "No reconnecting banner on /, /leaderboard, /dashboard",
+      "demo_mode": "WS connects successfully, no reconnecting banner",
+      "pro_user": "WS connects, no reconnecting banner after login",
+      "free_user": "Upgrade prompt shown, no infinite reconnect loop"
+    },
+    "backend_endpoints": {
+      "alerts_status": "GET /api/alerts/status returns connection stats",
+      "alerts_test": "POST /api/alerts/test broadcasts test alert"
+    }
+  }
+}

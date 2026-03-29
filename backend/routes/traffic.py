@@ -135,7 +135,7 @@ async def ws_admin_events(websocket: WebSocket):
         # Keep-alive loop
         while True:
             try:
-                data = await asyncio.wait_for(websocket.receive_json(), timeout=60)
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=90)
                 if data.get("action") == "ping":
                     await websocket.send_json({
                         "type": "pong",

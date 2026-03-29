@@ -13,11 +13,14 @@ const useStrategyAlerts = () => {
   const { isDemoMode } = useDemoMode();
   const { user, tokens, isAuthenticated } = useAuth();
   const [alerts, setAlerts] = useState([]);
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(null); // null = no attempt, true = connected, false = disconnected
   const [upgradeRequired, setUpgradeRequired] = useState(false);
   const wsRef = useRef(null);
   const reconnectCount = useRef(0);
   const reconnectTimer = useRef(null);
+  const openedAtRef = useRef(0);
+  const failedFastCount = useRef(0);
+  const upgradeRequiredRef = useRef(false);
 
   const clearAlerts = useCallback(() => setAlerts([]), []);
 
@@ -29,6 +32,7 @@ const useStrategyAlerts = () => {
       const tier = user.user_tier || (user.is_pro || user.is_elite ? "pro" : "free");
       clientId = `${user.id}:${tier}`;
     } else {
+      // No connection needed — keep connected as null (not false)
       return;
     }
 
@@ -37,53 +41,106 @@ const useStrategyAlerts = () => {
 
     const connect = () => {
       if (wsRef.current?.readyState === WebSocket.OPEN) return;
+      
+      // Don't reconnect if upgrade is required (free user)
+      if (upgradeRequiredRef.current) {
+        console.debug("[WS] Upgrade required, not reconnecting");
+        return;
+      }
 
-      const ws = new WebSocket(fullUrl);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        setConnected(true);
-        setUpgradeRequired(false);
-        reconnectCount.current = 0;
-        trackEvent("ws_connect", { endpoint: "alerts" });
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "connected") return;
-          if (data.type === "upgrade_required") { setUpgradeRequired(true); return; }
-          if (data.type === "heartbeat" || data.type === "pong") return;
-
-          if (data.type === "strategy_alert") {
-            setAlerts((prev) => [data, ...prev].slice(0, MAX_ALERTS));
-            trackEvent("signal", { strategy_id: data.strategy_id, action: data.action });
-            toast(data.message, {
-              description: data.asset || data.strategy_name || "",
-              duration: 6000,
-            });
-          }
-        } catch {
-          // Ignore
-        }
-      };
-
-      ws.onclose = (event) => {
+      // Stop if too many rapid failures (server likely down)
+      if (failedFastCount.current >= 5) {
+        console.debug("[WS] Server appears offline, pausing reconnect");
         setConnected(false);
-        wsRef.current = null;
-        trackEvent("ws_disconnect", { endpoint: "alerts", code: event.code });
+        // Retry once after 30s
+        reconnectTimer.current = setTimeout(() => {
+          failedFastCount.current = 0;
+          reconnectCount.current = 0;
+          connect();
+        }, 30000);
+        return;
+      }
 
-        if (event.code === 4003) { setUpgradeRequired(true); return; }
+      try {
+        const ws = new WebSocket(fullUrl);
+        wsRef.current = ws;
 
-        // Exponential backoff reconnect
-        if (reconnectCount.current < MAX_RECONNECT_ATTEMPTS) {
-          reconnectCount.current += 1;
-          const delay = RECONNECT_BASE_DELAY * Math.pow(1.5, reconnectCount.current - 1);
-          reconnectTimer.current = setTimeout(connect, delay);
-        }
-      };
+        ws.onopen = () => {
+          openedAtRef.current = Date.now();
+          setConnected(true);
+          setUpgradeRequired(false);
+          upgradeRequiredRef.current = false;
+          reconnectCount.current = 0;
+          failedFastCount.current = 0;
+          console.debug("[WS] Connected", { url: fullUrl });
+          trackEvent("ws_connect", { endpoint: "alerts" });
+        };
 
-      ws.onerror = () => {};
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "connected") return;
+            if (data.type === "upgrade_required") { 
+              upgradeRequiredRef.current = true;
+              setUpgradeRequired(true); 
+              return; 
+            }
+            if (data.type === "heartbeat" || data.type === "pong") return;
+
+            if (data.type === "strategy_alert") {
+              setAlerts((prev) => [data, ...prev].slice(0, MAX_ALERTS));
+              trackEvent("signal", { strategy_id: data.strategy_id, action: data.action });
+              toast(data.message, {
+                description: data.asset || data.strategy_name || "",
+                duration: 6000,
+              });
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        };
+
+        ws.onclose = (event) => {
+          console.debug("[WS] Closed", { code: event.code, reason: event.reason });
+          wsRef.current = null;
+          trackEvent("ws_disconnect", { endpoint: "alerts", code: event.code });
+
+          // Intentional close (cleanup) - don't show reconnecting banner
+          if (event.code === 1000) return;
+          
+          if (event.code === 4003) { 
+            upgradeRequiredRef.current = true;
+            setUpgradeRequired(true); 
+            // Keep connected as null for free users - they shouldn't see reconnecting banner
+            setConnected(null); 
+            return; 
+          }
+          
+          // Only set disconnected for unexpected closes
+          setConnected(false);
+
+          // Detect rapid close (< 500ms = server likely rejecting)
+          const lifespan = Date.now() - openedAtRef.current;
+          if (lifespan < 500 && openedAtRef.current > 0) {
+            failedFastCount.current += 1;
+          }
+
+          // Exponential backoff reconnect
+          if (reconnectCount.current < MAX_RECONNECT_ATTEMPTS) {
+            reconnectCount.current += 1;
+            const baseDelay = failedFastCount.current >= 3 ? 8000 : RECONNECT_BASE_DELAY;
+            const delay = baseDelay * Math.pow(1.5, reconnectCount.current - 1);
+            console.debug("[WS] Reconnecting in", delay, "ms, attempt", reconnectCount.current);
+            reconnectTimer.current = setTimeout(connect, delay);
+          }
+        };
+
+        ws.onerror = () => {
+          console.debug("[WS] Error on", fullUrl);
+        };
+      } catch (e) {
+        console.debug("[WS] Failed to create WebSocket:", e);
+      }
     };
 
     connect();
@@ -99,6 +156,7 @@ const useStrategyAlerts = () => {
     const visibilityHandler = () => {
       if (!document.hidden && wsRef.current?.readyState !== WebSocket.OPEN) {
         reconnectCount.current = 0;
+        failedFastCount.current = 0;
         connect();
       }
     };
@@ -108,6 +166,7 @@ const useStrategyAlerts = () => {
     const onlineHandler = () => {
       if (wsRef.current?.readyState !== WebSocket.OPEN) {
         reconnectCount.current = 0;
+        failedFastCount.current = 0;
         connect();
       }
     };
@@ -119,7 +178,7 @@ const useStrategyAlerts = () => {
       document.removeEventListener("visibilitychange", visibilityHandler);
       window.removeEventListener("online", onlineHandler);
       if (wsRef.current) {
-        wsRef.current.close();
+        wsRef.current.close(1000, "cleanup");
         wsRef.current = null;
       }
     };

@@ -66,82 +66,93 @@ async def websocket_alerts(websocket: WebSocket, client_id: str):
       - "{user_id}:elite" → Elite user (receives real alerts)
       - "{user_id}:free" → Free user (gets upgrade prompt, then disconnect)
     """
-    # ── Demo mode ──────────────────────────────────────────────
-    if client_id.startswith("demo"):
-        await alerts_manager.connect(websocket, client_id, is_demo=True)
+    try:
+        # ── Demo mode ──────────────────────────────────────────────
+        if client_id.startswith("demo"):
+            await alerts_manager.connect(websocket, client_id, is_demo=True)
+            try:
+                await websocket.send_json({
+                    "type": "connected",
+                    "mode": "demo",
+                    "message": "Connected to AlphaAI demo alerts stream",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                })
+                while True:
+                    delay = random.randint(10, 20)
+                    await asyncio.sleep(delay)
+                    try:
+                        alert = _generate_mock_alert()
+                        await websocket.send_json(alert)
+                    except Exception:
+                        break
+            except (WebSocketDisconnect, Exception):
+                pass
+            finally:
+                await alerts_manager.disconnect(client_id, is_demo=True)
+            return
+
+        # ── Authenticated user ─────────────────────────────────────
+        parts = client_id.split(":")
+        if len(parts) != 2:
+            await websocket.close(code=4000, reason="Invalid client_id format. Use user_id:tier")
+            return
+
+        user_id, tier = parts
+        tier = tier.lower()
+
+        # Free user → upgrade prompt
+        if tier not in ("pro", "elite"):
+            await websocket.accept()
+            await websocket.send_json({
+                "type": "upgrade_required",
+                "message": "Real-time strategy alerts require a Pro subscription. Upgrade now for instant signals.",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            await websocket.close(code=4003, reason="Pro subscription required")
+            return
+
+        # Pro / Elite → full connection
+        await alerts_manager.connect(websocket, user_id)
         try:
             await websocket.send_json({
                 "type": "connected",
-                "mode": "demo",
-                "message": "Connected to AlphaAI demo alerts stream",
+                "mode": tier,
+                "message": f"Connected to AlphaAI real-time alerts ({tier})",
+                "user_id": user_id,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })
+
+            # Keep-alive loop
             while True:
-                delay = random.randint(10, 20)
-                await asyncio.sleep(delay)
-                alert = _generate_mock_alert()
-                await websocket.send_json(alert)
+                try:
+                    data = await asyncio.wait_for(websocket.receive_json(), timeout=90)
+                    if data.get("action") == "ping":
+                        await websocket.send_json({
+                            "type": "pong",
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                        })
+                except asyncio.TimeoutError:
+                    # Send heartbeat
+                    try:
+                        await websocket.send_json({
+                            "type": "heartbeat",
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                        })
+                    except Exception:
+                        break
+                except (WebSocketDisconnect, Exception):
+                    break
         except (WebSocketDisconnect, Exception):
             pass
         finally:
-            await alerts_manager.disconnect(client_id, is_demo=True)
-        return
+            await alerts_manager.disconnect(user_id)
 
-    # ── Authenticated user ─────────────────────────────────────
-    parts = client_id.split(":")
-    if len(parts) != 2:
-        await websocket.close(code=4000, reason="Invalid client_id format. Use user_id:tier")
-        return
-
-    user_id, tier = parts
-    tier = tier.lower()
-
-    # Free user → upgrade prompt
-    if tier not in ("pro", "elite"):
-        await websocket.accept()
-        await websocket.send_json({
-            "type": "upgrade_required",
-            "message": "Real-time strategy alerts require a Pro subscription. Upgrade now for instant signals.",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
-        await websocket.close(code=4003, reason="Pro subscription required")
-        return
-
-    # Pro / Elite → full connection
-    await alerts_manager.connect(websocket, user_id)
-    try:
-        await websocket.send_json({
-            "type": "connected",
-            "mode": tier,
-            "message": f"Connected to AlphaAI real-time alerts ({tier})",
-            "user_id": user_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
-
-        # Keep-alive loop
-        while True:
-            try:
-                data = await asyncio.wait_for(websocket.receive_json(), timeout=60)
-                if data.get("action") == "ping":
-                    await websocket.send_json({
-                        "type": "pong",
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                    })
-            except asyncio.TimeoutError:
-                # Send heartbeat
-                try:
-                    await websocket.send_json({
-                        "type": "heartbeat",
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                    })
-                except Exception:
-                    break
-            except (WebSocketDisconnect, Exception):
-                break
-    except (WebSocketDisconnect, Exception):
-        pass
-    finally:
-        await alerts_manager.disconnect(user_id)
+    except Exception as e:
+        logger.error(f"WebSocket handler error for {client_id}: {e}")
+        try:
+            await websocket.close(code=1011, reason="Internal server error")
+        except Exception:
+            pass
 
 
 # ── REST: Alerts status ────────────────────────────────────────
