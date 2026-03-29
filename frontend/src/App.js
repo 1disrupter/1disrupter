@@ -24,6 +24,7 @@ import MarketplacePage from "./pages/MarketplacePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ConversionAnalyticsPage from "./pages/ConversionAnalyticsPage";
 import AdminPage from "./pages/AdminPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ReferralPage from "./pages/ReferralPage";
 
 function App() {
@@ -63,6 +64,7 @@ function App() {
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/conversion-analytics" element={<ConversionAnalyticsPage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />

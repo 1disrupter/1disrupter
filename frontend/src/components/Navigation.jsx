@@ -46,6 +46,7 @@ const Navigation = () => {
     { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
     { path: "/pricing", label: "Pricing", icon: Crown },
     { path: "/admin", label: "Admin", icon: Shield },
+    { path: "/admin/analytics", label: "Demo Analytics", icon: BarChart3 },
   ];
 
   const navItems = (isAuthenticated || isDemoMode) ? authNavItems : publicNavItems;

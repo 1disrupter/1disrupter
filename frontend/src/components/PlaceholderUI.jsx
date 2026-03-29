@@ -128,3 +128,24 @@ export const MiniChart = ({ data, color = '#7B61FF' }) => {
     </svg>
   );
 };
+
+
+export const LoadingSkeleton = ({ rows = 4 }) => (
+  <div className="space-y-4 animate-pulse" data-testid="loading-skeleton">
+    {Array.from({ length: rows }).map((_, i) => (
+      <div key={i} className="h-16 rounded-xl bg-zinc-800/40" />
+    ))}
+  </div>
+);
+
+export const ErrorState = ({ message = 'Failed to load data', onRetry }) => (
+  <div className="flex flex-col items-center justify-center py-16 text-center" data-testid="error-state">
+    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+      <span className="text-red-400 text-xl">!</span>
+    </div>
+    <p className="text-sm text-zinc-400 mb-4">{message}</p>
+    {onRetry && (
+      <button onClick={onRetry} className="text-xs text-[#7B61FF] hover:underline">Try again</button>
+    )}
+  </div>
+);

@@ -680,3 +680,117 @@ async def get_admin_dashboard(admin: dict = Depends(verify_admin)):
             {"payment_status": "paid"}, {"_id": 0}
         ).sort("created_at", -1).limit(5).to_list(5)
     }
+
+
+# ============= ADMIN ANALYTICS DASHBOARD =============
+
+import time as _time
+
+_analytics_cache = {"data": None, "ts": 0}
+_CACHE_TTL = 60  # seconds
+
+
+@router.get("/analytics")
+async def admin_analytics(
+    admin: dict = Depends(verify_admin),
+    period: str = Query("30d", regex="^(24h|7d|30d|all)$"),
+):
+    """Aggregate analytics_events for the admin analytics dashboard."""
+
+    now = datetime.now(timezone.utc)
+    if period == "24h":
+        cutoff = now - timedelta(hours=24)
+    elif period == "7d":
+        cutoff = now - timedelta(days=7)
+    elif period == "30d":
+        cutoff = now - timedelta(days=30)
+    else:
+        cutoff = datetime(2020, 1, 1, tzinfo=timezone.utc)
+
+    cache_key = f"{period}"
+    if _analytics_cache["data"] and _analytics_cache.get("key") == cache_key and _time.time() - _analytics_cache["ts"] < _CACHE_TTL:
+        return _analytics_cache["data"]
+
+    match_stage = {"timestamp": {"$gte": cutoff}}
+
+    # 1. Total demo opens
+    demo_opens = await db.analytics_events.count_documents({**match_stage, "event_type": "demo_link_opened"})
+
+    # 2. Demo opens over time (by date)
+    opens_over_time = await db.analytics_events.aggregate([
+        {"$match": {**match_stage, "event_type": "demo_link_opened"}},
+        {"$group": {"_id": "$date", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}},
+        {"$limit": 90},
+    ]).to_list(90)
+
+    # 3. Signups in period
+    total_signups = await db.users.count_documents({"created_at": {"$gte": cutoff}})
+    total_pro = await db.users.count_documents({"created_at": {"$gte": cutoff}, "$or": [{"is_pro": True}, {"is_elite": True}]})
+
+    # 4. Conversion rates
+    demo_signup_rate = round((total_signups / demo_opens * 100), 1) if demo_opens > 0 else 0
+    demo_pro_rate = round((total_pro / demo_opens * 100), 1) if demo_opens > 0 else 0
+
+    # 5. K-factor (viral coefficient) = avg referrals per user × conversion rate
+    total_users = await db.users.count_documents({})
+    k_factor = round((demo_opens / max(total_users, 1)) * (demo_signup_rate / 100), 2)
+
+    # 6. Top referrers
+    top_referrers = await db.analytics_events.aggregate([
+        {"$match": {**match_stage, "event_type": "demo_link_opened", "metadata.referrer": {"$ne": "(direct)"}}},
+        {"$group": {"_id": "$metadata.referrer", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10},
+    ]).to_list(10)
+
+    # 7. Pages viewed per demo session
+    pages_per_session = await db.analytics_events.aggregate([
+        {"$match": {**match_stage, "event_type": "demo_link_opened"}},
+        {"$group": {"_id": "$metadata.path", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 15},
+    ]).to_list(15)
+
+    # 8. All events (for avg session and live stream)
+    all_event_types = await db.analytics_events.aggregate([
+        {"$match": match_stage},
+        {"$group": {"_id": "$event_type", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]).to_list(50)
+
+    total_events = sum(e["count"] for e in all_event_types)
+
+    # 9. Recent events for live stream
+    recent_events = []
+    async for doc in db.analytics_events.find(match_stage, {"_id": 0}).sort([("timestamp", -1)]).limit(20):
+        recent_events.append({
+            "event_type": doc.get("event_type"),
+            "timestamp": doc.get("timestamp").isoformat() if hasattr(doc.get("timestamp", ""), "isoformat") else str(doc.get("timestamp", "")),
+            "path": doc.get("metadata", {}).get("path"),
+            "referrer": doc.get("metadata", {}).get("referrer"),
+        })
+
+    result = {
+        "period": period,
+        "kpi": {
+            "demo_opens": demo_opens,
+            "total_signups": total_signups,
+            "total_pro": total_pro,
+            "demo_signup_rate": demo_signup_rate,
+            "demo_pro_rate": demo_pro_rate,
+            "k_factor": k_factor,
+            "total_events": total_events,
+            "total_users": total_users,
+        },
+        "opens_over_time": [{"date": o["_id"], "count": o["count"]} for o in opens_over_time],
+        "top_referrers": [{"referrer": r["_id"], "count": r["count"]} for r in top_referrers],
+        "pages_per_session": [{"path": p["_id"], "count": p["count"]} for p in pages_per_session],
+        "event_types": [{"type": e["_id"], "count": e["count"]} for e in all_event_types],
+        "recent_events": recent_events,
+    }
+
+    _analytics_cache["data"] = result
+    _analytics_cache["ts"] = _time.time()
+    _analytics_cache["key"] = cache_key
+    return result
