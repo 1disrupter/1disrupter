@@ -26,17 +26,21 @@ Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conver
 - useApiData hook for conditional real/mock data loading
 - All dashboard pages wired to mock data in demo mode
 
-### Dashboard Pages (8 pages wired)
-- AI Agents, Event Agents, Marketplace, Strategy Lab
-- Research Engine, Simulation, Analytics, Referrals
+### Dashboard Pages — All Functional (6 pages enhanced Feb 2026)
+1. **Research Engine** — GPT-5.2 AI-powered market analysis with asset selector (BTC/ETH/SOL), trend/confidence/risk/indicators display. Backend endpoint: POST /api/research/ai-query
+2. **Strategy Lab** — Generate strategies (momentum/mean_reversion/arbitrage/yield/funding), backtest with metrics (Sharpe, return, drawdown, win rate), strategy rankings table
+3. **AI Agents** — Configure modal (asset, timeframe, risk level, signal frequency), View Signals modal (LONG/SHORT signals with confidence), saved configs shown as badges
+4. **Event Agents** — Pause/Resume toggle, View Log modal with timestamped entries, macro events modal (6 upcoming events with impact levels and expected volatility)
+5. **Marketplace** — Preview modal with description, monthly returns chart, metrics (Sharpe, Max DD, Win Rate), Install functionality with search filtering
+6. **Simulation** — Backtest tab with pair/strategy selectors, equity curve visualization, PnL metrics (Total Return, Sharpe, Max Drawdown, Win Rate, Profit Factor)
 
 ### Admin
 - Admin panel with user management, signal generation, system config
 - Admin Analytics dashboard with conversion funnels, referrer tracking
 - Goal Tracker widget with K-factor and conversion targets
 
-### Bug Fixes (Current Session — Feb 2026)
-- **Fixed global UI interaction blocker**: All action buttons across 6 pages (Agents, Event Agents, Marketplace, Strategy Lab, Research, Simulation) had `disabled` prop making them unclickable with default cursor. Removed `disabled`, added active styling and toast "coming soon" handlers. Verified via testing agent (iteration_25, 19/19 passed).
+### Bug Fixes
+- Fixed global UI interaction blocker: removed `disabled` prop from all action buttons across 6 pages (Feb 2026)
 
 ## Prioritized Backlog
 
