@@ -1,0 +1,87 @@
+{
+  "summary": "Demo Mode feature testing complete. All core Demo Mode functionality working correctly: toggle in nav header, purple banner with correct text, PRO gating bypass on Copy Trading and Leaderboard pages, mobile menu toggle, sessionStorage persistence, and toggle OFF via X button or nav toggle.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Dashboard in Demo Mode",
+        "issues": ["'Upgrade to unlock full features' banner (data-testid='demo-mode-banner') is shown in Demo Mode - this is intentional per code design to remind users they can upgrade, but may be confusing since Demo Mode is supposed to 'unlock all features visually'"]
+      }
+    ]
+  },
+
+  "passed_tests": [
+    "Landing page loads correctly when not logged in",
+    "Login flow works with demo_test2@my-alpha-ai.com / NewPass1234!",
+    "Demo Mode toggle visible in nav header (data-testid='demo-mode-toggle') when authenticated",
+    "Clicking Demo toggle shows purple banner 'Demo Mode: Data simulated for preview.' (data-testid='demo-mode-global-banner')",
+    "Demo Mode banner has X button (data-testid='demo-banner-close') that closes banner and disables Demo Mode",
+    "Clicking Demo toggle again disables Demo Mode and hides banner",
+    "PRO badge appears in nav header when Demo Mode is ON",
+    "Dashboard shows AI signals with live data in Demo Mode",
+    "'Delayed' badge on signals is hidden in Demo Mode (PRO gating bypassed)",
+    "Copy Trading page loads with full access in Demo Mode (no PRO gate)",
+    "Leaderboard page loads with 'Copy' buttons available in Demo Mode (PRO feature unlocked)",
+    "Mobile menu has Demo Mode toggle (data-testid='demo-mode-toggle-mobile')",
+    "Mobile Demo Mode toggle enables Demo Mode and shows banner",
+    "Demo Mode state persists across page navigation (sessionStorage working)"
+  ],
+
+  "test_report_links": [
+    "/app/test_reports/iteration_21.json"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "Demo Mode implementation is well-structured with DemoModeContext providing global state",
+    "Live simulation updates every 3-5 seconds as specified",
+    "sessionStorage persistence working correctly for Demo Mode state",
+    "PRO gating bypass implemented correctly using effectivePro = demoMode || isPro pattern",
+    "All required data-testid attributes are present for testing"
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {
+    "backend": "N/A (frontend-only testing)",
+    "frontend": "100% (14/14 tests passed)"
+  },
+
+  "test_credentials": {
+    "test_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "admin_user": "admin@my-alpha-ai.com / Admin1234!"
+  },
+
+  "seed_data_creation": "None - used existing test users",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Demo Mode feature fully tested and working. Key test-ids: demo-mode-toggle (desktop nav), demo-mode-toggle-mobile (mobile menu), demo-mode-global-banner (top banner), demo-banner-close (X button). Demo Mode uses mockData.js for simulated data and updates every 3-5 seconds. PRO gating is bypassed using effectivePro = demoMode || isPro pattern.",
+
+  "mocked_apis": {
+    "note": "Demo Mode uses mockData.js for all simulated data when enabled",
+    "mocked_list": ["All dashboard data in Demo Mode via DemoModeContext - signals, portfolio stats, agents, strategies, copy traders, leaderboard, chart data"]
+  },
+
+  "features_tested": {
+    "demo_mode_toggle_desktop": "PASS - Toggle visible in nav header, enables/disables Demo Mode",
+    "demo_mode_toggle_mobile": "PASS - Toggle visible in mobile menu, enables/disables Demo Mode",
+    "demo_mode_banner": "PASS - Purple banner shows 'Demo Mode: Data simulated for preview.' with X button",
+    "demo_mode_banner_close": "PASS - X button closes banner and disables Demo Mode",
+    "pro_badge_in_demo_mode": "PASS - PRO badge appears in nav when Demo Mode is ON",
+    "delayed_badge_hidden": "PASS - 'Delayed' badge on signals is hidden in Demo Mode",
+    "copy_trading_pro_bypass": "PASS - Copy Trading page loads with full access (no PRO gate)",
+    "leaderboard_pro_bypass": "PASS - Leaderboard shows Copy buttons (PRO feature unlocked)",
+    "session_storage_persistence": "PASS - Demo Mode state persists across page navigation",
+    "live_data_simulation": "PASS - Dashboard shows live-updating mock data in Demo Mode"
+  }
+}

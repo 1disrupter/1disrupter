@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { useDemoMode } from '../contexts/DemoModeContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -268,6 +269,7 @@ const EditSettingsModal = ({ open, onOpenChange, relationship, token, onSuccess 
 // ============= MAIN COPY TRADING PAGE =============
 const CopyTradingPage = () => {
   const { user, tokens } = useAuth();
+  const { isDemoMode, demoCopyTraders } = useDemoMode();
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [pendingTrades, setPendingTrades] = useState([]);
@@ -276,7 +278,7 @@ const CopyTradingPage = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
 
-  const isPro = user?.is_pro || user?.is_elite;
+  const isPro = isDemoMode || user?.is_pro || user?.is_elite;
   const token = tokens?.access_token;
 
   const loadData = useCallback(async () => {

@@ -8,8 +8,11 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { PageHeader, StatsRow } from "../components/PlaceholderUI";
 import { mockMarketplaceItems } from "../lib/mockData";
+import { useDemoMode } from "../contexts/DemoModeContext";
 
 const MarketplacePage = () => {
+  const { isDemoMode, demoMarketplace } = useDemoMode();
+  const marketplaceItems = isDemoMode ? demoMarketplace : mockMarketplaceItems;
   const stats = [
     { label: 'Listed Items', value: '24', change: '+6 this month', positive: true },
     { label: 'Active Users', value: '4.2K', change: '+12%', positive: true },
@@ -50,7 +53,7 @@ const MarketplacePage = () => {
 
         {/* Marketplace Items */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {mockMarketplaceItems.map((item, i) => (
+          {marketplaceItems.map((item, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.08 }}>
               <Card className="bg-[#0A0A0A] border-zinc-800/50 hover:border-zinc-700/50 transition-colors" data-testid={`marketplace-item-${i}`}>
                 <CardContent className="p-5">

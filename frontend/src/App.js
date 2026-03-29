@@ -5,6 +5,8 @@ import { AnimatePresence } from "framer-motion";
 import "@/App.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
+import { DemoModeProvider } from "./contexts/DemoModeContext";
+import DemoModeBanner from "./components/DemoModeBanner";
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./pages/AuthPages";
 import Navigation from "./components/Navigation";
 import SplashScreen from "./components/SplashScreen";
@@ -38,11 +40,13 @@ function App() {
   return (
     <AuthProvider>
       <WalletProvider>
+        <DemoModeProvider>
         <AnimatePresence>
           {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
         </AnimatePresence>
         <div className="App min-h-screen bg-[#050505]">
           <BrowserRouter>
+            <DemoModeBanner />
             <Navigation />
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -71,6 +75,7 @@ function App() {
           </BrowserRouter>
           <Toaster position="bottom-right" theme="dark" />
         </div>
+        </DemoModeProvider>
       </WalletProvider>
     </AuthProvider>
   );

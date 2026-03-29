@@ -8,8 +8,11 @@ import { Button } from "../components/ui/button";
 import { Progress } from "../components/ui/progress";
 import { PageHeader, StatsRow } from "../components/PlaceholderUI";
 import { mockAgents } from "../lib/mockData";
+import { useDemoMode } from "../contexts/DemoModeContext";
 
 const AgentsPage = () => {
+  const { isDemoMode, demoAgents } = useDemoMode();
+  const agents = isDemoMode ? demoAgents : mockAgents;
   const stats = [
     { label: 'Active Agents', value: '3', change: 'of 4 deployed', positive: true },
     { label: 'Signals Today', value: '148', change: '+22%', positive: true },
@@ -44,7 +47,7 @@ const AgentsPage = () => {
 
         {/* Agent Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {mockAgents.map((agent, i) => {
+          {agents.map((agent, i) => {
             const TypeIcon = typeIcons[agent.type] || Activity;
             return (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>

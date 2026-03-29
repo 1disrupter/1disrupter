@@ -11,8 +11,12 @@ import { Progress } from "../components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { PageHeader, StatsRow, MockTable, MiniChart } from "../components/PlaceholderUI";
 import { mockSimulationResults, mockChartData } from "../lib/mockData";
+import { useDemoMode } from "../contexts/DemoModeContext";
 
 const SimulationPage = () => {
+  const { isDemoMode, demoSimulations, demoChart } = useDemoMode();
+  const simResults = isDemoMode ? demoSimulations : mockSimulationResults;
+  const chartData = isDemoMode ? demoChart : mockChartData;
   const [activeTab, setActiveTab] = useState("overview");
 
   const stats = [
@@ -46,7 +50,7 @@ const SimulationPage = () => {
             {/* Recent Simulations Table */}
             <MockTable
               headers={['Pair', 'Strategy', 'Trades', 'Win Rate', 'P&L', 'Sharpe']}
-              rows={mockSimulationResults.map(r => [r.pair, r.strategy, r.trades, r.winRate, r.pnl, r.sharpe])}
+              rows={simResults.map(r => [r.pair, r.strategy, r.trades, r.winRate, r.pnl, r.sharpe])}
             />
 
             {/* Performance Chart Placeholder */}
@@ -59,7 +63,7 @@ const SimulationPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-2">
-                    <MiniChart data={mockChartData} color="#00FF94" />
+                    <MiniChart data={chartData} color="#00FF94" />
                     <div className="flex justify-between mt-3 text-xs text-zinc-600 font-mono">
                       <span>Mon</span><span>Wed</span><span>Fri</span><span>Sun</span>
                     </div>

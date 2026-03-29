@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge";
 import { PageHeader, StatsRow, MockTable } from "../components/PlaceholderUI";
 import { mockStrategies } from "../lib/mockData";
+import { useDemoMode } from "../contexts/DemoModeContext";
 
 const StrategyLabPage = () => {
+  const { isDemoMode, demoStrategies } = useDemoMode();
+  const strategies = isDemoMode ? demoStrategies : mockStrategies;
   const stats = [
     { label: 'Generated', value: '3', change: 'Strategies', positive: true },
     { label: 'Backtested', value: '2', change: 'Passed QA', positive: true },
@@ -74,7 +77,7 @@ const StrategyLabPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/30">
-                    {mockStrategies.map((s, i) => (
+                    {strategies.map((s, i) => (
                       <tr key={i} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-4 py-4 text-sm font-medium text-zinc-200">{s.name}</td>
                         <td className="px-4 py-4 text-xs text-zinc-500">{s.type}</td>

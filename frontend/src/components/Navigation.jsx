@@ -14,6 +14,7 @@ import {
 } from "./ui/dropdown-menu";
 import { useWallet } from "../contexts/WalletContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useDemoMode } from "../contexts/DemoModeContext";
 import { BrandLockup } from "./BrandComponents";
 import { TierBadge } from "../pages/PricingPage";
 import { Beaker } from "lucide-react";
@@ -21,6 +22,7 @@ import { Beaker } from "lucide-react";
 const Navigation = () => {
   const { wallet, connectWallet, disconnectWallet, loading: walletLoading, chainId, ethBalance, switchToSepolia } = useWallet();
   const { user, isAuthenticated, logout, isPro } = useAuth();
+  const { isDemoMode, toggleDemoMode } = useDemoMode();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -78,7 +80,24 @@ const Navigation = () => {
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                {isPro && (
+                {/* Demo Mode Toggle */}
+                <button
+                  onClick={toggleDemoMode}
+                  className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                    isDemoMode
+                      ? 'bg-[#7B61FF]/15 border-[#7B61FF]/40 text-[#7B61FF]'
+                      : 'bg-transparent border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
+                  }`}
+                  data-testid="demo-mode-toggle"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Demo
+                  <div className={`w-7 h-4 rounded-full p-0.5 transition-colors ${isDemoMode ? 'bg-[#7B61FF]' : 'bg-zinc-700'}`}>
+                    <div className={`w-3 h-3 rounded-full bg-white transition-transform ${isDemoMode ? 'translate-x-3' : 'translate-x-0'}`} />
+                  </div>
+                </button>
+
+                {(isPro || isDemoMode) && (
                   <Badge className="bg-gradient-to-r from-[#7B61FF] to-[#00FF94] text-white" data-testid="pro-badge">
                     PRO
                   </Badge>
@@ -184,6 +203,21 @@ const Navigation = () => {
                   <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#7B61FF] text-white">
                     <User className="w-5 h-5" />Get Started
                   </Link>
+                </div>
+              )}
+              {isAuthenticated && (
+                <div className="mt-4 pt-4 border-t border-zinc-800">
+                  <button
+                    onClick={() => { toggleDemoMode(); setMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl w-full ${isDemoMode ? 'text-[#7B61FF] bg-[#7B61FF]/10' : 'text-zinc-400'}`}
+                    data-testid="demo-mode-toggle-mobile"
+                  >
+                    <Eye className="w-5 h-5" />
+                    Demo Mode
+                    <div className={`ml-auto w-7 h-4 rounded-full p-0.5 transition-colors ${isDemoMode ? 'bg-[#7B61FF]' : 'bg-zinc-700'}`}>
+                      <div className={`w-3 h-3 rounded-full bg-white transition-transform ${isDemoMode ? 'translate-x-3' : 'translate-x-0'}`} />
+                    </div>
+                  </button>
                 </div>
               )}
             </motion.div>

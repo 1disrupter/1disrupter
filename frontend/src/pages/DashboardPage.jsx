@@ -19,6 +19,7 @@ import {
 } from "../components/ui/dialog";
 import { useWallet } from "../contexts/WalletContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useDemoMode } from "../contexts/DemoModeContext";
 import { UpgradeBanner, PaperTradingBadge } from "./PricingPage";
 import PerformanceMetrics from "../components/PerformanceMetrics";
 import NotificationSettings from "../components/NotificationSettings";
@@ -35,7 +36,8 @@ const WalletConnectButton = () => {
 const DashboardPage = () => {
   const { wallet, investor, refreshInvestor } = useWallet();
   const { user: authUser } = useAuth();
-  const [demoMode, setDemoMode] = useState(false);
+  const { isDemoMode, toggleDemoMode: setGlobalDemoMode } = useDemoMode();
+  const demoMode = isDemoMode;
   const [signals, setSignals] = useState([
     { symbol: 'BTC', signal: 'BUY', confidence: 87, price: 67432 },
     { symbol: 'ETH', signal: 'HOLD', confidence: 72, price: 3521 },
@@ -49,7 +51,8 @@ const DashboardPage = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState('pro_monthly');
   const [expandedSignal, setExpandedSignal] = useState(null); // Track which signal's AI explanation is expanded
-  const userTier = authUser?.user_tier || (isPro ? 'pro' : 'free');
+  const effectivePro = demoMode || isPro;
+  const userTier = demoMode ? 'elite' : (authUser?.user_tier || (isPro ? 'pro' : 'free'));
 
   // Sync isPro from auth context
   useEffect(() => {
@@ -153,13 +156,13 @@ const DashboardPage = () => {
   // Show upgrade popup after 2 minutes
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!isPro) {
+      if (!effectivePro) {
         setShowUpgradePopup(true);
         trackEvent('view', 'timed_popup');
       }
     }, 120000); // 2 minutes
     return () => clearTimeout(timer);
-  }, [isPro]);
+  }, [effectivePro]);
 
   // === ANALYTICS TRACKING ===
   const sessionId = useMemo(() => {
@@ -264,6 +267,13 @@ const DashboardPage = () => {
 
   const executeTrade = async () => {
     if (!selectedSignal) return;
+    
+    if (demoMode) {
+      toast.info("Demo Mode: Trade simulated successfully!", { description: "Enable real trading by connecting your wallet." });
+      setShowTradeModal(false);
+      setIsExecutingTrade(false);
+      return;
+    }
     
     setIsExecutingTrade(true);
     try {
@@ -416,7 +426,7 @@ const DashboardPage = () => {
 
   // Exit intent detection
   useEffect(() => {
-    if (isPro || exitPopupShown) return;
+    if (effectivePro || exitPopupShown) return;
     
     const handleMouseLeave = (e) => {
       if (e.clientY <= 0 && !exitPopupShown) {
@@ -441,7 +451,7 @@ const DashboardPage = () => {
       document.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [isPro, exitPopupShown]);
+  }, [effectivePro, exitPopupShown]);
 
   // Fetch signals from tiered backend API
   useEffect(() => {
@@ -511,11 +521,11 @@ const DashboardPage = () => {
     fetchSignals();
     
     // Set up polling based on tier (Pro: 1min, Free: 5min)
-    const pollInterval = isPro ? 60000 : 300000;
+    const pollInterval = effectivePro ? 60000 : 300000;
     const interval = setInterval(fetchSignals, pollInterval);
     
     return () => clearInterval(interval);
-  }, [wallet, isPro]);
+  }, [wallet, effectivePro]);
 
   // Check Pro status from backend on wallet connect
   useEffect(() => {
@@ -589,7 +599,7 @@ const DashboardPage = () => {
                   <WalletConnectButton />
                   <Button 
                     variant="outline" 
-                    onClick={() => setDemoMode(true)}
+                    onClick={() => setGlobalDemoMode()}
                     className="rounded-full border-zinc-700 hover:border-[#7B61FF] hover:text-[#7B61FF]"
                     data-testid="try-demo-btn"
                   >
@@ -632,10 +642,10 @@ const DashboardPage = () => {
       <div className="max-w-4xl mx-auto">
         
         {/* Free Tier Upgrade Banner */}
-        <UpgradeBanner className="mb-4" />
+        {!effectivePro && <UpgradeBanner className="mb-4" />}
         
         {/* Paper Trading Mode Badge */}
-        {!isPro && (
+        {!effectivePro && (
           <div className="mb-4 flex items-center gap-2">
             <PaperTradingBadge />
             <span className="text-xs text-zinc-600">Paper trades only. Upgrade for live trading.</span>
@@ -643,7 +653,7 @@ const DashboardPage = () => {
         )}
         
         {/* SOCIAL PROOF: Active Users + Live Timer */}
-        {!isPro && (
+        {!effectivePro && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -683,7 +693,7 @@ const DashboardPage = () => {
         )}
 
         {/* Delayed Signals Warning - Enhanced Urgency */}
-        {!isPro && (
+        {!effectivePro && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -731,7 +741,7 @@ const DashboardPage = () => {
                   <Brain className="w-6 h-6 text-[#7B61FF]" />
                 </div>
                 Today's AI Signals
-                {!isPro && <Badge variant="outline" className="ml-2 text-yellow-400 border-yellow-400/30">Delayed</Badge>}
+                {!effectivePro && <Badge variant="outline" className="ml-2 text-yellow-400 border-yellow-400/30">Delayed</Badge>}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -745,19 +755,19 @@ const DashboardPage = () => {
                   <span className={`text-sm ${tradingMode === 'simulation' ? 'text-[#7B61FF]' : 'text-zinc-500'}`}>Simulation</span>
                   <div className="relative">
                     <button 
-                      onClick={isPro ? toggleTradingMode : undefined}
-                      className={`w-12 h-6 rounded-full p-1 transition-colors ${tradingMode === 'live' ? 'bg-[#00FF94]' : 'bg-zinc-700'} ${!isPro ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      onClick={effectivePro ? toggleTradingMode : undefined}
+                      className={`w-12 h-6 rounded-full p-1 transition-colors ${tradingMode === 'live' ? 'bg-[#00FF94]' : 'bg-zinc-700'} ${!effectivePro ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                       data-testid="trading-mode-toggle"
-                      disabled={!isPro}
+                      disabled={!effectivePro}
                     >
                       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${tradingMode === 'live' ? 'translate-x-6' : ''}`} />
                     </button>
-                    {!isPro && (
+                    {!effectivePro && (
                       <Lock className="w-3 h-3 text-zinc-500 absolute -top-1 -right-1" />
                     )}
                   </div>
                   <span className={`text-sm ${tradingMode === 'live' ? 'text-[#00FF94]' : 'text-zinc-500'}`}>Live</span>
-                  {!isPro && <span className="text-xs text-zinc-600 ml-1">(Pro)</span>}
+                  {!effectivePro && <span className="text-xs text-zinc-600 ml-1">(Pro)</span>}
                 </div>
               </div>
 
@@ -1040,7 +1050,7 @@ const DashboardPage = () => {
                       )}
                     </div>
                     {/* MISSED TRADE TRIGGER - FOMO */}
-                    {!isPro && missedTrades[s.symbol] && (
+                    {!effectivePro && missedTrades[s.symbol] && (
                       <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500 pl-2">
                         <Clock className="w-3 h-3 text-yellow-500" />
                         <span>Signal triggered <span className="text-yellow-400">{missedTrades[s.symbol].mins} mins ago</span></span>
@@ -1126,19 +1136,19 @@ const DashboardPage = () => {
         </motion.div>
 
         {/* NOTIFICATION SETTINGS - Pro/Elite Feature */}
-        {(isPro || wallet || demoMode) && (
+        {(effectivePro || wallet || demoMode) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.23 }}
             className="mb-8"
           >
-            <NotificationSettings walletAddress={wallet || 'demo_user'} isPro={isPro || demoMode} />
+            <NotificationSettings walletAddress={wallet || 'demo_user'} isPro={effectivePro} />
           </motion.div>
         )}
 
         {/* RECENT SIGNALS - TRUST BUILDER */}
-        {!isPro && (
+        {!effectivePro && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1204,7 +1214,7 @@ const DashboardPage = () => {
         </motion.div>
 
         {/* UPGRADE CTA */}
-        {!isPro && (
+        {!effectivePro && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1249,7 +1259,7 @@ const DashboardPage = () => {
         )}
 
         {/* LOCKED FEATURES PREVIEW */}
-        {!isPro && (
+        {!effectivePro && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

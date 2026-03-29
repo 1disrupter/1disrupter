@@ -16,12 +16,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "../components/ui/select";
 import { useAuth } from "../contexts/AuthContext";
+import { useDemoMode } from "../contexts/DemoModeContext";
 import { FollowTraderModal } from "./CopyTradingPage";
 import { API } from "../lib/constants";
 import { mockLeaderboard } from "../lib/mockData";
 
 const LeaderboardPage = () => {
   const { user, tokens } = useAuth();
+  const { isDemoMode, demoLeaderboard } = useDemoMode();
   const [traders, setTraders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('all_time');
@@ -34,7 +36,7 @@ const LeaderboardPage = () => {
   const [followTarget, setFollowTarget] = useState(null);
 
   const userTier = user?.user_tier || (user?.is_elite ? 'elite' : user?.is_pro ? 'pro' : 'free');
-  const isPro = userTier !== 'free';
+  const isPro = isDemoMode || userTier !== 'free';
 
   useEffect(() => {
     loadLeaderboard();

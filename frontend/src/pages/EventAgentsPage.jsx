@@ -8,8 +8,11 @@ import { Button } from "../components/ui/button";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { PageHeader, StatsRow } from "../components/PlaceholderUI";
 import { mockEventAgents } from "../lib/mockData";
+import { useDemoMode } from "../contexts/DemoModeContext";
 
 const EventAgentsPage = () => {
+  const { isDemoMode, demoEventAgents } = useDemoMode();
+  const eventAgents = isDemoMode ? demoEventAgents : mockEventAgents;
   const stats = [
     { label: 'Active Monitors', value: '3', change: 'of 4 deployed', positive: true },
     { label: 'Events Detected', value: '47', change: 'Last 7 days', positive: true },
@@ -37,7 +40,7 @@ const EventAgentsPage = () => {
 
         {/* Event Agent Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {mockEventAgents.map((agent, i) => (
+          {eventAgents.map((agent, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
               <Card className="bg-[#0A0A0A] border-zinc-800/50 hover:border-zinc-700/50 transition-colors" data-testid={`event-agent-${i}`}>
                 <CardContent className="p-5">

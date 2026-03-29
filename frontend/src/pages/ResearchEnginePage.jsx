@@ -10,8 +10,11 @@ import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { PageHeader, StatsRow } from "../components/PlaceholderUI";
 import { mockResearchQueries } from "../lib/mockData";
+import { useDemoMode } from "../contexts/DemoModeContext";
 
 const ResearchEnginePage = () => {
+  const { isDemoMode, demoResearch } = useDemoMode();
+  const researchQueries = isDemoMode ? demoResearch : mockResearchQueries;
   const [query, setQuery] = useState('');
 
   const stats = [
@@ -65,7 +68,7 @@ const ResearchEnginePage = () => {
             <CardContent>
               <ScrollArea className="h-[300px]">
                 <div className="space-y-3">
-                  {mockResearchQueries.map((q, i) => (
+                  {researchQueries.map((q, i) => (
                     <div key={i} className="p-4 rounded-lg bg-[#050505] border border-zinc-800/30 hover:border-zinc-700/50 transition-colors cursor-pointer" data-testid={`research-query-${i}`}>
                       <div className="flex items-start justify-between mb-2">
                         <p className="text-sm text-zinc-300 font-medium">{q.query}</p>
