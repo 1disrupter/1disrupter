@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   Radio, Play, StopCircle, Target, TrendingUp,
   BarChart3, Zap, Clock, Activity
@@ -116,7 +117,7 @@ const SimulationPage = () => {
                       <p className="text-sm text-zinc-600 max-w-md mx-auto mb-5">
                         Select a strategy, time range, and trading pair to begin backtesting against historical data.
                       </p>
-                      <Button disabled className="rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 border border-[#7B61FF]/10">
+                      <Button onClick={() => toast.info("Backtesting coming soon")} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white border border-[#7B61FF]/30" data-testid="run-backtest-btn">
                         <Play className="w-4 h-4 mr-2" /> Run Backtest
                       </Button>
                     </CardContent>

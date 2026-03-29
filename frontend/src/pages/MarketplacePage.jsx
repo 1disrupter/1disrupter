@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { Store, Star, Users, Search, ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -70,7 +71,7 @@ const MarketplacePage = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-mono font-bold text-[#7B61FF]">{item.price}</span>
-                        <Button disabled size="sm" className="rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 text-xs"><ShoppingCart className="w-3 h-3 mr-1" /> Install</Button>
+                        <Button onClick={() => toast.info("Marketplace install coming soon")} size="sm" className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white text-xs" data-testid={`install-item-${i}`}><ShoppingCart className="w-3 h-3 mr-1" /> Install</Button>
                       </div>
                     </CardContent>
                   </Card>

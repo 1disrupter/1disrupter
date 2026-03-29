@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { Eye, Activity, Clock, Play, Pause } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -80,8 +81,8 @@ const EventAgentsPage = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button disabled size="sm" variant="outline" className="flex-1 rounded-full border-zinc-800 text-xs"><Pause className="w-3 h-3 mr-1" /> Pause</Button>
-                        <Button disabled size="sm" className="flex-1 rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 text-xs">View Log</Button>
+                        <Button onClick={() => toast.info("Agent controls coming soon")} size="sm" variant="outline" className="flex-1 rounded-full border-zinc-800 hover:border-[#7B61FF]/50 text-xs" data-testid={`pause-agent-${i}`}><Pause className="w-3 h-3 mr-1" /> Pause</Button>
+                        <Button onClick={() => toast.info("Event log viewer coming soon")} size="sm" className="flex-1 rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white text-xs" data-testid={`view-log-${i}`}>View Log</Button>
                       </div>
                     </CardContent>
                   </Card>

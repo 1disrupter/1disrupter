@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { Beaker, Play, FileCode, ScrollText } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -49,7 +50,7 @@ const ResearchEnginePage = () => {
                 <CardContent className="p-5">
                   <div className="flex gap-3">
                     <Input placeholder="Ask anything about crypto markets, technicals, or on-chain data..." value={query} onChange={(e) => setQuery(e.target.value)} className="bg-[#050505] border-zinc-800 text-sm h-12 rounded-xl" data-testid="research-input" />
-                    <Button disabled className="rounded-xl bg-[#7B61FF]/20 text-[#7B61FF]/60 border border-[#7B61FF]/10 h-12 px-6"><Play className="w-4 h-4 mr-2" /> Research</Button>
+                    <Button onClick={() => toast.info("AI research engine coming soon")} className="rounded-xl bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white border border-[#7B61FF]/30 h-12 px-6" data-testid="research-btn"><Play className="w-4 h-4 mr-2" /> Research</Button>
                   </div>
                 </CardContent>
               </Card>

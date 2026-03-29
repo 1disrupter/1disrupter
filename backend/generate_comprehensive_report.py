@@ -1147,7 +1147,7 @@ CORS_ORIGINS=*
     story.append(Paragraph("9.2 Frontend Environment (.env)", styles['SubHeading']))
     frontend_env = """
 # Backend API URL
-REACT_APP_BACKEND_URL=https://alpha-refactor-1.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://signal-lab-demo.preview.emergentagent.com
     """
     story.append(Paragraph(format_code_for_pdf(frontend_env), styles['CodeBlock']))
     

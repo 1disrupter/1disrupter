@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { FlaskConical, Sparkles, ArrowUpRight, TrendingUp, Rocket } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -90,7 +91,7 @@ const StrategyLabPage = () => {
                     <h3 className="text-sm font-semibold text-zinc-300 mb-1">Generate New Strategy</h3>
                     <p className="text-xs text-zinc-600">AI will analyze market conditions and create an optimized trading strategy</p>
                   </div>
-                  <Button disabled className="rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 border border-[#7B61FF]/10"><Sparkles className="w-4 h-4 mr-2" /> Generate Strategy</Button>
+                  <Button onClick={() => toast.info("AI strategy generation coming soon")} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white border border-[#7B61FF]/30" data-testid="generate-strategy-btn"><Sparkles className="w-4 h-4 mr-2" /> Generate Strategy</Button>
                 </CardContent>
               </Card>
             </motion.div>

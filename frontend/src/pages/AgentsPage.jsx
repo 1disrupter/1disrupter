@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { Bot, Activity, Target, Zap, Shield, Brain, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -77,8 +78,8 @@ const AgentsPage = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button disabled size="sm" variant="outline" className="flex-1 rounded-full border-zinc-800 text-xs">Configure</Button>
-                          <Button disabled size="sm" className="flex-1 rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 text-xs"><Sparkles className="w-3 h-3 mr-1" /> View Signals</Button>
+                          <Button onClick={() => toast.info("Agent configuration coming soon")} size="sm" variant="outline" className="flex-1 rounded-full border-zinc-800 hover:border-[#7B61FF]/50 text-xs" data-testid={`configure-agent-${i}`}>Configure</Button>
+                          <Button onClick={() => toast.info("Signal viewer coming soon")} size="sm" className="flex-1 rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white text-xs" data-testid={`view-signals-${i}`}><Sparkles className="w-3 h-3 mr-1" /> View Signals</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -94,7 +95,7 @@ const AgentsPage = () => {
                     <h3 className="text-sm font-semibold text-zinc-300 mb-1">Deploy Custom Agent</h3>
                     <p className="text-xs text-zinc-600">Create a new AI agent with custom parameters and strategies</p>
                   </div>
-                  <Button disabled className="rounded-full bg-[#7B61FF]/20 text-[#7B61FF]/60 border border-[#7B61FF]/10"><Zap className="w-4 h-4 mr-2" /> Deploy Agent</Button>
+                  <Button onClick={() => toast.info("Custom agent deployment coming soon")} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white border border-[#7B61FF]/30" data-testid="deploy-agent-btn"><Zap className="w-4 h-4 mr-2" /> Deploy Agent</Button>
                 </CardContent>
               </Card>
             </motion.div>
