@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Check, TrendingUp, UserPlus } from "lucide-react";
+import { Bell, Check, TrendingUp, UserPlus, Radio } from "lucide-react";
 import { Badge } from "./ui/badge";
 import axios from "axios";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { API } from "../lib/constants";
+import useStrategyAlerts from "../hooks/useStrategyAlerts";
 
-const typeIcon = { signal: TrendingUp, follow: UserPlus };
+const typeIcon = { signal: TrendingUp, follow: UserPlus, strategy_alert: Radio };
 
 const NotificationBell = () => {
   const { isDemoMode } = useDemoMode();
@@ -17,6 +18,7 @@ const NotificationBell = () => {
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
   const ref = useRef(null);
+  const { alerts: liveAlerts } = useStrategyAlerts();
 
   const load = async () => {
     try {
@@ -31,6 +33,26 @@ const NotificationBell = () => {
   };
 
   useEffect(() => { load(); const iv = setInterval(load, 30000); return () => clearInterval(iv); }, [isDemoMode, token]);
+
+  // Bump unread when a live alert arrives
+  const prevAlertCount = useRef(0);
+  useEffect(() => {
+    if (liveAlerts.length > prevAlertCount.current) {
+      const diff = liveAlerts.length - prevAlertCount.current;
+      setUnread(prev => prev + diff);
+      // Prepend live alerts to items
+      const newItems = liveAlerts.slice(0, diff).map(a => ({
+        id: `live-${a.timestamp}-${Math.random()}`,
+        strategy_id: a.strategy_id || "",
+        message: a.message,
+        type: "signal",
+        read: false,
+        created_at: a.timestamp || new Date().toISOString(),
+      }));
+      setItems(prev => [...newItems, ...prev].slice(0, 30));
+    }
+    prevAlertCount.current = liveAlerts.length;
+  }, [liveAlerts]);
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };

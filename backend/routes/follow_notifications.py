@@ -120,13 +120,28 @@ async def _create_notification(user_id: str, strategy_id: str, message: str, not
 
 
 async def notify_followers(strategy_id: str, message: str, notif_type: str = "signal"):
-    """Called when a strategy generates a signal — notifies all followers."""
+    """Called when a strategy generates a signal — notifies all followers and broadcasts via WebSocket."""
+    from services.alerts_manager import alerts_manager
+
     followers = await db.followed_strategies.find(
         {"strategy_id": strategy_id}, {"_id": 0, "user_id": 1}
     ).to_list(1000)
 
+    user_ids = []
     for f in followers:
         await _create_notification(f["user_id"], strategy_id, message, notif_type)
+        user_ids.append(f["user_id"])
+
+    # Broadcast to connected WebSocket clients
+    if user_ids:
+        ws_payload = {
+            "type": "strategy_alert",
+            "strategy_id": strategy_id,
+            "message": message,
+            "notif_type": notif_type,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        await alerts_manager.broadcast_to_users(user_ids, ws_payload)
 
     return len(followers)
 

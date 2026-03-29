@@ -18,6 +18,7 @@ from database import db, client, logger
 # ============= SERVICE IMPORTS =============
 from services.signal_service import signal_service
 from services.websocket_manager import manager
+from services.alerts_manager import alerts_manager
 
 # ============= ROUTE IMPORTS =============
 from routes.auth import router as auth_router, init_db as init_auth_db
@@ -114,6 +115,48 @@ async def price_broadcast_task():
         await asyncio.sleep(30)
 
 
+async def strategy_alerts_task():
+    """Periodically generates strategy alerts for followed strategies."""
+    import random
+    from datetime import datetime, timezone
+    from routes.follow_notifications import notify_followers
+
+    ALERT_TEMPLATES = [
+        ("{name} triggered LONG signal at ${price:,.2f} (confidence: {conf}%)", "signal"),
+        ("{name} triggered SHORT signal at ${price:,.2f} (confidence: {conf}%)", "signal"),
+        ("{name} closed position — PnL: +${pnl:,.2f} (+{pct:.1f}%)", "signal"),
+        ("{name} hit take-profit target — total P&L: +${pnl:,.2f}", "signal"),
+    ]
+
+    while True:
+        try:
+            # Find strategies that have followers
+            followed_ids = await db.followed_strategies.distinct("strategy_id")
+            if followed_ids:
+                # Pick a random strategy to generate an alert for
+                strategy_id = random.choice(followed_ids)
+                strat = await db.strategy_leaderboard.find_one({"id": strategy_id}, {"_id": 0})
+                if strat:
+                    name = strat.get("name", strategy_id[:8])
+                    asset = strat.get("asset", "BTC/USDT")
+                    price = round(random.uniform(60000, 72000) if "BTC" in asset
+                                  else random.uniform(3200, 4000) if "ETH" in asset
+                                  else random.uniform(100, 300), 2)
+                    tpl, ntype = random.choice(ALERT_TEMPLATES)
+                    msg = tpl.format(
+                        name=name, price=price,
+                        conf=random.randint(70, 95),
+                        pnl=round(random.uniform(100, 2000), 2),
+                        pct=round(random.uniform(1, 8), 1),
+                    )
+                    await notify_followers(strategy_id, msg, ntype)
+                    logger.info(f"Strategy alert generated for {strategy_id[:8]}")
+        except Exception as e:
+            logger.error(f"Strategy alert task error: {e}")
+        # Run every 60-120 seconds
+        await asyncio.sleep(random.randint(60, 120))
+
+
 # ============= LIFECYCLE EVENTS =============
 @app.on_event("startup")
 async def startup_db_client():
@@ -147,6 +190,7 @@ async def startup_db_client():
     # Start background tasks
     asyncio.create_task(signal_generation_task())
     asyncio.create_task(price_broadcast_task())
+    asyncio.create_task(strategy_alerts_task())
 
     logger.info("AlphaAI Platform started successfully")
 

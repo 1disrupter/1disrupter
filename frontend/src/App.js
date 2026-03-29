@@ -27,6 +27,7 @@ import AdminPage from "./pages/AdminPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ReferralPage from "./pages/ReferralPage";
 import FollowingPage from "./pages/FollowingPage";
+import AlertsPage from "./pages/AlertsPage";
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -75,6 +76,7 @@ function App() {
               {/* Referral */}
               <Route path="/referrals" element={<ReferralPage />} />
               <Route path="/following" element={<FollowingPage />} />
+              <Route path="/alerts" element={<AlertsPage />} />
             </Routes>
           </BrowserRouter>
           <Toaster position="bottom-right" theme="dark" />

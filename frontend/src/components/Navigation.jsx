@@ -46,6 +46,7 @@ const Navigation = () => {
     { path: "/copy-trading", label: "Copy Trading", icon: Copy },
     { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
     { path: "/following", label: "Following", icon: Heart },
+    { path: "/alerts", label: "Alerts", icon: Radio },
     { path: "/pricing", label: "Pricing", icon: Crown },
     { path: "/admin", label: "Admin", icon: Shield },
     { path: "/admin/analytics", label: "Demo Analytics", icon: BarChart3 },

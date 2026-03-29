@@ -1,117 +1,166 @@
 """
-AlphaAI WebSocket Route
-Real-time signal and price broadcast via WebSocket.
+AlphaAI WebSocket Routes
+Real-time strategy alerts and signal broadcasts.
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import json
+from datetime import datetime, timezone
 import asyncio
+import random
 import logging
-from services.websocket_manager import manager
-from services.signal_service import signal_service
+
+from services.alerts_manager import alerts_manager
+from services.websocket_manager import manager as ws_manager
 
 logger = logging.getLogger("AlphaAI")
 
 router = APIRouter(prefix="/api")
 
-@router.websocket("/ws/signals/{client_id}")
-async def websocket_signals_endpoint(websocket: WebSocket, client_id: str):
-    """
-    WebSocket endpoint for real-time signal updates.
-    Requires Pro or Elite tier.
-    
-    client_id format: {user_id}:{tier} (e.g., "abc123:pro")
-    """
-    try:
-        # Parse client_id to get user_id and tier
-        parts = client_id.split(":")
-        if len(parts) != 2:
-            await websocket.close(code=4000, reason="Invalid client_id format")
-            return
-        
-        user_id, tier = parts
-        tier = tier.lower()
-        
-        if tier not in ["pro", "elite"]:
-            await websocket.close(code=4003, reason="WebSocket requires Pro or Elite subscription")
-            return
-        
-        # Connect using the connection manager
-        connected = await ws_manager.connect(websocket, user_id, tier)
-        if not connected:
-            return
-        
-        # Send welcome message
-        await websocket.send_json({
-            "type": "connected",
-            "message": f"Connected to AlphaAI real-time signals ({tier})",
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        })
-        
-        # Send current signals immediately
-        signals = await signal_service.get_realtime_signals(user_id)
-        await websocket.send_json({
-            "type": "signals",
-            "data": signals,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        })
-        
-        # Keep connection alive and handle incoming messages
-        while True:
-            try:
-                data = await websocket.receive_json()
-                
-                # Handle subscription requests
-                if data.get("action") == "subscribe":
-                    channel = data.get("channel")
-                    if channel:
-                        await ws_manager.subscribe(user_id, channel)
-                        await websocket.send_json({
-                            "type": "subscribed",
-                            "channel": channel
-                        })
-                
-                elif data.get("action") == "unsubscribe":
-                    channel = data.get("channel")
-                    if channel:
-                        await ws_manager.unsubscribe(user_id, channel)
-                        await websocket.send_json({
-                            "type": "unsubscribed",
-                            "channel": channel
-                        })
-                
-                elif data.get("action") == "ping":
-                    await websocket.send_json({
-                        "type": "pong",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    })
-                    
-            except WebSocketDisconnect:
-                break
-            except Exception as e:
-                logger.error(f"WebSocket message error: {e}")
-                break
-    
-    except WebSocketDisconnect:
-        pass
-    except Exception as e:
-        logger.error(f"WebSocket connection error: {e}")
-    finally:
-        await ws_manager.disconnect(user_id)
-        logger.info(f"WebSocket disconnected: {user_id}")
+# ── Mock alert generator for Demo mode ─────────────────────────
 
-# WebSocket status endpoint
-@router.get("/ws/status")
-async def websocket_status():
-    """Get WebSocket connection statistics"""
-    counts = ws_manager.get_connection_count()
+MOCK_STRATEGIES = [
+    {"id": "demo-1", "name": "BTC Momentum Alpha", "asset": "BTC/USDT"},
+    {"id": "demo-2", "name": "ETH Mean Reversion", "asset": "ETH/USDT"},
+    {"id": "demo-3", "name": "SOL Breakout Trader", "asset": "SOL/USDT"},
+]
+
+MOCK_ACTIONS = [
+    ("LONG", "triggered LONG signal", "84"),
+    ("SHORT", "triggered SHORT signal", "76"),
+    ("CLOSE", "closed position — PnL: +${pnl}", "91"),
+    ("TAKE_PROFIT", "hit take-profit target", "95"),
+    ("STOP_LOSS", "hit stop-loss — minimal loss", "88"),
+]
+
+
+def _generate_mock_alert():
+    strat = random.choice(MOCK_STRATEGIES)
+    action_tpl = random.choice(MOCK_ACTIONS)
+    pnl = round(random.uniform(50, 1500), 2)
+    price = round(random.uniform(60000, 72000) if "BTC" in strat["asset"]
+                  else random.uniform(3200, 4000) if "ETH" in strat["asset"]
+                  else random.uniform(120, 200), 2)
+    msg = f'{strat["name"]} {action_tpl[1].replace("${pnl}", str(pnl))} at ${price:,.2f} (confidence: {action_tpl[2]}%)'
     return {
-        "status": "active",
-        "connections": counts,
-        "channels": {
-            "signals": ws_manager.get_channel_subscribers("signals"),
-            "prices": ws_manager.get_channel_subscribers("prices"),
-            "trades": ws_manager.get_channel_subscribers("trades")
-        }
+        "type": "strategy_alert",
+        "strategy_id": strat["id"],
+        "strategy_name": strat["name"],
+        "asset": strat["asset"],
+        "action": action_tpl[0],
+        "message": msg,
+        "confidence": int(action_tpl[2]),
+        "price": price,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-# ============= NOTIFICATION PREFERENCES ENDPOINTS =============
+
+# ── WebSocket: Strategy Alerts ─────────────────────────────────
+
+@router.websocket("/ws/alerts/{client_id}")
+async def websocket_alerts(websocket: WebSocket, client_id: str):
+    """
+    Real-time strategy alerts WebSocket.
+
+    client_id formats:
+      - "demo-{random}" → Demo mode (mock alerts every 10-20s)
+      - "{user_id}:pro"  → Pro user (receives real alerts)
+      - "{user_id}:elite" → Elite user (receives real alerts)
+      - "{user_id}:free" → Free user (gets upgrade prompt, then disconnect)
+    """
+    # ── Demo mode ──────────────────────────────────────────────
+    if client_id.startswith("demo"):
+        await alerts_manager.connect(websocket, client_id, is_demo=True)
+        try:
+            await websocket.send_json({
+                "type": "connected",
+                "mode": "demo",
+                "message": "Connected to AlphaAI demo alerts stream",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            while True:
+                delay = random.randint(10, 20)
+                await asyncio.sleep(delay)
+                alert = _generate_mock_alert()
+                await websocket.send_json(alert)
+        except (WebSocketDisconnect, Exception):
+            pass
+        finally:
+            await alerts_manager.disconnect(client_id, is_demo=True)
+        return
+
+    # ── Authenticated user ─────────────────────────────────────
+    parts = client_id.split(":")
+    if len(parts) != 2:
+        await websocket.close(code=4000, reason="Invalid client_id format. Use user_id:tier")
+        return
+
+    user_id, tier = parts
+    tier = tier.lower()
+
+    # Free user → upgrade prompt
+    if tier not in ("pro", "elite"):
+        await websocket.accept()
+        await websocket.send_json({
+            "type": "upgrade_required",
+            "message": "Real-time strategy alerts require a Pro subscription. Upgrade now for instant signals.",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+        await websocket.close(code=4003, reason="Pro subscription required")
+        return
+
+    # Pro / Elite → full connection
+    await alerts_manager.connect(websocket, user_id)
+    try:
+        await websocket.send_json({
+            "type": "connected",
+            "mode": tier,
+            "message": f"Connected to AlphaAI real-time alerts ({tier})",
+            "user_id": user_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+
+        # Keep-alive loop
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=60)
+                if data.get("action") == "ping":
+                    await websocket.send_json({
+                        "type": "pong",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+            except asyncio.TimeoutError:
+                # Send heartbeat
+                try:
+                    await websocket.send_json({
+                        "type": "heartbeat",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+                except Exception:
+                    break
+            except (WebSocketDisconnect, Exception):
+                break
+    except (WebSocketDisconnect, Exception):
+        pass
+    finally:
+        await alerts_manager.disconnect(user_id)
+
+
+# ── REST: Alerts status ────────────────────────────────────────
+
+@router.get("/alerts/status")
+async def alerts_status():
+    stats = alerts_manager.get_stats()
+    return {"status": "active", "connections": stats}
+
+
+# ── REST: Trigger test alert (for testing) ─────────────────────
+
+@router.post("/alerts/test")
+async def trigger_test_alert():
+    """Broadcasts a test alert to all connected Pro users."""
+    alert = _generate_mock_alert()
+    alert["type"] = "strategy_alert"
+    alert["test"] = True
+    for uid in list(alerts_manager.connections.keys()):
+        await alerts_manager.send_to_user(uid, alert)
+    await alerts_manager.broadcast_demo(alert)
+    return {"success": True, "alert": alert, "broadcast_to": alerts_manager.get_stats()}

@@ -1,0 +1,102 @@
+{
+  "summary": "WebSocket Strategy Alerts feature testing complete. All 8 backend tests passed (REST endpoints + WebSocket connections). All frontend tests passed for Alerts page in demo mode, notification bell, and navigation.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend GET /api/alerts/status returns connection statistics (status=active, pro_connections, demo_connections, total)",
+    "Backend POST /api/alerts/test broadcasts test alert and returns alert payload with type=strategy_alert",
+    "Backend WebSocket /api/ws/alerts/demo-{id} connects and sends 'connected' event with mode='demo'",
+    "Backend WebSocket /api/ws/alerts/demo-{id} streams mock 'strategy_alert' events every 10-20 seconds",
+    "Backend WebSocket /api/ws/alerts/{user_id}:free sends 'upgrade_required' message then closes with code 4003",
+    "Backend WebSocket /api/ws/alerts/{user_id}:pro connects successfully with mode='pro'",
+    "Backend WebSocket /api/ws/alerts/{user_id}:elite connects successfully with mode='elite'",
+    "Backend WebSocket invalid client_id format rejected with HTTP 403",
+    "Frontend /alerts?demo=true page loads with 'Live Alerts' title",
+    "Frontend /alerts?demo=true shows 'Live' connection badge (green)",
+    "Frontend /alerts?demo=true shows 'Demo Mode' badge",
+    "Frontend /alerts?demo=true receives live alert cards within 20 seconds",
+    "Frontend alert cards show action badges (LONG/SHORT/CLOSE/TP HIT/SL HIT)",
+    "Frontend alert cards show strategy name, asset, confidence, and price",
+    "Frontend Clear button clears all alerts",
+    "Frontend /alerts without auth or demo mode shows 'Offline' status and doesn't crash",
+    "Frontend Navigation shows 'Alerts' link in demo mode",
+    "Frontend Notification bell visible at /dashboard?demo=true with unread count badge",
+    "Frontend Notification dropdown shows 4 notification items",
+    "Frontend Notification dropdown has 'Mark all read' button"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_websocket_alerts.py",
+    "/app/test_reports/pytest/websocket_alerts_results.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "websocket.py: Well-structured WebSocket endpoint with proper demo/pro/free tier handling",
+    "websocket.py: Demo mode correctly streams mock alerts every 10-20 seconds",
+    "websocket.py: Free user correctly receives upgrade_required message and connection closes with 4003",
+    "alerts_manager.py: Clean connection management with async lock for thread safety",
+    "useStrategyAlerts.js: Proper WebSocket hook with reconnection logic and cleanup",
+    "AlertsPage.jsx: Good UI with action badges, connection status, and clear functionality",
+    "NotificationBell.jsx: Integrates with WebSocket alerts and shows live notifications"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_websocket_alerts.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+
+  "test_credentials": {
+    "demo_mode": "?demo=true URL parameter",
+    "pro_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "free_user": "test_free_user_iter29@my-alpha-ai.com / TestPass123!",
+    "admin_user": "admin@my-alpha-ai.com / Admin1234!"
+  },
+
+  "seed_data_creation": "",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "WebSocket Strategy Alerts feature fully tested. WebSocket URL pattern: wss://alpha-alerts-live.preview.emergentagent.com/api/ws/alerts/{client_id}. Client ID formats: 'demo-{random}' for demo mode, '{user_id}:pro' or '{user_id}:elite' for paid users, '{user_id}:free' for free users (gets upgrade_required then closes). Demo mode streams mock alerts every 10-20 seconds. REST endpoints: GET /api/alerts/status for connection stats, POST /api/alerts/test to broadcast test alert. Frontend: /alerts?demo=true for demo mode alerts page, notification bell shows live alerts in dropdown.",
+
+  "mocked_api": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "Demo WebSocket /api/ws/alerts/demo-{id} - streams mock strategy alerts every 10-20 seconds",
+      "GET /api/notifications/inbox/demo - returns 4 static mock notifications"
+    ]
+  },
+
+  "features_tested": {
+    "alerts_status_endpoint": "PASS - Returns connection statistics",
+    "alerts_test_endpoint": "PASS - Broadcasts test alert to all connections",
+    "demo_websocket_connect": "PASS - Connects and sends 'connected' event with mode='demo'",
+    "demo_websocket_streaming": "PASS - Streams mock alerts every 10-20 seconds",
+    "free_user_websocket": "PASS - Sends upgrade_required then closes with 4003",
+    "pro_user_websocket": "PASS - Connects successfully with mode='pro'",
+    "elite_user_websocket": "PASS - Connects successfully with mode='elite'",
+    "invalid_client_id": "PASS - Rejected with HTTP 403",
+    "alerts_page_demo_mode": "PASS - Shows Live Alerts title, Live badge, Demo Mode badge",
+    "alert_cards_content": "PASS - Shows action badges, strategy name, asset, confidence, price",
+    "clear_button": "PASS - Clears all alerts",
+    "alerts_page_no_auth": "PASS - Shows Offline status, doesn't crash",
+    "navigation_alerts_link": "PASS - Shows Alerts link in demo mode",
+    "notification_bell": "PASS - Shows unread count and dropdown with notifications"
+  }
+}
