@@ -1,0 +1,118 @@
+{
+  "summary": "All 6 dashboard pages have been fully tested with Demo Mode. All previously 'Coming Soon' buttons are now wired to real functionality with mock data. Research Engine shows AI analysis with trend/confidence/risk/indicators. Strategy Lab generates strategies and runs backtests with metrics. AI Agents has working Configure and View Signals modals. Event Agents has Pause/Resume toggle, Log modal, and Events modal. Marketplace has Preview modal with performance chart and Install functionality. Simulation has Backtest tab with PnL curve and metrics. No 'Coming Soon' toasts appear on any wired button.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Research Engine (/research?demo=true): Research button triggers AI result panel",
+    "Research Engine: Result panel shows summary, trend (bullish), confidence (78%), risk (medium), indicators",
+    "Research Engine: Asset selector (BTC/ETH/SOL) changes query context",
+    "Research Engine: Enter key in input field triggers research",
+    "Research Engine: Close button (X) on result panel hides it",
+    "Strategy Lab (/lab?demo=true): Generate Strategy button creates strategy card",
+    "Strategy Lab: Generated strategy shows name, type, parameters (lookback, threshold, risk_level)",
+    "Strategy Lab: Strategy type selector (momentum, mean_reversion, etc.) works",
+    "Strategy Lab: Backtest button on generated strategy shows results",
+    "Strategy Lab: Backtest result shows Total Return (18.5%), Sharpe Ratio (1.92), Max Drawdown (4.2%), Win Rate (64.3%)",
+    "AI Agents (/agents?demo=true): Configure button opens modal with asset, timeframe, risk level, signal frequency options",
+    "AI Agents: Save configuration in modal shows toast and closes modal",
+    "AI Agents: Config badges appear on card after saving",
+    "AI Agents: View Signals button opens modal with signal list",
+    "AI Agents: Signals show LONG/SHORT type, asset, confidence percentage, status",
+    "AI Agents: Deploy Agent button shows toast message",
+    "Event Agents (/events?demo=true): Pause button dims card and changes to Resume",
+    "Event Agents: Resume button reactivates agent",
+    "Event Agents: View Log button opens modal with timestamped log entries",
+    "Event Agents: View All events button opens macro events modal with 6 events and impact levels",
+    "Marketplace (/marketplace?demo=true): Preview button opens modal with description",
+    "Marketplace: Preview modal shows monthly returns chart (12 bars)",
+    "Marketplace: Preview modal shows metrics (Sharpe, Max DD, Win Rate)",
+    "Marketplace: Install button shows success toast and closes modal",
+    "Marketplace: Search input filters items",
+    "Simulation (/simulation?demo=true): Backtest tab shows pair and strategy selectors",
+    "Simulation: Run Backtest button shows loading state then results",
+    "Simulation: Backtest result shows equity curve (30 data points)",
+    "Simulation: Backtest result shows Total Return, Sharpe Ratio, Max Drawdown, Win Rate",
+    "Simulation: Additional stats show Total Trades, Profit Factor, Capital change",
+    "All modals can be closed by clicking X button",
+    "No 'Coming Soon' toasts appear on any wired button"
+  ],
+
+  "test_report_links": [],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "All 6 pages properly implement Demo Mode with mock data fallbacks",
+    "Research Engine has real GPT-5.2 backend endpoint POST /api/research/ai-query",
+    "All modals use AnimatePresence for smooth open/close animations",
+    "Proper data-testid attributes on all interactive elements",
+    "Toast notifications from sonner appear correctly at bottom-right"
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100% (32/32 tests passed)"
+  },
+
+  "test_credentials": {
+    "demo_mode": "?demo=true URL parameter",
+    "standard_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "admin_user": "admin@my-alpha-ai.com / Admin1234!"
+  },
+
+  "seed_data_creation": "None - used Demo Mode mock data",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "All 6 dashboard pages fully functional with Demo Mode. Key test-ids: research-btn, research-result, research-input, asset-btc/eth/sol, generate-strategy-btn, generated-strategy, backtest-result, configure-agent-{i}, config-modal, save-config-btn, signals-modal, view-signals-{i}, pause-agent-{i}, view-log-{i}, log-modal, view-all-events-btn, events-modal, install-item-{i}, preview-modal, confirm-install-btn, marketplace-search, run-backtest-btn, bt-pair-BTCUSDT, bt-strat-momentum. All features use MOCKED data in Demo Mode.",
+
+  "mocked_api": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "Demo Mode mock data for all 6 pages",
+      "Research Engine DEMO_RESULT constant for AI analysis",
+      "Strategy Lab client-side generated backtest results",
+      "AI Agents mock signals array",
+      "Event Agents MOCK_EVENTS and MOCK_LOG arrays",
+      "Marketplace MOCK_DETAILS for preview modal",
+      "Simulation client-side generated backtest with random metrics"
+    ]
+  },
+
+  "features_tested": {
+    "research_engine_ai_query": "PASS - Shows AI analysis with trend, confidence, risk, indicators",
+    "research_engine_asset_selector": "PASS - BTC/ETH/SOL buttons work",
+    "research_engine_enter_key": "PASS - Triggers research",
+    "research_engine_close_result": "PASS - X button hides result panel",
+    "strategy_lab_generate": "PASS - Creates strategy card with name, type, parameters",
+    "strategy_lab_type_selector": "PASS - momentum, mean_reversion, etc. work",
+    "strategy_lab_backtest": "PASS - Shows Total Return, Sharpe, Max DD, Win Rate",
+    "ai_agents_configure_modal": "PASS - Opens with asset, timeframe, risk, frequency options",
+    "ai_agents_save_config": "PASS - Toast confirms, modal closes, badges appear",
+    "ai_agents_view_signals": "PASS - Modal shows LONG/SHORT signals with confidence",
+    "ai_agents_deploy": "PASS - Shows toast message",
+    "event_agents_pause_resume": "PASS - Toggle works, card dims when paused",
+    "event_agents_view_log": "PASS - Modal shows timestamped log entries",
+    "event_agents_view_all_events": "PASS - Modal shows 6 events with impact levels",
+    "marketplace_preview_modal": "PASS - Shows description, chart, metrics",
+    "marketplace_install": "PASS - Toast success, modal closes",
+    "marketplace_search": "PASS - Filters items",
+    "simulation_backtest_tab": "PASS - Pair and strategy selectors visible",
+    "simulation_run_backtest": "PASS - Loading state, then results with PnL curve",
+    "simulation_backtest_metrics": "PASS - Total Return, Sharpe, Max DD, Win Rate",
+    "no_coming_soon_toasts": "PASS - No Coming Soon toasts on any wired button"
+  }
+}
