@@ -1,18 +1,21 @@
 """
 AlphaAI Admin Traffic Analytics
-Event logging, aggregated summaries, and timeseries data for the Admin Traffic Dashboard.
+Event logging, aggregated summaries, timeseries data, and real-time admin event streaming.
 """
 import os
+import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
+
+from services.admin_events_manager import admin_events_manager
 
 logger = logging.getLogger("AlphaAI.Traffic")
 
-router = APIRouter(prefix="/api/admin", tags=["traffic"])
+router = APIRouter(prefix="/api", tags=["traffic"])
 
 ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "alphaai_admin_2026")
 
@@ -56,9 +59,9 @@ async def _verify_admin(admin_key: str):
         raise HTTPException(status_code=403, detail="Admin access denied")
 
 
-# ── POST /events — log any event ───────────────────────────────
+# ── POST /events — log any event + broadcast to admin WS ───────
 
-@router.post("/events")
+@router.post("/admin/events")
 async def log_event(event: TrafficEvent, request: Request):
     """Log a traffic event. Auth optional — demo events tagged automatically."""
     user_id = None
@@ -76,20 +79,96 @@ async def log_event(event: TrafficEvent, request: Request):
         except Exception:
             pass  # Anonymous event
 
+    now = datetime.now(timezone.utc)
     doc = {
         "id": str(uuid.uuid4()),
         "type": event.type,
         "user_id": user_id,
-        "timestamp": datetime.now(timezone.utc),
+        "timestamp": now,
         "metadata": event.metadata,
     }
     await db.traffic_events.insert_one(doc)
+
+    # Broadcast to connected admin WebSocket clients (non-blocking)
+    ws_payload = {
+        "id": doc["id"],
+        "type": doc["type"],
+        "user_id": doc["user_id"],
+        "timestamp": now.isoformat(),
+        "metadata": doc["metadata"],
+    }
+    asyncio.create_task(admin_events_manager.broadcast_event(ws_payload))
+
     return {"success": True, "event_id": doc["id"]}
+
+
+# ── WebSocket: Admin live event stream ──────────────────────────
+
+@router.websocket("/ws/admin/events")
+async def ws_admin_events(websocket: WebSocket):
+    """
+    Real-time admin event stream.
+    Query params:
+      - admin_key (required) — must match ADMIN_SECRET
+      - demo_only (optional) — if "true", only stream demo events
+    """
+    params = websocket.query_params
+    admin_key = params.get("admin_key", "")
+
+    if admin_key != ADMIN_SECRET:
+        await websocket.close(code=4003, reason="Admin access denied")
+        return
+
+    demo_only = params.get("demo_only", "false").lower() == "true"
+    conn_id = f"admin-{uuid.uuid4().hex[:8]}"
+
+    await admin_events_manager.connect(websocket, conn_id, demo_only=demo_only)
+    try:
+        await websocket.send_json({
+            "type": "connected",
+            "conn_id": conn_id,
+            "demo_only": demo_only,
+            "message": "Connected to admin event stream",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+
+        # Keep-alive loop
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=60)
+                if data.get("action") == "ping":
+                    await websocket.send_json({
+                        "type": "pong",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+            except asyncio.TimeoutError:
+                # Send heartbeat
+                try:
+                    await websocket.send_json({
+                        "type": "heartbeat",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+                except Exception:
+                    break
+            except (WebSocketDisconnect, Exception):
+                break
+    except (WebSocketDisconnect, Exception):
+        pass
+    finally:
+        await admin_events_manager.disconnect(conn_id)
+
+
+# ── REST: Admin stream status ──────────────────────────────────
+
+@router.get("/admin/traffic/stream-status")
+async def stream_status(admin_key: str = Query(...)):
+    await _verify_admin(admin_key)
+    return {"status": "active", "connections": admin_events_manager.get_stats()}
 
 
 # ── GET /traffic/summary — aggregated metrics ──────────────────
 
-@router.get("/traffic/summary")
+@router.get("/admin/traffic/summary")
 async def traffic_summary(
     admin_key: str = Query(...),
     range: str = Query("24h", alias="range"),
@@ -110,10 +189,6 @@ async def traffic_summary(
 
     def _count(t):
         return buckets.get(t, {}).get("count", 0)
-
-    def _users(t):
-        s = buckets.get(t, {}).get("unique_users", [])
-        return len([u for u in s if u is not None])
 
     # Total unique users across all events
     all_users = set()
@@ -166,7 +241,7 @@ async def traffic_summary(
 
 # ── GET /traffic/timeseries — time-bucketed data ───────────────
 
-@router.get("/traffic/timeseries")
+@router.get("/admin/traffic/timeseries")
 async def traffic_timeseries(
     admin_key: str = Query(...),
     range: str = Query("24h", alias="range"),
@@ -206,7 +281,7 @@ async def traffic_timeseries(
 
 # ── GET /traffic/events — raw paginated events ─────────────────
 
-@router.get("/traffic/events")
+@router.get("/admin/traffic/events")
 async def traffic_events(
     admin_key: str = Query(...),
     event_type: Optional[str] = Query(None, alias="type"),

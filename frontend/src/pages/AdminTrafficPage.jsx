@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3, Users, Eye, Zap, Globe, Radio, Heart,
-  TrendingUp, ShieldAlert, Activity, RefreshCw, Wifi,
-  ArrowUpRight, Filter, ChevronLeft, ChevronRight
+  TrendingUp, ShieldAlert, Activity, RefreshCw, Wifi, WifiOff,
+  ArrowUpRight, Filter, ChevronLeft, ChevronRight, Pause, Play,
+  Trash2, Terminal
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -16,7 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "../components/ui/select";
 import { toast } from "sonner";
-import { API } from "../lib/constants";
+import { API, BACKEND_URL } from "../lib/constants";
 
 const ADMIN_KEY = localStorage.getItem("adminKey") || "alphaai_admin_2026";
 const RANGES = [
@@ -30,15 +31,9 @@ const EVENT_TYPES = [
   "checkout_start", "checkout_success", "error",
 ];
 
-const CHART_COLORS = {
-  page_view: "#7B61FF",
-  api_call: "#00FF94",
-  ws_connect: "#3b82f6",
-  strategy_view: "#FFB800",
-  follow: "#ec4899",
-  signal: "#8b5cf6",
-  error: "#ef4444",
-};
+const MAX_LIVE_EVENTS = 200;
+const RECONNECT_BASE_DELAY = 2000;
+const MAX_RECONNECT_ATTEMPTS = 8;
 
 // ── KPI Card ───────────────────────────────────────────────────
 
@@ -58,7 +53,7 @@ const KpiCard = ({ icon: Icon, label, value, color = "#7B61FF", testId }) => (
   </motion.div>
 );
 
-// ── Conversion Funnel ──────────────────────────────────────────
+// ── Conversion Funnel Bar ──────────────────────────────────────
 
 const FunnelBar = ({ label, value, max, color }) => {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -75,21 +70,52 @@ const FunnelBar = ({ label, value, max, color }) => {
   );
 };
 
-// ── Event Type Badge ───────────────────────────────────────────
+// ── Event Type Badge Config ────────────────────────────────────
 
 const typeBadgeConfig = {
-  page_view: { color: "bg-[#7B61FF]/15 text-[#7B61FF]" },
-  api_call: { color: "bg-[#00FF94]/15 text-[#00FF94]" },
-  strategy_view: { color: "bg-[#FFB800]/15 text-[#FFB800]" },
-  follow: { color: "bg-pink-500/15 text-pink-400" },
-  unfollow: { color: "bg-zinc-700 text-zinc-400" },
-  signal: { color: "bg-purple-500/15 text-purple-400" },
-  ws_connect: { color: "bg-blue-500/15 text-blue-400" },
-  ws_disconnect: { color: "bg-zinc-700 text-zinc-400" },
-  upgrade_prompt: { color: "bg-[#FFB800]/15 text-[#FFB800]" },
-  checkout_start: { color: "bg-[#00FF94]/15 text-[#00FF94]" },
-  checkout_success: { color: "bg-[#00FF94]/15 text-[#00FF94]" },
-  error: { color: "bg-red-500/15 text-red-400" },
+  page_view: { color: "bg-[#7B61FF]/15 text-[#7B61FF]", short: "PV" },
+  api_call: { color: "bg-[#00FF94]/15 text-[#00FF94]", short: "API" },
+  strategy_view: { color: "bg-[#FFB800]/15 text-[#FFB800]", short: "SV" },
+  follow: { color: "bg-pink-500/15 text-pink-400", short: "FOL" },
+  unfollow: { color: "bg-zinc-700 text-zinc-400", short: "UNF" },
+  signal: { color: "bg-purple-500/15 text-purple-400", short: "SIG" },
+  ws_connect: { color: "bg-blue-500/15 text-blue-400", short: "WSC" },
+  ws_disconnect: { color: "bg-zinc-700 text-zinc-400", short: "WSD" },
+  upgrade_prompt: { color: "bg-[#FFB800]/15 text-[#FFB800]", short: "UPG" },
+  checkout_start: { color: "bg-[#00FF94]/15 text-[#00FF94]", short: "CHK" },
+  checkout_success: { color: "bg-[#00FF94]/15 text-[#00FF94]", short: "SUC" },
+  error: { color: "bg-red-500/15 text-red-400", short: "ERR" },
+};
+
+// ── Live Event Feed Line ───────────────────────────────────────
+
+const LiveEventLine = ({ ev }) => {
+  const cfg = typeBadgeConfig[ev.type] || { color: "bg-zinc-700 text-zinc-400", short: "?" };
+  const ts = ev.timestamp ? new Date(ev.timestamp) : new Date();
+  const time = ts.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  // Build description from metadata
+  const meta = ev.metadata || {};
+  const parts = [];
+  if (meta.path) parts.push(meta.path);
+  if (meta.endpoint) parts.push(meta.endpoint);
+  if (meta.strategy_id) parts.push(`strategy:${meta.strategy_id.slice(0, 8)}`);
+  if (meta.action) parts.push(meta.action);
+  if (meta.feature) parts.push(meta.feature);
+  if (meta.message) parts.push(meta.message.slice(0, 60));
+  const desc = parts.join(" — ") || ev.type;
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1 text-[11px] font-mono hover:bg-white/[0.02] transition-colors group">
+      <span className="text-zinc-700 shrink-0 w-16">[{time}]</span>
+      <Badge className={`${cfg.color} text-[8px] px-1.5 py-0 h-4 shrink-0`}>{ev.type}</Badge>
+      <span className="text-zinc-400 truncate flex-1">{desc}</span>
+      <span className="text-zinc-700 shrink-0">
+        {ev.user_id ? `user:${ev.user_id.slice(0, 6)}` : "anon"}
+      </span>
+      {meta.demo && <span className="text-[8px] text-pink-500/60 shrink-0">demo</span>}
+    </div>
+  );
 };
 
 // ── Main Page ──────────────────────────────────────────────────
@@ -105,6 +131,23 @@ const AdminTrafficPage = () => {
   const [eventFilter, setEventFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Live stream state
+  const [liveEvents, setLiveEvents] = useState([]);
+  const [liveStatus, setLiveStatus] = useState("disconnected"); // connected | reconnecting | disconnected
+  const [livePaused, setLivePaused] = useState(false);
+  const [liveTypeFilter, setLiveTypeFilter] = useState("all");
+  const [liveDemoFilter, setLiveDemoFilter] = useState("all"); // all | demo | live
+  const wsRef = useRef(null);
+  const reconnectCount = useRef(0);
+  const reconnectTimer = useRef(null);
+  const feedRef = useRef(null);
+  const pausedRef = useRef(false);
+
+  // Keep pausedRef in sync
+  useEffect(() => { pausedRef.current = livePaused; }, [livePaused]);
+
+  // ── Data fetching ────────────────────────────────────────────
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -145,15 +188,106 @@ const AdminTrafficPage = () => {
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
-  // Auto-refresh every 30s
   useEffect(() => {
     const iv = setInterval(() => { fetchAll(); fetchEvents(); }, 30000);
     return () => clearInterval(iv);
   }, [fetchAll, fetchEvents]);
 
+  // ── Live Event Stream WebSocket ──────────────────────────────
+
+  useEffect(() => {
+    const wsUrl = BACKEND_URL.replace("https://", "wss://").replace("http://", "ws://");
+    const fullUrl = `${wsUrl}/api/ws/admin/events?admin_key=${ADMIN_KEY}`;
+
+    const connect = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+      setLiveStatus("reconnecting");
+
+      const ws = new WebSocket(fullUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setLiveStatus("connected");
+        reconnectCount.current = 0;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "connected" || data.type === "pong" || data.type === "heartbeat") return;
+
+          if (!pausedRef.current) {
+            setLiveEvents((prev) => [...prev, data].slice(-MAX_LIVE_EVENTS));
+          }
+        } catch {
+          // ignore
+        }
+      };
+
+      ws.onclose = (event) => {
+        wsRef.current = null;
+        if (event.code === 4003) {
+          setLiveStatus("disconnected");
+          return;
+        }
+        setLiveStatus("reconnecting");
+        if (reconnectCount.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectCount.current += 1;
+          const delay = RECONNECT_BASE_DELAY * Math.pow(1.5, reconnectCount.current - 1);
+          reconnectTimer.current = setTimeout(connect, delay);
+        } else {
+          setLiveStatus("disconnected");
+        }
+      };
+
+      ws.onerror = () => {};
+    };
+
+    connect();
+
+    // Ping every 45s
+    const pingIv = setInterval(() => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ action: "ping" }));
+      }
+    }, 45000);
+
+    return () => {
+      clearInterval(pingIv);
+      clearTimeout(reconnectTimer.current);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, []);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (!livePaused && feedRef.current) {
+      feedRef.current.scrollTop = feedRef.current.scrollHeight;
+    }
+  }, [liveEvents, livePaused]);
+
+  // ── Filtered live events ─────────────────────────────────────
+
+  const filteredLiveEvents = liveEvents.filter((ev) => {
+    if (liveTypeFilter !== "all" && ev.type !== liveTypeFilter) return false;
+    if (liveDemoFilter === "demo" && !ev.metadata?.demo) return false;
+    if (liveDemoFilter === "live" && ev.metadata?.demo) return false;
+    return true;
+  });
+
   const s = summary || {};
   const funnelMax = Math.max(s.upgrade_prompts || 0, 1);
   const convRate = s.upgrade_prompts > 0 ? ((s.checkout_successes || 0) / s.upgrade_prompts * 100).toFixed(1) : "0.0";
+
+  const statusColors = {
+    connected: { bg: "bg-[#00FF94]/10", text: "text-[#00FF94]", icon: Wifi, label: "Connected" },
+    reconnecting: { bg: "bg-[#FFB800]/10", text: "text-[#FFB800]", icon: RefreshCw, label: "Reconnecting" },
+    disconnected: { bg: "bg-red-500/10", text: "text-red-400", icon: WifiOff, label: "Disconnected" },
+  };
+  const st = statusColors[liveStatus];
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4" data-testid="admin-traffic-page">
@@ -213,7 +347,6 @@ const AdminTrafficPage = () => {
 
             {/* ── Section 2: Activity Charts ────────────────── */}
             <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="activity-charts">
-              {/* Page Views + API Calls Chart */}
               <Card className="bg-[#0A0A0A] border-zinc-800/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold text-zinc-300">Page Views & API Calls</CardTitle>
@@ -232,7 +365,6 @@ const AdminTrafficPage = () => {
                 </CardContent>
               </Card>
 
-              {/* Strategy Interactions Chart */}
               <Card className="bg-[#0A0A0A] border-zinc-800/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold text-zinc-300">Strategy Interactions</CardTitle>
@@ -255,7 +387,6 @@ const AdminTrafficPage = () => {
 
             {/* ── Section 3: Conversion Funnel + System Health ─ */}
             <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Conversion Funnel */}
               <Card className="bg-[#0A0A0A] border-zinc-800/50" data-testid="conversion-funnel">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
@@ -274,7 +405,6 @@ const AdminTrafficPage = () => {
                 </CardContent>
               </Card>
 
-              {/* System Health */}
               <Card className="bg-[#0A0A0A] border-zinc-800/50" data-testid="system-health">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
@@ -311,7 +441,104 @@ const AdminTrafficPage = () => {
               </Card>
             </section>
 
-            {/* ── Section 4: Strategy Activity Cards ────────── */}
+            {/* ── Section 4: LIVE EVENT STREAM ──────────────── */}
+            <section className="mb-8" data-testid="live-event-stream">
+              <Card className="bg-[#0A0A0A] border-zinc-800/50 overflow-hidden">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <CardTitle className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+                      <Terminal className="w-4 h-4 text-[#7B61FF]" />
+                      Live Event Stream
+                      <Badge className={`${st.bg} ${st.text} text-[9px] gap-1`} data-testid="live-stream-status">
+                        <st.icon className={`w-3 h-3 ${liveStatus === "reconnecting" ? "animate-spin" : ""}`} />
+                        {st.label}
+                      </Badge>
+                      <span className="text-[10px] text-zinc-600 font-normal font-mono ml-1">{filteredLiveEvents.length} events</span>
+                    </CardTitle>
+
+                    <div className="flex items-center gap-2">
+                      {/* Type filter */}
+                      <Select value={liveTypeFilter} onValueChange={setLiveTypeFilter}>
+                        <SelectTrigger className="w-[130px] bg-[#111] border-zinc-800 text-[10px] h-7" data-testid="live-type-filter">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#0A0A0A] border-zinc-800">
+                          {EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="text-xs">{t === "all" ? "All Types" : t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Demo filter */}
+                      <Select value={liveDemoFilter} onValueChange={setLiveDemoFilter}>
+                        <SelectTrigger className="w-[90px] bg-[#111] border-zinc-800 text-[10px] h-7" data-testid="live-demo-filter">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#0A0A0A] border-zinc-800">
+                          <SelectItem value="all" className="text-xs">All</SelectItem>
+                          <SelectItem value="demo" className="text-xs">Demo</SelectItem>
+                          <SelectItem value="live" className="text-xs">Live</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {/* Pause / Resume */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLivePaused(p => !p)}
+                        className={`h-7 px-2.5 border-zinc-800 text-[10px] ${livePaused ? "text-[#FFB800] border-[#FFB800]/30" : "text-zinc-400"}`}
+                        data-testid="live-pause-btn"
+                      >
+                        {livePaused ? <Play className="w-3 h-3 mr-1" /> : <Pause className="w-3 h-3 mr-1" />}
+                        {livePaused ? "Resume" : "Pause"}
+                      </Button>
+
+                      {/* Clear */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLiveEvents([])}
+                        className="h-7 px-2.5 border-zinc-800 text-[10px] text-zinc-400"
+                        data-testid="live-clear-btn"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" /> Clear
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-0">
+                  <div
+                    ref={feedRef}
+                    className="h-72 overflow-y-auto bg-[#060606] border-t border-zinc-800/30 font-mono"
+                    data-testid="live-feed-container"
+                  >
+                    {filteredLiveEvents.length === 0 ? (
+                      <div className="flex items-center justify-center h-full text-zinc-700 text-xs">
+                        {liveStatus === "connected"
+                          ? "Waiting for events..."
+                          : liveStatus === "reconnecting"
+                          ? "Reconnecting to event stream..."
+                          : "Disconnected from event stream"}
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-zinc-900/50">
+                        {filteredLiveEvents.map((ev, i) => (
+                          <LiveEventLine key={`${ev.id || ev.timestamp}-${i}`} ev={ev} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {livePaused && (
+                    <div className="bg-[#FFB800]/5 border-t border-[#FFB800]/20 px-4 py-1.5 flex items-center justify-center gap-2" data-testid="live-paused-banner">
+                      <Pause className="w-3 h-3 text-[#FFB800]" />
+                      <span className="text-[10px] text-[#FFB800]">Stream paused — new events are buffered</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* ── Section 5: Strategy Activity Cards ────────── */}
             <section className="mb-8" data-testid="strategy-activity">
               <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">Strategy Activity</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -322,7 +549,7 @@ const AdminTrafficPage = () => {
               </div>
             </section>
 
-            {/* ── Section 5: Raw Event Table ────────────────── */}
+            {/* ── Section 6: Raw Event Table ────────────────── */}
             <section data-testid="event-table">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Raw Events</h2>
@@ -376,7 +603,6 @@ const AdminTrafficPage = () => {
                   </table>
                 </div>
 
-                {/* Pagination */}
                 {eventsPages > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800/50">
                     <span className="text-[10px] text-zinc-600">{eventsTotal} total events</span>

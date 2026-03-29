@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="11" time="47.477" timestamp="2026-03-29T12:55:59.611553+00:00" hostname="agent-env-044a6354-87b5-444f-b126-cad4f300f93b"><testcase classname="tests.test_admin_websocket_streaming.TestStreamStatusEndpoint" name="test_stream_status_with_valid_admin_key" time="14.066" /><testcase classname="tests.test_admin_websocket_streaming.TestStreamStatusEndpoint" name="test_stream_status_with_wrong_admin_key" time="0.122" /><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketConnection" name="test_ws_connect_with_valid_admin_key" time="15.021"><failure message="TimeoutError: timed out during opening handshake">/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:543: in __await_impl__
+    await self.connection.handshake(
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:104: in handshake
+    await asyncio.wait(
+/usr/local/lib/python3.11/asyncio/tasks.py:428: in wait
+    return await _wait(fs, timeout, return_when, loop)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/tasks.py:535: in _wait
+    await waiter
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:539: in __await_impl__
+    async with asyncio_timeout(self.open_timeout):
+/usr/local/lib/python3.11/asyncio/timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+
+The above exception was the direct cause of the following exception:
+tests/test_admin_websocket_streaming.py:63: in test_ws_connect_with_valid_admin_key
+    async with websockets.connect(ws_url, open_timeout=15) as ws:
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:587: in __aenter__
+    return await self
+           ^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:578: in __await_impl__
+    raise TimeoutError("timed out during opening handshake") from exc
+E   TimeoutError: timed out during opening handshake</failure></testcase><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketConnection" name="test_ws_connect_with_demo_only_filter" time="15.014"><failure message="TimeoutError: timed out during opening handshake">/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:543: in __await_impl__
+    await self.connection.handshake(
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:104: in handshake
+    await asyncio.wait(
+/usr/local/lib/python3.11/asyncio/tasks.py:428: in wait
+    return await _wait(fs, timeout, return_when, loop)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/tasks.py:535: in _wait
+    await waiter
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:539: in __await_impl__
+    async with asyncio_timeout(self.open_timeout):
+/usr/local/lib/python3.11/asyncio/timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+
+The above exception was the direct cause of the following exception:
+tests/test_admin_websocket_streaming.py:80: in test_ws_connect_with_demo_only_filter
+    async with websockets.connect(ws_url, open_timeout=15) as ws:
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:587: in __aenter__
+    return await self
+           ^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/websockets/asyncio/client.py:578: in __await_impl__
+    raise TimeoutError("timed out during opening handshake") from exc
+E   TimeoutError: timed out during opening handshake</failure></testcase><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketConnection" name="test_ws_reject_without_admin_key" time="0.398" /><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketConnection" name="test_ws_reject_with_wrong_admin_key" time="0.141" /><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketConnection" name="test_ws_ping_pong" time="0.248" /><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketEventBroadcast" name="test_ws_receives_posted_event" time="0.276" /><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketEventBroadcast" name="test_multiple_ws_clients_receive_same_event" time="0.466" /><testcase classname="tests.test_admin_websocket_streaming.TestWebSocketEventBroadcast" name="test_demo_only_filter_receives_demo_events" time="0.267" /><testcase classname="tests.test_admin_websocket_streaming.TestPostEventsEndpoint" name="test_post_event_various_types" time="1.318" /></testsuite></testsuites>
