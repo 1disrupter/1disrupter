@@ -1,0 +1,125 @@
+{
+  "summary": "Strategy Leaderboard feature testing complete. All 12 backend tests passed. Frontend leaderboard page works correctly with demo mode showing 8 mock strategies, sortable table, top-3 podium, and strategy detail modal with equity curve. One minor bug found: max_drawdown sort order parameter is inverted in backend.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "GET /api/leaderboard/strategies",
+        "issue": "max_drawdown sort order parameter is inverted - order=asc returns descending, order=desc returns ascending",
+        "priority": "LOW",
+        "file": "/app/backend/routes/leaderboard.py",
+        "line": "246-247"
+      }
+    ]
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend GET /api/leaderboard/strategies?demo=true returns 8 mock strategies sorted by Sharpe",
+    "Backend GET /api/leaderboard/strategies?demo=true&sort_by=total_return&order=desc returns strategies sorted by total return",
+    "Backend GET /api/leaderboard/strategies?demo=true&sort_by=win_rate returns strategies sorted by win rate",
+    "Backend GET /api/leaderboard/strategies?demo=true&sort_by=max_drawdown works (order param inverted)",
+    "Backend GET /api/leaderboard/strategies (no demo) returns real strategies from DB with data_source=coingecko",
+    "Backend POST /api/leaderboard/strategies creates/updates a leaderboard entry",
+    "Backend POST /api/leaderboard/strategies auto-generates ID when not provided",
+    "Backend GET /api/leaderboard/strategies/{id}?demo=true returns single strategy detail with equity_curve",
+    "Backend GET /api/leaderboard/strategies/{invalid_id}?demo=true returns success=false",
+    "Backend POST /api/simulation/backtest auto-pushes results to leaderboard (non-demo)",
+    "Backend demo strategies have all required fields and metrics",
+    "Backend demo strategy types are valid (momentum, mean_reversion, breakout)",
+    "Leaderboard page (/leaderboard?demo=true): Title 'Strategy Leaderboard' visible",
+    "Leaderboard page: 'Demo Mode — Mock Data' badge visible in demo mode",
+    "Leaderboard page: Top-3 podium cards showing 1st, 2nd, 3rd place strategies",
+    "Leaderboard page: Table shows 8 strategy rows with Sharpe, Return, MaxDD, WinRate, Trades columns",
+    "Leaderboard page: Click column headers to sort (Sharpe, Return, MaxDD, WinRate)",
+    "Leaderboard page: Sort by Return shows BTC Momentum Alpha first (24.8%)",
+    "Leaderboard page: Sort by Win Rate shows ETH Scalper Pro first (71.2%)",
+    "Leaderboard page: Click 'View' button opens strategy detail modal",
+    "Leaderboard page: Detail modal shows data source badge 'Demo Mode — Mock Data'",
+    "Leaderboard page: Detail modal shows metrics grid (Sharpe, Return, MaxDD, WinRate)",
+    "Leaderboard page: Detail modal shows equity curve chart with 30 bars",
+    "Leaderboard page: Detail modal shows Total Trades, Profit Factor stats",
+    "Leaderboard page: Close detail modal by clicking outside",
+    "Leaderboard page: Refresh button works",
+    "Simulation page: Toast shows 'Strategy added to Leaderboard' in non-demo mode (code verified)",
+    "Strategy Lab page: Toast shows 'Strategy added to Leaderboard' (code verified)",
+    "No regressions on Research page",
+    "No regressions on AI Agents page",
+    "No regressions on Marketplace page"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_strategy_leaderboard.py",
+    "/app/test_reports/pytest/strategy_leaderboard_results.xml"
+  ],
+
+  "action_items": [
+    "MINOR: Fix max_drawdown sort order logic in /app/backend/routes/leaderboard.py line 246-247 - the order parameter is inverted for max_drawdown sorting"
+  ],
+
+  "critical_code_review_comments": [
+    "leaderboard.py: DEMO_STRATEGIES constant has 8 well-structured mock strategies with all required fields",
+    "leaderboard.py: GET /api/leaderboard/strategies correctly handles demo vs real mode",
+    "leaderboard.py: POST /api/leaderboard/strategies correctly upserts to strategy_leaderboard collection",
+    "strategies.py: Backtest auto-push to leaderboard implemented correctly (line 399-411)",
+    "simulation.py: Simulation backtest auto-push to leaderboard implemented correctly (line 689-704)",
+    "LeaderboardPage.jsx: Well-structured with proper data-testid attributes for testing",
+    "LeaderboardPage.jsx: Podium, sortable table, and detail modal all work correctly"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_strategy_leaderboard.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+
+  "test_credentials": {
+    "demo_mode": "?demo=true URL parameter",
+    "standard_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "admin_user": "admin@my-alpha-ai.com / Admin1234!"
+  },
+
+  "seed_data_creation": "None - used DEMO_STRATEGIES constant for demo mode and created test strategies via POST endpoint",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Strategy Leaderboard feature fully tested. Demo mode uses 8 static mock strategies (DEMO_STRATEGIES constant). Real mode queries strategy_leaderboard MongoDB collection. Auto-push to leaderboard works from both Strategy Lab backtest and Simulation backtest endpoints. Minor bug: max_drawdown sort order is inverted (order=asc returns desc, order=desc returns asc). Event Agents page (/event-agents) returns 404 - pre-existing issue not related to leaderboard feature.",
+
+  "mocked_api": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "Demo Mode: 8 static mock strategies in DEMO_STRATEGIES constant",
+      "Real mode: CoinGecko OHLC data via backtest engine"
+    ]
+  },
+
+  "features_tested": {
+    "leaderboard_demo_mode_default_sort": "PASS - Returns 8 strategies sorted by Sharpe desc",
+    "leaderboard_demo_mode_sort_return": "PASS - Sorts by total_return correctly",
+    "leaderboard_demo_mode_sort_winrate": "PASS - Sorts by win_rate correctly",
+    "leaderboard_demo_mode_sort_drawdown": "PASS - Works but order param inverted (minor bug)",
+    "leaderboard_real_mode": "PASS - Returns data_source=coingecko",
+    "leaderboard_post_strategy": "PASS - Creates/updates entries",
+    "leaderboard_single_strategy_detail": "PASS - Returns full detail with equity_curve",
+    "simulation_backtest_auto_push": "PASS - Pushes to leaderboard in non-demo mode",
+    "frontend_leaderboard_title": "PASS - 'Strategy Leaderboard' visible",
+    "frontend_demo_badge": "PASS - 'Demo Mode — Mock Data' badge visible",
+    "frontend_podium": "PASS - Top-3 podium shows 1st, 2nd, 3rd",
+    "frontend_table_8_rows": "PASS - 8 strategy rows displayed",
+    "frontend_sort_headers": "PASS - All 4 sort headers clickable",
+    "frontend_detail_modal": "PASS - Opens with equity curve and metrics",
+    "frontend_modal_close": "PASS - Closes when clicking outside",
+    "toast_messages": "PASS - Code verified for 'Strategy added to Leaderboard' toast",
+    "no_regressions": "PASS - Research, AI Agents, Marketplace pages load correctly"
+  }
+}

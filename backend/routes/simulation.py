@@ -686,4 +686,21 @@ async def simulation_backtest(request: SimulationBacktestRequest):
     results["asset"] = request.asset
     results["strategy"] = request.strategy
 
+    # Push to strategy leaderboard (skip demo mode)
+    if not request.demo and db is not None:
+        from datetime import datetime as dt
+        lb_id = f"sim-{request.asset.replace('/', '')}-{request.strategy}-{dt.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+        lb_name = f"{request.asset} {request.strategy.replace('_', ' ').title()}"
+        leaderboard_doc = {
+            "id": lb_id,
+            "name": lb_name,
+            "type": request.strategy,
+            "asset": request.asset,
+            "metrics": {k: v for k, v in results.items() if k not in ("asset", "strategy", "period")},
+            "data_source": data_source,
+            "parameters": {"days": request.days, "initial_capital": request.initial_capital},
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.strategy_leaderboard.update_one({"id": lb_id}, {"$set": leaderboard_doc}, upsert=True)
+
     return {"success": True, "results": results}

@@ -95,7 +95,7 @@ const StrategyLabPage = () => {
       const res = await axios.post(`${API}/lab/strategies/${strategyId}/backtest`, { initial_capital: 100000 });
       if (res.data?.success) {
         setBacktestResult(res.data.results);
-        toast.success("Backtest complete!");
+        toast.success("Backtest complete — Strategy added to Leaderboard!");
         refetch();
       }
     } catch (e) {

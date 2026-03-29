@@ -158,7 +158,7 @@ const SimulationPage = () => {
                           });
                           if (res.data?.success) {
                             setBacktestResult(res.data.results);
-                            toast.success("Backtest complete!");
+                            toast.success(isDemoMode ? "Backtest complete!" : "Backtest complete — Strategy added to Leaderboard!");
                           }
                         } catch (e) {
                           toast.error("Market data unavailable — using fallback data");

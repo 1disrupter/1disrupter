@@ -396,6 +396,20 @@ async def backtest_strategy(strategy_id: str, request: BacktestBody):
     await sim_engine.log_event("strategy", f"Backtest complete for '{strategy['name']}': Return {backtest_results['total_return']}%, Sharpe {backtest_results['sharpe_ratio']}", strategy_id=strategy_id, agent_name="BacktestingAgent", details={k: v for k, v in backtest_results.items() if k != "equity_curve"})
     await sim_engine.log_agent_interaction("BacktestingAgent", "SandboxValidationAgent", "data", {"strategy_id": strategy_id, "sharpe": backtest_results["sharpe_ratio"], "return": backtest_results["total_return"]})
 
+    # Push to strategy leaderboard
+    asset_label = asset if "/" in asset else f"{asset}/USDT"
+    leaderboard_doc = {
+        "id": strategy_id,
+        "name": strategy.get("name", "Unnamed Strategy"),
+        "type": strategy.get("type", "momentum"),
+        "asset": asset_label,
+        "metrics": {k: v for k, v in backtest_results.items() if k != "period"},
+        "data_source": backtest_results.get("data_source", "coingecko"),
+        "parameters": strategy.get("parameters", {}),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.strategy_leaderboard.update_one({"id": strategy_id}, {"$set": leaderboard_doc}, upsert=True)
+
     return {"success": True, "strategy_id": strategy_id, "results": backtest_results}
 
 @router.post("/lab/strategies/{strategy_id}/sandbox")

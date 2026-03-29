@@ -1,405 +1,287 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Copy, DollarSign, Lock, RefreshCw, Target, TrendingUp, Trophy, User
+  Trophy, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, ChevronUp, ChevronDown,
+  RefreshCw, X, Shield, Zap, Loader2, Minus
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle
-} from "../components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "../components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../contexts/AuthContext";
 import { useDemoMode } from "../contexts/DemoModeContext";
-import { FollowTraderModal } from "./CopyTradingPage";
 import { API } from "../lib/constants";
-import { mockLeaderboard } from "../lib/mockData";
+
+const SORT_COLS = [
+  { key: "sharpe_ratio", label: "Sharpe", apiKey: "sharpe" },
+  { key: "total_return", label: "Return %", apiKey: "total_return" },
+  { key: "max_drawdown", label: "Max DD %", apiKey: "max_drawdown" },
+  { key: "win_rate", label: "Win Rate %", apiKey: "win_rate" },
+];
+
+const typeColors = {
+  momentum: "bg-[#7B61FF]/15 text-[#7B61FF]",
+  mean_reversion: "bg-[#00FF94]/15 text-[#00FF94]",
+  breakout: "bg-[#FFB800]/15 text-[#FFB800]",
+};
 
 const LeaderboardPage = () => {
-  const { user, tokens } = useAuth();
-  const { isDemoMode, demoLeaderboard } = useDemoMode();
-  const [traders, setTraders] = useState([]);
+  const { tokens } = useAuth();
+  const { isDemoMode } = useDemoMode();
+  const [strategies, setStrategies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('all_time');
-  const [sortBy, setSortBy] = useState('pnl');
-  const [myRank, setMyRank] = useState(null);
-  const [topPerformers, setTopPerformers] = useState(null);
-  const [selectedTrader, setSelectedTrader] = useState(null);
-  const [traderDetailOpen, setTraderDetailOpen] = useState(false);
-  const [followModalOpen, setFollowModalOpen] = useState(false);
-  const [followTarget, setFollowTarget] = useState(null);
+  const [sortBy, setSortBy] = useState("sharpe");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [detailModal, setDetailModal] = useState(null);
 
-  const userTier = user?.user_tier || (user?.is_elite ? 'elite' : user?.is_pro ? 'pro' : 'free');
-  const isPro = isDemoMode || userTier !== 'free';
-
-  useEffect(() => {
-    loadLeaderboard();
-    loadTopPerformers();
-    if (user?.id) loadMyRank();
-  }, [period, sortBy, user]);
-
-  const loadLeaderboard = async () => {
+  const loadStrategies = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/leaderboard?period=${period}&sort_by=${sortBy}&user_tier=${userTier}&limit=50`);
-      setTraders(res.data.traders || []);
-    } catch (error) {
-      console.error('Leaderboard error:', error);
-      // Use mock data as fallback
-      setTraders(mockLeaderboard.map((t, i) => ({
-        id: `mock-${i}`, name: t.name, total_pnl: parseFloat(t.pnl.replace(/[$+,K]/g, '')) * 1000,
-        win_rate: parseFloat(t.winRate), total_trades: t.trades, rank: t.rank,
-        user_tier: t.badge, avg_return_pct: 4.2 + i * 0.5
-      })));
+      const res = await axios.get(`${API}/leaderboard/strategies`, {
+        params: { sort_by: sortBy, order: sortOrder, limit: 50, demo: isDemoMode },
+      });
+      if (res.data?.success) {
+        setStrategies(res.data.strategies || []);
+      }
+    } catch (e) {
+      console.error("Leaderboard error:", e);
+      toast.error("Failed to load leaderboard");
     }
     setLoading(false);
-  };
+  }, [sortBy, sortOrder, isDemoMode]);
 
-  const loadTopPerformers = async () => {
-    try {
-      const res = await axios.get(`${API}/leaderboard/top-performers?limit=5`);
-      setTopPerformers(res.data);
-    } catch (error) {
-      console.error('Top performers error:', error);
+  useEffect(() => { loadStrategies(); }, [loadStrategies]);
+
+  const handleSort = (colApiKey) => {
+    if (sortBy === colApiKey) {
+      setSortOrder(prev => prev === "desc" ? "asc" : "desc");
+    } else {
+      setSortBy(colApiKey);
+      setSortOrder(colApiKey === "max_drawdown" ? "asc" : "desc");
     }
   };
 
-  const loadMyRank = async () => {
+  const openDetail = async (strat) => {
+    if (strat.metrics?.equity_curve?.length > 0) {
+      setDetailModal(strat);
+      return;
+    }
     try {
-      const res = await axios.get(`${API}/leaderboard/me?user_id=${user.id}`);
-      setMyRank(res.data);
-    } catch (error) {
-      console.error('My rank error:', error);
+      const res = await axios.get(`${API}/leaderboard/strategies/${strat.id}`, { params: { demo: isDemoMode } });
+      if (res.data?.success) setDetailModal(res.data.strategy);
+    } catch {
+      setDetailModal(strat);
     }
   };
 
-  const viewTraderProfile = async (traderId) => {
-    try {
-      const res = await axios.get(`${API}/leaderboard/trader/${traderId}?user_tier=${userTier}`);
-      setSelectedTrader(res.data);
-      setTraderDetailOpen(true);
-    } catch (error) {
-      toast.error('Failed to load trader profile');
-    }
-  };
-
-  const formatPnl = (value) => {
-    if (value === undefined || value === null) return '-';
-    const formatted = Math.abs(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-    return value >= 0 ? `+${formatted}` : `-${formatted.replace('$', '')}`;
-  };
+  const topThree = strategies.slice(0, 3);
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
+    <div className="min-h-screen pt-24 pb-12 px-4" data-testid="leaderboard-page">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold font-['Outfit']" data-testid="leaderboard-title">
-              <Trophy className="inline w-8 h-8 mr-2 text-[#FFB800]" />
-              Leaderboard
-            </h1>
-            <p className="text-zinc-400 mt-1">Top performing traders on AlphaAI</p>
-          </div>
-          {myRank && myRank.ranks?.pnl && (
-            <div className="text-right">
-              <p className="text-sm text-zinc-500">Your Rank</p>
-              <p className="text-2xl font-bold text-[#7B61FF]">#{myRank.ranks.pnl}</p>
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold font-['Outfit'] flex items-center gap-3" data-testid="leaderboard-title">
+                <div className="p-2.5 rounded-xl bg-[#FFB800]/10 border border-[#FFB800]/20">
+                  <Trophy className="w-6 h-6 text-[#FFB800]" />
+                </div>
+                Strategy Leaderboard
+              </h1>
+              <p className="text-sm text-zinc-500 mt-2 ml-14">Ranked by real market performance using CoinGecko OHLC data</p>
             </div>
-          )}
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-36 bg-[#121212] border-zinc-800" data-testid="period-select">
-              <SelectValue placeholder="Period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="all_time">All Time</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-36 bg-[#121212] border-zinc-800" data-testid="sort-select">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pnl">Total P&L</SelectItem>
-              <SelectItem value="win_rate">Win Rate</SelectItem>
-              <SelectItem value="roi">ROI %</SelectItem>
-              <SelectItem value="total_trades">Trades</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" onClick={loadLeaderboard} className="border-zinc-700">
-            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-          </Button>
-        </div>
-
-        {/* Top Performers Cards */}
-        {topPerformers && (
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <Card className="glass-card border-[#FFB800]/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-[#FFB800]" /> Top P&L
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {topPerformers.top_by_pnl?.slice(0, 3).map((t, i) => (
-                  <div key={i} className="flex items-center justify-between py-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#FFB800] font-bold">{i + 1}</span>
-                      <span className="text-sm truncate">{t.display_name || `Trader_${t.user_id?.slice(0,6)}`}</span>
-                    </div>
-                    <span className="text-[#00FF94] font-mono text-sm">{formatPnl(t.stats?.total_pnl)}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card border-[#00FF94]/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Target className="w-4 h-4 text-[#00FF94]" /> Top Win Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {topPerformers.top_by_win_rate?.slice(0, 3).map((t, i) => (
-                  <div key={i} className="flex items-center justify-between py-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#00FF94] font-bold">{i + 1}</span>
-                      <span className="text-sm truncate">{t.display_name || `Trader_${t.user_id?.slice(0,6)}`}</span>
-                    </div>
-                    <span className="text-white font-mono text-sm">{t.stats?.win_rate?.toFixed(1)}%</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card border-[#7B61FF]/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-[#7B61FF]" /> Top ROI
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {topPerformers.top_by_roi?.slice(0, 3).map((t, i) => (
-                  <div key={i} className="flex items-center justify-between py-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#7B61FF] font-bold">{i + 1}</span>
-                      <span className="text-sm truncate">{t.display_name || `Trader_${t.user_id?.slice(0,6)}`}</span>
-                    </div>
-                    <span className="text-white font-mono text-sm">{t.stats?.roi_percentage?.toFixed(1)}%</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-2">
+              <Badge className={strategies.length > 0 && strategies[0]?.data_source === "coingecko" ? "bg-[#00FF94]/10 text-[#00FF94] text-[9px]" : "bg-zinc-700 text-zinc-400 text-[9px]"} data-testid="lb-data-source">
+                {isDemoMode ? "Demo Mode — Mock Data" : "Data: CoinGecko"}
+              </Badge>
+              <Button variant="outline" size="sm" onClick={loadStrategies} className="border-zinc-800 rounded-full" data-testid="refresh-btn">
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
           </div>
+        </motion.div>
+
+        {/* Top 3 Podium */}
+        {topThree.length >= 3 && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-3 gap-4 mb-8">
+            {[1, 0, 2].map((idx, pos) => {
+              const s = topThree[idx];
+              if (!s) return null;
+              const medal = idx === 0 ? { color: "border-[#FFB800]/40 bg-[#FFB800]/5", text: "text-[#FFB800]", label: "1st" } : idx === 1 ? { color: "border-zinc-500/30 bg-zinc-500/5", text: "text-zinc-400", label: "2nd" } : { color: "border-[#CD7F32]/30 bg-[#CD7F32]/5", text: "text-[#CD7F32]", label: "3rd" };
+              return (
+                <Card key={idx} className={`bg-[#0A0A0A] ${medal.color} ${idx === 0 ? "md:-mt-4" : ""}`} data-testid={`podium-${idx}`}>
+                  <CardContent className="p-4 text-center">
+                    <div className={`text-2xl font-bold font-mono ${medal.text} mb-2`}>{medal.label}</div>
+                    <p className="text-sm font-semibold text-zinc-200 mb-1 truncate">{s.name}</p>
+                    <Badge className={typeColors[s.type] || "bg-zinc-700 text-zinc-400"} >{s.type?.replace("_", " ")}</Badge>
+                    <div className="mt-3 space-y-1 text-xs font-mono">
+                      <div className="flex justify-between"><span className="text-zinc-600">Sharpe</span><span className="text-white font-bold">{s.metrics?.sharpe_ratio}</span></div>
+                      <div className="flex justify-between"><span className="text-zinc-600">Return</span><span className={s.metrics?.total_return >= 0 ? "text-[#00FF94]" : "text-red-400"}>{s.metrics?.total_return}%</span></div>
+                      <div className="flex justify-between"><span className="text-zinc-600">Win Rate</span><span className="text-zinc-300">{s.metrics?.win_rate}%</span></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </motion.div>
         )}
 
-        {/* Main Leaderboard */}
-        <Card className="glass-card">
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="w-8 h-8 animate-spin text-[#7B61FF]" />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-zinc-800">
-                      <th className="text-left p-4 text-zinc-500 text-sm">Rank</th>
-                      <th className="text-left p-4 text-zinc-500 text-sm">Trader</th>
-                      <th className="text-right p-4 text-zinc-500 text-sm">Total P&L</th>
-                      <th className="text-right p-4 text-zinc-500 text-sm">Win Rate</th>
-                      <th className="text-right p-4 text-zinc-500 text-sm">ROI</th>
-                      <th className="text-right p-4 text-zinc-500 text-sm">Trades</th>
-                      <th className="text-right p-4 text-zinc-500 text-sm">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {traders.map((trader, i) => (
-                      <tr key={trader.user_id} className="border-b border-zinc-800/50 hover:bg-[#050505]/50" data-testid={`leaderboard-row-${i}`}>
-                        <td className="p-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                            trader.rank_position === 1 ? 'bg-[#FFB800]/20 text-[#FFB800]' :
-                            trader.rank_position === 2 ? 'bg-zinc-400/20 text-zinc-400' :
-                            trader.rank_position === 3 ? 'bg-[#CD7F32]/20 text-[#CD7F32]' :
-                            'bg-zinc-800 text-zinc-400'
-                          }`}>
-                            {trader.rank_position}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{trader.display_name || `Trader_${trader.user_id?.slice(0,6)}`}</span>
-                            {trader.is_elite && <Badge className="bg-[#FFB800]/20 text-[#FFB800] text-xs">ELITE</Badge>}
-                            {trader.is_pro && !trader.is_elite && <Badge className="bg-[#7B61FF]/20 text-[#7B61FF] text-xs">PRO</Badge>}
-                          </div>
-                        </td>
-                        <td className={`p-4 text-right font-mono ${trader.stats?.total_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                          {formatPnl(trader.stats?.total_pnl)}
-                        </td>
-                        <td className="p-4 text-right font-mono">
-                          {trader.stats?.win_rate?.toFixed(1) || '-'}%
-                        </td>
-                        <td className={`p-4 text-right font-mono ${(trader.stats?.roi_percentage || 0) >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                          {trader.stats?.roi_percentage?.toFixed(1) || '-'}%
-                        </td>
-                        <td className="p-4 text-right font-mono text-zinc-400">
-                          {trader.stats?.total_trades || 0}
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-1">
-                            {isPro && trader.user_id !== user?.id && (
-                              <Button size="sm" onClick={() => { setFollowTarget(trader); setFollowModalOpen(true); }}
-                                className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-xs"
-                                data-testid={`follow-btn-${trader.user_id}`}
-                              >
-                                <Copy className="w-3 h-3 mr-1" /> Copy
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline" onClick={() => viewTraderProfile(trader.user_id)} className="border-zinc-700">
-                              View
-                            </Button>
-                          </div>
-                        </td>
+        {/* Rankings Table */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Card className="bg-[#0A0A0A] border-zinc-800/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-[#7B61FF]" /> All Strategies ({strategies.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#7B61FF]" /></div>
+              ) : strategies.length === 0 ? (
+                <div className="py-16 text-center text-zinc-600 text-sm">No strategies backtested yet. Go to Strategy Lab or Simulation to create one.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full" data-testid="strategy-table">
+                    <thead>
+                      <tr className="border-b border-zinc-800/50">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider w-12">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Strategy</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Type</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Asset</th>
+                        {SORT_COLS.map(col => (
+                          <th key={col.key} className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider cursor-pointer select-none hover:text-zinc-300 transition-colors" onClick={() => handleSort(col.apiKey)} data-testid={`sort-${col.apiKey}`}>
+                            <span className="inline-flex items-center gap-1">
+                              {col.label}
+                              {sortBy === col.apiKey ? (sortOrder === "desc" ? <ChevronDown className="w-3 h-3 text-[#7B61FF]" /> : <ChevronUp className="w-3 h-3 text-[#7B61FF]" />) : <ArrowUpDown className="w-3 h-3 text-zinc-700" />}
+                            </span>
+                          </th>
+                        ))}
+                        <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">Trades</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider w-20"></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/30">
+                      {strategies.map((s, i) => (
+                        <tr key={s.id || i} className="hover:bg-white/[0.02] transition-colors" data-testid={`leaderboard-row-${i}`}>
+                          <td className="px-4 py-4">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-[#FFB800]/20 text-[#FFB800]" : i === 1 ? "bg-zinc-400/15 text-zinc-400" : i === 2 ? "bg-[#CD7F32]/15 text-[#CD7F32]" : "bg-zinc-800/50 text-zinc-500"}`}>{i + 1}</div>
+                          </td>
+                          <td className="px-4 py-4 text-sm font-medium text-zinc-200 max-w-[200px] truncate">{s.name}</td>
+                          <td className="px-4 py-4"><Badge className={typeColors[s.type] || "bg-zinc-700 text-zinc-400"} >{s.type?.replace("_", " ")}</Badge></td>
+                          <td className="px-4 py-4 text-xs font-mono text-zinc-400">{s.asset}</td>
+                          <td className="px-4 py-4 text-right text-sm font-mono font-bold text-white">{s.metrics?.sharpe_ratio}</td>
+                          <td className={`px-4 py-4 text-right text-sm font-mono ${(s.metrics?.total_return || 0) >= 0 ? "text-[#00FF94]" : "text-red-400"}`}>{s.metrics?.total_return}%</td>
+                          <td className="px-4 py-4 text-right text-sm font-mono text-red-400">{s.metrics?.max_drawdown}%</td>
+                          <td className="px-4 py-4 text-right text-sm font-mono text-zinc-300">{s.metrics?.win_rate}%</td>
+                          <td className="px-4 py-4 text-right text-xs font-mono text-zinc-500">{s.metrics?.total_trades || "--"}</td>
+                          <td className="px-4 py-4 text-center">
+                            <Button size="sm" variant="outline" onClick={() => openDetail(s)} className="rounded-full border-zinc-800 hover:border-[#7B61FF]/50 text-[10px] h-7 px-3" data-testid={`view-strategy-${i}`}>View</Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
-            {!isPro && traders.length >= 10 && (
-              <div className="p-4 border-t border-zinc-800 bg-[#7B61FF]/5 text-center" data-testid="leaderboard-upgrade-cta">
-                <Lock className="inline w-4 h-4 mr-1 text-[#7B61FF]" />
-                <p className="text-sm text-zinc-400 inline">
-                  Free users can only see the Top 10. 
-                </p>
-                <Button asChild size="sm" variant="link" className="text-[#7B61FF] p-0 ml-1">
-                  <Link to="/pricing">Upgrade to Pro</Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Trader Detail Dialog */}
-        <Dialog open={traderDetailOpen} onOpenChange={setTraderDetailOpen}>
-          <DialogContent className="bg-[#121212] border-zinc-800 max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Trader Profile</DialogTitle>
-            </DialogHeader>
-            {selectedTrader && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-[#7B61FF]/20 flex items-center justify-center">
-                    <User className="w-8 h-8 text-[#7B61FF]" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold">{selectedTrader.display_name || `Trader_${selectedTrader.user_id?.slice(0,6)}`}</p>
-                    <div className="flex gap-2 mt-1">
-                      {selectedTrader.is_elite && <Badge className="bg-[#FFB800]/20 text-[#FFB800]">ELITE</Badge>}
-                      {selectedTrader.is_pro && !selectedTrader.is_elite && <Badge className="bg-[#7B61FF]/20 text-[#7B61FF]">PRO</Badge>}
+        {/* Strategy Detail Modal */}
+        <AnimatePresence>
+          {detailModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setDetailModal(null)}>
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={e => e.stopPropagation()} className="w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+                <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="strategy-detail-modal">
+                  <CardHeader className="border-b border-zinc-800/50 pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base font-semibold text-zinc-100">{detailModal.name}</CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={typeColors[detailModal.type] || "bg-zinc-700 text-zinc-400"}>{detailModal.type?.replace("_", " ")}</Badge>
+                          <span className="text-xs font-mono text-zinc-500">{detailModal.asset}</span>
+                          <Badge className={detailModal.data_source === "coingecko" ? "bg-[#00FF94]/10 text-[#00FF94] text-[9px]" : "bg-zinc-700 text-zinc-400 text-[9px]"} data-testid="detail-data-source">
+                            {detailModal.data_source === "coingecko" ? "Data: CoinGecko" : "Demo Mode — Mock Data"}
+                          </Badge>
+                        </div>
+                      </div>
+                      <button onClick={() => setDetailModal(null)} className="p-1 rounded hover:bg-white/5"><X className="w-4 h-4 text-zinc-500" /></button>
                     </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 rounded-lg bg-[#050505]">
-                    <p className="text-xs text-zinc-500">Total P&L</p>
-                    <p className={`text-lg font-mono ${selectedTrader.stats?.total_pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                      {formatPnl(selectedTrader.stats?.total_pnl)}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-[#050505]">
-                    <p className="text-xs text-zinc-500">Win Rate</p>
-                    <p className="text-lg font-mono">{selectedTrader.stats?.win_rate?.toFixed(1) || '-'}%</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-[#050505]">
-                    <p className="text-xs text-zinc-500">ROI</p>
-                    <p className={`text-lg font-mono ${(selectedTrader.stats?.roi_percentage || 0) >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                      {selectedTrader.stats?.roi_percentage?.toFixed(1) || '-'}%
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-[#050505]">
-                    <p className="text-xs text-zinc-500">Total Trades</p>
-                    <p className="text-lg font-mono">{selectedTrader.stats?.total_trades || 0}</p>
-                  </div>
-                </div>
-
-                {selectedTrader.recent_trades && selectedTrader.recent_trades.length > 0 && (
-                  <div>
-                    <p className="text-sm text-zinc-500 mb-2">Recent Trades</p>
-                    <div className="space-y-2">
-                      {selectedTrader.recent_trades.slice(0, 5).map((trade, i) => (
-                        <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-[#050505]">
-                          <div className="flex items-center gap-2">
-                            <Badge className={trade.side === 'buy' ? 'bg-[#00FF94]/20 text-[#00FF94]' : 'bg-red-400/20 text-red-400'}>
-                              {trade.side?.toUpperCase()}
-                            </Badge>
-                            <span className="font-mono">{trade.symbol}</span>
-                          </div>
-                          <span className={`font-mono ${trade.pnl >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                            {formatPnl(trade.pnl)}
-                          </span>
+                  </CardHeader>
+                  <CardContent className="p-5 space-y-5">
+                    {/* Key Metrics Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        { label: "Sharpe Ratio", value: detailModal.metrics?.sharpe_ratio, color: "text-white" },
+                        { label: "Total Return", value: `${detailModal.metrics?.total_return}%`, color: (detailModal.metrics?.total_return || 0) >= 0 ? "text-[#00FF94]" : "text-red-400" },
+                        { label: "Max Drawdown", value: `${detailModal.metrics?.max_drawdown}%`, color: "text-red-400" },
+                        { label: "Win Rate", value: `${detailModal.metrics?.win_rate}%`, color: "text-white" },
+                      ].map((m, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-[#050505] border border-zinc-800/30 text-center">
+                          <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">{m.label}</p>
+                          <p className={`text-lg font-bold font-mono ${m.color}`}>{m.value}</p>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
 
-                {!isPro && (
-                  <div className="p-3 rounded-lg bg-[#7B61FF]/10 border border-[#7B61FF]/30 text-center">
-                    <p className="text-sm text-zinc-400">
-                      Upgrade to Pro to see full trade history and copy this trader
-                    </p>
-                  </div>
-                )}
+                    {/* Equity Curve */}
+                    {detailModal.metrics?.equity_curve?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-zinc-500 mb-2 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Equity Curve</p>
+                        <div className="h-32 flex items-end gap-[2px]">
+                          {detailModal.metrics.equity_curve.map((pt, i) => {
+                            const vals = detailModal.metrics.equity_curve.map(p => p.value);
+                            const mn = Math.min(...vals);
+                            const mx = Math.max(...vals);
+                            const pct = mx > mn ? ((pt.value - mn) / (mx - mn)) * 100 : 50;
+                            return (<div key={i} className="flex-1 rounded-t bg-[#00FF94]/50 hover:bg-[#00FF94]/70 transition-colors" style={{ height: `${Math.max(pct, 3)}%` }} title={`$${Math.round(pt.value).toLocaleString()}`} />);
+                          })}
+                        </div>
+                      </div>
+                    )}
 
-                {isPro && selectedTrader.user_id !== user?.id && (
-                  <Button
-                    onClick={() => { setFollowTarget(selectedTrader); setFollowModalOpen(true); setTraderDetailOpen(false); }}
-                    className="w-full bg-[#7B61FF] hover:bg-[#7B61FF]/90"
-                    data-testid="follow-from-profile-btn"
-                  >
-                    <Copy className="w-4 h-4 mr-2" /> Copy This Trader
-                  </Button>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+                    {/* Additional Stats */}
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      {[
+                        { icon: Zap, label: "Total Trades", value: detailModal.metrics?.total_trades || "--" },
+                        { icon: Shield, label: "Profit Factor", value: detailModal.metrics?.profit_factor || "--" },
+                        { icon: BarChart3, label: "Capital", value: detailModal.metrics?.initial_capital ? `$${detailModal.metrics.initial_capital.toLocaleString()} → $${(detailModal.metrics.final_capital || 0).toLocaleString()}` : "--" },
+                      ].map((m, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-[#050505] border border-zinc-800/30">
+                          <m.icon className="w-3.5 h-3.5 text-[#7B61FF] mx-auto mb-1" />
+                          <p className="text-[10px] text-zinc-600">{m.label}</p>
+                          <p className="text-xs font-mono text-zinc-300">{m.value}</p>
+                        </div>
+                      ))}
+                    </div>
 
-        {/* Follow Trader Modal */}
-        {followTarget && (
-          <FollowTraderModal
-            open={followModalOpen}
-            onOpenChange={setFollowModalOpen}
-            traderId={followTarget.user_id}
-            traderName={followTarget.display_name || `Trader_${followTarget.user_id?.slice(0,6)}`}
-            token={tokens?.access_token}
-            onSuccess={() => toast.success('Navigate to Copy Trading to manage your follows')}
-          />
-        )}
+                    {/* Parameters */}
+                    {detailModal.parameters && Object.keys(detailModal.parameters).length > 0 && (
+                      <div>
+                        <p className="text-xs text-zinc-500 mb-2">Parameters</p>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(detailModal.parameters).map(([k, v]) => (
+                            <Badge key={k} className="bg-zinc-800 text-zinc-400 font-mono text-[10px]">{k}: {String(v)}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {detailModal.updated_at && (
+                      <p className="text-[10px] text-zinc-700 text-right">Last updated: {new Date(detailModal.updated_at).toLocaleString()}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
-
-// Main App
 
 export default LeaderboardPage;
