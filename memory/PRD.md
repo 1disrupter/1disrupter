@@ -60,6 +60,16 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **usePrefetch Hook** — Integrated in App.js TrackingWrapper. Starts/stops prefetching on route changes.
 - **Strategy Detail Modal** — Smooth animated metrics reveal + equity curve bar animation.
 
+### Phase 6: Stripe Webhook Delivery Testing (March 29, 2026)
+- **Comprehensive Webhook Handler** (`services/stripe_webhook_handler.py`) — Processes all 9 Stripe event types: checkout.session.completed, customer.subscription.created/updated/deleted, invoice.payment_succeeded/failed, customer.subscription.trial_will_end, charge.refunded, charge.dispute.created.
+- **Subscription State Machine** — Full lifecycle: active, trialing, past_due, canceled, flagged. Each transition updates user.subscription_status, user_tier, is_pro, subscription_end.
+- **Idempotency** — Duplicate event detection via `stripe_webhook_events` collection with unique event_id index.
+- **Admin Stream Integration** — All webhook events broadcast to `/api/ws/admin/events` (stripe_event_received, subscription_activated/updated/canceled, payment_failed, refund_processed, dispute_created).
+- **Founder Email Alerts** — Triggered on: signature failure, unhandled events, payment failure, refund, dispute. Suppressed in demo mode.
+- **Test Simulation Endpoint** — `POST /api/webhook/stripe/test?admin_key=...` for admin-only event simulation without real Stripe.
+- **Subscription Status API** — `GET /api/subscription/status` (auth/demo), `GET /api/subscription/webhook-events?admin_key=...` (admin).
+- **Mobile Bootstrap Updated** — Includes subscription_status and subscription_end in user object.
+- **Backend Tests** — 16 unit tests + 21 API integration tests, 100% pass rate.
+
 ## Backlog (P2)
-- Webhook Delivery Testing via Stripe Dashboard
 - Deploy AlphaAIManager.sol Smart Contract to Sepolia
