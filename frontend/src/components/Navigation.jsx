@@ -174,7 +174,7 @@ const Navigation = () => {
                 {/* Demo Mode Toggle */}
                 <button
                   onClick={toggleDemoMode}
-                  className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                  className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
                     isDemoMode
                       ? 'bg-[#7B61FF]/15 border-[#7B61FF]/40 text-[#7B61FF]'
                       : 'bg-transparent border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'

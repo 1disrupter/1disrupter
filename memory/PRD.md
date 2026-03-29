@@ -30,26 +30,19 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion. 
 - Stripe Pro-Tier Gating
 - Real-Time Strategy Alerts (WebSocket)
 
-### Phase 3: Admin Traffic Analytics
-- Event Logging System (`POST /api/admin/events`)
-- Aggregated Summary, Timeseries, Raw Events endpoints
-- Global Frontend Tracking (page_view, error capture)
-- Component-Level Tracking (strategy_view, follow/unfollow, ws_connect/disconnect, signal, upgrade_prompt, checkout_start)
-- Admin Dashboard at `/admin/traffic` with KPIs, charts, conversion funnel, system health
+### Phase 3: Admin Traffic Analytics + Real-Time Event Streaming
+- Event Logging, Aggregated Summary, Timeseries, Raw Events endpoints
+- Global Frontend Tracking + Component-Level Tracking
+- Admin Dashboard at `/admin/traffic` with KPIs, charts, funnel, system health
+- WebSocket admin event stream at `/api/ws/admin/events`
+- Live Event Stream panel with pause/resume, filters, auto-scroll
 
-### Phase 3b: Real-Time Admin Event Streaming (NEW — March 29, 2026)
-- **WebSocket endpoint** `GET /api/ws/admin/events` — broadcasts traffic events to connected admins in real-time
-- **AdminEventsManager** — thread-safe connection manager with demo-only filtering
-- **Non-blocking broadcast** — events POSTed to `/api/admin/events` are broadcast via `asyncio.create_task`
-- **Live Event Stream panel** — embedded in `/admin/traffic` with:
-  - Scrollable event feed (newest at bottom, auto-scroll)
-  - Connection status indicator (Connected/Reconnecting/Disconnected)
-  - Pause/Resume toggle with visual banner
-  - Clear button
-  - Event type filter (multi-select)
-  - Demo vs Live filter
-  - Exponential backoff reconnection (max 8 attempts)
-  - Heartbeat/ping-pong keep-alive
+### Phase 3c: Responsive Navigation Fix (March 29, 2026)
+- **Priority-based nav split**: 5 primary items (Dashboard, Leaderboard, Research, Strategy Lab, Alerts) always visible
+- **"More" dropdown**: 8 overflow items (Simulation, AI Agents, Event Agents, Marketplace, Copy Trading, Following, Referrals, Pricing) + 3 admin items (Admin Panel, Demo Analytics, Traffic)
+- **Responsive breakpoints**: `xl` for Demo toggle, `md` for hamburger menu
+- **No horizontal overflow** at 1024px, 1366px, or 1920px
+- **Mobile hamburger menu** with all items at < 768px
 
 ## Key Endpoints
 | Endpoint | Method | Description |
@@ -75,8 +68,7 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion. 
 - `traffic_events` (type, user_id, timestamp, metadata)
 
 ## Test Results
-- Iterations 25-32: All passing (100% success rate)
-- Iteration 32: 23 backend + all frontend tests for admin streaming
+- Iterations 25-33: All passing (100% success rate except 1 minor fix applied)
 
 ## Backlog (P2)
 - Biometric Authentication for Mobile (Face ID / Touch ID)
