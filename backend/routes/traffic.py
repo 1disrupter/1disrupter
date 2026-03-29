@@ -166,6 +166,14 @@ async def stream_status(admin_key: str = Query(...)):
     return {"status": "active", "connections": admin_events_manager.get_stats()}
 
 
+@router.get("/admin/traffic/active-alerts")
+async def active_alerts(admin_key: str = Query(...)):
+    """Returns currently active alert types from the rule engine."""
+    await _verify_admin(admin_key)
+    from services.rule_engine import get_active_alerts
+    return {"active_alerts": get_active_alerts()}
+
+
 # ── GET /traffic/summary — aggregated metrics ──────────────────
 
 @router.get("/admin/traffic/summary")

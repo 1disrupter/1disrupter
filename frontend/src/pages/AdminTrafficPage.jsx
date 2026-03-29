@@ -4,7 +4,7 @@ import {
   BarChart3, Users, Eye, Zap, Globe, Radio, Heart,
   TrendingUp, ShieldAlert, Activity, RefreshCw, Wifi, WifiOff,
   ArrowUpRight, Filter, ChevronLeft, ChevronRight, Pause, Play,
-  Trash2, Terminal
+  Trash2, Terminal, AlertTriangle, BellRing, Volume2, VolumeX
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -26,7 +26,7 @@ const RANGES = [
   { value: "30d", label: "Last 30 days" },
 ];
 const EVENT_TYPES = [
-  "all", "page_view", "api_call", "strategy_view", "follow", "unfollow",
+  "all", "alerts_only", "page_view", "api_call", "strategy_view", "follow", "unfollow",
   "signal", "ws_connect", "ws_disconnect", "upgrade_prompt",
   "checkout_start", "checkout_success", "error",
 ];
@@ -34,6 +34,7 @@ const EVENT_TYPES = [
 const MAX_LIVE_EVENTS = 200;
 const RECONNECT_BASE_DELAY = 2000;
 const MAX_RECONNECT_ATTEMPTS = 8;
+const ALERT_PIN_DURATION = 10000; // 10 seconds
 
 // ── KPI Card ───────────────────────────────────────────────────
 
@@ -73,45 +74,61 @@ const FunnelBar = ({ label, value, max, color }) => {
 // ── Event Type Badge Config ────────────────────────────────────
 
 const typeBadgeConfig = {
-  page_view: { color: "bg-[#7B61FF]/15 text-[#7B61FF]", short: "PV" },
-  api_call: { color: "bg-[#00FF94]/15 text-[#00FF94]", short: "API" },
-  strategy_view: { color: "bg-[#FFB800]/15 text-[#FFB800]", short: "SV" },
-  follow: { color: "bg-pink-500/15 text-pink-400", short: "FOL" },
-  unfollow: { color: "bg-zinc-700 text-zinc-400", short: "UNF" },
-  signal: { color: "bg-purple-500/15 text-purple-400", short: "SIG" },
-  ws_connect: { color: "bg-blue-500/15 text-blue-400", short: "WSC" },
-  ws_disconnect: { color: "bg-zinc-700 text-zinc-400", short: "WSD" },
-  upgrade_prompt: { color: "bg-[#FFB800]/15 text-[#FFB800]", short: "UPG" },
-  checkout_start: { color: "bg-[#00FF94]/15 text-[#00FF94]", short: "CHK" },
-  checkout_success: { color: "bg-[#00FF94]/15 text-[#00FF94]", short: "SUC" },
-  error: { color: "bg-red-500/15 text-red-400", short: "ERR" },
+  page_view: { color: "bg-[#7B61FF]/15 text-[#7B61FF]" },
+  api_call: { color: "bg-[#00FF94]/15 text-[#00FF94]" },
+  strategy_view: { color: "bg-[#FFB800]/15 text-[#FFB800]" },
+  follow: { color: "bg-pink-500/15 text-pink-400" },
+  unfollow: { color: "bg-zinc-700 text-zinc-400" },
+  signal: { color: "bg-purple-500/15 text-purple-400" },
+  ws_connect: { color: "bg-blue-500/15 text-blue-400" },
+  ws_disconnect: { color: "bg-zinc-700 text-zinc-400" },
+  upgrade_prompt: { color: "bg-[#FFB800]/15 text-[#FFB800]" },
+  checkout_start: { color: "bg-[#00FF94]/15 text-[#00FF94]" },
+  checkout_success: { color: "bg-[#00FF94]/15 text-[#00FF94]" },
+  error: { color: "bg-red-500/15 text-red-400" },
+  alert: { color: "bg-red-500/20 text-red-400" },
 };
 
 // ── Live Event Feed Line ───────────────────────────────────────
 
-const LiveEventLine = ({ ev }) => {
-  const cfg = typeBadgeConfig[ev.type] || { color: "bg-zinc-700 text-zinc-400", short: "?" };
+const LiveEventLine = ({ ev, isPinned }) => {
+  const isAlert = ev.type === "alert";
+  const cfg = typeBadgeConfig[ev.type] || { color: "bg-zinc-700 text-zinc-400" };
   const ts = ev.timestamp ? new Date(ev.timestamp) : new Date();
   const time = ts.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  // Build description from metadata
   const meta = ev.metadata || {};
   const parts = [];
-  if (meta.path) parts.push(meta.path);
-  if (meta.endpoint) parts.push(meta.endpoint);
-  if (meta.strategy_id) parts.push(`strategy:${meta.strategy_id.slice(0, 8)}`);
-  if (meta.action) parts.push(meta.action);
-  if (meta.feature) parts.push(meta.feature);
-  if (meta.message) parts.push(meta.message.slice(0, 60));
+  if (isAlert) {
+    parts.push(meta.alert_type?.replace(/_/g, " ")?.toUpperCase() || "ALERT");
+    if (meta.message) parts.push(meta.message);
+  } else {
+    if (meta.path) parts.push(meta.path);
+    if (meta.endpoint) parts.push(meta.endpoint);
+    if (meta.strategy_id) parts.push(`strategy:${String(meta.strategy_id).slice(0, 8)}`);
+    if (meta.action) parts.push(meta.action);
+    if (meta.feature) parts.push(meta.feature);
+    if (meta.message) parts.push(String(meta.message).slice(0, 60));
+  }
   const desc = parts.join(" — ") || ev.type;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1 text-[11px] font-mono hover:bg-white/[0.02] transition-colors group">
+    <div
+      className={`flex items-center gap-2 px-3 py-1 text-[11px] font-mono transition-colors group ${
+        isAlert
+          ? "bg-red-500/[0.06] border-l-2 border-red-500/40 hover:bg-red-500/[0.1]"
+          : "hover:bg-white/[0.02]"
+      } ${isPinned ? "bg-red-500/[0.08]" : ""}`}
+      data-testid={isAlert ? "live-alert-line" : "live-event-line"}
+    >
+      {isAlert && <AlertTriangle className="w-3 h-3 text-red-400 shrink-0 animate-pulse" />}
       <span className="text-zinc-700 shrink-0 w-16">[{time}]</span>
-      <Badge className={`${cfg.color} text-[8px] px-1.5 py-0 h-4 shrink-0`}>{ev.type}</Badge>
-      <span className="text-zinc-400 truncate flex-1">{desc}</span>
+      <Badge className={`${cfg.color} text-[8px] px-1.5 py-0 h-4 shrink-0 ${isAlert ? "font-bold" : ""}`}>
+        {isAlert ? `ALERT` : ev.type}
+      </Badge>
+      <span className={`truncate flex-1 ${isAlert ? "text-red-300 font-semibold" : "text-zinc-400"}`}>{desc}</span>
       <span className="text-zinc-700 shrink-0">
-        {ev.user_id ? `user:${ev.user_id.slice(0, 6)}` : "anon"}
+        {ev.user_id ? `user:${ev.user_id.slice(0, 6)}` : "sys"}
       </span>
       {meta.demo && <span className="text-[8px] text-pink-500/60 shrink-0">demo</span>}
     </div>
@@ -134,17 +151,19 @@ const AdminTrafficPage = () => {
 
   // Live stream state
   const [liveEvents, setLiveEvents] = useState([]);
-  const [liveStatus, setLiveStatus] = useState("disconnected"); // connected | reconnecting | disconnected
+  const [pinnedAlerts, setPinnedAlerts] = useState([]); // alerts pinned to top
+  const [liveStatus, setLiveStatus] = useState("disconnected");
   const [livePaused, setLivePaused] = useState(false);
   const [liveTypeFilter, setLiveTypeFilter] = useState("all");
-  const [liveDemoFilter, setLiveDemoFilter] = useState("all"); // all | demo | live
+  const [liveDemoFilter, setLiveDemoFilter] = useState("all");
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [activeAlerts, setActiveAlerts] = useState([]);
   const wsRef = useRef(null);
   const reconnectCount = useRef(0);
   const reconnectTimer = useRef(null);
   const feedRef = useRef(null);
   const pausedRef = useRef(false);
 
-  // Keep pausedRef in sync
   useEffect(() => { pausedRef.current = livePaused; }, [livePaused]);
 
   // ── Data fetching ────────────────────────────────────────────
@@ -154,14 +173,19 @@ const AdminTrafficPage = () => {
     setError(null);
     try {
       const params = `admin_key=${ADMIN_KEY}&range=${range}`;
-      const [sumRes, tsRes] = await Promise.all([
+      const [sumRes, tsRes, alertsRes] = await Promise.all([
         fetch(`${API}/admin/traffic/summary?${params}`),
         fetch(`${API}/admin/traffic/timeseries?${params}`),
+        fetch(`${API}/admin/traffic/active-alerts?${params}`),
       ]);
       if (!sumRes.ok || !tsRes.ok) throw new Error("Failed to load traffic data");
       const [sumData, tsData] = await Promise.all([sumRes.json(), tsRes.json()]);
       setSummary(sumData);
       setTimeseries(tsData.series || []);
+      if (alertsRes.ok) {
+        const alertsData = await alertsRes.json();
+        setActiveAlerts(alertsData.active_alerts || []);
+      }
     } catch (e) {
       setError(e.message);
       toast.error("Failed to load traffic analytics");
@@ -216,8 +240,33 @@ const AdminTrafficPage = () => {
           const data = JSON.parse(event.data);
           if (data.type === "connected" || data.type === "pong" || data.type === "heartbeat") return;
 
+          const isAlert = data.type === "alert";
+
           if (!pausedRef.current) {
             setLiveEvents((prev) => [...prev, data].slice(-MAX_LIVE_EVENTS));
+          }
+
+          // Pin alerts to top for ALERT_PIN_DURATION
+          if (isAlert) {
+            const pinId = data.id || Date.now();
+            setPinnedAlerts((prev) => [...prev, { ...data, _pinId: pinId }]);
+
+            // Show alert toast
+            toast.error(data.metadata?.message || "Alert triggered", {
+              description: data.metadata?.alert_type?.replace(/_/g, " ") || "System Alert",
+              duration: 8000,
+            });
+
+            // Refresh active alerts
+            fetch(`${API}/admin/traffic/active-alerts?admin_key=${ADMIN_KEY}`)
+              .then(r => r.json())
+              .then(d => setActiveAlerts(d.active_alerts || []))
+              .catch(() => {});
+
+            // Remove pin after ALERT_PIN_DURATION
+            setTimeout(() => {
+              setPinnedAlerts((prev) => prev.filter((p) => p._pinId !== pinId));
+            }, ALERT_PIN_DURATION);
           }
         } catch {
           // ignore
@@ -245,7 +294,6 @@ const AdminTrafficPage = () => {
 
     connect();
 
-    // Ping every 45s
     const pingIv = setInterval(() => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ action: "ping" }));
@@ -272,7 +320,8 @@ const AdminTrafficPage = () => {
   // ── Filtered live events ─────────────────────────────────────
 
   const filteredLiveEvents = liveEvents.filter((ev) => {
-    if (liveTypeFilter !== "all" && ev.type !== liveTypeFilter) return false;
+    if (liveTypeFilter === "alerts_only" && ev.type !== "alert") return false;
+    if (liveTypeFilter !== "all" && liveTypeFilter !== "alerts_only" && ev.type !== liveTypeFilter) return false;
     if (liveDemoFilter === "demo" && !ev.metadata?.demo) return false;
     if (liveDemoFilter === "live" && ev.metadata?.demo) return false;
     return true;
@@ -289,6 +338,8 @@ const AdminTrafficPage = () => {
   };
   const st = statusColors[liveStatus];
 
+  const alertCount = liveEvents.filter(e => e.type === "alert").length;
+
   return (
     <div className="min-h-screen pt-24 pb-12 px-4" data-testid="admin-traffic-page">
       <div className="max-w-7xl mx-auto">
@@ -301,6 +352,12 @@ const AdminTrafficPage = () => {
                   <Activity className="w-6 h-6 text-[#7B61FF]" />
                 </div>
                 Traffic Analytics
+                {activeAlerts.length > 0 && (
+                  <Badge className="bg-red-500/20 text-red-400 text-[10px] gap-1 animate-pulse ml-2" data-testid="alert-active-badge">
+                    <AlertTriangle className="w-3 h-3" />
+                    {activeAlerts.length} ALERT{activeAlerts.length > 1 ? "S" : ""} ACTIVE
+                  </Badge>
+                )}
               </h1>
               <p className="text-sm text-zinc-500 mt-2 ml-14">Real-time user activity, API calls, and conversion tracking</p>
             </div>
@@ -319,6 +376,27 @@ const AdminTrafficPage = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Active Alerts Banner */}
+        {activeAlerts.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className="bg-red-500/[0.05] border-red-500/20 mb-6" data-testid="active-alerts-banner">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-red-500/10 shrink-0">
+                  <BellRing className="w-5 h-5 text-red-400 animate-pulse" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-red-300">Active Alerts</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {activeAlerts.map(a => (
+                      <Badge key={a} className="bg-red-500/15 text-red-400 text-[9px]">{a.replace(/_/g, " ")}</Badge>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {error && (
           <Card className="bg-red-500/5 border-red-500/20 mb-6">
@@ -453,17 +531,27 @@ const AdminTrafficPage = () => {
                         <st.icon className={`w-3 h-3 ${liveStatus === "reconnecting" ? "animate-spin" : ""}`} />
                         {st.label}
                       </Badge>
+                      {alertCount > 0 && (
+                        <Badge className="bg-red-500/15 text-red-400 text-[9px] gap-1" data-testid="live-alert-count">
+                          <AlertTriangle className="w-3 h-3" />
+                          {alertCount}
+                        </Badge>
+                      )}
                       <span className="text-[10px] text-zinc-600 font-normal font-mono ml-1">{filteredLiveEvents.length} events</span>
                     </CardTitle>
 
                     <div className="flex items-center gap-2">
-                      {/* Type filter */}
+                      {/* Type filter — includes alerts_only */}
                       <Select value={liveTypeFilter} onValueChange={setLiveTypeFilter}>
                         <SelectTrigger className="w-[130px] bg-[#111] border-zinc-800 text-[10px] h-7" data-testid="live-type-filter">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0A0A0A] border-zinc-800">
-                          {EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="text-xs">{t === "all" ? "All Types" : t}</SelectItem>)}
+                          {EVENT_TYPES.map(t => (
+                            <SelectItem key={t} value={t} className="text-xs">
+                              {t === "all" ? "All Types" : t === "alerts_only" ? "Alerts Only" : t}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
 
@@ -478,6 +566,18 @@ const AdminTrafficPage = () => {
                           <SelectItem value="live" className="text-xs">Live</SelectItem>
                         </SelectContent>
                       </Select>
+
+                      {/* Sound toggle */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSoundEnabled(p => !p)}
+                        className={`h-7 w-7 p-0 border-zinc-800 ${soundEnabled ? "text-[#FFB800] border-[#FFB800]/30" : "text-zinc-600"}`}
+                        data-testid="live-sound-toggle"
+                        title={soundEnabled ? "Mute alerts" : "Enable alert sounds"}
+                      >
+                        {soundEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+                      </Button>
 
                       {/* Pause / Resume */}
                       <Button
@@ -495,7 +595,7 @@ const AdminTrafficPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setLiveEvents([])}
+                        onClick={() => { setLiveEvents([]); setPinnedAlerts([]); }}
                         className="h-7 px-2.5 border-zinc-800 text-[10px] text-zinc-400"
                         data-testid="live-clear-btn"
                       >
@@ -506,6 +606,18 @@ const AdminTrafficPage = () => {
                 </CardHeader>
 
                 <CardContent className="p-0">
+                  {/* Pinned alerts */}
+                  {pinnedAlerts.length > 0 && (
+                    <div className="border-b border-red-500/20 bg-red-500/[0.03]" data-testid="pinned-alerts-section">
+                      <div className="px-3 py-1 text-[9px] text-red-400/80 uppercase tracking-wider font-semibold flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Pinned Alerts
+                      </div>
+                      {pinnedAlerts.map((ev, i) => (
+                        <LiveEventLine key={ev._pinId || i} ev={ev} isPinned />
+                      ))}
+                    </div>
+                  )}
+
                   <div
                     ref={feedRef}
                     className="h-72 overflow-y-auto bg-[#060606] border-t border-zinc-800/30 font-mono"
@@ -522,7 +634,7 @@ const AdminTrafficPage = () => {
                     ) : (
                       <div className="divide-y divide-zinc-900/50">
                         {filteredLiveEvents.map((ev, i) => (
-                          <LiveEventLine key={`${ev.id || ev.timestamp}-${i}`} ev={ev} />
+                          <LiveEventLine key={`${ev.id || ev.timestamp}-${i}`} ev={ev} isPinned={false} />
                         ))}
                       </div>
                     )}
@@ -560,7 +672,7 @@ const AdminTrafficPage = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#0A0A0A] border-zinc-800">
-                      {EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="text-xs">{t === "all" ? "All Types" : t}</SelectItem>)}
+                      {EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="text-xs">{t === "all" ? "All Types" : t === "alerts_only" ? "Alerts Only" : t}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -581,17 +693,21 @@ const AdminTrafficPage = () => {
                       {events.length === 0 ? (
                         <tr><td colSpan={4} className="text-center py-8 text-zinc-600">No events found</td></tr>
                       ) : events.map((ev, i) => {
+                        const isAlert = ev.type === "alert";
                         const badgeCfg = typeBadgeConfig[ev.type] || { color: "bg-zinc-700 text-zinc-400" };
                         return (
-                          <tr key={ev.id || i} className="hover:bg-white/[0.01] transition-colors" data-testid={`event-row-${i}`}>
+                          <tr key={ev.id || i} className={`transition-colors ${isAlert ? "bg-red-500/[0.04] hover:bg-red-500/[0.08]" : "hover:bg-white/[0.01]"}`} data-testid={`event-row-${i}`}>
                             <td className="px-4 py-2.5">
-                              <Badge className={`${badgeCfg.color} text-[9px]`}>{ev.type}</Badge>
+                              <div className="flex items-center gap-1.5">
+                                {isAlert && <AlertTriangle className="w-3 h-3 text-red-400" />}
+                                <Badge className={`${badgeCfg.color} text-[9px] ${isAlert ? "font-bold" : ""}`}>{ev.type}</Badge>
+                              </div>
                             </td>
                             <td className="px-4 py-2.5 text-zinc-400 font-mono">
-                              {ev.user_id ? ev.user_id.slice(0, 8) + "..." : <span className="text-zinc-700">anon</span>}
+                              {ev.user_id ? ev.user_id.slice(0, 8) + "..." : <span className="text-zinc-700">sys</span>}
                             </td>
-                            <td className="px-4 py-2.5 text-zinc-500 max-w-[300px] truncate">
-                              {ev.metadata ? Object.entries(ev.metadata).filter(([k]) => k !== "demo").map(([k, v]) => `${k}=${v}`).join(", ") : "-"}
+                            <td className={`px-4 py-2.5 max-w-[300px] truncate ${isAlert ? "text-red-300 font-semibold" : "text-zinc-500"}`}>
+                              {ev.metadata ? Object.entries(ev.metadata).filter(([k]) => k !== "demo").map(([k, v]) => `${k}=${typeof v === "string" ? v.slice(0, 40) : v}`).join(", ") : "-"}
                             </td>
                             <td className="px-4 py-2.5 text-zinc-600 whitespace-nowrap">
                               {ev.timestamp ? new Date(ev.timestamp).toLocaleString() : "-"}

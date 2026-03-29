@@ -19,6 +19,7 @@ from database import db, client, logger
 from services.signal_service import signal_service
 from services.websocket_manager import manager
 from services.alerts_manager import alerts_manager
+from services.rule_engine import rule_engine_loop, init_db as init_rule_engine_db, get_active_alerts
 
 # ============= ROUTE IMPORTS =============
 from routes.auth import router as auth_router, init_db as init_auth_db
@@ -176,6 +177,7 @@ async def startup_db_client():
     init_mobile_db(db)
     init_copy_db(db)
     init_traffic_db(db)
+    init_rule_engine_db(db)
 
     # Create indexes
     await db.users.create_index("email", unique=True, sparse=True)
@@ -197,6 +199,7 @@ async def startup_db_client():
     asyncio.create_task(signal_generation_task())
     asyncio.create_task(price_broadcast_task())
     asyncio.create_task(strategy_alerts_task())
+    asyncio.create_task(rule_engine_loop())
 
     logger.info("AlphaAI Platform started successfully")
 
