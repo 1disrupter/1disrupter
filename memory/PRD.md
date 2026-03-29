@@ -60,7 +60,13 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **usePrefetch Hook** — Integrated in App.js TrackingWrapper. Starts/stops prefetching on route changes.
 - **Strategy Detail Modal** — Smooth animated metrics reveal + equity curve bar animation.
 
-### Phase 6: Stripe Webhook Delivery Testing (March 29, 2026)
+### Phase 6.1: WebSocket Reconnect Loop Fix (March 29, 2026)
+- **Root Cause**: `useStrategyAlerts` initialized `connected = false`. For unauthenticated/non-demo users, no WS was attempted, so `connected` stayed `false` and `MobileNetworkBanner` showed "Reconnecting..." permanently.
+- **Fix**: Three-state connected: `null` (no attempt) → `true` (connected) → `false` (disconnected). Banner only triggers on `wsConnected === false` (strict).
+- **Additional Fixes by Testing Agent**: Moved `setConnected(false)` after code-1000 check (prevented Pro user banner flash), added `upgradeRequiredRef` to prevent Free user infinite reconnect loop on code 4003.
+- **Safety Guards**: Rapid-close detection (< 500ms), fast-failure pause after 5 failures (30s cooldown), exponential backoff with increased base delay for server-down scenarios.
+- **Backend**: Added try/except wrapping around entire WS handler, increased timeout from 60s to 90s.
+
 - **Comprehensive Webhook Handler** (`services/stripe_webhook_handler.py`) — Processes all 9 Stripe event types: checkout.session.completed, customer.subscription.created/updated/deleted, invoice.payment_succeeded/failed, customer.subscription.trial_will_end, charge.refunded, charge.dispute.created.
 - **Subscription State Machine** — Full lifecycle: active, trialing, past_due, canceled, flagged. Each transition updates user.subscription_status, user_tier, is_pro, subscription_end.
 - **Idempotency** — Duplicate event detection via `stripe_webhook_events` collection with unique event_id index.
