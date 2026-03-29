@@ -77,5 +77,18 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Mobile Bootstrap Updated** — Includes subscription_status and subscription_end in user object.
 - **Backend Tests** — 16 unit tests + 21 API integration tests, 100% pass rate.
 
+### Phase 7: AlphaAIManager.sol Deployment Pipeline & Contract Integration (March 29, 2026)
+- **Hardhat Project** (`/app/contracts/`) — Compiles AlphaAIManager.sol (Solidity 0.8.20, optimizer 200 runs). Pinned to Hardhat v2.28.6. Reads keys from `backend/.env`.
+- **Deploy Script** (`scripts/deploy.js`) — Mainnet blocked, validates RPC/balance, saves deployment artifact to `deployments/sepolia/`, auto-updates `backend/.env` and `web3/contract_abi.py`.
+- **Verify Script** (`scripts/verify.js`) — Etherscan verification with 3x retry. Updates artifact with verification timestamp.
+- **Contract Manager Service** (`services/contract_manager.py`) — Web3 integration layer with TTL cache (30s), graceful mock fallback when RPC unavailable. Helpers: `get_strategy`, `get_strategy_count`, `get_investor_balance`, `get_owner`, `is_strategy_registered`, `get_contract_status`.
+- **Admin Contract Status** — `GET /api/admin/contract/status` returns health, deployment info, verification status, ABI function count, RPC connectivity.
+- **Admin Traffic Page** — Contract status card with address (clickable Etherscan link), verification badge, health indicator, ABI function count.
+- **Mobile Bootstrap** — Includes `contract.address` and `contract.network` in bootstrap response.
+- **Web3 Routes Updated** — `/api/contract/info`, `/api/contract/strategies`, `/api/contract/balance/{wallet}` use real contract_manager when available, fall back to DB/mock.
+- **Tests**: 19 contract_manager unit tests + 35 total backend tests, 100% pass.
+- **Status**: Pipeline ready. Contract NOT deployed yet — awaiting user credentials (DEPLOYER_PRIVATE_KEY, SEPOLIA_RPC_URL, ETHERSCAN_API_KEY).
+- **Deployment README** at `/app/contracts/README.md` with full instructions.
+
 ## Backlog (P2)
-- Deploy AlphaAIManager.sol Smart Contract to Sepolia
+- Actual Sepolia deployment when user provides keys
