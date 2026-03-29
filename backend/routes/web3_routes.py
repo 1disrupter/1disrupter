@@ -61,7 +61,7 @@ async def get_contract_info():
 @router.get("/contract/source")
 async def get_contract_source():
     """Get the Solidity source code for the AlphaAI Manager contract"""
-    contract_path = Path(__file__).parent / "contracts" / "AlphaAIManager.sol"
+    contract_path = Path(__file__).parent.parent / "contracts" / "AlphaAIManager.sol"
     
     if contract_path.exists():
         with open(contract_path, 'r') as f:

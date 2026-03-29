@@ -61,7 +61,7 @@ class PerformanceMetrics(BaseModel):
 def load_csv_price_data(filepath: str) -> List[Dict]:
     """Load historical price data from CSV file"""
     data = []
-    full_path = Path(__file__).parent / filepath.lstrip('/')
+    full_path = Path(__file__).parent.parent / filepath.lstrip('/')
     
     if not full_path.exists():
         print(f"CSV file not found: {full_path}")

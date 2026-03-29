@@ -58,17 +58,75 @@ Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conver
 ### Admin Route (DONE — 2026-03-28)
 - POST /api/auth/admin/create — temporary admin user creation endpoint
 
+### Phase 8 — Backend Monolith Refactor (DONE — 2026-03-29)
+- Refactored monolithic server.py (6,200+ lines) into clean modular architecture
+- server.py reduced to lightweight router orchestrator (~156 lines)
+- 20+ route modules in /app/backend/routes/
+- Centralized Pydantic models in /app/backend/models/schemas.py
+- Service layer in /app/backend/services/
+- Database connection in /app/backend/database/__init__.py
+- Fixed all import errors, missing dependencies, and path issues across extracted modules
+- All 15+ API endpoint groups verified working (100% pass rate)
+- Frontend fully functional with all dashboard pages accessible
+
 ## File Structure
 ```
+/app/backend/
+├── server.py                       # Lightweight router orchestrator (~156 lines)
+├── database/
+│   └── __init__.py                 # DB connection, EMERGENT_LLM_KEY, STRIPE_API_KEY
+├── models/
+│   └── schemas.py                  # All Pydantic models (~507 lines)
+├── routes/
+│   ├── admin.py                    # Admin dashboard
+│   ├── analytics_routes.py         # Analytics tracking
+│   ├── auth.py                     # Authentication (JWT, login, register)
+│   ├── copy_trading.py             # Copy trading system
+│   ├── demo.py                     # Demo/overview endpoints
+│   ├── event_agents.py             # Event-driven agent system
+│   ├── fund.py                     # Fund stats, investors, market data
+│   ├── leaderboard.py              # Leaderboard rankings
+│   ├── marketing.py                # Marketing assets, PDF generation
+│   ├── metrics.py                  # Platform metrics
+│   ├── mobile_v1.py                # Mobile API endpoints
+│   ├── notifications.py            # Notification preferences
+│   ├── orders.py                   # Order management
+│   ├── payments.py                 # Stripe payments
+│   ├── referrals.py                # Referral system
+│   ├── research.py                 # AI research engine, backtesting
+│   ├── signals.py                  # Tiered signal API (free/pro/elite)
+│   ├── simulation.py               # Simulation engine
+│   ├── strategies.py               # Strategy lab, agent management
+│   ├── trading.py                  # Live/paper trading, risk management
+│   ├── web3_routes.py              # Smart contract integration
+│   └── websocket.py                # WebSocket connections
+├── services/
+│   ├── copy_trading_service.py
+│   ├── email_service.py
+│   ├── leaderboard_service.py
+│   ├── market_data.py
+│   ├── order_manager.py
+│   ├── push_notifications.py
+│   ├── signal_intelligence.py
+│   ├── signal_service.py
+│   ├── simulation_service.py
+│   ├── trading_service.py
+│   └── websocket_manager.py
+├── web3/
+│   └── contract_abi.py
+├── data/
+│   ├── btc_usd.csv
+│   └── eth_usd.csv
+
 /app/frontend/src/
 ├── App.js                          # Routing shell (79 lines)
 ├── components/
-│   ├── BrandComponents.jsx         # BrandLockup, PoweredByTag
-│   ├── LivePriceTicker.jsx         # Live crypto price feed
-│   ├── Navigation.jsx              # Main nav bar (auth-aware)
-│   ├── NotificationSettings.jsx    # Push notification prefs
-│   ├── PlaceholderUI.jsx           # PageHeader, StatsRow, MockTable, MiniChart
-│   ├── SplashScreen.jsx            # Cinematic splash
+│   ├── BrandComponents.jsx
+│   ├── LivePriceTicker.jsx
+│   ├── Navigation.jsx
+│   ├── NotificationSettings.jsx
+│   ├── PlaceholderUI.jsx
+│   ├── SplashScreen.jsx
 │   ├── PerformanceMetrics.jsx
 │   ├── ReferralDashboard.jsx
 │   └── ui/                         # Shadcn components
@@ -76,9 +134,9 @@ Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conver
 │   ├── AuthContext.jsx
 │   └── WalletContext.jsx
 ├── lib/
-│   ├── constants.js                # API, BACKEND_URL
-│   ├── formatters.js               # formatCurrency, formatAddress
-│   └── mockData.js                 # Static mock data for all pages
+│   ├── constants.js
+│   ├── formatters.js
+│   └── mockData.js
 ├── pages/
 │   ├── AdminPage.jsx
 │   ├── AgentsPage.jsx
@@ -103,8 +161,8 @@ Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conver
 - Test user: `demo_test2@my-alpha-ai.com` / `NewPass1234!`
 
 ## Backlog (P2)
-- Backend server.py refactor (6,232 lines → multiple route files)
-- Biometric Auth for Mobile (Face ID / Touch ID)
+- Wire up real backend data to replace mock placeholders across dashboard
+- Biometric Authentication for Mobile (Face ID / Touch ID)
 - Mobile App API Optimization (React Native)
 - Webhook Delivery Testing via Stripe Dashboard
 - Deploy AlphaAIManager.sol to Sepolia mainnet

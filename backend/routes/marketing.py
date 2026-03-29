@@ -17,12 +17,12 @@ router = APIRouter(prefix="/api")
 
 async def download_comprehensive_pdf():
     """Download the comprehensive project documentation PDF"""
-    pdf_path = Path(__file__).parent / "reports" / "AlphaAI_Complete_Technical_Documentation.pdf"
+    pdf_path = Path(__file__).parent.parent / "reports" / "AlphaAI_Complete_Technical_Documentation.pdf"
     
     if not pdf_path.exists():
         # Generate if not exists
         import subprocess
-        subprocess.run(["python", str(Path(__file__).parent / "generate_comprehensive_report.py")], check=True)
+        subprocess.run(["python", str(Path(__file__).parent.parent / "generate_comprehensive_report.py")], check=True)
     
     if pdf_path.exists():
         return FileResponse(
@@ -39,12 +39,12 @@ async def regenerate_comprehensive_pdf():
     import subprocess
     try:
         result = subprocess.run(
-            ["python", str(Path(__file__).parent / "generate_comprehensive_report.py")],
+            ["python", str(Path(__file__).parent.parent / "generate_comprehensive_report.py")],
             capture_output=True,
             text=True,
             check=True
         )
-        pdf_path = Path(__file__).parent / "reports" / "AlphaAI_Complete_Technical_Documentation.pdf"
+        pdf_path = Path(__file__).parent.parent / "reports" / "AlphaAI_Complete_Technical_Documentation.pdf"
         return {
             "success": True,
             "message": "PDF regenerated successfully",
@@ -59,7 +59,7 @@ async def regenerate_comprehensive_pdf():
 @router.get("/marketing/assets")
 async def list_marketing_assets():
     """List all available marketing assets"""
-    assets_dir = Path(__file__).parent / "marketing_assets"
+    assets_dir = Path(__file__).parent.parent / "marketing_assets"
     if not assets_dir.exists():
         return {"assets": [], "message": "No marketing assets generated yet"}
     
@@ -78,7 +78,7 @@ async def list_marketing_assets():
 @router.get("/marketing/image/{filename}")
 async def get_marketing_image(filename: str):
     """Get a specific marketing image"""
-    assets_dir = Path(__file__).parent / "marketing_assets"
+    assets_dir = Path(__file__).parent.parent / "marketing_assets"
     filepath = assets_dir / filename
     
     if not filepath.exists():
@@ -93,7 +93,7 @@ async def generate_marketing_image(image_name: str):
     import subprocess
     try:
         result = subprocess.run(
-            ["python", str(Path(__file__).parent / "generate_marketing_images.py"), image_name],
+            ["python", str(Path(__file__).parent.parent / "generate_marketing_images.py"), image_name],
             capture_output=True,
             text=True,
             timeout=120
@@ -114,7 +114,7 @@ async def generate_marketing_image(image_name: str):
 @router.get("/marketing/videos")
 async def list_marketing_videos():
     """List all available marketing videos"""
-    videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
+    videos_dir = Path(__file__).parent.parent / "marketing_assets" / "videos"
     if not videos_dir.exists():
         return {"videos": [], "message": "No marketing videos generated yet"}
     
@@ -133,7 +133,7 @@ async def list_marketing_videos():
 @router.get("/marketing/video/{filename}")
 async def get_marketing_video(filename: str, request: Request):
     """Get a specific marketing video with proper range support for playback"""
-    videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
+    videos_dir = Path(__file__).parent.parent / "marketing_assets" / "videos"
     filepath = videos_dir / filename
     
     if not filepath.exists():
@@ -204,7 +204,7 @@ async def generate_marketing_video(video_name: str, background_tasks: Background
     # Run in background since video generation takes 2-5 minutes
     def generate():
         subprocess.run(
-            ["python", str(Path(__file__).parent / "generate_promo_videos.py"), video_name],
+            ["python", str(Path(__file__).parent.parent / "generate_promo_videos.py"), video_name],
             capture_output=True,
             text=True,
             timeout=600
@@ -223,7 +223,7 @@ async def generate_marketing_video(video_name: str, background_tasks: Background
 @router.get("/marketing/ads")
 async def list_viral_ads():
     """List all viral ad variations"""
-    ads_dir = Path(__file__).parent / "marketing_assets" / "ads"
+    ads_dir = Path(__file__).parent.parent / "marketing_assets" / "ads"
     ads = []
     if ads_dir.exists():
         for f in ads_dir.iterdir():
@@ -239,7 +239,7 @@ async def list_viral_ads():
 @router.get("/marketing/ad/{filename}")
 async def get_viral_ad(filename: str, request: Request):
     """Get a specific viral ad video"""
-    ads_dir = Path(__file__).parent / "marketing_assets" / "ads"
+    ads_dir = Path(__file__).parent.parent / "marketing_assets" / "ads"
     filepath = ads_dir / filename
     
     if not filepath.exists():
@@ -287,7 +287,7 @@ async def ads_preview_page():
     """HTML page to preview viral ads"""
     from fastapi.responses import HTMLResponse
     
-    ads_dir = Path(__file__).parent / "marketing_assets" / "ads"
+    ads_dir = Path(__file__).parent.parent / "marketing_assets" / "ads"
     ads = []
     if ads_dir.exists():
         # Sort by name to show main first
@@ -401,7 +401,7 @@ async def video_preview_page():
     """HTML page to preview all marketing videos"""
     from fastapi.responses import HTMLResponse
     
-    videos_dir = Path(__file__).parent / "marketing_assets" / "videos"
+    videos_dir = Path(__file__).parent.parent / "marketing_assets" / "videos"
     videos = []
     if videos_dir.exists():
         # Sort to show main promo first
@@ -489,7 +489,7 @@ async def video_preview_page():
 @router.get("/marketing/ads-v2")
 async def list_hc_ads():
     """List high-converting ad variations v2"""
-    ads_dir = Path(__file__).parent / "marketing_assets" / "ads_v2"
+    ads_dir = Path(__file__).parent.parent / "marketing_assets" / "ads_v2"
     ads = []
     if ads_dir.exists():
         for f in sorted(ads_dir.iterdir()):
@@ -505,7 +505,7 @@ async def list_hc_ads():
 @router.get("/marketing/ad-v2/{filename}")
 async def get_hc_ad(filename: str, request: Request):
     """Get a high-converting ad video v2"""
-    ads_dir = Path(__file__).parent / "marketing_assets" / "ads_v2"
+    ads_dir = Path(__file__).parent.parent / "marketing_assets" / "ads_v2"
     filepath = ads_dir / filename
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Ad not found")
@@ -516,7 +516,7 @@ async def hc_ads_preview_page():
     """Preview page for high-converting ads v2"""
     from fastapi.responses import HTMLResponse
     
-    ads_dir = Path(__file__).parent / "marketing_assets" / "ads_v2"
+    ads_dir = Path(__file__).parent.parent / "marketing_assets" / "ads_v2"
     ads = []
     if ads_dir.exists():
         for f in sorted(ads_dir.iterdir()):
