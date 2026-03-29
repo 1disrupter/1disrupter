@@ -47,6 +47,19 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 | `/api/ws/admin/events` | WS | Admin event stream |
 | `/api/ws/alerts/{client_id}` | WS | Strategy alerts |
 
+### Phase 5: Smart Prefetching & Performance Polish (March 29, 2026)
+- **Smart Prefetch Engine** (`smartPrefetch.js`) — Background data fetching with safety guards: runs only when network online, app idle (requestIdleCallback 300ms), cache cold/expired, battery not low. Cancels on navigation via AbortController.
+  - Page rules: Leaderboard (top 3 strategies + details), Dashboard (followed strategies), Alerts (bootstrap warm).
+  - Hover/touch prefetch on strategy rows and podium cards.
+- **TTL Cache Enhancements** — Extended `mobileCache.js` TTL_MAP: strategy_detail: 5min, metadata: 10min, alerts: 30s, chart: 2min.
+- **Skeleton Loaders** (`SkeletonLoaders.jsx`) — ChartSkeleton, StatsSkeleton, AlertCardSkeleton, AlertListSkeleton, HeaderSkeleton, LeaderboardRowSkeleton, PodiumSkeleton, StrategyDetailSkeleton. All with `data-testid`.
+- **Virtualized Alert Lists** — `react-window` v2.2.7 `List` component activates when alert count > 20 (VIRTUALIZE_THRESHOLD).
+- **Compact Mode** — Toggle on Leaderboard (persisted to localStorage). Reduces cell padding in strategy table.
+- **Pull-to-Refresh** — Touch-based pull-to-refresh on Leaderboard page (80px threshold).
+- **Offline Behavior** — Offline banner on Leaderboard and Alerts. Cached data shown. Follow/Unfollow buttons disabled when offline.
+- **usePrefetch Hook** — Integrated in App.js TrackingWrapper. Starts/stops prefetching on route changes.
+- **Strategy Detail Modal** — Smooth animated metrics reveal + equity curve bar animation.
+
 ## Backlog (P2)
 - Webhook Delivery Testing via Stripe Dashboard
 - Deploy AlphaAIManager.sol Smart Contract to Sepolia
