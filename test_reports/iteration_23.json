@@ -74,7 +74,7 @@
 
   "test_credentials": {
     "admin_key": "alphaai_admin_2026",
-    "demo_url": "https://alpha-alerts-live.preview.emergentagent.com/dashboard?demo=true",
+    "demo_url": "https://idle-cache.preview.emergentagent.com/dashboard?demo=true",
     "test_user": "demo_test2@my-alpha-ai.com / NewPass1234!"
   },
 

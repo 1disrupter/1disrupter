@@ -35,9 +35,11 @@ import MobileBottomNav from "./components/MobileBottomNav";
 import useMobileOptimizations from "./hooks/useMobileOptimizations";
 import useStrategyAlerts from "./hooks/useStrategyAlerts";
 import useTracking from "./hooks/useTracking";
+import usePrefetch from "./hooks/usePrefetch";
 
 function TrackingWrapper({ children }) {
   useTracking();
+  usePrefetch();
   const { isOnline } = useMobileOptimizations();
   const { connected: wsConnected } = useStrategyAlerts();
 

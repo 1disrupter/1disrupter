@@ -6,11 +6,14 @@ const PREFIX = "alphaai_cache_";
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 
 const TTL_MAP = {
-  bootstrap: 2 * 60 * 1000,      // 2 min
-  strategies: 5 * 60 * 1000,     // 5 min
-  followed: 3 * 60 * 1000,       // 3 min
-  profile: 5 * 60 * 1000,        // 5 min
-  alerts: 60 * 1000,             // 1 min
+  bootstrap: 2 * 60 * 1000,
+  strategies: 5 * 60 * 1000,
+  followed: 3 * 60 * 1000,
+  profile: 5 * 60 * 1000,
+  alerts: 30 * 1000,
+  strategy_detail: 5 * 60 * 1000,
+  metadata: 10 * 60 * 1000,
+  chart: 2 * 60 * 1000,
 };
 
 export const cacheGet = (key) => {
