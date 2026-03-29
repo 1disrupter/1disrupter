@@ -39,6 +39,32 @@ async def track_analytics_event(event: AnalyticsEvent):
         logger.error(f"Analytics tracking error: {str(e)}")
         return {"status": "error", "message": str(e)}
 
+
+class BatchEventsPayload(BaseModel):
+    events: list
+
+
+@router.post("/analytics/events")
+async def track_batch_events(payload: BatchEventsPayload):
+    """Batch-insert analytics events (used by frontend analytics abstraction)"""
+    try:
+        docs = []
+        for evt in payload.events:
+            docs.append({
+                "event_type": evt.get("event", "unknown"),
+                "feature": evt.get("event", "unknown"),
+                "metadata": {k: v for k, v in evt.items() if k not in ("event", "timestamp")},
+                "timestamp": datetime.fromisoformat(evt["timestamp"]) if "timestamp" in evt else datetime.now(timezone.utc),
+                "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            })
+        if docs:
+            await db.analytics_events.insert_many(docs)
+        return {"status": "tracked", "count": len(docs)}
+    except Exception as e:
+        logger.error(f"Batch analytics error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+
 @router.get("/analytics/summary")
 async def get_analytics_summary(days: int = 7):
     """Get summary of conversion analytics for the last N days"""

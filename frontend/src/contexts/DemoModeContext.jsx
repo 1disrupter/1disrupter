@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
+import analytics from '../lib/analytics';
 import {
   mockSignals, mockPortfolioStats, mockAgents, mockStrategies,
   mockMarketplaceItems, mockEventAgents, mockResearchQueries,
@@ -48,6 +49,21 @@ export const DemoModeProvider = ({ children }) => {
   const [demoChart, setDemoChart] = useState(mockChartData);
   const [demoLeaderboard, setDemoLeaderboard] = useState(mockLeaderboard);
   const timerRef = useRef(null);
+
+  // Fire demo_link_opened event once per session when ?demo=true is detected
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') !== 'true') return;
+    if (sessionStorage.getItem('alphaai_demo_link_tracked')) return;
+
+    sessionStorage.setItem('alphaai_demo_link_tracked', '1');
+    analytics.track('demo_link_opened', {
+      referrer: document.referrer || '(direct)',
+      userAgent: navigator.userAgent,
+      path: window.location.pathname,
+      isAuthenticated: false,
+    });
+  }, []);
 
   const toggleDemoMode = useCallback(() => {
     setIsDemoMode(prev => {
