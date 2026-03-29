@@ -41,22 +41,41 @@ class ContractDeploymentInfo(BaseModel):
 @router.get("/contract/info")
 async def get_contract_info():
     """Get smart contract deployment information"""
-    contract_info = await db.contract_info.find_one({}, {"_id": 0})
+    from services.contract_manager import get_contract_status, CONTRACT_ADDRESS as cm_address
     
-    if not contract_info:
-        # Return default info indicating contract needs deployment
+    # Try live status first
+    status = await get_contract_status()
+    
+    if status.get("deployed"):
         return {
-            "deployed": False,
+            "deployed": True,
             "network": "sepolia",
             "chain_id": 11155111,
-            "contract_address": CONTRACT_ADDRESS,
-            "explorer_url": "https://sepolia.etherscan.io",
-            "rpc_url": SEPOLIA_RPC,
+            "contract_address": status["contract_address"],
+            "explorer_url": status["explorer_url"],
+            "verified": status.get("verified", False),
+            "deployer": status.get("deployer"),
+            "deployed_at": status.get("deployed_at"),
+            "rpc_connected": status.get("rpc_connected", False),
+            "health": status.get("health"),
             "contract_source": "/api/contract/source",
-            "message": "Contract ready for deployment to Sepolia testnet"
         }
     
-    return contract_info
+    # Fallback — not yet deployed
+    contract_info = await db.contract_info.find_one({}, {"_id": 0})
+    if contract_info and contract_info.get("deployed"):
+        return contract_info
+    
+    return {
+        "deployed": False,
+        "network": "sepolia",
+        "chain_id": 11155111,
+        "contract_address": cm_address or CONTRACT_ADDRESS,
+        "explorer_url": "https://sepolia.etherscan.io",
+        "rpc_url": SEPOLIA_RPC,
+        "contract_source": "/api/contract/source",
+        "message": "Contract ready for deployment to Sepolia testnet",
+    }
 
 @router.get("/contract/source")
 async def get_contract_source():
@@ -110,8 +129,20 @@ async def register_deployed_contract(contract_address: str, deployer_address: st
 @router.get("/contract/balance/{wallet_address}")
 async def get_on_chain_balance(wallet_address: str):
     """Get investor's on-chain balance from the smart contract"""
-    contract_info = await db.contract_info.find_one({}, {"_id": 0})
+    from services.contract_manager import get_investor_balance, is_live, CONTRACT_ADDRESS as cm_addr
     
+    if is_live():
+        result = await get_investor_balance(wallet_address)
+        return {
+            "wallet_address": wallet_address,
+            "on_chain_balance_wei": result["balance_wei"],
+            "on_chain_balance_eth": round(result["balance_wei"] / 10**18, 6),
+            "contract_address": cm_addr,
+            "contract_deployed": True,
+            "on_chain": result["on_chain"],
+        }
+    
+    contract_info = await db.contract_info.find_one({}, {"_id": 0})
     if not contract_info or not contract_info.get('deployed'):
         return {
             "wallet_address": wallet_address,
@@ -121,25 +152,37 @@ async def get_on_chain_balance(wallet_address: str):
             "message": "Contract not yet deployed. Using simulated balance."
         }
     
-    # For now, return simulated data
-    # In production, this would call the actual contract
-    simulated_balance = random.uniform(0, 5) * 10**18  # Random balance in wei
-    
+    simulated_balance = random.uniform(0, 5) * 10**18
     return {
         "wallet_address": wallet_address,
         "on_chain_balance_wei": int(simulated_balance),
         "on_chain_balance_eth": round(simulated_balance / 10**18, 6),
         "contract_address": contract_info.get('contract_address'),
-        "contract_deployed": True
+        "contract_deployed": True,
+        "on_chain": False,
     }
 
 @router.get("/contract/strategies")
 async def get_on_chain_strategies():
     """Get strategies registered on-chain"""
-    contract_info = await db.contract_info.find_one({}, {"_id": 0})
+    from services.contract_manager import get_strategy, get_strategy_count, is_live, CONTRACT_ADDRESS as cm_addr
     
+    if is_live():
+        count = await get_strategy_count()
+        strats = []
+        for i in range(min(count, 20)):
+            s = await get_strategy(i)
+            strats.append({"id": i, "name": s["name"], "allocated_wei": s["allocated_wei"], "allocated_eth": round(s["allocated_wei"] / 10**18, 4), "active": s["active"]})
+        return {
+            "contract_deployed": True,
+            "contract_address": cm_addr,
+            "strategy_count": count,
+            "strategies": strats,
+            "on_chain": True,
+        }
+    
+    contract_info = await db.contract_info.find_one({}, {"_id": 0})
     if not contract_info or not contract_info.get('deployed'):
-        # Return strategies from DB as fallback
         strategies = await db.strategies.find({"status": "live"}, {"_id": 0}).to_list(10)
         return {
             "contract_deployed": False,
@@ -147,17 +190,13 @@ async def get_on_chain_strategies():
             "message": "Strategies from simulation. Deploy contract for on-chain data."
         }
     
-    # Simulated on-chain strategies
     return {
         "contract_deployed": True,
         "contract_address": contract_info.get('contract_address'),
-        "strategy_count": 4,
-        "strategies": [
-            {"id": 0, "name": "Arbitrage Strategy", "allocated_wei": int(25 * 10**18), "allocated_eth": 25.0, "active": True},
-            {"id": 1, "name": "Momentum Strategy", "allocated_wei": int(25 * 10**18), "allocated_eth": 25.0, "active": True},
-            {"id": 2, "name": "Funding Rate Strategy", "allocated_wei": int(25 * 10**18), "allocated_eth": 25.0, "active": True},
-            {"id": 3, "name": "AI Research Lab", "allocated_wei": int(25 * 10**18), "allocated_eth": 25.0, "active": True}
-        ]
+        "strategy_count": 0,
+        "strategies": [],
+        "on_chain": False,
+        "message": "Contract deployed but RPC not configured. Add SEPOLIA_RPC_URL to .env.",
     }
 
 @router.post("/contract/prepare-deposit")

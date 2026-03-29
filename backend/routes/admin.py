@@ -857,3 +857,13 @@ async def save_analytics_goals(payload: GoalsPayload, admin: dict = Depends(veri
     _goals_cache["data"] = {k: v for k, v in doc.items() if k != "updated_at"}
     _goals_cache["ts"] = _time.time()
     return {"status": "saved", **_goals_cache["data"]}
+
+
+# ============= CONTRACT STATUS =============
+
+@router.get("/contract/status")
+async def admin_contract_status(admin: dict = Depends(verify_admin)):
+    """Get smart contract deployment and health status."""
+    from services.contract_manager import get_contract_status
+    status = await get_contract_status()
+    return {"success": True, **status}

@@ -2,6 +2,7 @@
 AlphaAI Mobile Bootstrap & Optimization Endpoints
 Lightweight endpoints for fast mobile web initialization and token refresh.
 """
+import os
 import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException
@@ -40,6 +41,10 @@ DEMO_BOOTSTRAP = {
     "strategies_summary": {
         "total": 12,
         "top_performer": {"name": "BTC Momentum Alpha", "sharpe": 2.41},
+    },
+    "contract": {
+        "address": os.environ.get("CONTRACT_ADDRESS_SEPOLIA", ""),
+        "network": "sepolia",
     },
 }
 
@@ -128,6 +133,10 @@ async def mobile_bootstrap(request: Request):
                 "name": top.get("name", "N/A") if top else "N/A",
                 "sharpe": top.get("metrics", {}).get("sharpe_ratio", 0) if top else 0,
             },
+        },
+        "contract": {
+            "address": os.environ.get("CONTRACT_ADDRESS_SEPOLIA", ""),
+            "network": "sepolia",
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

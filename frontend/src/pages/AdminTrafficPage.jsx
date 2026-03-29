@@ -158,6 +158,7 @@ const AdminTrafficPage = () => {
   const [liveDemoFilter, setLiveDemoFilter] = useState("all");
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [activeAlerts, setActiveAlerts] = useState([]);
+  const [contractStatus, setContractStatus] = useState(null);
   const wsRef = useRef(null);
   const reconnectCount = useRef(0);
   const reconnectTimer = useRef(null);
@@ -173,10 +174,11 @@ const AdminTrafficPage = () => {
     setError(null);
     try {
       const params = `admin_key=${ADMIN_KEY}&range=${range}`;
-      const [sumRes, tsRes, alertsRes] = await Promise.all([
+      const [sumRes, tsRes, alertsRes, contractRes] = await Promise.all([
         fetch(`${API}/admin/traffic/summary?${params}`),
         fetch(`${API}/admin/traffic/timeseries?${params}`),
         fetch(`${API}/admin/traffic/active-alerts?${params}`),
+        fetch(`${API}/admin/contract/status?admin_key=${ADMIN_KEY}`),
       ]);
       if (!sumRes.ok || !tsRes.ok) throw new Error("Failed to load traffic data");
       const [sumData, tsData] = await Promise.all([sumRes.json(), tsRes.json()]);
@@ -185,6 +187,10 @@ const AdminTrafficPage = () => {
       if (alertsRes.ok) {
         const alertsData = await alertsRes.json();
         setActiveAlerts(alertsData.active_alerts || []);
+      }
+      if (contractRes.ok) {
+        const cData = await contractRes.json();
+        setContractStatus(cData);
       }
     } catch (e) {
       setError(e.message);
@@ -422,6 +428,42 @@ const AdminTrafficPage = () => {
                 <KpiCard icon={Radio} label="Demo Sessions" value={s.demo_sessions || 0} color="#ec4899" testId="kpi-demo-sessions" />
               </div>
             </section>
+
+            {/* ── Contract Status ────────────────────────────── */}
+            {contractStatus && (
+              <section className="mb-8" data-testid="contract-status-section">
+                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">Smart Contract</h2>
+                <Card className="bg-[#0A0A0A] border-zinc-800/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${contractStatus.health === "ok" ? "bg-[#00FF94]" : contractStatus.deployed ? "bg-[#FFB800]" : "bg-zinc-600"}`} />
+                        <div>
+                          <p className="text-sm font-medium text-zinc-300" data-testid="contract-network">
+                            {contractStatus.network?.toUpperCase() || "Sepolia"} {contractStatus.deployed ? "" : "— Not Deployed"}
+                          </p>
+                          {contractStatus.contract_address ? (
+                            <a href={contractStatus.explorer_url} target="_blank" rel="noopener noreferrer" className="text-[11px] font-mono text-[#7B61FF] hover:underline" data-testid="contract-address-link">
+                              {contractStatus.contract_address}
+                            </a>
+                          ) : (
+                            <p className="text-[11px] text-zinc-600 font-mono" data-testid="contract-not-deployed">Awaiting deployment</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-[10px]">
+                        {contractStatus.verified && <Badge className="bg-[#00FF94]/10 text-[#00FF94] text-[9px]">Verified</Badge>}
+                        <span className="text-zinc-600">ABI: {contractStatus.abi_functions || 0} functions</span>
+                        {contractStatus.rpc_connected && <span className="text-zinc-500">Block: {contractStatus.latest_block?.toLocaleString()}</span>}
+                        <Badge className={contractStatus.health === "ok" ? "bg-[#00FF94]/10 text-[#00FF94] text-[9px]" : contractStatus.health === "not_configured" ? "bg-zinc-800 text-zinc-500 text-[9px]" : "bg-[#FFB800]/10 text-[#FFB800] text-[9px]"} data-testid="contract-health">
+                          {contractStatus.health}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
 
             {/* ── Section 2: Activity Charts ────────────────── */}
             <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="activity-charts">
