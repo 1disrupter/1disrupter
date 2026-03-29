@@ -6,7 +6,7 @@ Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conver
 ## Architecture
 - **Frontend**: React + Tailwind CSS + Shadcn UI + Framer Motion + Recharts
 - **Backend**: FastAPI + Motor (Async MongoDB) + Background Tasks
-- **Integrations**: OpenAI GPT-5.2 (Emergent LLM Key), Stripe, Resend
+- **Integrations**: OpenAI GPT-5.2 (Emergent LLM Key), Stripe, Resend, CoinGecko (OHLC market data)
 - **Structure**: Modular backend (routes/, services/, models/), React SPA with contexts/hooks
 
 ## What's Been Implemented
@@ -26,21 +26,31 @@ Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conver
 - useApiData hook for conditional real/mock data loading
 - All dashboard pages wired to mock data in demo mode
 
-### Dashboard Pages — All Functional (6 pages enhanced Feb 2026)
-1. **Research Engine** — GPT-5.2 AI-powered market analysis with asset selector (BTC/ETH/SOL), trend/confidence/risk/indicators display. Backend endpoint: POST /api/research/ai-query
-2. **Strategy Lab** — Generate strategies (momentum/mean_reversion/arbitrage/yield/funding), backtest with metrics (Sharpe, return, drawdown, win rate), strategy rankings table
-3. **AI Agents** — Configure modal (asset, timeframe, risk level, signal frequency), View Signals modal (LONG/SHORT signals with confidence), saved configs shown as badges
-4. **Event Agents** — Pause/Resume toggle, View Log modal with timestamped entries, macro events modal (6 upcoming events with impact levels and expected volatility)
-5. **Marketplace** — Preview modal with description, monthly returns chart, metrics (Sharpe, Max DD, Win Rate), Install functionality with search filtering
-6. **Simulation** — Backtest tab with pair/strategy selectors, equity curve visualization, PnL metrics (Total Return, Sharpe, Max Drawdown, Win Rate, Profit Factor)
+### Dashboard Pages — All Functional
+1. **Research Engine** — GPT-5.2 AI-powered market analysis with asset selector, trend/confidence/risk/indicators
+2. **Strategy Lab** — Generate strategies, backtest with REAL CoinGecko OHLC data, equity curve, data source badge
+3. **AI Agents** — Configure modal (asset, timeframe, risk, frequency), View Signals modal
+4. **Event Agents** — Pause/Resume toggle, View Log, macro events modal
+5. **Marketplace** — Preview modal with description, returns chart, metrics, Install
+6. **Simulation** — Backtest with REAL CoinGecko OHLC data, equity curve, data source badge
+
+### CoinGecko Integration (Feb 2026)
+- `services/market_data.py`: OHLC fetcher with 10-min TTL cache, asset mapping (BTC→bitcoin, ETH→ethereum, SOL→solana)
+- `services/backtest_engine.py`: Real strategy backtesting (momentum SMA crossover, mean reversion z-score, breakout N-period)
+- Computes: Sharpe ratio, max drawdown, win rate, total return, profit factor, equity curve
+- Demo Mode: deterministic mock OHLC fallback, no external API calls
+- Frontend badges: "Data: CoinGecko" (real) or "Demo Mode — Mock Data" (demo)
 
 ### Admin
 - Admin panel with user management, signal generation, system config
 - Admin Analytics dashboard with conversion funnels, referrer tracking
 - Goal Tracker widget with K-factor and conversion targets
 
-### Bug Fixes
-- Fixed global UI interaction blocker: removed `disabled` prop from all action buttons across 6 pages (Feb 2026)
+## Key API Endpoints
+- `POST /api/simulation/backtest` — Real OHLC backtest (asset, strategy, days, initial_capital, demo)
+- `POST /api/lab/strategies/{id}/backtest` — Strategy backtest with real CoinGecko data
+- `POST /api/research/ai-query` — GPT-5.2 market analysis
+- `GET/POST /api/admin/analytics` — Admin analytics
 
 ## Prioritized Backlog
 
