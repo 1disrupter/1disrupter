@@ -1,0 +1,126 @@
+{
+  "summary": "Follow Strategy + In-App Notifications + Pro Gating feature testing complete. All 23 backend tests passed. Frontend tests passed for Leaderboard (Follow buttons, detail modal), Following page (strategy cards, unfollow), and Notification Bell (dropdown, mark all read). Free-tier gating correctly returns 403 on second follow attempt.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend GET /api/strategies/following/demo returns 2 mock strategies with metrics",
+    "Backend GET /api/notifications/inbox/demo returns 4 mock notifications with 2 unread",
+    "Backend POST /api/strategies/{id}/follow without auth returns 401",
+    "Backend POST /api/strategies/{id}/unfollow without auth returns 401",
+    "Backend GET /api/strategies/following without auth returns 401",
+    "Backend GET /api/strategies/following/ids without auth returns 401",
+    "Backend GET /api/notifications/inbox without auth returns 401",
+    "Backend POST /api/notifications/{id}/read without auth returns 401",
+    "Backend POST /api/notifications/read-all without auth returns 401",
+    "Backend GET /api/user/pro-status without auth returns 401",
+    "Backend GET /api/user/pro-status for free user returns tier=free, follow_limit=1",
+    "Backend GET /api/user/pro-status for admin (elite) returns tier=elite, follow_limit=null",
+    "Backend POST /api/strategies/{id}/follow creates follow entry and notification",
+    "Backend POST /api/strategies/{id}/follow when already following returns success with 'already following'",
+    "Backend POST /api/strategies/{id}/unfollow removes follow entry",
+    "Backend POST /api/strategies/{id}/unfollow when not following returns success",
+    "Backend free-tier first follow succeeds",
+    "Backend free-tier second follow returns 403 with upgrade message",
+    "Backend GET /api/strategies/following returns list with metrics and is_pro flag",
+    "Backend GET /api/notifications/inbox returns notifications with unread_count",
+    "Backend POST /api/notifications/read-all marks all as read",
+    "Backend GET /api/leaderboard/strategies?demo=true returns 8 strategies",
+    "Frontend Leaderboard page: 8 strategy rows with Follow buttons visible",
+    "Frontend Leaderboard page: demo-1 and demo-2 show 'Following' (red heart)",
+    "Frontend Leaderboard page: Click Follow toggles to 'Following' in demo mode",
+    "Frontend Leaderboard page: Strategy detail modal opens with Follow/Unfollow button",
+    "Frontend Leaderboard page: Detail modal shows 'Unfollow Strategy' for followed strategies",
+    "Frontend Following page: Shows 2 followed strategies with metrics",
+    "Frontend Following page: Unfollow button removes strategy card",
+    "Frontend Notification bell visible in navigation",
+    "Frontend Notification bell shows unread count badge (2)",
+    "Frontend Notification dropdown shows 4 demo notifications",
+    "Frontend Mark all read button clears unread count",
+    "Frontend Navigation has 'Following' link",
+    "Frontend Dashboard page loads without regressions"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_follow_notifications.py",
+    "/app/test_reports/pytest/follow_notifications_results.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "follow_notifications.py: Well-structured with proper auth checks using get_current_user dependency",
+    "follow_notifications.py: Free-tier gating correctly limits to 1 follow with 403 response",
+    "follow_notifications.py: Demo endpoints correctly return static mock data without auth",
+    "follow_notifications.py: Notification creation on follow works correctly",
+    "LeaderboardPage.jsx: Follow buttons properly integrated with toggleFollow function",
+    "LeaderboardPage.jsx: UpgradeModal opens on 403 response from follow endpoint",
+    "FollowingPage.jsx: Strategy cards display metrics and unfollow functionality works",
+    "NotificationBell.jsx: Dropdown shows notifications with mark read functionality",
+    "Navigation.jsx: Following link with Heart icon added to nav items"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_follow_notifications.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (23/23 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+
+  "test_credentials": {
+    "demo_mode": "?demo=true URL parameter",
+    "free_user": "test_free_user_iter29@my-alpha-ai.com / TestPass123! (created for testing)",
+    "admin_user": "admin@my-alpha-ai.com / Admin1234!",
+    "note": "demo_test2@my-alpha-ai.com was upgraded to Pro tier"
+  },
+
+  "seed_data_creation": "Created new free-tier user test_free_user_iter29@my-alpha-ai.com for free-tier gating tests",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Follow Strategy + Notifications feature fully tested. Demo mode uses static mock data (DEMO_FOLLOWING, DEMO_NOTIFICATIONS). Real mode requires JWT auth. Free tier limited to 1 follow (returns 403 on second attempt). MongoDB collections: followed_strategies (unique index on user_id+strategy_id), notifications_inbox (index on user_id+created_at). Leaderboard pre-seeds followedIds with demo-1 and demo-2 in demo mode. Note: demo_test2@my-alpha-ai.com was upgraded to Pro tier - use test_free_user_iter29@my-alpha-ai.com for free-tier testing.",
+
+  "mocked_api": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "GET /api/strategies/following/demo - returns 2 static mock strategies",
+      "GET /api/notifications/inbox/demo - returns 4 static mock notifications"
+    ]
+  },
+
+  "features_tested": {
+    "follow_endpoint_auth": "PASS - Returns 401 without auth",
+    "follow_creates_entry": "PASS - Creates follow entry and notification",
+    "follow_already_following": "PASS - Returns success with 'already following'",
+    "unfollow_removes_entry": "PASS - Removes follow entry",
+    "free_tier_gating": "PASS - First follow succeeds, second returns 403",
+    "pro_status_endpoint": "PASS - Returns correct tier and follow_limit",
+    "notifications_inbox": "PASS - Returns notifications with unread_count",
+    "mark_all_read": "PASS - Marks all notifications as read",
+    "demo_following": "PASS - Returns 2 mock strategies",
+    "demo_notifications": "PASS - Returns 4 mock notifications with 2 unread",
+    "leaderboard_follow_buttons": "PASS - 8 Follow buttons visible",
+    "leaderboard_following_state": "PASS - demo-1 and demo-2 show 'Following'",
+    "leaderboard_toggle_follow": "PASS - Click toggles Follow/Following",
+    "leaderboard_detail_modal": "PASS - Opens with Follow/Unfollow button",
+    "following_page_cards": "PASS - Shows 2 strategy cards with metrics",
+    "following_page_unfollow": "PASS - Unfollow removes card",
+    "notification_bell": "PASS - Visible with unread count badge",
+    "notification_dropdown": "PASS - Shows 4 notifications",
+    "notification_mark_all_read": "PASS - Clears unread count",
+    "navigation_following_link": "PASS - 'Following' link in nav",
+    "no_regressions": "PASS - Dashboard page loads correctly"
+  }
+}

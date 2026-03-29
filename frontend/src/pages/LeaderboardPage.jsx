@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, ChevronUp, ChevronDown,
-  RefreshCw, X, Shield, Zap, Loader2, Minus
+  RefreshCw, X, Shield, Zap, Loader2, Minus, Heart
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -12,6 +12,7 @@ import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useAuth } from "../contexts/AuthContext";
 import { useDemoMode } from "../contexts/DemoModeContext";
+import UpgradeModal from "../components/UpgradeModal";
 import { API } from "../lib/constants";
 
 const SORT_COLS = [
@@ -29,12 +30,27 @@ const typeColors = {
 
 const LeaderboardPage = () => {
   const { tokens } = useAuth();
+  const token = tokens?.access_token;
   const { isDemoMode } = useDemoMode();
   const [strategies, setStrategies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("sharpe");
   const [sortOrder, setSortOrder] = useState("desc");
   const [detailModal, setDetailModal] = useState(null);
+  const [followedIds, setFollowedIds] = useState(new Set());
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const loadFollowedIds = useCallback(async () => {
+    if (isDemoMode) {
+      setFollowedIds(new Set(["demo-1", "demo-2"]));
+      return;
+    }
+    if (!token) return;
+    try {
+      const res = await axios.get(`${API}/strategies/following/ids`, { headers: { Authorization: `Bearer ${token}` } });
+      setFollowedIds(new Set(res.data?.ids || []));
+    } catch { }
+  }, [isDemoMode, token]);
 
   const loadStrategies = useCallback(async () => {
     setLoading(true);
@@ -53,6 +69,33 @@ const LeaderboardPage = () => {
   }, [sortBy, sortOrder, isDemoMode]);
 
   useEffect(() => { loadStrategies(); }, [loadStrategies]);
+  useEffect(() => { loadFollowedIds(); }, [loadFollowedIds]);
+
+  const toggleFollow = async (stratId) => {
+    if (isDemoMode) {
+      setFollowedIds(prev => {
+        const next = new Set(prev);
+        if (next.has(stratId)) { next.delete(stratId); toast.success("Strategy unfollowed"); }
+        else { next.add(stratId); toast.success("Strategy followed! You'll receive signal notifications."); }
+        return next;
+      });
+      return;
+    }
+    if (!token) { toast.info("Sign in to follow strategies"); return; }
+    const isFollowed = followedIds.has(stratId);
+    try {
+      const endpoint = isFollowed ? `${API}/strategies/${stratId}/unfollow` : `${API}/strategies/${stratId}/follow`;
+      const res = await axios.post(endpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.data?.success) {
+        setFollowedIds(prev => { const n = new Set(prev); isFollowed ? n.delete(stratId) : n.add(stratId); return n; });
+        toast.success(isFollowed ? "Strategy unfollowed" : "Strategy followed! You'll receive signal notifications.");
+      }
+    } catch (e) {
+      if (e.response?.status === 403) {
+        setUpgradeOpen(true);
+      } else { toast.error("Failed to update follow"); }
+    }
+  };
 
   const handleSort = (colApiKey) => {
     if (sortBy === colApiKey) {
@@ -160,6 +203,7 @@ const LeaderboardPage = () => {
                           </th>
                         ))}
                         <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">Trades</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider w-28">Follow</th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider w-20"></th>
                       </tr>
                     </thead>
@@ -177,6 +221,11 @@ const LeaderboardPage = () => {
                           <td className="px-4 py-4 text-right text-sm font-mono text-red-400">{s.metrics?.max_drawdown}%</td>
                           <td className="px-4 py-4 text-right text-sm font-mono text-zinc-300">{s.metrics?.win_rate}%</td>
                           <td className="px-4 py-4 text-right text-xs font-mono text-zinc-500">{s.metrics?.total_trades || "--"}</td>
+                          <td className="px-4 py-4 text-center">
+                            <Button size="sm" variant={followedIds.has(s.id) ? "default" : "outline"} onClick={(e) => { e.stopPropagation(); toggleFollow(s.id); }} className={`rounded-full text-[10px] h-7 px-3 ${followedIds.has(s.id) ? "bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25" : "border-zinc-800 hover:border-[#7B61FF]/50"}`} data-testid={`follow-${i}`}>
+                              <Heart className={`w-3 h-3 mr-1 ${followedIds.has(s.id) ? "fill-current" : ""}`} /> {followedIds.has(s.id) ? "Following" : "Follow"}
+                            </Button>
+                          </td>
                           <td className="px-4 py-4 text-center">
                             <Button size="sm" variant="outline" onClick={() => openDetail(s)} className="rounded-full border-zinc-800 hover:border-[#7B61FF]/50 text-[10px] h-7 px-3" data-testid={`view-strategy-${i}`}>View</Button>
                           </td>
@@ -273,12 +322,20 @@ const LeaderboardPage = () => {
                     {detailModal.updated_at && (
                       <p className="text-[10px] text-zinc-700 text-right">Last updated: {new Date(detailModal.updated_at).toLocaleString()}</p>
                     )}
+
+                    <div className="pt-2 border-t border-zinc-800/50">
+                      <Button onClick={() => { toggleFollow(detailModal.id); setDetailModal(null); }} className={`w-full rounded-full text-xs ${followedIds.has(detailModal.id) ? "bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25" : "bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white"}`} data-testid="detail-follow-btn">
+                        <Heart className={`w-3.5 h-3.5 mr-1.5 ${followedIds.has(detailModal.id) ? "fill-current" : ""}`} /> {followedIds.has(detailModal.id) ? "Unfollow Strategy" : "Follow Strategy"}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} feature="Unlimited strategy follows" />
       </div>
     </div>
   );

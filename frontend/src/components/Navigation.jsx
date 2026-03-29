@@ -5,7 +5,7 @@ import {
   Wallet, BarChart3, Bot, Store, Shield,
   ChevronDown, ArrowUpRight, Copy, FlaskConical,
   Users, ExternalLink, Home, Eye, Trophy,
-  LogIn, LogOut, User, Menu, Radio, Crown, Share2
+  LogIn, LogOut, User, Menu, Radio, Crown, Share2, Heart
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -17,6 +17,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import { BrandLockup } from "./BrandComponents";
 import { TierBadge } from "../pages/PricingPage";
+import NotificationBell from "./NotificationBell";
 import { Beaker } from "lucide-react";
 
 const Navigation = () => {
@@ -44,6 +45,7 @@ const Navigation = () => {
     { path: "/referrals", label: "Referrals", icon: Users },
     { path: "/copy-trading", label: "Copy Trading", icon: Copy },
     { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { path: "/following", label: "Following", icon: Heart },
     { path: "/pricing", label: "Pricing", icon: Crown },
     { path: "/admin", label: "Admin", icon: Shield },
     { path: "/admin/analytics", label: "Demo Analytics", icon: BarChart3 },
@@ -138,6 +140,8 @@ const Navigation = () => {
                 )}
                 
                 {isAuthenticated ? (
+                  <>
+                  <NotificationBell />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="rounded-full border-[#7B61FF]/30 hover:border-[#7B61FF] bg-[#7B61FF]/10" data-testid="user-dropdown">
@@ -178,12 +182,16 @@ const Navigation = () => {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </>
                 ) : isDemoMode ? (
-                  <Link to="/register">
-                    <Button className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-xs px-4" data-testid="demo-signup-btn">
-                      Sign Up Free
-                    </Button>
-                  </Link>
+                  <>
+                    <NotificationBell />
+                    <Link to="/register">
+                      <Button className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-xs px-4" data-testid="demo-signup-btn">
+                        Sign Up Free
+                      </Button>
+                    </Link>
+                  </>
                 ) : null}
               </>
             ) : (

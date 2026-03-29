@@ -26,6 +26,7 @@ import ConversionAnalyticsPage from "./pages/ConversionAnalyticsPage";
 import AdminPage from "./pages/AdminPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ReferralPage from "./pages/ReferralPage";
+import FollowingPage from "./pages/FollowingPage";
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -73,6 +74,7 @@ function App() {
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               {/* Referral */}
               <Route path="/referrals" element={<ReferralPage />} />
+              <Route path="/following" element={<FollowingPage />} />
             </Routes>
           </BrowserRouter>
           <Toaster position="bottom-right" theme="dark" />
