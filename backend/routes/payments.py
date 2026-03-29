@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime, timezone
 import os
+import uuid
 from database import db, STRIPE_API_KEY, logger
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
@@ -185,61 +186,119 @@ async def get_payment_status(session_id: str, http_request: Request):
 
 @router.post("/webhook/stripe")
 async def stripe_webhook(request: Request):
-    """Handle Stripe webhook events"""
+    """Handle Stripe webhook events — comprehensive handler for all lifecycle events."""
+    from services.stripe_webhook_handler import process_webhook_event
+
     try:
         body = await request.body()
-        signature = request.headers.get("Stripe-Signature")
-        
-        host_url = str(request.base_url).rstrip('/')
-        webhook_url = f"{host_url}/api/webhook/stripe"
-        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-        
-        webhook_response = await stripe_checkout.handle_webhook(body, signature)
-        
-        # Update transaction based on webhook event
-        if webhook_response.session_id:
-            update_data = {
-                "status": webhook_response.event_type,
-                "payment_status": webhook_response.payment_status,
-                "webhook_event_id": webhook_response.event_id,
-                "updated_at": datetime.now(timezone.utc)
-            }
-            
-            if webhook_response.payment_status == "paid":
-                update_data["pro_activated_at"] = datetime.now(timezone.utc)
-                
-                # Get transaction to find wallet address and tier
-                transaction = await db.payment_transactions.find_one({"session_id": webhook_response.session_id})
-                if transaction:
-                    pkg = PRO_SUBSCRIPTION_PACKAGES.get(transaction.get("package_id"), {})
-                    target_tier = pkg.get("tier", "pro")
-                    is_elite_pkg = target_tier == "elite"
-                    
-                    wallet_address = transaction.get("wallet_address")
-                    if wallet_address and wallet_address != "demo_user":
-                        await db.investors.update_one(
-                            {"wallet_address": wallet_address},
-                            {"$set": {"is_pro": True, "is_elite": is_elite_pkg, "pro_since": datetime.now(timezone.utc)}}
-                        )
-                    
-                    user_email = transaction.get("metadata", {}).get("user_email")
-                    if user_email:
-                        await db.users.update_one(
-                            {"email": user_email},
-                            {"$set": {"is_pro": True, "is_elite": is_elite_pkg, "user_tier": target_tier, "pro_since": datetime.now(timezone.utc)}}
-                        )
-            
-            await db.payment_transactions.update_one(
-                {"session_id": webhook_response.session_id},
-                {"$set": update_data}
-            )
-        
-        logger.info(f"Processed webhook: {webhook_response.event_type} for session: {webhook_response.session_id}")
-        return {"status": "ok"}
-        
-    except Exception as e:
-        logger.error(f"Webhook error: {str(e)}")
+        signature = request.headers.get("Stripe-Signature", "")
+
+        # Check for demo mode (test events sent via API)
+        is_demo = request.query_params.get("demo", "false").lower() == "true"
+
+        result = await process_webhook_event(body, signature, is_demo=is_demo)
+        return result
+
+    except ValueError as e:
+        logger.error(f"Webhook validation error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Webhook processing error: {str(e)}")
+        # Return 200 to prevent Stripe retries for handler errors
+        return {"status": "error", "message": str(e)}
+
+
+class SimulateWebhookRequest(BaseModel):
+    event_type: str = Field(..., description="Stripe event type e.g. checkout.session.completed")
+    customer_email: Optional[str] = None
+    customer_id: Optional[str] = None
+    subscription_id: Optional[str] = None
+    session_id: Optional[str] = None
+    amount: Optional[int] = 2900
+    status: Optional[str] = "active"
+    period_end: Optional[int] = None
+    refund_full: Optional[bool] = True
+    dispute_reason: Optional[str] = "fraudulent"
+
+
+@router.post("/webhook/stripe/test")
+async def simulate_stripe_webhook(body: SimulateWebhookRequest, request: Request):
+    """
+    Simulate a Stripe webhook event for testing.
+    Admin-only — requires admin_key query parameter.
+    """
+    admin_key = request.query_params.get("admin_key", "")
+    import os as _os
+    if admin_key != _os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+        raise HTTPException(status_code=403, detail="Admin access denied")
+
+    import json
+    import time
+
+    event_id = f"evt_test_{int(time.time())}_{body.event_type.replace('.', '_')}"
+    period_end = body.period_end or int(time.time()) + 30 * 86400
+
+    # Build synthetic event based on type
+    event_data = {}
+    if body.event_type == "checkout.session.completed":
+        event_data = {
+            "id": body.session_id or f"cs_test_{int(time.time())}",
+            "customer": body.customer_id,
+            "customer_email": body.customer_email,
+            "customer_details": {"email": body.customer_email},
+            "subscription": body.subscription_id,
+        }
+    elif body.event_type in ("customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"):
+        event_data = {
+            "id": body.subscription_id or f"sub_test_{int(time.time())}",
+            "customer": body.customer_id,
+            "status": body.status,
+            "current_period_end": period_end,
+            "cancel_at_period_end": False,
+        }
+    elif body.event_type == "invoice.payment_succeeded":
+        event_data = {
+            "customer": body.customer_id,
+            "subscription": body.subscription_id,
+            "amount_paid": body.amount,
+            "lines": {"data": [{"period": {"end": period_end}}]},
+        }
+    elif body.event_type == "invoice.payment_failed":
+        event_data = {
+            "customer": body.customer_id,
+            "subscription": body.subscription_id,
+            "attempt_count": 1,
+        }
+    elif body.event_type == "customer.subscription.trial_will_end":
+        event_data = {
+            "customer": body.customer_id,
+            "trial_end": period_end,
+        }
+    elif body.event_type == "charge.refunded":
+        event_data = {
+            "customer": body.customer_id,
+            "amount": body.amount,
+            "amount_refunded": body.amount if body.refund_full else body.amount // 2,
+        }
+    elif body.event_type == "charge.dispute.created":
+        event_data = {
+            "customer": body.customer_id,
+            "charge": f"ch_test_{int(time.time())}",
+            "amount": body.amount,
+            "reason": body.dispute_reason,
+        }
+
+    synthetic_event = json.dumps({
+        "id": event_id,
+        "type": body.event_type,
+        "data": {"object": event_data},
+    })
+
+    from services.stripe_webhook_handler import process_webhook_event
+    result = await process_webhook_event(
+        synthetic_event.encode(), "", is_demo=True
+    )
+    return {"success": True, "simulated_event_id": event_id, "result": result}
 
 @router.get("/payments/packages")
 async def get_subscription_packages():

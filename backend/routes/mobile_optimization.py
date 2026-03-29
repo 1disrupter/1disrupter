@@ -111,6 +111,8 @@ async def mobile_bootstrap(request: Request):
             "email": user.get("email", ""),
             "user_tier": user.get("user_tier", "free"),
             "is_pro": user.get("user_tier") in ("pro", "elite"),
+            "subscription_status": user.get("subscription_status", "active" if user.get("user_tier") in ("pro", "elite") else "inactive"),
+            "subscription_end": user.get("subscription_end").isoformat() if user.get("subscription_end") else None,
         },
         "followed_strategies": followed_strategies,
         "unread_alerts": unread,

@@ -49,6 +49,8 @@ from routes.notifications import router as notifications_router
 from routes.follow_notifications import router as follow_notif_router
 from routes.traffic import router as traffic_router, init_db as init_traffic_db
 from routes.mobile_optimization import router as mobile_opt_router, init_db as init_mobile_opt_db
+from routes.subscription import router as subscription_router, init_db as init_subscription_db
+from services.stripe_webhook_handler import init_db as init_webhook_handler_db
 
 # ============= APP SETUP =============
 app = FastAPI(title="AlphaAI Fund Platform")
@@ -90,6 +92,7 @@ app.include_router(notifications_router)
 app.include_router(follow_notif_router)
 app.include_router(traffic_router)
 app.include_router(mobile_opt_router)
+app.include_router(subscription_router)
 
 
 # ============= BACKGROUND TASKS =============
@@ -181,6 +184,8 @@ async def startup_db_client():
     init_traffic_db(db)
     init_rule_engine_db(db)
     init_mobile_opt_db(db)
+    init_subscription_db(db)
+    init_webhook_handler_db(db)
 
     # Create indexes
     await db.users.create_index("email", unique=True, sparse=True)
@@ -197,6 +202,8 @@ async def startup_db_client():
     await db.traffic_events.create_index([("timestamp", -1)])
     await db.traffic_events.create_index([("type", 1, )])
     await db.traffic_events.create_index([("user_id", 1)])
+    await db.stripe_webhook_events.create_index("event_id", unique=True)
+    await db.stripe_webhook_events.create_index([("processed_at", -1)])
 
     # Start background tasks
     asyncio.create_task(signal_generation_task())
