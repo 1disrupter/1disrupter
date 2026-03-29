@@ -771,6 +771,23 @@ async def admin_analytics(
             "referrer": doc.get("metadata", {}).get("referrer"),
         })
 
+    # 10. 24h trend data for goal tracker
+    cutoff_24h = now - timedelta(hours=24)
+    cutoff_48h = now - timedelta(hours=48)
+    demo_opens_24h = await db.analytics_events.count_documents({"timestamp": {"$gte": cutoff_24h}, "event_type": "demo_link_opened"})
+    demo_opens_prev24h = await db.analytics_events.count_documents({"timestamp": {"$gte": cutoff_48h, "$lt": cutoff_24h}, "event_type": "demo_link_opened"})
+    signups_24h = await db.users.count_documents({"created_at": {"$gte": cutoff_24h}})
+    signups_prev24h = await db.users.count_documents({"created_at": {"$gte": cutoff_48h, "$lt": cutoff_24h}})
+    pro_24h = await db.users.count_documents({"created_at": {"$gte": cutoff_24h}, "$or": [{"is_pro": True}, {"is_elite": True}]})
+    pro_prev24h = await db.users.count_documents({"created_at": {"$gte": cutoff_48h, "$lt": cutoff_24h}, "$or": [{"is_pro": True}, {"is_elite": True}]})
+
+    signup_rate_24h = round((signups_24h / demo_opens_24h * 100), 1) if demo_opens_24h > 0 else 0
+    signup_rate_prev = round((signups_prev24h / demo_opens_prev24h * 100), 1) if demo_opens_prev24h > 0 else 0
+    pro_rate_24h = round((pro_24h / demo_opens_24h * 100), 1) if demo_opens_24h > 0 else 0
+    pro_rate_prev = round((pro_prev24h / demo_opens_prev24h * 100), 1) if demo_opens_prev24h > 0 else 0
+    k_24h = round((demo_opens_24h / max(total_users, 1)) * (signup_rate_24h / 100), 2)
+    k_prev = round((demo_opens_prev24h / max(total_users, 1)) * (signup_rate_prev / 100), 2)
+
     result = {
         "period": period,
         "kpi": {
@@ -783,6 +800,14 @@ async def admin_analytics(
             "total_events": total_events,
             "total_users": total_users,
         },
+        "trends_24h": {
+            "k_factor": k_24h,
+            "k_factor_prev": k_prev,
+            "demo_signup_rate": signup_rate_24h,
+            "demo_signup_rate_prev": signup_rate_prev,
+            "demo_pro_rate": pro_rate_24h,
+            "demo_pro_rate_prev": pro_rate_prev,
+        },
         "opens_over_time": [{"date": o["_id"], "count": o["count"]} for o in opens_over_time],
         "top_referrers": [{"referrer": r["_id"], "count": r["count"]} for r in top_referrers],
         "pages_per_session": [{"path": p["_id"], "count": p["count"]} for p in pages_per_session],
@@ -794,3 +819,41 @@ async def admin_analytics(
     _analytics_cache["ts"] = _time.time()
     _analytics_cache["key"] = cache_key
     return result
+
+
+# ============= GOAL TRACKER =============
+
+_goals_cache = {"data": None, "ts": 0}
+_GOALS_CACHE_TTL = 60
+
+DEFAULT_GOALS = {"k_factor_target": 1.0, "demo_signup_target": 15.0, "demo_pro_target": 5.0}
+
+
+@router.get("/analytics/goals")
+async def get_analytics_goals(admin: dict = Depends(verify_admin)):
+    """Return saved goal targets."""
+    if _goals_cache["data"] and _time.time() - _goals_cache["ts"] < _GOALS_CACHE_TTL:
+        return _goals_cache["data"]
+
+    doc = await db.analytics_goals.find_one({"_id": "goals"}, {"_id": 0})
+    result = doc if doc else DEFAULT_GOALS
+    _goals_cache["data"] = result
+    _goals_cache["ts"] = _time.time()
+    return result
+
+
+class GoalsPayload(BaseModel):
+    k_factor_target: float = Field(ge=0, le=5)
+    demo_signup_target: float = Field(ge=0, le=100)
+    demo_pro_target: float = Field(ge=0, le=100)
+
+
+@router.post("/analytics/goals")
+async def save_analytics_goals(payload: GoalsPayload, admin: dict = Depends(verify_admin)):
+    """Save / update goal targets."""
+    doc = payload.dict()
+    doc["updated_at"] = datetime.now(timezone.utc)
+    await db.analytics_goals.update_one({"_id": "goals"}, {"$set": doc}, upsert=True)
+    _goals_cache["data"] = {k: v for k, v in doc.items() if k != "updated_at"}
+    _goals_cache["ts"] = _time.time()
+    return {"status": "saved", **_goals_cache["data"]}

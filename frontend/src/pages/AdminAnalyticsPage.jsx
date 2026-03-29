@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3, Users, TrendingUp, Zap, Globe, Eye,
-  ArrowUpRight, RefreshCw, Share2, Clock, Activity
+  ArrowUpRight, ArrowDownRight, RefreshCw, Share2, Clock, Activity,
+  Target, Save, Check, AlertTriangle
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -11,7 +12,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
+import { Progress } from "../components/ui/progress";
+import { toast } from "sonner";
 import { API } from "../lib/constants";
 
 const ADMIN_KEY = localStorage.getItem("adminKey") || "alphaai_admin_2026";
@@ -48,6 +52,11 @@ const AdminAnalyticsPage = () => {
   const [error, setError] = useState(null);
   const [liveEvents, setLiveEvents] = useState([]);
 
+  // Goal tracker state
+  const [goals, setGoals] = useState({ k_factor_target: 1.0, demo_signup_target: 15.0, demo_pro_target: 5.0 });
+  const [editGoals, setEditGoals] = useState(null); // null = not editing
+  const [savingGoals, setSavingGoals] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -65,6 +74,36 @@ const AdminAnalyticsPage = () => {
   }, [period]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Fetch goals on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API}/admin/analytics/goals?admin_key=${ADMIN_KEY}`);
+        if (res.ok) { const g = await res.json(); setGoals(g); }
+      } catch { /* use defaults */ }
+    })();
+  }, []);
+
+  const saveGoals = async () => {
+    setSavingGoals(true);
+    try {
+      const res = await fetch(`${API}/admin/analytics/goals?admin_key=${ADMIN_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editGoals),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      const saved = await res.json();
+      setGoals({ k_factor_target: saved.k_factor_target, demo_signup_target: saved.demo_signup_target, demo_pro_target: saved.demo_pro_target });
+      setEditGoals(null);
+      toast.success("Goals saved!");
+    } catch (e) {
+      toast.error("Failed to save goals");
+    } finally {
+      setSavingGoals(false);
+    }
+  };
 
   // Simulate live event polling every 15s
   useEffect(() => {
@@ -279,6 +318,136 @@ const AdminAnalyticsPage = () => {
                 </Card>
               </motion.div>
             </div>
+
+            {/* ========= GOAL TRACKER WIDGET ========= */}
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }} className="mb-8" data-testid="goal-tracker-widget">
+              <Card className="bg-[#0A0A0A] border-zinc-800/50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Target className="w-4 h-4 text-[#FFB800]" /> Goal Tracker
+                    </CardTitle>
+                    {editGoals ? (
+                      <div className="flex items-center gap-2">
+                        <Button onClick={() => setEditGoals(null)} size="sm" variant="ghost" className="text-xs text-zinc-500 h-7 px-2">Cancel</Button>
+                        <Button onClick={saveGoals} size="sm" disabled={savingGoals} className="text-xs bg-[#00FF94]/15 text-[#00FF94] hover:bg-[#00FF94]/25 h-7 px-3 rounded-full" data-testid="save-goals-btn">
+                          <Save className="w-3 h-3 mr-1" /> {savingGoals ? "Saving..." : "Save Goals"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button onClick={() => setEditGoals({ ...goals })} size="sm" variant="outline" className="text-xs border-zinc-800 h-7 px-3 rounded-full" data-testid="edit-goals-btn">
+                        Edit Targets
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Goal target inputs (only when editing) */}
+                  {editGoals && (
+                    <div className="grid grid-cols-3 gap-4 mb-6 p-4 rounded-xl bg-[#050505] border border-zinc-800/30">
+                      {[
+                        { key: "k_factor_target", label: "K-Factor Target", max: 5, step: 0.1 },
+                        { key: "demo_signup_target", label: "Demo→Signup Target (%)", max: 100, step: 1 },
+                        { key: "demo_pro_target", label: "Demo→PRO Target (%)", max: 100, step: 1 },
+                      ].map(f => (
+                        <div key={f.key}>
+                          <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1.5 block">{f.label}</label>
+                          <Input
+                            type="number"
+                            min={0} max={f.max} step={f.step}
+                            value={editGoals[f.key]}
+                            onChange={e => setEditGoals(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) || 0 }))}
+                            className="bg-[#0A0A0A] border-zinc-800 text-sm h-9 font-mono"
+                            data-testid={`goal-input-${f.key}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Progress bars */}
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {(() => {
+                      const trends = data?.trends_24h || {};
+                      const metrics = [
+                        {
+                          label: "K-Factor",
+                          current: kpi.k_factor || 0,
+                          target: goals.k_factor_target,
+                          color: "#7B61FF",
+                          trend: (trends.k_factor || 0) - (trends.k_factor_prev || 0),
+                          format: v => v.toFixed(2),
+                        },
+                        {
+                          label: "Demo → Signup",
+                          current: kpi.demo_signup_rate || 0,
+                          target: goals.demo_signup_target,
+                          color: "#00FF94",
+                          trend: (trends.demo_signup_rate || 0) - (trends.demo_signup_rate_prev || 0),
+                          format: v => `${v.toFixed(1)}%`,
+                          suffix: "%",
+                        },
+                        {
+                          label: "Demo → PRO",
+                          current: kpi.demo_pro_rate || 0,
+                          target: goals.demo_pro_target,
+                          color: "#FFB800",
+                          trend: (trends.demo_pro_rate || 0) - (trends.demo_pro_rate_prev || 0),
+                          format: v => `${v.toFixed(1)}%`,
+                          suffix: "%",
+                        },
+                      ];
+
+                      return metrics.map((m, i) => {
+                        const pct = m.target > 0 ? Math.min(100, (m.current / m.target) * 100) : 0;
+                        const achieved = m.current >= m.target && m.target > 0;
+                        const needsAttention = pct < 50 && m.target > 0;
+                        const trendUp = m.trend > 0;
+                        const trendFlat = m.trend === 0;
+
+                        return (
+                          <div key={i} className="space-y-3" data-testid={`goal-metric-${i}`}>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-zinc-500 font-medium">{m.label}</span>
+                              <div className="flex items-center gap-1.5">
+                                {achieved ? (
+                                  <Badge className="bg-[#00FF94]/15 text-[#00FF94] text-[10px] gap-1" data-testid={`goal-achieved-${i}`}>
+                                    <Check className="w-2.5 h-2.5" /> Goal Achieved
+                                  </Badge>
+                                ) : needsAttention ? (
+                                  <Badge className="bg-red-400/15 text-red-400 text-[10px] gap-1" data-testid={`goal-attention-${i}`}>
+                                    <AlertTriangle className="w-2.5 h-2.5" /> Needs Attention
+                                  </Badge>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="flex items-end justify-between">
+                              <div>
+                                <span className="text-lg font-bold font-mono" style={{ color: m.color }}>{m.format(m.current)}</span>
+                                <span className="text-xs text-zinc-600 ml-1">/ {m.format(m.target)}</span>
+                              </div>
+                              {!trendFlat && (
+                                <div className={`flex items-center gap-0.5 text-[10px] font-mono ${trendUp ? "text-[#00FF94]" : "text-red-400"}`} data-testid={`goal-trend-${i}`}>
+                                  {trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                                  {trendUp ? "+" : ""}{m.trend.toFixed(m.suffix ? 1 : 2)}
+                                  <span className="text-zinc-600 ml-0.5">24h</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="relative">
+                              <Progress value={pct} className="h-2" />
+                              <span className="text-[10px] text-zinc-600 font-mono mt-1 block">{pct.toFixed(0)}% of target</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Conversion Funnel Summary */}
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
