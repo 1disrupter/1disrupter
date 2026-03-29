@@ -5,7 +5,7 @@ import {
   Wallet, BarChart3, Bot, Store, Shield,
   ChevronDown, ArrowUpRight, Copy, FlaskConical,
   Users, ExternalLink, Home, Eye, Trophy,
-  LogIn, LogOut, User, Menu, Radio, Crown
+  LogIn, LogOut, User, Menu, Radio, Crown, Share2
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -22,7 +22,7 @@ import { Beaker } from "lucide-react";
 const Navigation = () => {
   const { wallet, connectWallet, disconnectWallet, loading: walletLoading, chainId, ethBalance, switchToSepolia } = useWallet();
   const { user, isAuthenticated, logout, isPro } = useAuth();
-  const { isDemoMode, toggleDemoMode } = useDemoMode();
+  const { isDemoMode, toggleDemoMode, shareDemoLink } = useDemoMode();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -48,7 +48,7 @@ const Navigation = () => {
     { path: "/admin", label: "Admin", icon: Shield },
   ];
 
-  const navItems = isAuthenticated ? authNavItems : publicNavItems;
+  const navItems = (isAuthenticated || isDemoMode) ? authNavItems : publicNavItems;
 
   const isOnSepolia = chainId === 11155111;
 
@@ -78,7 +78,7 @@ const Navigation = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {isAuthenticated ? (
+            {(isAuthenticated || isDemoMode) ? (
               <>
                 {/* Demo Mode Toggle */}
                 <button
@@ -96,6 +96,18 @@ const Navigation = () => {
                     <div className={`w-3 h-3 rounded-full bg-white transition-transform ${isDemoMode ? 'translate-x-3' : 'translate-x-0'}`} />
                   </div>
                 </button>
+
+                {/* Share Demo Button */}
+                {isDemoMode && (
+                  <button
+                    onClick={shareDemoLink}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border border-[#00FF94]/30 text-[#00FF94]/80 hover:bg-[#00FF94]/10 hover:text-[#00FF94] hover:border-[#00FF94]/50"
+                    data-testid="share-demo-btn"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    Share Demo
+                  </button>
+                )}
 
                 {(isPro || isDemoMode) && (
                   <Badge className="bg-gradient-to-r from-[#7B61FF] to-[#00FF94] text-white" data-testid="pro-badge">
@@ -124,46 +136,54 @@ const Navigation = () => {
                   </>
                 )}
                 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="rounded-full border-[#7B61FF]/30 hover:border-[#7B61FF] bg-[#7B61FF]/10" data-testid="user-dropdown">
-                      <User className="w-4 h-4 mr-2 text-[#7B61FF]" />
-                      {user?.name?.split(' ')[0] || 'User'}
-                      <ChevronDown className="w-4 h-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-[#121212] border-zinc-800 w-56">
-                    <div className="px-3 py-2 border-b border-zinc-800">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{user?.name}</p>
-                        <TierBadge tier={user?.user_tier || 'free'} />
+                {isAuthenticated ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="rounded-full border-[#7B61FF]/30 hover:border-[#7B61FF] bg-[#7B61FF]/10" data-testid="user-dropdown">
+                        <User className="w-4 h-4 mr-2 text-[#7B61FF]" />
+                        {user?.name?.split(' ')[0] || 'User'}
+                        <ChevronDown className="w-4 h-4 ml-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-[#121212] border-zinc-800 w-56">
+                      <div className="px-3 py-2 border-b border-zinc-800">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium">{user?.name}</p>
+                          <TierBadge tier={user?.user_tier || 'free'} />
+                        </div>
+                        <p className="text-xs text-zinc-500">{user?.email}</p>
                       </div>
-                      <p className="text-xs text-zinc-500">{user?.email}</p>
-                    </div>
-                    
-                    {wallet ? (
-                      <>
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(wallet)}>
-                          <Copy className="w-4 h-4 mr-2" />Copy Wallet
+                      
+                      {wallet ? (
+                        <>
+                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(wallet)}>
+                            <Copy className="w-4 h-4 mr-2" />Copy Wallet
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => window.open(`https://sepolia.etherscan.io/address/${wallet}`, '_blank')}>
+                            <ExternalLink className="w-4 h-4 mr-2" />View on Etherscan
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={disconnectWallet} className="text-[#FFB800]">
+                            <Wallet className="w-4 h-4 mr-2" />Disconnect Wallet
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <DropdownMenuItem onClick={connectWallet}>
+                          <Wallet className="w-4 h-4 mr-2" />Connect Wallet
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.open(`https://sepolia.etherscan.io/address/${wallet}`, '_blank')}>
-                          <ExternalLink className="w-4 h-4 mr-2" />View on Etherscan
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={disconnectWallet} className="text-[#FFB800]">
-                          <Wallet className="w-4 h-4 mr-2" />Disconnect Wallet
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <DropdownMenuItem onClick={connectWallet}>
-                        <Wallet className="w-4 h-4 mr-2" />Connect Wallet
+                      )}
+                      
+                      <DropdownMenuItem onClick={logout} className="text-red-400">
+                        <LogOut className="w-4 h-4 mr-2" />Sign Out
                       </DropdownMenuItem>
-                    )}
-                    
-                    <DropdownMenuItem onClick={logout} className="text-red-400">
-                      <LogOut className="w-4 h-4 mr-2" />Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : isDemoMode ? (
+                  <Link to="/register">
+                    <Button className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-xs px-4" data-testid="demo-signup-btn">
+                      Sign Up Free
+                    </Button>
+                  </Link>
+                ) : null}
               </>
             ) : (
               <>
@@ -195,7 +215,7 @@ const Navigation = () => {
                   <item.icon className="w-5 h-5" />{item.label}
                 </Link>
               ))}
-              {!isAuthenticated && (
+              {!isAuthenticated && !isDemoMode && (
                 <div className="mt-4 pt-4 border-t border-zinc-800 space-y-2">
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400">
                     <LogIn className="w-5 h-5" />Sign In
@@ -205,8 +225,8 @@ const Navigation = () => {
                   </Link>
                 </div>
               )}
-              {isAuthenticated && (
-                <div className="mt-4 pt-4 border-t border-zinc-800">
+              {(isAuthenticated || isDemoMode) && (
+                <div className="mt-4 pt-4 border-t border-zinc-800 space-y-1">
                   <button
                     onClick={() => { toggleDemoMode(); setMobileMenuOpen(false); }}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl w-full ${isDemoMode ? 'text-[#7B61FF] bg-[#7B61FF]/10' : 'text-zinc-400'}`}
@@ -218,6 +238,21 @@ const Navigation = () => {
                       <div className={`w-3 h-3 rounded-full bg-white transition-transform ${isDemoMode ? 'translate-x-3' : 'translate-x-0'}`} />
                     </div>
                   </button>
+                  {isDemoMode && (
+                    <button
+                      onClick={() => { shareDemoLink(); setMobileMenuOpen(false); }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-[#00FF94]/80 hover:bg-[#00FF94]/10"
+                      data-testid="share-demo-btn-mobile"
+                    >
+                      <Share2 className="w-5 h-5" />
+                      Share Demo Link
+                    </button>
+                  )}
+                  {!isAuthenticated && isDemoMode && (
+                    <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#7B61FF] text-white mt-2">
+                      <User className="w-5 h-5" />Sign Up Free
+                    </Link>
+                  )}
                 </div>
               )}
             </motion.div>

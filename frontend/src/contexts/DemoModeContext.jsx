@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import {
   mockSignals, mockPortfolioStats, mockAgents, mockStrategies,
   mockMarketplaceItems, mockEventAgents, mockResearchQueries,
@@ -25,6 +26,12 @@ const randomPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 export const DemoModeProvider = ({ children }) => {
   const [isDemoMode, setIsDemoMode] = useState(() => {
+    // Check URL param first, then sessionStorage
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === 'true') {
+      sessionStorage.setItem('alphaai_demo_mode', 'true');
+      return true;
+    }
     return sessionStorage.getItem('alphaai_demo_mode') === 'true';
   });
 
@@ -47,6 +54,27 @@ export const DemoModeProvider = ({ children }) => {
       const next = !prev;
       sessionStorage.setItem('alphaai_demo_mode', String(next));
       return next;
+    });
+  }, []);
+
+  const shareDemoLink = useCallback(() => {
+    const base = window.location.origin + '/dashboard';
+    const url = base + '?demo=true';
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Demo link copied!', {
+        description: 'Share it with anyone to let them explore AlphaAI instantly.',
+      });
+    }).catch(() => {
+      // Fallback: select text for manual copy
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      toast.success('Demo link copied!', {
+        description: 'Share it with anyone to let them explore AlphaAI instantly.',
+      });
     });
   }, []);
 
@@ -110,6 +138,7 @@ export const DemoModeProvider = ({ children }) => {
   const value = {
     isDemoMode,
     toggleDemoMode,
+    shareDemoLink,
     demoSignals,
     demoStats,
     demoAgents,
