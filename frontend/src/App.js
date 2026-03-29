@@ -104,7 +104,7 @@ function App() {
             </Routes>
             </TrackingWrapper>
           </BrowserRouter>
-          <Toaster position="bottom-right" theme="dark" />
+          <Toaster position="top-center" theme="dark" toastOptions={{ className: "md:!bottom-auto" }} />
         </div>
         </DemoModeProvider>
       </WalletProvider>

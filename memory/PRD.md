@@ -1,71 +1,52 @@
 # AlphaAI — Product Requirements Document
 
 ## Original Problem Statement
-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion. The platform provides AI-powered research, backtesting, strategy management, real-time trading signals, and comprehensive admin monitoring.
+AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion with AI-powered research, backtesting, strategy management, real-time signals, and admin monitoring.
 
 ## Core Architecture
 - **Frontend**: React + Tailwind CSS + Shadcn UI + Recharts + Framer Motion
 - **Backend**: FastAPI + Motor (Async MongoDB) + WebSockets
 - **Integrations**: OpenAI GPT-5.2 (Emergent LLM Key), Stripe, CoinGecko, Resend
 
-## Implemented Features (All Passing — Iterations 25-34)
+## Implemented Features (All Passing — Iterations 25-35)
 
 ### Phase 1: Core Platform
-- User auth (JWT, 2FA, password reset, email verification), Dashboard, AI Agents, Event Agents
-- Strategy Lab, Marketplace, Copy Trading, Referral system, Admin panel + analytics
-- Demo Mode (`?demo=true`) global bypass
+- Auth (JWT, 2FA, password reset, email verification), Dashboard, Agents, Strategy Lab
+- Marketplace, Copy Trading, Referral, Admin panel, Demo Mode
 
 ### Phase 2: Intelligence & Data
-- GPT-5.2 Research Engine, CoinGecko OHLC Integration, Backtest Engine
-- Strategy Leaderboard, Follow Strategy + Notifications, Stripe Pro-Tier Gating
-- Real-Time Strategy Alerts (WebSocket)
+- GPT-5.2 Research, CoinGecko OHLC, Backtest Engine, Strategy Leaderboard
+- Follow Strategy + Notifications, Stripe Pro-Tier Gating, Real-Time Strategy Alerts (WS)
 
 ### Phase 3: Admin Analytics + Monitoring
-- Event Logging (`POST /api/admin/events`), Summary/Timeseries/Raw Events endpoints
-- Global + Component-Level Frontend Tracking
-- Admin Dashboard `/admin/traffic` with KPIs, charts, funnel, system health
-- WebSocket admin event stream `/api/ws/admin/events`
-- Live Event Stream panel with pause/resume, filters, auto-scroll
+- Event Logging, Summary/Timeseries/Raw Events, Frontend Tracking
+- Admin Dashboard, WebSocket admin event stream, Live Event Stream panel
+- Rule Engine (6 anomaly rules), Alert events, Founder email alerts
+- Responsive Navigation (priority split + More dropdown)
 
-### Phase 3d: Alerting System (March 29, 2026)
-- **Rule Engine** — Background task running every 5s, evaluating 6 rules:
-  1. Error Spike (10+ errors in 60s)
-  2. Traffic Surge (100+ page views or 200+ API calls in 60s)
-  3. WebSocket Disconnect Storm (15+ disconnects in 30s)
-  4. Strategy Alert Flood (20+ signals from same strategy in 30s)
-  5. Checkout Failure Spike (5+ failed checkouts in 10min)
-  6. Suspicious User Behavior (50+ API calls from same user in 10s)
-- **Alert Events** — Inserted into `traffic_events` with type="alert", broadcast to admin WS
-- **Cooldown** — 120s per alert type to prevent spam
-- **Founder Email Alerts** — Via Resend, suppressed in Demo Mode, 3-retry logic
-- **UI Enhancements**:
-  - ALERT ACTIVE badge with pulse animation
-  - Active Alerts banner with alert type badges
-  - Red-styled alert lines in live feed (bold, icon, left border)
-  - Pin-to-top for 10 seconds
-  - "Alerts Only" filter option
-  - Sound toggle button
-  - Alert count badge in live stream header
-  - Red-highlighted rows in raw events table
-
-### Phase 3e: Responsive Navigation (March 29, 2026)
-- Priority-based nav: 5 primary items + "More" dropdown
-- No overflow at 1024px, 1366px, 1920px
-- Mobile hamburger menu at < 768px
+### Phase 4: Mobile API Optimization (March 29, 2026)
+- **Bootstrap Endpoint** (`GET /api/mobile/bootstrap`) — Lightweight single-call init returning user profile, followed strategies, unread alerts, feature flags, strategy summary. Works in demo mode. <120ms total.
+- **Mobile Refresh** (`POST /api/mobile/refresh`) — Lightweight token refresh for mobile sessions.
+- **Mobile API Client** — `fetchWithRetry` (exponential backoff, 3 retries), `fetchCached` (localStorage + TTL), `queueOfflineEvent` / `flushOfflineQueue` (offline event queue).
+- **Mobile Cache** — localStorage wrapper with TTL per key (bootstrap: 2min, strategies: 5min, followed: 3min, alerts: 1min). Invalidated on login/logout.
+- **WebSocket Reconnection** — Reconnects on `visibilitychange` (app resume) and `online` event (network recovery). Exponential backoff with 8 max attempts.
+- **MobileNetworkBanner** — Offline (red) and Reconnecting (yellow) banners with smooth animations.
+- **MobileBottomNav** — Sticky bottom nav (Dashboard, Leaderboard, Alerts, Settings) visible below md breakpoint.
+- **MobileSettingsPage** (`/settings`) — Clear cache, refresh data, alert sounds toggle, compact mode toggle, cache status display.
+- **Compact Mode** — CSS class that reduces padding/spacing globally.
+- **Safe Area Support** — CSS env() for notch/home indicator on iOS.
 
 ## Key Endpoints
 | Endpoint | Method | Description |
 |---|---|---|
+| `/api/mobile/bootstrap` | GET | Mobile initialization (demo + auth) |
+| `/api/mobile/refresh` | POST | Lightweight token refresh |
 | `/api/admin/events` | POST | Log traffic event |
 | `/api/admin/traffic/summary` | GET | Aggregated metrics |
-| `/api/admin/traffic/timeseries` | GET | Time-bucketed charts |
-| `/api/admin/traffic/events` | GET | Paginated raw events |
-| `/api/admin/traffic/active-alerts` | GET | Currently triggered alert types |
-| `/api/admin/traffic/stream-status` | GET | Admin WS stats |
-| `/api/ws/admin/events` | WS | Real-time admin event stream |
+| `/api/admin/traffic/active-alerts` | GET | Active alert types |
+| `/api/ws/admin/events` | WS | Admin event stream |
+| `/api/ws/alerts/{client_id}` | WS | Strategy alerts |
 
 ## Backlog (P2)
-- Biometric Authentication for Mobile (Face ID / Touch ID)
-- Mobile App API Optimization (React Native)
 - Webhook Delivery Testing via Stripe Dashboard
 - Deploy AlphaAIManager.sol Smart Contract to Sepolia
