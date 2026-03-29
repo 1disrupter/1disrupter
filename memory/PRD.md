@@ -51,109 +51,55 @@ Build "AlphaAI", a B2C/SaaS crypto trading signals platform optimized for conver
 ### Phase 7 — Dashboard Placeholder UI (DONE — 2026-03-28)
 - All 11 dashboard pages updated with polished placeholder UI
 - Consistent pattern: PageHeader + StatsRow + Mock data/charts/tables
-- Pages updated: Simulation, Research, AI Agents, Event Agents, Strategy Lab, Marketplace, Referrals, Analytics, Conversion Analytics, Leaderboard (mock fallback)
-- Shared components: PlaceholderUI.jsx (PageHeader, StatsRow, ComingSoonCard, MockTable, MiniChart)
-- Shared mock data: lib/mockData.js
-
-### Admin Route (DONE — 2026-03-28)
-- POST /api/auth/admin/create — temporary admin user creation endpoint
+- Shared components: PlaceholderUI.jsx, mockData.js
 
 ### Phase 8 — Backend Monolith Refactor (DONE — 2026-03-29)
-- Refactored monolithic server.py (6,200+ lines) into clean modular architecture
 - server.py reduced to lightweight router orchestrator (~156 lines)
 - 20+ route modules in /app/backend/routes/
 - Centralized Pydantic models in /app/backend/models/schemas.py
 - Service layer in /app/backend/services/
-- Database connection in /app/backend/database/__init__.py
-- Fixed all import errors, missing dependencies, and path issues across extracted modules
-- All 15+ API endpoint groups verified working (100% pass rate)
-- Frontend fully functional with all dashboard pages accessible
+- All 15+ API endpoint groups verified working
+
+### Phase 9 — Global Demo Mode (DONE — 2026-03-29)
+- DemoModeContext provider with global state (sessionStorage persistence)
+- Toggle in nav header (desktop + mobile) with pill-shaped switch UI
+- Subtle global banner: "Demo Mode: Data simulated for preview." with close button
+- Live simulation: mock data updates every 3-5 seconds (signals, portfolio, agents, chart)
+- PRO gating bypass: effectivePro = demoMode || isPro unlocks all features visually
+- Pages wired up: Dashboard, Simulation, AI Agents, Event Agents, Strategy Lab, Marketplace, Research, Leaderboard, Copy Trading, Referrals
+- Disabled real actions: trade execution shows toast in demo mode
+- Upgrade banners hidden when demo mode is active
+
+### Admin Route (DONE — 2026-03-28)
+- POST /api/auth/admin/create — temporary admin user creation endpoint
 
 ## File Structure
 ```
 /app/backend/
-├── server.py                       # Lightweight router orchestrator (~156 lines)
-├── database/
-│   └── __init__.py                 # DB connection, EMERGENT_LLM_KEY, STRIPE_API_KEY
-├── models/
-│   └── schemas.py                  # All Pydantic models (~507 lines)
-├── routes/
-│   ├── admin.py                    # Admin dashboard
-│   ├── analytics_routes.py         # Analytics tracking
-│   ├── auth.py                     # Authentication (JWT, login, register)
-│   ├── copy_trading.py             # Copy trading system
-│   ├── demo.py                     # Demo/overview endpoints
-│   ├── event_agents.py             # Event-driven agent system
-│   ├── fund.py                     # Fund stats, investors, market data
-│   ├── leaderboard.py              # Leaderboard rankings
-│   ├── marketing.py                # Marketing assets, PDF generation
-│   ├── metrics.py                  # Platform metrics
-│   ├── mobile_v1.py                # Mobile API endpoints
-│   ├── notifications.py            # Notification preferences
-│   ├── orders.py                   # Order management
-│   ├── payments.py                 # Stripe payments
-│   ├── referrals.py                # Referral system
-│   ├── research.py                 # AI research engine, backtesting
-│   ├── signals.py                  # Tiered signal API (free/pro/elite)
-│   ├── simulation.py               # Simulation engine
-│   ├── strategies.py               # Strategy lab, agent management
-│   ├── trading.py                  # Live/paper trading, risk management
-│   ├── web3_routes.py              # Smart contract integration
-│   └── websocket.py                # WebSocket connections
-├── services/
-│   ├── copy_trading_service.py
-│   ├── email_service.py
-│   ├── leaderboard_service.py
-│   ├── market_data.py
-│   ├── order_manager.py
-│   ├── push_notifications.py
-│   ├── signal_intelligence.py
-│   ├── signal_service.py
-│   ├── simulation_service.py
-│   ├── trading_service.py
-│   └── websocket_manager.py
-├── web3/
-│   └── contract_abi.py
-├── data/
-│   ├── btc_usd.csv
-│   └── eth_usd.csv
+├── server.py                       # Lightweight router orchestrator
+├── database/__init__.py            # DB connection, keys
+├── models/schemas.py               # All Pydantic models
+├── routes/                         # 20+ modular route files
+├── services/                       # Business logic services
+├── web3/contract_abi.py
+├── data/ (btc_usd.csv, eth_usd.csv)
 
 /app/frontend/src/
-├── App.js                          # Routing shell (79 lines)
+├── App.js                          # Routing shell + DemoModeProvider
 ├── components/
-│   ├── BrandComponents.jsx
-│   ├── LivePriceTicker.jsx
-│   ├── Navigation.jsx
-│   ├── NotificationSettings.jsx
+│   ├── DemoModeBanner.jsx          # Global demo mode banner (NEW)
 │   ├── PlaceholderUI.jsx
-│   ├── SplashScreen.jsx
-│   ├── PerformanceMetrics.jsx
-│   ├── ReferralDashboard.jsx
+│   ├── Navigation.jsx              # Demo toggle in nav (UPDATED)
 │   └── ui/                         # Shadcn components
 ├── contexts/
 │   ├── AuthContext.jsx
+│   ├── DemoModeContext.jsx          # Global demo mode state (NEW)
 │   └── WalletContext.jsx
 ├── lib/
 │   ├── constants.js
 │   ├── formatters.js
 │   └── mockData.js
-├── pages/
-│   ├── AdminPage.jsx
-│   ├── AgentsPage.jsx
-│   ├── AnalyticsPage.jsx
-│   ├── AuthPages.jsx
-│   ├── ConversionAnalyticsPage.jsx
-│   ├── CopyTradingPage.jsx
-│   ├── DashboardPage.jsx
-│   ├── EventAgentsPage.jsx
-│   ├── LandingPage.jsx
-│   ├── LeaderboardPage.jsx
-│   ├── MarketplacePage.jsx
-│   ├── PricingPage.jsx
-│   ├── ReferralPage.jsx
-│   ├── ResearchEnginePage.jsx
-│   ├── SimulationPage.jsx
-│   └── StrategyLabPage.jsx
+├── pages/                          # All dashboard pages (demo-mode aware)
 ```
 
 ## Credentials

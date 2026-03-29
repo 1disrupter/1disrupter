@@ -670,25 +670,16 @@ const DashboardPage = () => {
           </motion.div>
         )}
 
-        {/* Demo Mode Banner */}
+        {/* Demo Mode Info */}
         {demoMode && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-xl bg-[#7B61FF]/10 border border-[#7B61FF]/30 flex items-center justify-between"
+            className="mb-6 p-3 rounded-xl bg-[#7B61FF]/5 border border-[#7B61FF]/20 flex items-center gap-3"
             data-testid="demo-mode-banner"
           >
-            <div className="flex items-center gap-3">
-              <Zap className="w-5 h-5 text-[#7B61FF]" />
-              <span className="text-[#7B61FF] font-medium">Upgrade to unlock full features</span>
-            </div>
-            <Button 
-              onClick={() => setShowUpgradePopup(true)}
-              className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 rounded-full px-6"
-              data-testid="upgrade-demo-btn"
-            >
-              <Zap className="w-4 h-4 mr-2" /> Upgrade Now
-            </Button>
+            <Eye className="w-4 h-4 text-[#7B61FF]/70" />
+            <span className="text-sm text-[#7B61FF]/70">All features unlocked for preview. Data is simulated.</span>
           </motion.div>
         )}
 
