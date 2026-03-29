@@ -11,6 +11,9 @@ from database import db, EMERGENT_LLM_KEY, logger
 from models.schemas import StrategyGenerateRequest, BacktestRequest
 from services.signal_service import signal_service
 from services.trading_service import live_trading_service
+from services.simulation_service import simulation_engine as sim_engine
+from services.market_data import calculate_sharpe_ratio
+from models.schemas import StrategyGenerateRequest, BacktestRequest, Strategy
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 router = APIRouter(prefix="/api")

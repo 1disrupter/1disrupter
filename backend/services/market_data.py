@@ -3,6 +3,7 @@ AlphaAI Market Data Service
 Fetches live market data from CoinGecko API.
 """
 import httpx
+import random
 import logging
 from datetime import datetime, timezone
 from typing import List, Dict

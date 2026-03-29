@@ -5,6 +5,8 @@ Tiered signal generation with free (15-min delay) and pro (real-time) tiers.
 import asyncio
 import random
 import logging
+import httpx
+import uuid
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field, ConfigDict
@@ -387,5 +389,3 @@ async def price_broadcast_task():
         except Exception as e:
             logger.error(f"Price broadcast error: {str(e)}")
         await asyncio.sleep(5)  # Broadcast prices every 5 seconds for Pro/Elite
-
-signal_service = SignalService()

@@ -10,6 +10,13 @@ from services.signal_service import signal_service
 
 router = APIRouter(prefix="/api")
 
+# Signal refresh rates per tier (seconds)
+SIGNAL_REFRESH_RATES = {
+    "free": 300,     # 5 minutes
+    "pro": 30,       # 30 seconds
+    "elite": 10      # 10 seconds
+}
+
 # ============= TIERED SIGNAL API ENDPOINTS =============
 
 @router.get("/signals/free")

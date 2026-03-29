@@ -89,7 +89,7 @@ async def signal_generation_task():
     """Periodically generates AI trading signals."""
     while True:
         try:
-            await signal_service.generate_ai_signal()
+            await signal_service.generate_signals()
         except Exception as e:
             logger.error(f"Signal generation error: {e}")
         await asyncio.sleep(300)
@@ -103,7 +103,7 @@ async def price_broadcast_task():
                 from services.market_data import get_top_coins
                 prices = await get_top_coins()
                 if prices:
-                    await manager.broadcast({
+                    await manager.broadcast_all({
                         "type": "price_update",
                         "data": prices
                     })

@@ -5,10 +5,13 @@ AI-powered market research, sentiment analysis, and report generation.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
+import random
+import json
 from database import db, EMERGENT_LLM_KEY, logger
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from services.simulation_service import simulation_engine as sim_engine
 
 router = APIRouter(prefix="/api")
 

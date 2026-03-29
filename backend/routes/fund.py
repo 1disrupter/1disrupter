@@ -6,9 +6,11 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Optional, Dict
 from datetime import datetime, timezone
 import uuid
+import random
 from database import db, logger
 from models.schemas import Investor, InvestorCreate, DepositRequest, WithdrawRequest, StatusCheck, StatusCheckCreate
 from services.signal_service import signal_service
+from services.market_data import calculate_nav, calculate_sharpe_ratio, calculate_max_drawdown
 
 router = APIRouter(prefix="/api")
 

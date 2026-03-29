@@ -5,7 +5,7 @@ Conversion analytics, A/B testing, and campaign tracking.
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 from database import db, logger
 

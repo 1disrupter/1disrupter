@@ -4,7 +4,8 @@ All request/response schemas used across the platform.
 """
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
+import uuid
 
 # ============= MODELS =============
 

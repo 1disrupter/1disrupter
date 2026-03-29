@@ -14,6 +14,7 @@ from models.schemas import (
     RiskConfig, RiskAlert, MarketplaceAgentCreate
 )
 from services.trading_service import live_trading_service
+from services.simulation_service import simulation_engine as sim_engine
 
 router = APIRouter(prefix="/api")
 

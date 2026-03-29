@@ -10,7 +10,7 @@ import uuid
 import random
 from database import db, EMERGENT_LLM_KEY, logger
 from models.schemas import AdvancedSimulationConfig, SimulationExportRequest
-from services.simulation_service import simulation_engine
+from services.simulation_service import simulation_engine as sim_engine
 from services.signal_service import signal_service
 from services.market_data import get_market_data, get_market_chart
 from emergentintegrations.llm.chat import LlmChat, UserMessage

@@ -5,10 +5,24 @@ Contract deployment, interaction, and blockchain integration.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
 import uuid
+import random
 from database import db, logger
-from web3.contract_abi import CONTRACT_ABI
+from services.simulation_service import simulation_engine as sim_engine
+
+# Load contract ABI from local file (avoid clash with web3 pip package)
+import importlib.util
+_abi_spec = importlib.util.spec_from_file_location("contract_abi", str(Path(__file__).parent.parent / "web3" / "contract_abi.py"))
+_abi_mod = importlib.util.module_from_spec(_abi_spec)
+_abi_spec.loader.exec_module(_abi_mod)
+ALPHA_AI_ABI = _abi_mod.ALPHA_AI_MANAGER_ABI
+SEPOLIA_CONFIG = _abi_mod.SEPOLIA_CONFIG
+CONTRACT_ADDRESSES = _abi_mod.CONTRACT_ADDRESSES
+
+CONTRACT_ADDRESS = CONTRACT_ADDRESSES.get("sepolia")
+SEPOLIA_RPC = SEPOLIA_CONFIG.get("rpc_url", "https://sepolia.infura.io/v3/")
 
 router = APIRouter(prefix="/api")
 

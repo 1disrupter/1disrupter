@@ -3,7 +3,7 @@ AlphaAI Event Agent Routes
 Event-driven agent system for automated market monitoring and response.
 """
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 import uuid
@@ -385,3 +385,6 @@ async def get_integration_config():
 from fastapi.responses import FileResponse
 
 @router.get("/export/comprehensive-pdf")
+async def export_comprehensive_pdf():
+    """Export comprehensive PDF report (placeholder)"""
+    return {"message": "PDF export coming soon", "status": "not_implemented"}

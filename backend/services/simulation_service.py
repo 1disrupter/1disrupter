@@ -9,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional, Any
 from database import db
 
-from models.schemas import Trade
+from models.schemas import Trade, SimulationConfig
 
 logger = logging.getLogger("AlphaAI")
 
