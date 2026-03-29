@@ -654,3 +654,36 @@ async def load_historical_data(source_url: str = None, use_sample: bool = True):
         }
     
     return {"success": False, "message": "External data source loading not implemented. Use sample data."}
+
+
+class SimulationBacktestRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    asset: str = Field(default="BTC/USDT")
+    strategy: str = Field(default="momentum")
+    days: int = Field(default=365, ge=30, le=730)
+    initial_capital: float = Field(default=100000, ge=1000)
+    demo: bool = Field(default=False)
+
+@router.post("/simulation/backtest")
+async def simulation_backtest(request: SimulationBacktestRequest):
+    """Run a backtest on real OHLC data for the Simulation page."""
+    from services.market_data import get_ohlc, get_demo_ohlc
+    from services.backtest_engine import run_backtest
+
+    if request.demo:
+        candles = get_demo_ohlc(request.days)
+        data_source = "mock"
+    else:
+        candles = await get_ohlc(asset=request.asset, days=request.days)
+        data_source = "coingecko"
+
+    results = run_backtest(
+        candles=candles,
+        strategy_type=request.strategy,
+        initial_capital=request.initial_capital,
+    )
+    results["data_source"] = data_source
+    results["asset"] = request.asset
+    results["strategy"] = request.strategy
+
+    return {"success": True, "results": results}

@@ -1,0 +1,110 @@
+{
+  "summary": "CoinGecko OHLC integration testing complete. Backend POST /api/simulation/backtest endpoint works correctly with real CoinGecko data (data_source=coingecko) and demo mode (data_source=mock). Frontend Simulation and Strategy Lab pages correctly display data source badges and equity curves. 9/10 backend tests passed, 1 pre-existing bug in strategy generation endpoint.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/lab/strategies/generate",
+        "issue": "NameError: name 'SimulationLog' is not defined in simulation_service.py - pre-existing bug not related to new backtest feature",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend POST /api/simulation/backtest with BTC/USDT, momentum, demo=false returns data_source=coingecko",
+    "Backend POST /api/simulation/backtest with demo=true returns data_source=mock",
+    "Backend POST /api/simulation/backtest with ETH/USDT returns valid data",
+    "Backend POST /api/simulation/backtest with SOL/USDT returns valid data",
+    "Backend POST /api/simulation/backtest with mean_reversion strategy returns valid data",
+    "Backend POST /api/simulation/backtest with breakout strategy returns valid data",
+    "Backend response includes all required fields: equity_curve, total_return, sharpe_ratio, max_drawdown, win_rate, total_trades, profit_factor",
+    "Backend backtest with 30 days minimum period works",
+    "Backend backtest with custom initial_capital (50000) works",
+    "Simulation page (/simulation?demo=true): Backtest tab shows pair/strategy selectors",
+    "Simulation page: Run Backtest button triggers API call and shows results",
+    "Simulation page: Demo Mode shows 'Demo Mode — Mock Data' badge",
+    "Simulation page: Backtest result shows equity curve bars (62 bars)",
+    "Simulation page: Backtest result shows Total Return, Sharpe Ratio, Max Drawdown, Win Rate",
+    "Simulation page (non-demo): Shows 'Data: CoinGecko' badge with real market data",
+    "Strategy Lab (/lab?demo=true): Generate Strategy creates strategy card",
+    "Strategy Lab: Backtest This Strategy button shows results",
+    "Strategy Lab: Demo Mode shows 'Demo Mode — Mock Data' badge",
+    "Strategy Lab: Backtest result shows equity curve and metrics",
+    "No regressions on AI Agents page",
+    "No regressions on Event Agents page",
+    "No regressions on Marketplace page",
+    "No regressions on Research page"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_backtest_coingecko.py",
+    "/app/test_reports/pytest/backtest_coingecko_results.xml"
+  ],
+
+  "action_items": [
+    "Fix NameError in POST /api/lab/strategies/generate - SimulationLog not defined (pre-existing bug, not blocking new feature)"
+  ],
+
+  "critical_code_review_comments": [
+    "market_data.py: OHLC fetch with 10-min TTL cache implemented correctly",
+    "backtest_engine.py: Three strategies (momentum, mean_reversion, breakout) implemented with proper signal generation",
+    "simulation.py: New POST /api/simulation/backtest endpoint correctly handles demo vs real mode",
+    "SimulationPage.jsx: Correctly passes demo flag and displays data_source badge",
+    "StrategyLabPage.jsx: Correctly displays backtest results with equity curve"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_backtest_coingecko.py"
+  ],
+
+  "success_rate": {
+    "backend": "90% (9/10 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+
+  "test_credentials": {
+    "demo_mode": "?demo=true URL parameter",
+    "standard_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "admin_user": "admin@my-alpha-ai.com / Admin1234!"
+  },
+
+  "seed_data_creation": "None - used CoinGecko API for real data and mock generator for demo mode",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "CoinGecko OHLC integration fully tested. New endpoint POST /api/simulation/backtest works with real data (data_source=coingecko) and demo mode (data_source=mock). Frontend correctly displays 'Data: CoinGecko' or 'Demo Mode — Mock Data' badges. Pre-existing bug in strategy generation endpoint (SimulationLog not defined) - not related to new feature.",
+
+  "mocked_api": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "Demo Mode: get_demo_ohlc() returns deterministic mock OHLC data",
+      "CoinGecko fallback: _generate_mock_ohlc() when API fails or rate limited"
+    ]
+  },
+
+  "features_tested": {
+    "simulation_backtest_btc_momentum": "PASS - Returns data_source=coingecko with real data",
+    "simulation_backtest_demo_mode": "PASS - Returns data_source=mock",
+    "simulation_backtest_eth_usdt": "PASS - Different asset works",
+    "simulation_backtest_sol_usdt": "PASS - Different asset works",
+    "simulation_backtest_mean_reversion": "PASS - Different strategy works",
+    "simulation_backtest_breakout": "PASS - Different strategy works",
+    "simulation_backtest_response_structure": "PASS - All required fields present",
+    "strategy_lab_generate_backtest": "FAIL - Pre-existing SimulationLog bug",
+    "simulation_page_demo_mode_ui": "PASS - Badge shows 'Demo Mode — Mock Data'",
+    "simulation_page_real_mode_ui": "PASS - Badge shows 'Data: CoinGecko'",
+    "simulation_page_equity_curve": "PASS - 62 bars displayed",
+    "strategy_lab_demo_mode_ui": "PASS - Badge shows 'Demo Mode — Mock Data'",
+    "strategy_lab_equity_curve": "PASS - Equity curve displayed",
+    "no_regressions_other_pages": "PASS - AI Agents, Event Agents, Marketplace, Research all load"
+  }
+}

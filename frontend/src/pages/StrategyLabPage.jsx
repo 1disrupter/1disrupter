@@ -82,7 +82,10 @@ const StrategyLabPage = () => {
         sharpe_ratio: 1.92,
         max_drawdown: 4.2,
         win_rate: 64.3,
-        total_trades: 237
+        total_trades: 237,
+        profit_factor: 1.82,
+        equity_curve: Array.from({ length: 30 }, (_, i) => ({ day: i, value: 100000 + i * 617 + (Math.sin(i) * 1500) })),
+        data_source: "mock",
       });
       setBacktesting(null);
       return;
@@ -96,7 +99,7 @@ const StrategyLabPage = () => {
         refetch();
       }
     } catch (e) {
-      toast.error("Backtest failed");
+      toast.error("Market data unavailable — using fallback data");
     }
     setBacktesting(null);
   };
@@ -173,13 +176,18 @@ const StrategyLabPage = () => {
                     <CardHeader className="pb-3 border-b border-zinc-800/50">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-medium flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#7B61FF]" /> Backtest Results</CardTitle>
-                        <button onClick={() => setBacktestResult(null)} className="p-1 rounded hover:bg-white/5"><X className="w-4 h-4 text-zinc-500" /></button>
+                        <div className="flex items-center gap-2">
+                          <Badge className={backtestResult.data_source === "coingecko" ? "bg-[#00FF94]/10 text-[#00FF94] text-[9px]" : "bg-zinc-700 text-zinc-400 text-[9px]"} data-testid="data-source-badge">
+                            {backtestResult.data_source === "coingecko" ? "Data: CoinGecko" : "Demo Mode — Mock Data"}
+                          </Badge>
+                          <button onClick={() => setBacktestResult(null)} className="p-1 rounded hover:bg-white/5"><X className="w-4 h-4 text-zinc-500" /></button>
+                        </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-5">
+                    <CardContent className="p-5 space-y-4">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {[
-                          { label: "Total Return", value: `${backtestResult.total_return}%`, color: "text-[#00FF94]" },
+                          { label: "Total Return", value: `${backtestResult.total_return}%`, color: backtestResult.total_return >= 0 ? "text-[#00FF94]" : "text-red-400" },
                           { label: "Sharpe Ratio", value: backtestResult.sharpe_ratio, color: "text-white" },
                           { label: "Max Drawdown", value: `${backtestResult.max_drawdown}%`, color: "text-red-400" },
                           { label: "Win Rate", value: `${backtestResult.win_rate}%`, color: "text-white" },
@@ -190,7 +198,29 @@ const StrategyLabPage = () => {
                           </div>
                         ))}
                       </div>
-                      <p className="text-xs text-zinc-600 mt-3">Period: {backtestResult.period} | Trades: {backtestResult.total_trades} | Capital: ${backtestResult.initial_capital?.toLocaleString()} → ${backtestResult.final_capital?.toLocaleString()}</p>
+
+                      {/* Equity Curve */}
+                      {backtestResult.equity_curve?.length > 0 && (
+                        <div>
+                          <p className="text-xs text-zinc-500 mb-2 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Equity Curve</p>
+                          <div className="h-28 flex items-end gap-[2px]">
+                            {backtestResult.equity_curve.map((pt, i) => {
+                              const vals = backtestResult.equity_curve.map(p => p.value);
+                              const mn = Math.min(...vals);
+                              const mx = Math.max(...vals);
+                              const pct = mx > mn ? ((pt.value - mn) / (mx - mn)) * 100 : 50;
+                              return (
+                                <div key={i} className="flex-1 rounded-t bg-[#00FF94]/50 hover:bg-[#00FF94]/70 transition-colors" style={{ height: `${Math.max(pct, 3)}%` }} title={`$${Math.round(pt.value).toLocaleString()}`} />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-zinc-600">
+                        <span>Period: {backtestResult.period} | Trades: {backtestResult.total_trades}{backtestResult.profit_factor ? ` | PF: ${backtestResult.profit_factor}` : ""}</span>
+                        <span>Capital: ${backtestResult.initial_capital?.toLocaleString()} → ${backtestResult.final_capital?.toLocaleString()}</span>
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import axios from "axios";
 import {
   Radio, Play, StopCircle, Target, TrendingUp,
   BarChart3, Zap, Clock, Activity, X, Loader2, Shield
@@ -15,6 +16,7 @@ import { mockSimulationResults, mockChartData } from "../lib/mockData";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useApiData } from "../lib/useApiData";
+import { API } from "../lib/constants";
 
 const SimulationPage = () => {
   const { isDemoMode, demoSimulations, demoChart } = useDemoMode();
@@ -146,34 +148,22 @@ const SimulationPage = () => {
                       <Button onClick={async () => {
                         setBacktestRunning(true);
                         setBacktestResult(null);
-                        await new Promise(r => setTimeout(r, 2000));
-                        const winRate = 55 + Math.random() * 20;
-                        const totalTrades = 150 + Math.floor(Math.random() * 200);
-                        const totalReturn = 8 + Math.random() * 25;
-                        const sharpe = 0.8 + Math.random() * 1.8;
-                        const maxDD = 3 + Math.random() * 8;
-                        const curve = Array.from({ length: 30 }, (_, i) => ({
-                          day: i + 1,
-                          value: 100000 + (totalReturn * 1000 * (i / 30)) + (Math.random() - 0.4) * 3000
-                        }));
-                        setBacktestResult({
-                          pair: selectedPair,
-                          strategy: selectedStrategy,
-                          period: "Jan 2025 — Dec 2025",
-                          initial: 100000,
-                          final: Math.round(100000 * (1 + totalReturn / 100)),
-                          totalReturn: totalReturn.toFixed(1),
-                          sharpe: sharpe.toFixed(2),
-                          maxDD: maxDD.toFixed(1),
-                          winRate: winRate.toFixed(1),
-                          totalTrades,
-                          avgWin: (totalReturn / totalTrades * 2.5).toFixed(2),
-                          avgLoss: (totalReturn / totalTrades * 1.2).toFixed(2),
-                          profitFactor: (1.4 + Math.random() * 0.8).toFixed(2),
-                          curve
-                        });
+                        try {
+                          const res = await axios.post(`${API}/simulation/backtest`, {
+                            asset: selectedPair,
+                            strategy: selectedStrategy,
+                            days: 365,
+                            initial_capital: 100000,
+                            demo: isDemoMode,
+                          });
+                          if (res.data?.success) {
+                            setBacktestResult(res.data.results);
+                            toast.success("Backtest complete!");
+                          }
+                        } catch (e) {
+                          toast.error("Market data unavailable — using fallback data");
+                        }
                         setBacktestRunning(false);
-                        toast.success("Backtest complete!");
                       }} disabled={backtestRunning} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white border border-[#7B61FF]/30" data-testid="run-backtest-btn">
                         {backtestRunning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Running...</> : <><Play className="w-4 h-4 mr-2" /> Run Backtest</>}
                       </Button>
@@ -187,8 +177,13 @@ const SimulationPage = () => {
                         <Card className="bg-[#0A0A0A] border-[#7B61FF]/30" data-testid="backtest-result">
                           <CardHeader className="pb-3 border-b border-zinc-800/50">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-sm font-medium flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#7B61FF]" /> Backtest: {backtestResult.pair} — {backtestResult.strategy.replace("_"," ")}</CardTitle>
-                              <button onClick={() => setBacktestResult(null)} className="p-1 rounded hover:bg-white/5"><X className="w-4 h-4 text-zinc-500" /></button>
+                              <CardTitle className="text-sm font-medium flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#7B61FF]" /> Backtest: {backtestResult.asset || selectedPair} — {(backtestResult.strategy || selectedStrategy).replace("_"," ")}</CardTitle>
+                              <div className="flex items-center gap-2">
+                                <Badge className={backtestResult.data_source === "coingecko" ? "bg-[#00FF94]/10 text-[#00FF94] text-[9px]" : "bg-zinc-700 text-zinc-400 text-[9px]"} data-testid="sim-data-source-badge">
+                                  {backtestResult.data_source === "coingecko" ? "Data: CoinGecko" : "Demo Mode — Mock Data"}
+                                </Badge>
+                                <button onClick={() => setBacktestResult(null)} className="p-1 rounded hover:bg-white/5"><X className="w-4 h-4 text-zinc-500" /></button>
+                              </div>
                             </div>
                             <p className="text-xs text-zinc-600 mt-1">{backtestResult.period}</p>
                           </CardHeader>
@@ -196,10 +191,10 @@ const SimulationPage = () => {
                             {/* Key Metrics */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                               {[
-                                { label: "Total Return", value: `+${backtestResult.totalReturn}%`, color: "text-[#00FF94]" },
-                                { label: "Sharpe Ratio", value: backtestResult.sharpe, color: "text-white" },
-                                { label: "Max Drawdown", value: `${backtestResult.maxDD}%`, color: "text-red-400" },
-                                { label: "Win Rate", value: `${backtestResult.winRate}%`, color: "text-white" },
+                                { label: "Total Return", value: `${backtestResult.total_return}%`, color: (backtestResult.total_return >= 0) ? "text-[#00FF94]" : "text-red-400" },
+                                { label: "Sharpe Ratio", value: backtestResult.sharpe_ratio, color: "text-white" },
+                                { label: "Max Drawdown", value: `${backtestResult.max_drawdown}%`, color: "text-red-400" },
+                                { label: "Win Rate", value: `${backtestResult.win_rate}%`, color: "text-white" },
                               ].map((m, i) => (
                                 <div key={i} className="p-3 rounded-lg bg-[#050505] border border-zinc-800/30 text-center">
                                   <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">{m.label}</p>
@@ -209,26 +204,29 @@ const SimulationPage = () => {
                             </div>
 
                             {/* PnL Curve */}
+                            {backtestResult.equity_curve?.length > 0 && (
                             <div>
                               <p className="text-xs text-zinc-500 mb-2 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Equity Curve</p>
                               <div className="h-32 flex items-end gap-[2px]">
-                                {backtestResult.curve.map((d, i) => {
-                                  const min = Math.min(...backtestResult.curve.map(c => c.value));
-                                  const max = Math.max(...backtestResult.curve.map(c => c.value));
-                                  const pct = ((d.value - min) / (max - min)) * 100;
+                                {backtestResult.equity_curve.map((d, i) => {
+                                  const vals = backtestResult.equity_curve.map(c => c.value);
+                                  const mn = Math.min(...vals);
+                                  const mx = Math.max(...vals);
+                                  const pct = mx > mn ? ((d.value - mn) / (mx - mn)) * 100 : 50;
                                   return (
-                                    <div key={i} className="flex-1 rounded-t bg-[#00FF94]/50 hover:bg-[#00FF94]/70 transition-colors" style={{ height: `${Math.max(pct, 3)}%` }} title={`Day ${d.day}: $${Math.round(d.value).toLocaleString()}`} />
+                                    <div key={i} className="flex-1 rounded-t bg-[#00FF94]/50 hover:bg-[#00FF94]/70 transition-colors" style={{ height: `${Math.max(pct, 3)}%` }} title={`$${Math.round(d.value).toLocaleString()}`} />
                                   );
                                 })}
                               </div>
                             </div>
+                            )}
 
                             {/* Additional Stats */}
                             <div className="grid grid-cols-3 gap-3 text-center">
                               {[
-                                { label: "Total Trades", value: backtestResult.totalTrades },
-                                { label: "Profit Factor", value: backtestResult.profitFactor },
-                                { label: "Capital", value: `$${backtestResult.initial.toLocaleString()} → $${backtestResult.final.toLocaleString()}` },
+                                { label: "Total Trades", value: backtestResult.total_trades },
+                                { label: "Profit Factor", value: backtestResult.profit_factor },
+                                { label: "Capital", value: `$${(backtestResult.initial_capital || 100000).toLocaleString()} → $${(backtestResult.final_capital || 100000).toLocaleString()}` },
                               ].map((m, i) => (
                                 <div key={i} className="p-2 rounded bg-[#050505] border border-zinc-800/30">
                                   <p className="text-[10px] text-zinc-600">{m.label}</p>

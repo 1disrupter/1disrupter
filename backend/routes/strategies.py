@@ -363,30 +363,32 @@ async def backtest_strategy(strategy_id: str, request: BacktestRequest):
     strategy = await db.strategies.find_one({"id": strategy_id}, {"_id": 0})
     if not strategy:
         raise HTTPException(status_code=404, detail="Strategy not found")
-    
-    # Simulate backtest
-    total_return = round(random.uniform(-5, 35), 2)
-    sharpe = round(random.uniform(0.5, 2.5), 2)
-    max_dd = round(random.uniform(2, 10), 2)
-    win_rate = round(random.uniform(45, 75), 1)
-    total_trades = random.randint(50, 500)
-    
-    backtest_results = {
-        "period": f"{request.start_date or '2024-01-01'} to {request.end_date or '2024-12-31'}",
-        "initial_capital": request.initial_capital,
-        "final_capital": round(request.initial_capital * (1 + total_return/100), 2),
-        "total_return": total_return,
-        "sharpe_ratio": sharpe,
-        "max_drawdown": max_dd,
-        "win_rate": win_rate,
-        "total_trades": total_trades,
-    }
-    
-    await db.strategies.update_one({"id": strategy_id}, {"$set": {"status": "backtested", "backtest_results": backtest_results, "sharpe_ratio": sharpe, "total_return": total_return, "max_drawdown": max_dd, "win_rate": win_rate}})
-    
-    await sim_engine.log_event("strategy", f"Backtest complete for '{strategy['name']}': Return {total_return}%, Sharpe {sharpe}", strategy_id=strategy_id, agent_name="BacktestingAgent", details=backtest_results)
-    await sim_engine.log_agent_interaction("BacktestingAgent", "SandboxValidationAgent", "data", {"strategy_id": strategy_id, "sharpe": sharpe, "return": total_return})
-    
+
+    from services.market_data import get_ohlc
+    from services.backtest_engine import run_backtest
+
+    asset = strategy.get("parameters", {}).get("asset", "BTC")
+    candles = await get_ohlc(asset=asset, days=365)
+    backtest_results = run_backtest(
+        candles=candles,
+        strategy_type=strategy.get("type", "momentum"),
+        initial_capital=request.initial_capital,
+        parameters=strategy.get("parameters", {}),
+    )
+    backtest_results["period"] = f"{request.start_date or backtest_results['period'].split(' to ')[0]} to {request.end_date or backtest_results['period'].split(' to ')[-1]}"
+
+    await db.strategies.update_one({"id": strategy_id}, {"$set": {
+        "status": "backtested",
+        "backtest_results": {k: v for k, v in backtest_results.items() if k != "equity_curve"},
+        "sharpe_ratio": backtest_results["sharpe_ratio"],
+        "total_return": backtest_results["total_return"],
+        "max_drawdown": backtest_results["max_drawdown"],
+        "win_rate": backtest_results["win_rate"],
+    }})
+
+    await sim_engine.log_event("strategy", f"Backtest complete for '{strategy['name']}': Return {backtest_results['total_return']}%, Sharpe {backtest_results['sharpe_ratio']}", strategy_id=strategy_id, agent_name="BacktestingAgent", details={k: v for k, v in backtest_results.items() if k != "equity_curve"})
+    await sim_engine.log_agent_interaction("BacktestingAgent", "SandboxValidationAgent", "data", {"strategy_id": strategy_id, "sharpe": backtest_results["sharpe_ratio"], "return": backtest_results["total_return"]})
+
     return {"success": True, "strategy_id": strategy_id, "results": backtest_results}
 
 @router.post("/lab/strategies/{strategy_id}/sandbox")
