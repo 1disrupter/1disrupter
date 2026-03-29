@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, Shield, TrendingUp, Star } from "lucide-react";
 import { Button } from "./ui/button";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import axios from "axios";
 import { API } from "../lib/constants";
+import { trackEvent } from "../lib/tracking";
 
 const FEATURES = [
   { icon: TrendingUp, label: "Unlimited strategy follows" },
@@ -17,8 +19,17 @@ const FEATURES = [
 
 const UpgradeModal = ({ open, onClose, feature = "This feature" }) => {
   const { isDemoMode } = useDemoMode();
+  const prevOpen = useRef(false);
+
+  useEffect(() => {
+    if (open && !prevOpen.current) {
+      trackEvent("upgrade_prompt", { feature });
+    }
+    prevOpen.current = open;
+  }, [open, feature]);
 
   const handleUpgrade = async () => {
+    trackEvent("checkout_start", { feature });
     if (isDemoMode) {
       toast.info("Billing disabled in Demo Mode");
       return;

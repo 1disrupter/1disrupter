@@ -9,6 +9,7 @@ import { Badge } from "../components/ui/badge";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { API } from "../lib/constants";
+import { trackEvent } from "../lib/tracking";
 
 const typeColors = { momentum: "bg-[#7B61FF]/15 text-[#7B61FF]", mean_reversion: "bg-[#00FF94]/15 text-[#00FF94]", breakout: "bg-[#FFB800]/15 text-[#FFB800]" };
 
@@ -41,12 +42,14 @@ const FollowingPage = () => {
     if (isDemoMode) {
       setStrategies(prev => prev.filter(s => s.id !== stratId));
       toast.success("Strategy unfollowed");
+      trackEvent("unfollow", { strategy_id: stratId });
       return;
     }
     try {
       await axios.post(`${API}/strategies/${stratId}/unfollow`, {}, { headers: { Authorization: `Bearer ${token}` } });
       setStrategies(prev => prev.filter(s => s.id !== stratId));
       toast.success("Strategy unfollowed");
+      trackEvent("unfollow", { strategy_id: stratId });
     } catch {
       toast.error("Failed to unfollow");
     }

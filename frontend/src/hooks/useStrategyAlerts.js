@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { BACKEND_URL } from "../lib/constants";
+import { trackEvent } from "../lib/tracking";
 
 const MAX_ALERTS = 50;
 const RECONNECT_DELAY = 3000;
@@ -45,6 +46,7 @@ const useStrategyAlerts = () => {
         setConnected(true);
         setUpgradeRequired(false);
         reconnectCount.current = 0;
+        trackEvent("ws_connect", { endpoint: "alerts" });
       };
 
       ws.onmessage = (event) => {
@@ -67,6 +69,7 @@ const useStrategyAlerts = () => {
 
           if (data.type === "strategy_alert") {
             setAlerts((prev) => [data, ...prev].slice(0, MAX_ALERTS));
+            trackEvent("signal", { strategy_id: data.strategy_id, action: data.action });
             toast(data.message, {
               description: data.asset || data.strategy_name || "",
               duration: 6000,
@@ -80,6 +83,7 @@ const useStrategyAlerts = () => {
       ws.onclose = (event) => {
         setConnected(false);
         wsRef.current = null;
+        trackEvent("ws_disconnect", { endpoint: "alerts", code: event.code });
 
         // Don't reconnect if intentionally closed or upgrade required
         if (event.code === 4003) {

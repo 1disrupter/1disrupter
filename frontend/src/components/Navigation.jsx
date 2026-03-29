@@ -5,7 +5,7 @@ import {
   Wallet, BarChart3, Bot, Store, Shield,
   ChevronDown, ArrowUpRight, Copy, FlaskConical,
   Users, ExternalLink, Home, Eye, Trophy,
-  LogIn, LogOut, User, Menu, Radio, Crown, Share2, Heart
+  LogIn, LogOut, User, Menu, Radio, Crown, Share2, Heart, Activity
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -50,6 +50,7 @@ const Navigation = () => {
     { path: "/pricing", label: "Pricing", icon: Crown },
     { path: "/admin", label: "Admin", icon: Shield },
     { path: "/admin/analytics", label: "Demo Analytics", icon: BarChart3 },
+    { path: "/admin/traffic", label: "Traffic", icon: Activity },
   ];
 
   const navItems = (isAuthenticated || isDemoMode) ? authNavItems : publicNavItems;

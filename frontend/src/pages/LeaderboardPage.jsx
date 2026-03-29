@@ -14,6 +14,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import UpgradeModal from "../components/UpgradeModal";
 import { API } from "../lib/constants";
+import { trackEvent } from "../lib/tracking";
 
 const SORT_COLS = [
   { key: "sharpe_ratio", label: "Sharpe", apiKey: "sharpe" },
@@ -75,8 +76,8 @@ const LeaderboardPage = () => {
     if (isDemoMode) {
       setFollowedIds(prev => {
         const next = new Set(prev);
-        if (next.has(stratId)) { next.delete(stratId); toast.success("Strategy unfollowed"); }
-        else { next.add(stratId); toast.success("Strategy followed! You'll receive signal notifications."); }
+        if (next.has(stratId)) { next.delete(stratId); toast.success("Strategy unfollowed"); trackEvent("unfollow", { strategy_id: stratId }); }
+        else { next.add(stratId); toast.success("Strategy followed! You'll receive signal notifications."); trackEvent("follow", { strategy_id: stratId }); }
         return next;
       });
       return;
@@ -89,6 +90,7 @@ const LeaderboardPage = () => {
       if (res.data?.success) {
         setFollowedIds(prev => { const n = new Set(prev); isFollowed ? n.delete(stratId) : n.add(stratId); return n; });
         toast.success(isFollowed ? "Strategy unfollowed" : "Strategy followed! You'll receive signal notifications.");
+        trackEvent(isFollowed ? "unfollow" : "follow", { strategy_id: stratId });
       }
     } catch (e) {
       if (e.response?.status === 403) {
@@ -107,6 +109,7 @@ const LeaderboardPage = () => {
   };
 
   const openDetail = async (strat) => {
+    trackEvent("strategy_view", { strategy_id: strat.id, name: strat.name });
     if (strat.metrics?.equity_curve?.length > 0) {
       setDetailModal(strat);
       return;

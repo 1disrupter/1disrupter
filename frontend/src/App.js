@@ -28,6 +28,13 @@ import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ReferralPage from "./pages/ReferralPage";
 import FollowingPage from "./pages/FollowingPage";
 import AlertsPage from "./pages/AlertsPage";
+import AdminTrafficPage from "./pages/AdminTrafficPage";
+import useTracking from "./hooks/useTracking";
+
+function TrackingWrapper({ children }) {
+  useTracking();
+  return children;
+}
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -49,6 +56,7 @@ function App() {
         </AnimatePresence>
         <div className="App min-h-screen bg-[#050505]">
           <BrowserRouter>
+            <TrackingWrapper>
             <DemoModeBanner />
             <Navigation />
             <Routes>
@@ -67,6 +75,7 @@ function App() {
               <Route path="/conversion-analytics" element={<ConversionAnalyticsPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+              <Route path="/admin/traffic" element={<AdminTrafficPage />} />
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
@@ -78,6 +87,7 @@ function App() {
               <Route path="/following" element={<FollowingPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
             </Routes>
+            </TrackingWrapper>
           </BrowserRouter>
           <Toaster position="bottom-right" theme="dark" />
         </div>

@@ -46,6 +46,7 @@ from routes.analytics_routes import router as analytics_router
 from routes.websocket import router as websocket_router
 from routes.notifications import router as notifications_router
 from routes.follow_notifications import router as follow_notif_router
+from routes.traffic import router as traffic_router, init_db as init_traffic_db
 
 # ============= APP SETUP =============
 app = FastAPI(title="AlphaAI Fund Platform")
@@ -85,6 +86,7 @@ app.include_router(analytics_router)
 app.include_router(websocket_router)
 app.include_router(notifications_router)
 app.include_router(follow_notif_router)
+app.include_router(traffic_router)
 
 
 # ============= BACKGROUND TASKS =============
@@ -173,6 +175,7 @@ async def startup_db_client():
     init_referrals_db(db)
     init_mobile_db(db)
     init_copy_db(db)
+    init_traffic_db(db)
 
     # Create indexes
     await db.users.create_index("email", unique=True, sparse=True)
@@ -186,6 +189,9 @@ async def startup_db_client():
     await db.copy_relationships.create_index([("copier_id", 1), ("trader_id", 1)], unique=True)
     await db.followed_strategies.create_index([("user_id", 1), ("strategy_id", 1)], unique=True)
     await db.notifications_inbox.create_index([("user_id", 1), ("created_at", -1)])
+    await db.traffic_events.create_index([("timestamp", -1)])
+    await db.traffic_events.create_index([("type", 1, )])
+    await db.traffic_events.create_index([("user_id", 1)])
 
     # Start background tasks
     asyncio.create_task(signal_generation_task())
