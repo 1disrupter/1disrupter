@@ -159,6 +159,8 @@ const AdminTrafficPage = () => {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [activeAlerts, setActiveAlerts] = useState([]);
   const [contractStatus, setContractStatus] = useState(null);
+  const [attestation, setAttestation] = useState(null);
+  const [attestRunning, setAttestRunning] = useState(false);
   const wsRef = useRef(null);
   const reconnectCount = useRef(0);
   const reconnectTimer = useRef(null);
@@ -192,6 +194,11 @@ const AdminTrafficPage = () => {
         const cData = await contractRes.json();
         setContractStatus(cData);
       }
+      // Fetch latest attestation
+      try {
+        const attRes = await fetch(`${API}/admin/attestation/latest?admin_key=${ADMIN_KEY}`);
+        if (attRes.ok) { const attData = await attRes.json(); setAttestation(attData.record); }
+      } catch {}
     } catch (e) {
       setError(e.message);
       toast.error("Failed to load traffic analytics");
@@ -464,6 +471,75 @@ const AdminTrafficPage = () => {
                 </Card>
               </section>
             )}
+
+            {/* ── Performance Attestation ────────────────────── */}
+            <section className="mb-8" data-testid="attestation-section">
+              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">On-Chain Performance Attestation</h2>
+              <Card className="bg-[#0A0A0A] border-zinc-800/50">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${attestation ? "bg-[#00FF94]" : "bg-zinc-600"}`} />
+                      <div>
+                        <p className="text-sm font-medium text-zinc-300" data-testid="attestation-status">
+                          {attestation ? `${attestation.strategies_processed} strategies processed` : "No attestation runs yet"}
+                        </p>
+                        {attestation?.timestamp && (
+                          <p className="text-[10px] text-zinc-600">Last run: {new Date(attestation.timestamp).toLocaleString()}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {attestation && (
+                        <>
+                          <Badge className="bg-[#00FF94]/10 text-[#00FF94] text-[9px]" data-testid="attestation-updated">{attestation.strategies_updated || 0} attested</Badge>
+                          {attestation.strategies_failed > 0 && <Badge className="bg-red-500/10 text-red-400 text-[9px]">{attestation.strategies_failed} failed</Badge>}
+                          {attestation.dry_run && <Badge className="bg-zinc-800 text-zinc-500 text-[9px]">Dry Run</Badge>}
+                        </>
+                      )}
+                      <Button
+                        size="sm" variant="outline"
+                        className="rounded-full border-zinc-800 text-[10px] h-7 px-3"
+                        disabled={attestRunning}
+                        data-testid="run-attestation-btn"
+                        onClick={async () => {
+                          setAttestRunning(true);
+                          try {
+                            const res = await fetch(`${API}/admin/attestation/run?admin_key=${ADMIN_KEY}&dry_run=true`, { method: "POST" });
+                            const data = await res.json();
+                            if (data.success !== false) setAttestation(data);
+                          } catch {}
+                          setAttestRunning(false);
+                        }}
+                      >
+                        {attestRunning ? "Running..." : "Run Dry Attestation"}
+                      </Button>
+                    </div>
+                  </div>
+                  {/* Top strategies from latest attestation */}
+                  {attestation?.details?.length > 0 && (
+                    <div className="border-t border-zinc-800/30 pt-3 mt-2">
+                      <div className="grid grid-cols-5 gap-2 text-[10px] text-zinc-600 uppercase tracking-wider mb-1.5 px-1">
+                        <span>Strategy</span><span className="text-right">Sharpe</span><span className="text-right">Win Rate</span><span className="text-right">Max DD</span><span className="text-right">Status</span>
+                      </div>
+                      {attestation.details.filter(d => d.metrics?.sharpe).slice(0, 5).map((d, i) => (
+                        <div key={i} className="grid grid-cols-5 gap-2 text-xs py-1 px-1 hover:bg-white/[0.02] rounded" data-testid={`attestation-row-${i}`}>
+                          <span className="text-zinc-400 truncate">{d.name}</span>
+                          <span className="text-right font-mono text-white">{d.metrics.sharpe}</span>
+                          <span className="text-right font-mono text-zinc-300">{d.metrics.win_rate}%</span>
+                          <span className="text-right font-mono text-red-400">{d.metrics.drawdown}%</span>
+                          <span className="text-right">
+                            <Badge className={d.status === "attested" ? "bg-[#00FF94]/10 text-[#00FF94] text-[8px]" : d.status === "dry_run" ? "bg-zinc-800 text-zinc-500 text-[8px]" : "bg-[#FFB800]/10 text-[#FFB800] text-[8px]"}>
+                              {d.status}
+                            </Badge>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
 
             {/* ── Section 2: Activity Charts ────────────────── */}
             <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="activity-charts">

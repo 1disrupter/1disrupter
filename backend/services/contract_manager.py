@@ -267,3 +267,109 @@ async def is_strategy_registered(strategy_id: int):
     """Check if strategy exists on-chain."""
     result = await get_strategy(strategy_id)
     return result.get("active", False)
+
+
+async def get_strategy_performance(strategy_id: int):
+    """Read strategy performance attestation from contract."""
+    cache_key = f"perf_{strategy_id}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    contract = _get_contract()
+    if contract:
+        try:
+            perf = contract.functions.getStrategyPerformance(strategy_id).call()
+            result = {
+                "sharpe": perf[0] / 100,
+                "win_rate": perf[1] / 100,
+                "drawdown": perf[2] / 100,
+                "monthly_pnl": perf[3] / 100,
+                "timestamp": perf[4],
+                "on_chain": True,
+            }
+            _cache_set(cache_key, result)
+            return result
+        except Exception as e:
+            logger.error(f"getStrategyPerformance({strategy_id}) error: {e}")
+
+    return {"sharpe": 0, "win_rate": 0, "drawdown": 0, "monthly_pnl": 0, "timestamp": 0, "on_chain": False}
+
+
+async def get_contract_version():
+    """Read contract version string."""
+    cached = _cache_get("version")
+    if cached is not None:
+        return cached
+
+    contract = _get_contract()
+    if contract:
+        try:
+            version = contract.functions.contractVersion().call()
+            _cache_set("version", version)
+            return version
+        except Exception as e:
+            logger.error(f"contractVersion() error: {e}")
+
+    return "2.0-performance-attestation"
+
+
+async def update_strategy_performance(
+    strategy_id: int, sharpe: float, win_rate: float, drawdown: float, monthly_pnl: float
+):
+    """
+    Write strategy performance to chain (owner-only transaction).
+    Returns tx hash on success, None on failure.
+    Requires DEPLOYER_PRIVATE_KEY in env for signing.
+    """
+    contract = _get_contract()
+    w3 = _get_web3()
+    private_key = os.environ.get("DEPLOYER_PRIVATE_KEY", "")
+
+    if not contract or not w3 or not private_key:
+        logger.warning("Cannot write performance: contract/web3/key not configured")
+        return None
+
+    try:
+        import time
+        from web3 import Web3
+
+        # Scale values to int (x100)
+        sharpe_int = int(round(sharpe * 100))
+        win_rate_int = int(round(win_rate * 100))
+        drawdown_int = int(round(drawdown * 100))
+        pnl_int = int(round(monthly_pnl * 100))
+        ts = int(time.time())
+
+        account = w3.eth.account.from_key(private_key)
+        nonce = w3.eth.get_transaction_count(account.address)
+
+        tx = contract.functions.updateStrategyPerformance(
+            strategy_id, sharpe_int, win_rate_int, drawdown_int, pnl_int, ts
+        ).build_transaction({
+            "from": account.address,
+            "nonce": nonce,
+            "gas": 100000,
+            "gasPrice": w3.eth.gas_price,
+            "chainId": CHAIN_ID,
+        })
+
+        signed = w3.eth.account.sign_transaction(tx, private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=60)
+
+        logger.info(f"Performance updated on-chain for strategy {strategy_id}: tx={tx_hash.hex()}")
+
+        # Invalidate cache
+        _cache.pop(f"perf_{strategy_id}", None)
+
+        return {
+            "tx_hash": tx_hash.hex(),
+            "block_number": receipt["blockNumber"],
+            "gas_used": receipt["gasUsed"],
+            "strategy_id": strategy_id,
+            "timestamp": ts,
+        }
+    except Exception as e:
+        logger.error(f"update_strategy_performance({strategy_id}) error: {e}")
+        return None

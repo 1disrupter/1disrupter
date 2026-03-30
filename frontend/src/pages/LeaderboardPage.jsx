@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, ChevronUp, ChevronDown,
-  RefreshCw, X, Shield, Zap, Loader2, Minus, Heart, WifiOff
+  RefreshCw, X, Shield, Zap, Loader2, Minus, Heart, WifiOff, ExternalLink, CheckCircle
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -46,6 +46,7 @@ const LeaderboardPage = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [followedIds, setFollowedIds] = useState(new Set());
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [attestation, setAttestation] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [compact, setCompact] = useState(() => {
     try { return localStorage.getItem("alphaai_compact") === "true"; } catch { return false; }
@@ -145,24 +146,31 @@ const LeaderboardPage = () => {
 
   const openDetail = async (strat) => {
     trackEvent("strategy_view", { strategy_id: strat.id, name: strat.name });
+    setAttestation(null);
 
     // Check prefetch cache first
     const cached = getCachedStrategy(strat.id);
-    if (cached?.strategy) { setDetailModal(cached.strategy); return; }
-    if (strat.metrics?.equity_curve?.length > 0) { setDetailModal(strat); return; }
-
-    setDetailModal(null);
-    setDetailLoading(true);
-    try {
-      const res = await axios.get(`${API}/leaderboard/strategies/${strat.id}`, { params: { demo: isDemoMode } });
-      if (res.data?.success) {
-        setDetailModal(res.data.strategy);
-        cacheSet(`strategy_detail_${strat.id}`, res.data);
-      } else setDetailModal(strat);
-    } catch {
-      setDetailModal(strat);
+    if (cached?.strategy) { setDetailModal(cached.strategy); } else if (strat.metrics?.equity_curve?.length > 0) { setDetailModal(strat); } else {
+      setDetailModal(null);
+      setDetailLoading(true);
+      try {
+        const res = await axios.get(`${API}/leaderboard/strategies/${strat.id}`, { params: { demo: isDemoMode } });
+        if (res.data?.success) {
+          setDetailModal(res.data.strategy);
+          cacheSet(`strategy_detail_${strat.id}`, res.data);
+        } else setDetailModal(strat);
+      } catch {
+        setDetailModal(strat);
+      }
+      setDetailLoading(false);
     }
-    setDetailLoading(false);
+
+    // Fetch attestation data in background (use index from strategies array)
+    const stratIdx = strategies.findIndex(s => s.id === strat.id);
+    try {
+      const attRes = await axios.get(`${API}/strategies/${stratIdx >= 0 ? stratIdx : 0}/attestation`, { params: { demo: isDemoMode } });
+      if (attRes.data?.attestation) setAttestation(attRes.data.attestation);
+    } catch {}
   };
 
   const topThree = strategies.slice(0, 3);
@@ -383,6 +391,38 @@ const LeaderboardPage = () => {
                                 ))}
                               </div>
                             </div>
+                          )}
+
+                          {/* On-Chain Attestation */}
+                          {attestation && (attestation.sharpe !== 0 || attestation.win_rate !== 0) && (
+                            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#7B61FF]/20 bg-[#7B61FF]/[0.03] p-4" data-testid="attestation-card">
+                              <div className="flex items-center gap-2 mb-3">
+                                <CheckCircle className="w-4 h-4 text-[#00FF94]" />
+                                <p className="text-xs font-semibold text-zinc-300">Verified On-Chain Performance</p>
+                                <Badge className="bg-[#7B61FF]/15 text-[#7B61FF] text-[8px] ml-auto">On-Chain Verified</Badge>
+                              </div>
+                              <div className="grid grid-cols-4 gap-2">
+                                {[
+                                  { label: "Sharpe", value: attestation.sharpe, color: attestation.sharpe >= 0 ? "text-[#00FF94]" : "text-red-400" },
+                                  { label: "Win Rate", value: `${attestation.win_rate}%`, color: "text-white" },
+                                  { label: "Max DD", value: `${attestation.drawdown}%`, color: "text-red-400" },
+                                  { label: "Monthly PnL", value: `${attestation.monthly_pnl}%`, color: attestation.monthly_pnl >= 0 ? "text-[#00FF94]" : "text-red-400" },
+                                ].map((m, i) => (
+                                  <div key={i} className="text-center">
+                                    <p className="text-[9px] text-zinc-600 uppercase tracking-wider">{m.label}</p>
+                                    <p className={`text-sm font-bold font-mono ${m.color}`}>{m.value}</p>
+                                  </div>
+                                ))}
+                              </div>
+                              {attestation.explorer_url && (
+                                <a href={attestation.explorer_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mt-3 text-[10px] text-[#7B61FF] hover:underline" data-testid="attestation-etherscan-link">
+                                  <ExternalLink className="w-3 h-3" /> View on Etherscan
+                                </a>
+                              )}
+                              {attestation.timestamp && (
+                                <p className="text-[9px] text-zinc-700 mt-1">Attested: {new Date(attestation.timestamp).toLocaleString()}</p>
+                              )}
+                            </motion.div>
                           )}
 
                           {detailModal.updated_at && (

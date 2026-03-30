@@ -8,7 +8,7 @@ import logging
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
-from fastapi import APIRouter, HTTPException, Depends, Query, Body
+from fastapi import APIRouter, HTTPException, Depends, Query, Body, Request
 from pydantic import BaseModel, Field
 from functools import wraps
 
@@ -867,3 +867,34 @@ async def admin_contract_status(admin: dict = Depends(verify_admin)):
     from services.contract_manager import get_contract_status
     status = await get_contract_status()
     return {"success": True, **status}
+
+
+# ============= PERFORMANCE ATTESTATION =============
+
+@router.post("/attestation/run")
+async def admin_run_attestation(request: Request, admin: dict = Depends(verify_admin)):
+    """Trigger a performance attestation cycle (admin-only)."""
+    dry_run = request.query_params.get("dry_run", "true").lower() == "true"
+    from cron.performance_attestor import run_attestation_cycle
+    result = await run_attestation_cycle(dry_run=dry_run)
+    return {"success": True, **result}
+
+
+@router.get("/attestation/history")
+async def admin_attestation_history(admin: dict = Depends(verify_admin), limit: int = 10):
+    """Get recent attestation results."""
+    records = await db.performance_attestations.find(
+        {}, {"_id": 0}
+    ).sort("timestamp", -1).to_list(limit)
+    return {"success": True, "records": records, "count": len(records)}
+
+
+@router.get("/attestation/latest")
+async def admin_attestation_latest(admin: dict = Depends(verify_admin)):
+    """Get the latest attestation result."""
+    record = await db.performance_attestations.find_one(
+        {}, {"_id": 0}, sort=[("timestamp", -1)]
+    )
+    if not record:
+        return {"success": True, "record": None, "message": "No attestation runs yet"}
+    return {"success": True, "record": record}

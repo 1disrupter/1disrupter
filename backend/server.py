@@ -50,7 +50,9 @@ from routes.follow_notifications import router as follow_notif_router
 from routes.traffic import router as traffic_router, init_db as init_traffic_db
 from routes.mobile_optimization import router as mobile_opt_router, init_db as init_mobile_opt_db
 from routes.subscription import router as subscription_router, init_db as init_subscription_db
+from routes.attestation import router as attestation_router, init_db as init_attestation_db
 from services.stripe_webhook_handler import init_db as init_webhook_handler_db
+from cron.performance_attestor import init_db as init_attestor_db
 
 # ============= APP SETUP =============
 app = FastAPI(title="AlphaAI Fund Platform")
@@ -93,6 +95,7 @@ app.include_router(follow_notif_router)
 app.include_router(traffic_router)
 app.include_router(mobile_opt_router)
 app.include_router(subscription_router)
+app.include_router(attestation_router)
 
 
 # ============= BACKGROUND TASKS =============
@@ -185,7 +188,9 @@ async def startup_db_client():
     init_rule_engine_db(db)
     init_mobile_opt_db(db)
     init_subscription_db(db)
+    init_attestation_db(db)
     init_webhook_handler_db(db)
+    init_attestor_db(db)
 
     # Create indexes
     await db.users.create_index("email", unique=True, sparse=True)
