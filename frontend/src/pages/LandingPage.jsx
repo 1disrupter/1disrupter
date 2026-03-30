@@ -1,308 +1,255 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import { motion } from "framer-motion";
 import {
-  ArrowUpRight, ArrowDownRight, Activity, Zap,
+  ArrowUpRight, ArrowRight, Activity, Zap,
   Check, Clock, Brain, TestTube, Beaker, Trophy,
-  Rocket, Shield, Lock
+  Rocket, Shield, Lock, ShieldCheck, Database, Terminal
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { useWallet } from "../contexts/WalletContext";
 import { BrandLockup, PoweredByTag } from "../components/BrandComponents";
 import LivePriceTicker from "../components/LivePriceTicker";
-import { API } from "../lib/constants";
-import { formatCurrency } from "../lib/formatters";
 
-const HeroVisualization = () => {
-  // Candlestick data: x, open, close, high, low (normalized 0-400 viewBox)
-  const candles = [
-    { x: 40, o: 310, c: 295, h: 285, l: 320 },
-    { x: 60, o: 295, c: 305, h: 285, l: 315 },
-    { x: 80, o: 305, c: 290, h: 280, l: 310 },
-    { x: 100, o: 290, c: 300, h: 278, l: 308 },
-    { x: 120, o: 300, c: 280, h: 270, l: 305 },
-    { x: 140, o: 280, c: 260, h: 250, l: 285 }, // AlphaAI flags here
-    { x: 160, o: 260, c: 240, h: 230, l: 268 },
-    { x: 180, o: 240, c: 210, h: 200, l: 248 },
-    { x: 200, o: 210, c: 180, h: 170, l: 218 },
-    { x: 220, o: 180, c: 155, h: 145, l: 188 },
-    { x: 240, o: 155, c: 140, h: 130, l: 162 },
-    { x: 260, o: 140, c: 125, h: 118, l: 148 }, // You enter here (late)
-    { x: 280, o: 125, c: 135, h: 140, l: 120 },
-    { x: 300, o: 135, c: 150, h: 155, l: 128 },
-    { x: 320, o: 150, c: 142, h: 158, l: 138 },
-    { x: 340, o: 142, c: 148, h: 155, l: 135 },
-    { x: 360, o: 148, c: 138, h: 152, l: 132 },
+/* ─── Live Metrics Terminal ─── */
+const LiveMetricsTerminal = () => {
+  const [tick, setTick] = useState(0);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => setTick(t => t + 1), 2400);
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  const metrics = [
+    { label: "Active Engine", value: "Alpha Engine V4", color: "text-white" },
+    { label: "Sharpe Ratio (30d)", value: "2.14", color: "text-[#00FF94]" },
+    { label: "Win Rate", value: "68.3%", color: "text-[#00FF94]" },
+    { label: "Max Drawdown", value: "-4.2%", color: "text-white" },
+    { label: "Execution Latency", value: "12ms", color: "text-white" },
+    { label: "Network", value: "Ethereum Sepolia", color: "text-white/80" },
   ];
-  const alphaY = 270; // AlphaAI entry line
-  const youY = 132;   // Your entry line
 
   return (
-    <div className="relative w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] lg:w-[500px] lg:h-[440px]" data-testid="hero-visualization">
-      {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-[#7B61FF]/6 blur-[80px]" />
+    <motion.div
+      className="w-full border border-white/10 bg-[#0B0B0F]/90 backdrop-blur-xl relative overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+      data-testid="live-metrics-terminal"
+    >
+      {/* Subtle corner accent */}
+      <div className="absolute top-0 right-0 w-24 h-24 bg-[#7B61FF]/5 blur-[40px] pointer-events-none" />
 
-      <svg viewBox="0 0 400 380" className="w-full h-full relative z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Grid lines */}
-        {[100, 150, 200, 250, 300].map(y => (
-          <line key={y} x1="30" y1={y} x2="375" y2={y} stroke="#ffffff" strokeOpacity="0.04" strokeWidth="0.5" />
+      {/* Header */}
+      <div className="flex justify-between items-center border-b border-white/10 px-6 py-4 lg:px-8">
+        <span className="font-data text-[11px] text-white/40 uppercase tracking-[0.15em]">
+          Strategy Performance
+        </span>
+        <span className="flex items-center gap-2 text-[#00FF94] text-[11px] font-data uppercase tracking-[0.15em]" data-testid="terminal-live-indicator">
+          <motion.span
+            className="inline-block w-1.5 h-1.5 rounded-full bg-[#00FF94]"
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+          Live
+        </span>
+      </div>
+
+      {/* Rows */}
+      <div className="px-6 py-4 lg:px-8 lg:py-5">
+        {metrics.map((m, i) => (
+          <motion.div
+            key={m.label}
+            className="flex justify-between items-center py-3 border-b border-white/5 last:border-0"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 + i * 0.08, duration: 0.4 }}
+          >
+            <span className="font-data text-sm text-white/50">{m.label}</span>
+            <motion.span
+              className={`font-data text-sm ${m.color}`}
+              key={`${m.label}-${tick}`}
+              animate={{ opacity: [0.6, 1] }}
+              transition={{ duration: 0.3 }}
+            >
+              {m.value}
+            </motion.span>
+          </motion.div>
         ))}
+      </div>
 
-        {/* Candlesticks */}
-        {candles.map((c, i) => {
-          const bullish = c.c < c.o; // price went up (lower close = higher price in inverted y)
-          const color = bullish ? '#00FF94' : '#ef4444';
-          const bodyTop = Math.min(c.o, c.c);
-          const bodyH = Math.abs(c.o - c.c);
-          return (
-            <g key={i}>
-              <line x1={c.x} y1={c.h} x2={c.x} y2={c.l} stroke={color} strokeWidth="1" strokeOpacity="0.5" />
-              <rect x={c.x - 6} y={bodyTop} width="12" height={Math.max(bodyH, 2)} fill={color} fillOpacity={i >= 5 && i <= 11 ? 0.8 : 0.35} rx="1" />
-            </g>
-          );
-        })}
-
-        {/* AlphaAI entry dashed line (green, low = early) */}
-        <line x1="30" y1={alphaY} x2="375" y2={alphaY} stroke="#00FF94" strokeWidth="1" strokeDasharray="6 4" strokeOpacity="0.5" />
-
-        {/* Your entry dashed line (red, high = late) */}
-        <line x1="30" y1={youY} x2="375" y2={youY} stroke="#ef4444" strokeWidth="1" strokeDasharray="6 4" strokeOpacity="0.5" />
-
-        {/* Pulsing gap zone between the two lines */}
-        <rect x="30" y={youY} width="345" height={alphaY - youY} fill="url(#gapGradient)">
-          <animate attributeName="opacity" dur="3s" repeatCount="indefinite" values="0.03;0.08;0.03" />
-        </rect>
-
-        {/* AlphaAI marker arrow */}
-        <g>
-          <circle cx="140" cy={alphaY} r="5" fill="#00FF94" fillOpacity="0.9">
-            <animate attributeName="r" dur="2.5s" repeatCount="indefinite" values="5;8;5" />
-            <animate attributeName="fillOpacity" dur="2.5s" repeatCount="indefinite" values="0.9;0.4;0.9" />
-          </circle>
-          <circle cx="140" cy={alphaY} r="3" fill="#00FF94" />
-        </g>
-
-        {/* Your entry marker */}
-        <g>
-          <circle cx="260" cy={youY} r="5" fill="#ef4444" fillOpacity="0.9">
-            <animate attributeName="r" dur="2.5s" repeatCount="indefinite" values="5;8;5" />
-            <animate attributeName="fillOpacity" dur="2.5s" repeatCount="indefinite" values="0.9;0.4;0.9" />
-          </circle>
-          <circle cx="260" cy={youY} r="3" fill="#ef4444" />
-        </g>
-
-        {/* Vertical connector between the two entries */}
-        <line x1="200" y1={youY + 8} x2="200" y2={alphaY - 8} stroke="#7B61FF" strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.25" />
-        <polygon points="197,{youY + 8} 203,{youY + 8} 200,{youY + 2}" fill="#ef4444" fillOpacity="0.5" />
-        <polygon points={`197,${alphaY - 8} 203,${alphaY - 8} 200,${alphaY - 2}`} fill="#00FF94" fillOpacity="0.5" />
-
-        {/* Gap label */}
-        <text x="210" y={(alphaY + youY) / 2 + 4} fill="#7B61FF" fontSize="11" fontFamily="monospace" opacity="0.6">
-          +4.2% gap
-        </text>
-
-        <defs>
-          <linearGradient id="gapGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ef4444" stopOpacity="0.15" />
-            <stop offset="50%" stopColor="#7B61FF" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#00FF94" stopOpacity="0.15" />
-          </linearGradient>
-        </defs>
-      </svg>
-
-      {/* AlphaAI label */}
-      <motion.div
-        className="absolute left-[4%] px-3 py-1.5 rounded-md bg-[#00FF94]/10 border border-[#00FF94]/25 backdrop-blur-sm"
-        style={{ top: '62%' }}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-      >
-        <span className="text-[11px] font-mono font-medium text-[#00FF94]">AlphaAI flagged here</span>
-      </motion.div>
-
-      {/* Your entry label */}
-      <motion.div
-        className="absolute right-[3%] px-3 py-1.5 rounded-md bg-[#ef4444]/10 border border-[#ef4444]/25 backdrop-blur-sm"
-        style={{ top: '25%' }}
-        initial={{ opacity: 0, x: 10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.9, duration: 0.5 }}
-      >
-        <span className="text-[11px] font-mono font-medium text-[#ef4444]">You entered here</span>
-      </motion.div>
-
-      {/* Time delta label */}
-      <motion.div
-        className="absolute bottom-[4%] left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-[#0B0B0F]/80 border border-zinc-800 backdrop-blur-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.7 }}
-        transition={{ delay: 1.2, duration: 0.5 }}
-      >
-        <span className="text-[10px] font-mono text-zinc-500">15 min late</span>
-      </motion.div>
-    </div>
+      {/* Footer */}
+      <div className="border-t border-white/5 px-6 py-3 lg:px-8 flex items-center justify-between">
+        <span className="font-data text-[10px] text-white/25 uppercase tracking-widest">
+          Last attestation: 2 hrs ago
+        </span>
+        <span className="font-data text-[10px] text-[#7B61FF]/60 uppercase tracking-widest">
+          On-Chain Verified
+        </span>
+      </div>
+    </motion.div>
   );
 };
 
 const LandingPage = () => {
-  const { connectWallet, wallet, loading } = useWallet();
-  const [fundStats, setFundStats] = useState(null);
-
-  useEffect(() => {
-    axios.get(`${API}/fund/stats`).then(res => setFundStats(res.data)).catch(console.error);
-  }, []);
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen">
       {/* Live Price Ticker */}
       <LivePriceTicker compact={true} />
-      
-      <section className="relative px-4 pt-16 pb-12 md:pt-24 md:pb-20 overflow-hidden" data-testid="hero-section">
-        {/* Cinematic background layers */}
-        <div className="absolute inset-0 bg-[#0B0B0F]" />
-        <div className="absolute inset-0 grid-pattern opacity-30" />
-        <div className="absolute top-[20%] left-[15%] w-[500px] h-[500px] bg-[#7B61FF]/10 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-[#00FF94]/5 rounded-full blur-[120px] pointer-events-none" />
-        
+
+      {/* ===== HERO SECTION ===== */}
+      <section
+        className="relative min-h-[90vh] flex flex-col justify-center pt-28 pb-16 md:pt-32 md:pb-24 border-b border-white/5 overflow-hidden"
+        data-testid="hero-section"
+      >
+        {/* Background layers */}
+        <div className="absolute inset-0 bg-[#050505]" />
+        <div className="absolute inset-0 grid-pattern opacity-20" />
+        <div className="absolute top-[10%] right-[-10%] w-[800px] h-[800px] bg-[#7B61FF]/8 rounded-full blur-[140px] pointer-events-none mix-blend-screen" />
+        <div className="absolute bottom-[5%] left-[-5%] w-[500px] h-[500px] bg-[#00FF94]/4 rounded-full blur-[120px] pointer-events-none" />
+
         {/* Noise texture */}
         <div
-          className="absolute inset-0 opacity-[0.025] pointer-events-none"
+          className="absolute inset-0 opacity-[0.02] pointer-events-none"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
             backgroundSize: '128px 128px',
           }}
         />
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[70vh]">
-            {/* Left: Text Content */}
-            <div className="order-1 lg:order-1">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                <Badge className="mb-6 bg-zinc-800/60 text-zinc-400 border-zinc-700/50 px-4 py-1.5" data-testid="hero-badge">
-                  <Activity className="w-3 h-3 mr-1.5" />Signal Intelligence System
-                </Badge>
-              </motion.div>
 
-              <motion.h1
-                className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 font-['Outfit'] tracking-tight leading-[1.08]"
-                data-testid="hero-title"
-                initial={{ opacity: 0, y: 30, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+        <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            {/* Left Column — Copy */}
+            <div className="lg:col-span-7 flex flex-col items-start gap-6 lg:gap-8">
+              {/* Overline */}
+              <motion.span
+                className="font-data text-xs font-bold tracking-[0.2em] uppercase text-[#7B61FF]"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                data-testid="hero-overline"
               >
-                <span className="text-white">You&apos;re Not Bad</span><br />
-                <span className="text-white">at Trading.</span><br />
-                <span className="text-[#ef4444]">You&apos;re Late.</span>
+                On-Chain Verified Performance
+              </motion.span>
+
+              {/* H1 */}
+              <motion.h1
+                className="text-4xl sm:text-5xl lg:text-[4.25rem] leading-[1.05] tracking-tighter font-medium text-white font-heading"
+                initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.1, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+                data-testid="hero-title"
+              >
+                AI-Generated Crypto{' '}
+                <br className="hidden sm:block" />
+                Strategies.{' '}
+                <span className="text-[#7B61FF]">Verified</span>{' '}
+                <br className="hidden lg:block" />
+                On-Chain.
               </motion.h1>
 
+              {/* Sub-headline */}
               <motion.p
-                className="text-base sm:text-lg text-zinc-400 mb-10 max-w-lg leading-relaxed"
-                data-testid="hero-description"
-                initial={{ opacity: 0, y: 20 }}
+                className="text-base sm:text-lg text-white/55 leading-relaxed max-w-xl font-data"
+                initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
+                transition={{ delay: 0.22, duration: 0.5 }}
+                data-testid="hero-description"
               >
-                The setup was there 15 minutes ago. You just didn&apos;t see it yet. AlphaAI did.
+                AlphaAI deploys quantitative strategies and writes every performance metric — Sharpe ratio, win rate, drawdown — directly to the blockchain. No screenshots. No manipulated backtests. Just verifiable data.
               </motion.p>
 
+              {/* Micro-copy */}
               <motion.p
-                className="text-sm text-zinc-500 mb-10 max-w-lg"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.38, duration: 0.5 }}
+                className="font-data text-xs text-white/35 max-w-lg uppercase tracking-widest"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.32, duration: 0.4 }}
+                data-testid="hero-microcopy"
               >
-                AlphaAI identifies trade entries before the move — not after.
+                Transparent metrics. Immutable records. Built for traders who verify.
               </motion.p>
 
               {/* CTA Buttons */}
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-6"
-                initial={{ opacity: 0, y: 20 }}
+                className="flex flex-col sm:flex-row items-start gap-4 pt-2"
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.6 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <Link to="/dashboard">
-                  <Button size="lg" className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 px-8 h-12 text-base shadow-[0_0_30px_rgba(123,97,255,0.3)] hover:shadow-[0_0_40px_rgba(123,97,255,0.45)] transition-shadow" data-testid="hero-get-started-btn">
-                    Start Free Demo<ArrowUpRight className="w-5 h-5 ml-2" />
-                  </Button>
+                <Link to="/register">
+                  <button
+                    className="h-14 px-8 bg-[#7B61FF] text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-[#6A50E5] focus:ring-2 focus:ring-[#7B61FF]/50 shadow-[0_0_20px_rgba(123,97,255,0.15)] hover:shadow-[0_0_30px_rgba(123,97,255,0.3)]"
+                    data-testid="cta-join-beta"
+                  >
+                    Join Free Beta Access (Limited Spots)
+                    <ArrowRight className="w-4 h-4 ml-2.5" />
+                  </button>
                 </Link>
-                <Link to="/pricing">
-                  <Button size="lg" variant="outline" className="rounded-full border-zinc-700 hover:border-[#7B61FF]/50 px-8 h-12 text-base transition-colors" data-testid="hero-view-signals-btn">
-                    View Plans
-                  </Button>
+                <Link to="/leaderboard">
+                  <button
+                    className="h-14 px-8 border border-white/20 bg-transparent text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-white/5 hover:border-white/40 focus:ring-2 focus:ring-white/20"
+                    data-testid="cta-view-metrics"
+                  >
+                    View Live Metrics
+                  </button>
                 </Link>
               </motion.div>
 
-              {/* CTA Trust Line */}
+              {/* Trust line */}
               <motion.p
-                className="text-xs text-zinc-600 mb-10"
+                className="font-data text-[11px] text-white/25"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.52, duration: 0.5 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
                 data-testid="hero-trust-line"
               >
-                No credit card required. Free tier included. Cancel anytime.
+                No credit card required. Free tier included.
               </motion.p>
-
-              {/* Trust Indicators */}
-              <motion.div
-                className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-zinc-500"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
-                data-testid="trust-indicators"
-              >
-                <span className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#00FF94]" />
-                  68% Win Rate — updated daily
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#7B61FF]" />
-                  Traders in 40+ countries
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#FFB800]" />
-                  Avg. 15-min earlier than manual entries
-                </span>
-              </motion.div>
             </div>
 
-            {/* Right: AI Signal Visualization */}
+            {/* Right Column — Terminal */}
             <motion.div
-              className="order-2 lg:order-2 hidden sm:flex justify-center lg:justify-end"
-              initial={{ opacity: 0, scale: 0.9 }}
+              className="lg:col-span-5 hidden md:block"
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
+              transition={{ delay: 0.35, duration: 0.7, ease: 'easeOut' }}
             >
-              <HeroVisualization />
+              <LiveMetricsTerminal />
             </motion.div>
           </div>
 
-          {/* Fund Stats */}
-          {fundStats && (
-            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 lg:mt-16">
-              <Card className="glass-card card-hover" data-testid="stat-nav">
-                <CardContent className="p-5 text-center">
-                  <p className="text-xs text-zinc-500 mb-1.5">Fund NAV</p>
-                  <p className="text-xl md:text-2xl font-bold text-white font-['JetBrains_Mono']">{formatCurrency(fundStats.nav)}</p>
-                  <p className={`text-xs mt-1 flex items-center justify-center gap-1 ${fundStats.nav_change_24h >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
-                    {fundStats.nav_change_24h >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}{fundStats.nav_change_24h}%
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="glass-card card-hover" data-testid="stat-aum"><CardContent className="p-5 text-center"><p className="text-xs text-zinc-500 mb-1.5">Total AUM</p><p className="text-xl md:text-2xl font-bold text-white font-['JetBrains_Mono']">{formatCurrency(fundStats.total_aum)}</p></CardContent></Card>
-              <Card className="glass-card card-hover" data-testid="stat-sharpe"><CardContent className="p-5 text-center"><p className="text-xs text-zinc-500 mb-1.5">Sharpe Ratio</p><p className="text-xl md:text-2xl font-bold text-[#7B61FF] font-['JetBrains_Mono']">{fundStats.sharpe_ratio}</p></CardContent></Card>
-              <Card className="glass-card card-hover" data-testid="stat-return"><CardContent className="p-5 text-center"><p className="text-xs text-zinc-500 mb-1.5">Monthly Return</p><p className={`text-xl md:text-2xl font-bold font-['JetBrains_Mono'] ${fundStats.monthly_return >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>{fundStats.monthly_return >= 0 ? '+' : ''}{fundStats.monthly_return}%</p></CardContent></Card>
-            </motion.div>
-          )}
+          {/* Trust Bar */}
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pt-14 mt-14 border-t border-white/10 w-full"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65, duration: 0.6 }}
+            data-testid="trust-bar"
+          >
+            {[
+              { icon: ShieldCheck, title: "Verified On-Chain", sub: "Metrics written to Ethereum" },
+              { icon: Database, title: "Transparent Metrics", sub: "Sharpe, drawdown, win rate — public" },
+              { icon: Terminal, title: "Built for Serious Traders", sub: "Institutional-grade quantitative engine" },
+              { icon: Activity, title: "Zero Hype, Real Data", sub: "No screenshots. No manipulation." },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                className="flex flex-col gap-2.5"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.75 + i * 0.08, duration: 0.4 }}
+                data-testid={`trust-item-${i}`}
+              >
+                <item.icon className="w-5 h-5 text-[#7B61FF] mb-1" />
+                <span className="font-data text-xs text-white uppercase tracking-widest">{item.title}</span>
+                <span className="font-data text-xs text-white/35">{item.sub}</span>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
