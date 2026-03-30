@@ -246,13 +246,13 @@ const LandingPage = () => {
   const isFull = remaining !== null && remaining <= 0;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-[92px]">
       {/* Live Price Ticker */}
       <LivePriceTicker compact={true} />
 
       {/* ===== HERO SECTION ===== */}
       <section
-        className="relative min-h-[90vh] flex flex-col justify-center pt-28 pb-16 md:pt-32 md:pb-24 border-b border-white/5 overflow-hidden"
+        className="relative min-h-[85vh] flex flex-col justify-center pt-12 pb-16 md:pt-16 md:pb-24 border-b border-white/5 overflow-hidden"
         data-testid="hero-section"
       >
         {/* Background layers */}
