@@ -51,6 +51,7 @@ from routes.traffic import router as traffic_router, init_db as init_traffic_db
 from routes.mobile_optimization import router as mobile_opt_router, init_db as init_mobile_opt_db
 from routes.subscription import router as subscription_router, init_db as init_subscription_db
 from routes.attestation import router as attestation_router, init_db as init_attestation_db
+from routes.beta import router as beta_router
 from services.stripe_webhook_handler import init_db as init_webhook_handler_db
 from cron.performance_attestor import init_db as init_attestor_db
 
@@ -96,6 +97,7 @@ app.include_router(traffic_router)
 app.include_router(mobile_opt_router)
 app.include_router(subscription_router)
 app.include_router(attestation_router)
+app.include_router(beta_router)
 
 
 # ============= BACKGROUND TASKS =============

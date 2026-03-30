@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -11,6 +11,8 @@ import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { BrandLockup, PoweredByTag } from "../components/BrandComponents";
 import LivePriceTicker from "../components/LivePriceTicker";
+
+const API = process.env.REACT_APP_BACKEND_URL;
 
 /* ─── Live Metrics Terminal ─── */
 const LiveMetricsTerminal = () => {
@@ -94,6 +96,24 @@ const LiveMetricsTerminal = () => {
 };
 
 const LandingPage = () => {
+  const [betaSpots, setBetaSpots] = useState(null);
+
+  const fetchBetaSpots = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/api/public/beta-spots`);
+      if (res.ok) setBetaSpots(await res.json());
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => {
+    fetchBetaSpots();
+    const id = setInterval(fetchBetaSpots, 30000);
+    return () => clearInterval(id);
+  }, [fetchBetaSpots]);
+
+  const remaining = betaSpots?.remaining ?? null;
+  const isLow = remaining !== null && remaining <= 5;
+  const isFull = remaining !== null && remaining <= 0;
 
   return (
     <div className="min-h-screen">
@@ -180,12 +200,17 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <Link to="/register">
+                <Link to={isFull ? "#" : "/register"} onClick={e => isFull && e.preventDefault()}>
                   <button
-                    className="h-14 px-8 bg-[#7B61FF] text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-[#6A50E5] focus:ring-2 focus:ring-[#7B61FF]/50 shadow-[0_0_20px_rgba(123,97,255,0.15)] hover:shadow-[0_0_30px_rgba(123,97,255,0.3)]"
+                    disabled={isFull}
+                    className={`h-14 px-8 font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all focus:ring-2 ${
+                      isFull
+                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                        : 'bg-[#7B61FF] text-white hover:bg-[#6A50E5] focus:ring-[#7B61FF]/50 shadow-[0_0_20px_rgba(123,97,255,0.15)] hover:shadow-[0_0_30px_rgba(123,97,255,0.3)]'
+                    }`}
                     data-testid="cta-join-beta"
                   >
-                    Join Free Beta Access (Limited Spots)
+                    {isFull ? 'Beta Full — Join Waitlist' : 'Join Free Beta Access (Limited Spots)'}
                     <ArrowRight className="w-4 h-4 ml-2.5" />
                   </button>
                 </Link>
@@ -198,6 +223,30 @@ const LandingPage = () => {
                   </button>
                 </Link>
               </motion.div>
+
+              {/* Spots remaining counter */}
+              {remaining !== null && (
+                <motion.div
+                  className={`flex items-center gap-2 font-data text-sm ${
+                    isFull ? 'text-zinc-500' : isLow ? 'text-amber-400' : 'text-white/50'
+                  }`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.48, duration: 0.4 }}
+                  data-testid="beta-spots-counter"
+                >
+                  <motion.span
+                    className={`inline-block w-2 h-2 rounded-full ${
+                      isFull ? 'bg-zinc-600' : isLow ? 'bg-amber-400' : 'bg-[#00FF94]'
+                    }`}
+                    animate={isLow && !isFull ? { opacity: [1, 0.3, 1] } : {}}
+                    transition={isLow && !isFull ? { duration: 1.2, repeat: Infinity, ease: 'easeInOut' } : {}}
+                  />
+                  {isFull
+                    ? 'All beta spots have been claimed'
+                    : `Spots Remaining: ${remaining}`}
+                </motion.div>
+              )}
 
               {/* Trust line */}
               <motion.p

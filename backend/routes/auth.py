@@ -226,6 +226,7 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks):
         "is_verified": False,
         "is_pro": False,
         "is_elite": False,
+        "is_beta_tester": True,
         "user_tier": "free",
         "has_2fa": False,
         "totp_secret": None,
