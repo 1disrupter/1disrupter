@@ -92,7 +92,12 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 
 ## Backlog (P2)
 - Actual Sepolia deployment when user provides keys
-- Subscription Health Dashboard for Admin Panel (MRR, churn rate, failed payment retries)
+
+### Phase 8.3: Subscription Health Dashboard (Feb 2026)
+- **Backend**: `GET /api/admin/subscription-health` — returns active_subscribers, MRR ($29/pro + $99/elite), 30d churn, 7d failed payments, retry queue, 7d upcoming renewals, and 20 most recent subscription events. Cached 30 seconds.
+- **Frontend**: New "Sub Health" tab in Admin Panel with 6 color-coded metric cards (green/purple/red/amber) and a Recent Subscription Events table sorted newest first with color-coded event types.
+- **UI**: Loading skeletons, error state with retry, subtle framer-motion entrance animations, mobile responsive (2-col → 6-col grid).
+- **Testing**: 15/15 tests passed (iteration 44).
 
 ### Phase 8: High-Conversion Hero Section Redesign (Feb 2026)
 - **Hero Section** — Complete redesign with premium fintech aesthetic (dark theme, purple accents). Left-aligned asymmetric layout with institutional-grade Live Metrics Terminal.
