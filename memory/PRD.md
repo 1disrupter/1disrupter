@@ -99,6 +99,11 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **UI**: Loading skeletons, error state with retry, subtle framer-motion entrance animations, mobile responsive (2-col → 6-col grid).
 - **Testing**: 15/15 tests passed (iteration 44).
 
+### Bug Fix: LivePriceTicker Z-Index Overlap (Feb 2026)
+- **Issue**: Price ticker hidden behind hero section background layers
+- **Fix**: Added `relative z-40` to LivePriceTicker compact container. Stacking: navbar z-50 > ticker z-40 > hero (auto)
+- **Testing**: 16/16 passed (iteration 45)
+
 ### Phase 8: High-Conversion Hero Section Redesign (Feb 2026)
 - **Hero Section** — Complete redesign with premium fintech aesthetic (dark theme, purple accents). Left-aligned asymmetric layout with institutional-grade Live Metrics Terminal.
 - **Headline**: "AI-Generated Crypto Strategies. Verified On-Chain." — clear value proposition.
