@@ -909,3 +909,89 @@ async def admin_get_waitlist(admin: dict = Depends(verify_admin), limit: int = 2
         {}, {"_id": 0, "ip": 0}
     ).sort("created_at", -1).to_list(limit)
     return {"success": True, "entries": entries, "count": len(entries)}
+
+
+# ============= SUBSCRIPTION HEALTH =============
+
+_sub_health_cache = {"data": None, "expires": 0}
+
+@router.get("/subscription-health")
+async def admin_subscription_health(admin: dict = Depends(verify_admin)):
+    """Subscription health dashboard — cached for 30 seconds."""
+    import time
+    now_ts = time.time()
+    if _sub_health_cache["data"] and now_ts < _sub_health_cache["expires"]:
+        return _sub_health_cache["data"]
+
+    now = datetime.now(timezone.utc)
+    thirty_days_ago = now - timedelta(days=30)
+    seven_days_ago = now - timedelta(days=7)
+
+    # Active subscribers: users with subscription_status=active or trialing
+    active_subscribers = await db.users.count_documents({
+        "subscription_status": {"$in": ["active", "trialing"]}
+    })
+
+    # MRR: count active pro * $29 (pro_monthly price from payment_transactions)
+    pro_count = await db.users.count_documents({
+        "subscription_status": "active", "user_tier": "pro"
+    })
+    elite_count = await db.users.count_documents({
+        "subscription_status": "active", "user_tier": "elite"
+    })
+    mrr = round(pro_count * 29.0 + elite_count * 99.0, 2)
+
+    # Churn 30d: users whose subscription_status became canceled in last 30 days
+    churn_events = await db.stripe_webhook_events.count_documents({
+        "event_type": "customer.subscription.deleted",
+        "processed_at": {"$gte": thirty_days_ago}
+    })
+
+    # Failed payments 7d
+    failed_payments_7d = await db.stripe_webhook_events.count_documents({
+        "event_type": "invoice.payment_failed",
+        "processed_at": {"$gte": seven_days_ago}
+    })
+
+    # Retry queue: users currently past_due
+    retry_queue = await db.users.count_documents({
+        "subscription_status": "past_due"
+    })
+
+    # Upcoming renewals 7d: active users with subscription_end within 7 days
+    seven_days_future = now + timedelta(days=7)
+    now_str = now.isoformat()
+    seven_future_str = seven_days_future.isoformat()
+    upcoming_renewals = await db.users.count_documents({
+        "subscription_status": "active",
+        "subscription_end": {"$gte": now_str, "$lte": seven_future_str}
+    })
+
+    # Recent subscription events (last 20)
+    raw_events = await db.stripe_webhook_events.find(
+        {}, {"_id": 0, "event_type": 1, "processed_at": 1, "metadata": 1}
+    ).sort("processed_at", -1).to_list(20)
+
+    recent_events = []
+    for ev in raw_events:
+        recent_events.append({
+            "type": ev.get("event_type", "unknown"),
+            "user_email": (ev.get("metadata") or {}).get("user", "N/A"),
+            "timestamp": ev.get("processed_at"),
+        })
+
+    result = {
+        "success": True,
+        "active_subscribers": active_subscribers,
+        "mrr": mrr,
+        "churn_30d": churn_events,
+        "failed_payments_7d": failed_payments_7d,
+        "retry_queue": retry_queue,
+        "upcoming_renewals_7d": upcoming_renewals,
+        "recent_events": recent_events,
+    }
+
+    _sub_health_cache["data"] = result
+    _sub_health_cache["expires"] = now_ts + 30
+
+    return result

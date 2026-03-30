@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Activity, Check, Clock, Cpu, DollarSign, Gauge,
   LogOut, RefreshCw, ScrollText, Settings, Shield, Users, BarChart3,
   Copy, ExternalLink, FileCode, Rocket, Target, Terminal, Wallet,
-  Download, ListOrdered
+  Download, ListOrdered, HeartPulse, TrendingDown, AlertTriangle, RotateCw, CalendarClock
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -27,6 +28,168 @@ import { BrandLockup } from "../components/BrandComponents";
 import { API } from "../lib/constants";
 
 const ADMIN_KEY = localStorage.getItem("adminKey") || "alphaai_admin_2026";
+
+/* ─── Subscription Health Tab ─── */
+const SubscriptionHealthTab = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchHealth = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/admin/subscription-health?admin_key=${ADMIN_KEY}`);
+      setData(res.data);
+      setError(null);
+    } catch (e) {
+      setError("Failed to load subscription health data");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchHealth(); }, [fetchHealth]);
+
+  const EVENT_LABELS = {
+    "checkout.session.completed": "Checkout Completed",
+    "customer.subscription.created": "Subscription Created",
+    "customer.subscription.updated": "Subscription Updated",
+    "customer.subscription.deleted": "Subscription Canceled",
+    "invoice.payment_succeeded": "Payment Succeeded",
+    "invoice.payment_failed": "Payment Failed",
+    "customer.subscription.trial_will_end": "Trial Ending",
+    "charge.refunded": "Charge Refunded",
+    "charge.dispute.created": "Dispute Created",
+  };
+
+  const EVENT_COLORS = {
+    "checkout.session.completed": "text-[#00FF94]",
+    "invoice.payment_succeeded": "text-[#00FF94]",
+    "customer.subscription.created": "text-[#7B61FF]",
+    "customer.subscription.updated": "text-[#7B61FF]",
+    "customer.subscription.deleted": "text-red-400",
+    "invoice.payment_failed": "text-red-400",
+    "charge.refunded": "text-amber-400",
+    "charge.dispute.created": "text-red-400",
+    "customer.subscription.trial_will_end": "text-amber-400",
+  };
+
+  const StatSkeleton = () => (
+    <Card className="bg-[#0A0A0A] border-zinc-800">
+      <CardContent className="p-6">
+        <div className="h-3 w-24 bg-zinc-800 rounded animate-pulse mb-3" />
+        <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
+      </CardContent>
+    </Card>
+  );
+
+  const TableSkeleton = () => (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex gap-4">
+          <div className="h-4 w-32 bg-zinc-800 rounded animate-pulse" />
+          <div className="h-4 w-48 bg-zinc-800 rounded animate-pulse" />
+          <div className="h-4 w-28 bg-zinc-800 rounded animate-pulse" />
+        </div>
+      ))}
+    </div>
+  );
+
+  if (error) {
+    return (
+      <Card className="bg-[#0A0A0A] border-zinc-800">
+        <CardContent className="p-6 text-center">
+          <p className="text-red-400 text-sm" data-testid="sub-health-error">{error}</p>
+          <Button variant="outline" size="sm" onClick={fetchHealth} className="mt-3 border-zinc-700">Retry</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const metrics = loading ? [] : [
+    { label: "Active Subscribers", value: data.active_subscribers, icon: Users, color: "text-[#00FF94]" },
+    { label: "Monthly Recurring Revenue", value: `$${data.mrr.toLocaleString()}`, icon: DollarSign, color: "text-[#7B61FF]" },
+    { label: "30-Day Churn", value: data.churn_30d, icon: TrendingDown, color: data.churn_30d > 0 ? "text-red-400" : "text-[#00FF94]" },
+    { label: "Failed Payments (7d)", value: data.failed_payments_7d, icon: AlertTriangle, color: data.failed_payments_7d > 0 ? "text-amber-400" : "text-[#00FF94]" },
+    { label: "Retry Queue", value: data.retry_queue, icon: RotateCw, color: data.retry_queue > 0 ? "text-amber-400" : "text-[#00FF94]" },
+    { label: "Upcoming Renewals (7d)", value: data.upcoming_renewals_7d, icon: CalendarClock, color: "text-white" },
+  ];
+
+  return (
+    <div className="space-y-6" data-testid="sub-health-dashboard">
+      {/* Metric Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" data-testid="sub-health-cards">
+        {loading ? (
+          [...Array(6)].map((_, i) => <StatSkeleton key={i} />)
+        ) : (
+          metrics.map((m, i) => (
+            <motion.div key={m.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.35 }}>
+              <Card className="bg-[#0A0A0A] border-zinc-800 hover:border-zinc-700 transition-colors" data-testid={`sub-health-card-${i}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <m.icon className="w-4 h-4 text-zinc-500" />
+                    <span className="text-xs text-zinc-500 uppercase tracking-wider">{m.label}</span>
+                  </div>
+                  <motion.p
+                    className={`text-2xl font-bold font-mono ${m.color}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 + i * 0.06, duration: 0.3 }}
+                    data-testid={`sub-health-value-${i}`}
+                  >
+                    {m.value}
+                  </motion.p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))
+        )}
+      </div>
+
+      {/* Recent Events Table */}
+      <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="sub-health-events-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <HeartPulse className="w-5 h-5 text-[#7B61FF]" />
+              Recent Subscription Events
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={fetchHealth} className="border-zinc-700 text-xs" data-testid="sub-health-refresh">
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? <TableSkeleton /> : !data.recent_events.length ? (
+            <p className="text-zinc-500 text-sm" data-testid="sub-health-no-events">No subscription events recorded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" data-testid="sub-health-events-table">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-xs text-zinc-500 uppercase tracking-wider">
+                    <th className="text-left py-3 px-2">Event Type</th>
+                    <th className="text-left py-3 px-2">User Email</th>
+                    <th className="text-left py-3 px-2">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.recent_events.map((ev, i) => (
+                    <tr key={`${ev.type}-${ev.timestamp}-${i}`} className="border-b border-zinc-800/50 hover:bg-white/[0.02]" data-testid={`sub-event-row-${i}`}>
+                      <td className={`py-3 px-2 font-mono text-xs ${EVENT_COLORS[ev.type] || 'text-zinc-400'}`}>
+                        {EVENT_LABELS[ev.type] || ev.type}
+                      </td>
+                      <td className="py-3 px-2 text-xs text-zinc-400">{ev.user_email || "N/A"}</td>
+                      <td className="py-3 px-2 text-xs text-zinc-500 whitespace-nowrap">{new Date(ev.timestamp).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 /* ─── Waitlist Tab ─── */
 const WaitlistTab = () => {
@@ -629,6 +792,7 @@ const AdminPage = () => {
             <TabsTrigger value="tools" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-tools">System Tools</TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-security">Security</TabsTrigger>
             <TabsTrigger value="waitlist" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-waitlist">Waitlist</TabsTrigger>
+            <TabsTrigger value="sub-health" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-sub-health">Sub Health</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW TAB */}
@@ -1157,6 +1321,11 @@ const AdminPage = () => {
           {/* WAITLIST TAB */}
           <TabsContent value="waitlist" className="space-y-6">
             <WaitlistTab />
+          </TabsContent>
+
+          {/* SUBSCRIPTION HEALTH TAB */}
+          <TabsContent value="sub-health" className="space-y-6">
+            <SubscriptionHealthTab />
           </TabsContent>
         </Tabs>
 
