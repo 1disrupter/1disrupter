@@ -211,6 +211,7 @@ async def startup_db_client():
     await db.traffic_events.create_index([("user_id", 1)])
     await db.stripe_webhook_events.create_index("event_id", unique=True)
     await db.stripe_webhook_events.create_index([("processed_at", -1)])
+    await db.waitlist.create_index("email", unique=True)
 
     # Start background tasks
     asyncio.create_task(signal_generation_task())

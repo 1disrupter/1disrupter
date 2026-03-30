@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowUpRight, ArrowRight, Activity, Zap,
+  ArrowUpRight, ArrowRight, Activity, Zap, X,
   Check, Clock, Brain, TestTube, Beaker, Trophy,
   Rocket, Shield, Lock, ShieldCheck, Database, Terminal
 } from "lucide-react";
@@ -95,8 +95,138 @@ const LiveMetricsTerminal = () => {
   );
 };
 
+/* ─── Waitlist Modal ─── */
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+const WaitlistModal = ({ open, onClose }) => {
+  const [email, setEmail] = useState('');
+  const [note, setNote] = useState('');
+  const [sending, setSending] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+
+  const emailValid = EMAIL_RE.test(email);
+  const showEmailError = email.length > 0 && !emailValid;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!emailValid || sending) return;
+    setSending(true);
+    setError('');
+    try {
+      const res = await fetch(`${API}/api/public/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), note: note.trim() || undefined }),
+      });
+      if (res.status === 429) { setError('Too many requests. Please try again later.'); setSending(false); return; }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.detail || 'Something went wrong.'); setSending(false); return; }
+      setDone(true);
+    } catch { setError('Network error. Please try again.'); }
+    setSending(false);
+  };
+
+  const handleClose = () => { onClose(); setTimeout(() => { setEmail(''); setNote(''); setDone(false); setError(''); }, 300); };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          data-testid="waitlist-modal-backdrop"
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleClose} />
+
+          {/* Modal */}
+          <motion.div
+            className="relative w-full max-w-md border border-white/10 bg-[#0B0B0F] shadow-[0_0_60px_rgba(123,97,255,0.1)] overflow-hidden"
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            data-testid="waitlist-modal"
+          >
+            {/* Corner glow */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-[#7B61FF]/8 blur-[50px] pointer-events-none" />
+
+            {/* Close */}
+            <button onClick={handleClose} className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors z-10" data-testid="waitlist-modal-close">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="relative p-8">
+              {done ? (
+                <motion.div className="text-center py-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} data-testid="waitlist-success">
+                  <div className="w-12 h-12 rounded-full bg-[#00FF94]/10 flex items-center justify-center mx-auto mb-4">
+                    <Check className="w-6 h-6 text-[#00FF94]" />
+                  </div>
+                  <p className="text-white font-heading text-lg font-medium mb-2">You&apos;re on the waitlist!</p>
+                  <p className="font-data text-sm text-white/40">We&apos;ll notify you when a spot opens.</p>
+                  <button onClick={handleClose} className="mt-6 h-11 px-6 bg-white/5 border border-white/10 text-white font-data text-sm hover:bg-white/10 transition-colors" data-testid="waitlist-done-btn">Done</button>
+                </motion.div>
+              ) : (
+                <>
+                  <h2 className="font-heading text-xl font-medium text-white mb-1">Join the Waitlist</h2>
+                  <p className="font-data text-xs text-white/40 mb-6">Beta is currently full. Be the first to know when a spot opens.</p>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block font-data text-xs text-white/50 uppercase tracking-widest mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className={`w-full h-11 px-4 bg-white/5 border ${showEmailError ? 'border-red-500/50' : 'border-white/10'} text-white font-data text-sm placeholder-white/20 outline-none focus:border-[#7B61FF]/50 transition-colors`}
+                        autoFocus
+                        data-testid="waitlist-email-input"
+                      />
+                      {showEmailError && <p className="font-data text-xs text-red-400 mt-1" data-testid="waitlist-email-error">Please enter a valid email address</p>}
+                    </div>
+                    <div>
+                      <label className="block font-data text-xs text-white/50 uppercase tracking-widest mb-2">What are you hoping to use AlphaAI for? <span className="text-white/20">(optional)</span></label>
+                      <textarea
+                        value={note}
+                        onChange={e => setNote(e.target.value)}
+                        rows={3}
+                        maxLength={500}
+                        placeholder="e.g. BTC swing trading, portfolio rebalancing..."
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white font-data text-sm placeholder-white/20 outline-none focus:border-[#7B61FF]/50 transition-colors resize-none"
+                        data-testid="waitlist-note-input"
+                      />
+                    </div>
+                    {error && <p className="font-data text-xs text-red-400" data-testid="waitlist-error">{error}</p>}
+                    <button
+                      type="submit"
+                      disabled={!emailValid || sending}
+                      className={`w-full h-12 font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all ${
+                        !emailValid || sending
+                          ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                          : 'bg-[#7B61FF] text-white hover:bg-[#6A50E5] shadow-[0_0_20px_rgba(123,97,255,0.15)]'
+                      }`}
+                      data-testid="waitlist-submit-btn"
+                    >
+                      {sending ? 'Submitting...' : 'Join Waitlist'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const LandingPage = () => {
   const [betaSpots, setBetaSpots] = useState(null);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   const fetchBetaSpots = useCallback(async () => {
     try {
@@ -200,20 +330,26 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <Link to={isFull ? "#" : "/register"} onClick={e => isFull && e.preventDefault()}>
+                {isFull ? (
                   <button
-                    disabled={isFull}
-                    className={`h-14 px-8 font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all focus:ring-2 ${
-                      isFull
-                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                        : 'bg-[#7B61FF] text-white hover:bg-[#6A50E5] focus:ring-[#7B61FF]/50 shadow-[0_0_20px_rgba(123,97,255,0.15)] hover:shadow-[0_0_30px_rgba(123,97,255,0.3)]'
-                    }`}
-                    data-testid="cta-join-beta"
+                    onClick={() => setWaitlistOpen(true)}
+                    className="h-14 px-8 bg-[#7B61FF] text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-[#6A50E5] focus:ring-2 focus:ring-[#7B61FF]/50 shadow-[0_0_20px_rgba(123,97,255,0.15)] hover:shadow-[0_0_30px_rgba(123,97,255,0.3)]"
+                    data-testid="cta-join-waitlist"
                   >
-                    {isFull ? 'Beta Full — Join Waitlist' : 'Join Free Beta Access (Limited Spots)'}
+                    Join Waitlist
                     <ArrowRight className="w-4 h-4 ml-2.5" />
                   </button>
-                </Link>
+                ) : (
+                  <Link to="/register">
+                    <button
+                      className="h-14 px-8 bg-[#7B61FF] text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-[#6A50E5] focus:ring-2 focus:ring-[#7B61FF]/50 shadow-[0_0_20px_rgba(123,97,255,0.15)] hover:shadow-[0_0_30px_rgba(123,97,255,0.3)]"
+                      data-testid="cta-join-beta"
+                    >
+                      Join Free Beta Access (Limited Spots)
+                      <ArrowRight className="w-4 h-4 ml-2.5" />
+                    </button>
+                  </Link>
+                )}
                 <Link to="/leaderboard">
                   <button
                     className="h-14 px-8 border border-white/20 bg-transparent text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-white/5 hover:border-white/40 focus:ring-2 focus:ring-white/20"
@@ -660,6 +796,9 @@ const LandingPage = () => {
           <PoweredByTag />
         </div>
       </footer>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal open={waitlistOpen} onClose={() => setWaitlistOpen(false)} />
     </div>
   );
 };

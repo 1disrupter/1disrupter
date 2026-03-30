@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import {
   Activity, Check, Clock, Cpu, DollarSign, Gauge,
   LogOut, RefreshCw, ScrollText, Settings, Shield, Users, BarChart3,
-  Copy, ExternalLink, FileCode, Rocket, Target, Terminal, Wallet
+  Copy, ExternalLink, FileCode, Rocket, Target, Terminal, Wallet,
+  Download, ListOrdered
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -24,6 +25,77 @@ import {
 } from "../components/ui/select";
 import { BrandLockup } from "../components/BrandComponents";
 import { API } from "../lib/constants";
+
+const ADMIN_KEY = localStorage.getItem("adminKey") || "alphaai_admin_2026";
+
+/* ─── Waitlist Tab ─── */
+const WaitlistTab = () => {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${API}/admin/waitlist?admin_key=${ADMIN_KEY}`)
+      .then(res => setEntries(res.data.entries || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const exportCsv = () => {
+    if (!entries.length) return;
+    const header = 'Email,Note,Date';
+    const rows = entries.map(e => `"${e.email}","${(e.note || '').replace(/"/g, '""')}","${new Date(e.created_at).toISOString()}"`);
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `waitlist_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="waitlist-admin-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <ListOrdered className="w-5 h-5 text-[#7B61FF]" />
+            Waitlist Entries ({entries.length})
+          </CardTitle>
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={!entries.length} className="border-zinc-700 text-xs" data-testid="waitlist-export-csv">
+            <Download className="w-3.5 h-3.5 mr-1.5" />Export CSV
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <p className="text-zinc-500 text-sm">Loading...</p>
+        ) : !entries.length ? (
+          <p className="text-zinc-500 text-sm" data-testid="waitlist-empty">No waitlist entries yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" data-testid="waitlist-table">
+              <thead>
+                <tr className="border-b border-zinc-800 text-xs text-zinc-500 uppercase tracking-wider">
+                  <th className="text-left py-3 px-2">Email</th>
+                  <th className="text-left py-3 px-2">Note</th>
+                  <th className="text-left py-3 px-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(e => (
+                  <tr key={e.id} className="border-b border-zinc-800/50 hover:bg-white/[0.02]" data-testid={`waitlist-row-${e.id}`}>
+                    <td className="py-3 px-2 font-mono text-xs text-white">{e.email}</td>
+                    <td className="py-3 px-2 text-xs text-zinc-400 max-w-xs truncate">{e.note || <span className="text-zinc-600">—</span>}</td>
+                    <td className="py-3 px-2 text-xs text-zinc-500 whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 const SmartContractPanel = () => {
   const [contractInfo, setContractInfo] = useState(null);
@@ -556,6 +628,7 @@ const AdminPage = () => {
             <TabsTrigger value="features" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-features">Features</TabsTrigger>
             <TabsTrigger value="tools" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-tools">System Tools</TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-security">Security</TabsTrigger>
+            <TabsTrigger value="waitlist" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-waitlist">Waitlist</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW TAB */}
@@ -1079,6 +1152,11 @@ const AdminPage = () => {
                 </ScrollArea>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* WAITLIST TAB */}
+          <TabsContent value="waitlist" className="space-y-6">
+            <WaitlistTab />
           </TabsContent>
         </Tabs>
 

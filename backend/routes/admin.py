@@ -898,3 +898,14 @@ async def admin_attestation_latest(admin: dict = Depends(verify_admin)):
     if not record:
         return {"success": True, "record": None, "message": "No attestation runs yet"}
     return {"success": True, "record": record}
+
+
+# ============= WAITLIST =============
+
+@router.get("/waitlist")
+async def admin_get_waitlist(admin: dict = Depends(verify_admin), limit: int = 200):
+    """Get waitlist entries, newest first."""
+    entries = await db.waitlist.find(
+        {}, {"_id": 0, "ip": 0}
+    ).sort("created_at", -1).to_list(limit)
+    return {"success": True, "entries": entries, "count": len(entries)}
