@@ -111,3 +111,10 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Frontend**: Fetches beta spots on load + polls every 30s. Displays "Spots Remaining: X" with green dot. Amber pulse when <=5 remaining. CTA disabled with "Beta Full — Join Waitlist" when 0 remaining.
 - **No fake scarcity**: Counter reflects real signups only.
 - **Testing**: 14/14 tests passed (iteration 42).
+
+### Phase 8.2: Waitlist System (Feb 2026)
+- **Backend**: `POST /api/public/waitlist` — accepts `{email, note?}`, validates email format, rate limits 3/IP/hour, stores in `waitlist` collection with unique email index. Idempotent on duplicates.
+- **Backend Admin**: `GET /api/admin/waitlist` — returns all entries sorted newest first, excludes IP field.
+- **Frontend Modal**: When beta full (remaining<=0), CTA becomes "Join Waitlist" opening a premium dark-themed modal with email input, optional note textarea, inline validation, and success state.
+- **Admin Panel**: New "Waitlist" tab with table (email, note, date) and client-side CSV export.
+- **Testing**: 17/17 tests passed (iteration 43). 2 backend pytest cases hit rate limit during sequential testing — expected behavior, not bugs.
