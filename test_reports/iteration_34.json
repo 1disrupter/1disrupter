@@ -56,7 +56,7 @@
   "test_credentials": {
     "admin_key": "alphaai_admin_2026",
     "demo_mode": "?demo=true URL parameter",
-    "backend_url": "https://idle-cache.preview.emergentagent.com"
+    "backend_url": "https://strategy-attestor.preview.emergentagent.com"
   },
 
   "seed_data_creation": "Created test error events to trigger error_spike alert",

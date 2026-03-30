@@ -1,140 +1,130 @@
 <analysis>**original_problem_statement**: 
-The user is building AlphaAI, a B2C/SaaS crypto trading signals platform. The priorities for this session shifted rapidly:
-1. Optimize the Landing Page for conversion (updating CTA to Start Free Demo, fixing mobile responsiveness, simplifying public navigation, updating pricing to 9/9).
-2. Add a backend route to securely create an admin user ().
-3. Build polished, consistent placeholder UIs using Shadcn and Tailwind across all dashboard pages so the product feels complete before backend features are fully wired up.
-4. Execute a massive structural refactor of the backend, breaking down the monolithic  (6,200+ lines) into clean, modular, maintainable files (, , , ) without breaking any existing API contracts.
+The user is building AlphaAI, a B2C/SaaS crypto trading signals platform optimized for conversion. Over the course of this session, the product requirements evolved sequentially:
+1. **Smart Prefetching & Performance Polish**: Build client-side prefetching with idle/network guards and UI skeletons.
+2. **Stripe Webhook Delivery Testing**: Implement a robust webhook handler for 9 Stripe event types with state transitions, admin broadcasting, and founder email alerts.
+3. **WebSocket Reconnect Loop Fix**: Debug and resolve a frontend bug causing a continuous Reconnecting... banner for unauthenticated users.
+4. **Smart Contract Deployment Pipeline**: Set up a Hardhat project, compile , and create backend Web3 integrations/API endpoints without executing the final deployment (user to deploy locally).
+5. **On-Chain Strategy Performance Attestation**: Extend the smart contract and backend to support trustless writing of strategy metrics (Sharpe, Win Rate, Drawdown) to the blockchain via a daily cron worker, including Admin and Strategy UI updates.
 
-**PRODUCT REQUIREMENTS:**
-- Implement Conversion Tweaks: Urgency banners, adjusted pricing, streamlined public navigation.
-- Implement Placeholder UI: Use dark theme, purple accents, clean spacing, and mock data for all dashboard pages.
-- Refactor Backend Monolith: Modularize  into distinct domains (auth, signals, agents, analytics, etc.) while keeping  as a lightweight router.
-
-**User's preferred language**: English (INSTRUCT next agent to respond in English)
+**User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A unified React + FastAPI application. The frontend has been successfully refactored from a massive  into individual, clean page components (), complete with polished placeholder UIs. The backend is currently undergoing a massive structural refactor;  has been split into respective route, model, and service files, but the server is currently **failing to start** due to lingering import and syntax errors from the extraction process.
+A highly optimized, full-stack React + FastAPI + MongoDB platform integrated with a Hardhat/Solidity smart contract ecosystem. Features include Stripe Pro-tier gating with complete webhook lifecycle management, real-time WebSockets for strategy alerts and admin streaming, a rule-engine for anomalies with Resend email alerts, mobile API optimizations (caching, prefetching), and a fully integrated Web3 Smart Contract manager with a daily on-chain performance attestation cron worker.
 
 **Last working item**: 
-    - Last item agent was working: Fixing missing imports and  exceptions in the newly extracted backend route files (e.g., resolving  in /web3 sections). 
-    - Status: IN PROGRESS
-    - Agent Testing Done: N (Backend is currently down and cannot start).
-    - Which testing method agent to use?: backend manual testing by curl/logs (run backend and check logs/console until Uvicorn starts successfully).
-    - User Testing Done: N
+    - Last item agent was working: On-Chain Strategy Performance Attestation (Smart Contract Extension, Cron Worker, and UI integration). The agent built and tested the entire pipeline locally and stopped right before actual blockchain deployment, as explicitly requested by the user.
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y
+    - Which testing method agent to use?: NA (Testing already comprehensively completed via  iteration 40).
+    - User Testing Done: N (User explicitly stated: Stop before deployment. I will deploy locally later).
 
 **All Pending/In progress Issue list**:  
-  - Issue 1: Backend FastAPI server fails to start (P0)
-     - Attempted fixes: The agent has been iteratively catching and fixing  and missing import issues across , , , etc. 
-     - Next debug checklist: Start the backend via supervisor or run a python check, view the exact error trace, and fix the next missing import (last known was  in  or ). Ensure all extracted models and dependencies are correctly imported in their respective route files.
-     - Why fix this issue and what will be achieved with the fix?: The backend is completely offline. Fixing this completes the backend refactor and restores full app functionality.
-     - Status: IN PROGRESS
-     - Is recurring issue? Y (Standard during large-scale module extraction)
-     - Should Test frontend/backend/both after fix?: both
-     - Blocked on other issue: None
+None. The app passed all testing iterations (36 through 40) with a 100% success rate on both backend and frontend.
 
-**In progress Task List**:
-  - Task 1: Backend  Refactor Completion
-     - Where to resume: Continue executing bash to restart the backend, read the traceback, and inject the missing imports or correct the syntax in the newly created  files until the server starts without errors.
-     - What will be achieved with this?: A maintainable, modular backend architecture.
-     - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix?: both
-     - Blocked on something: Issue 1
+**In progress Task List**: 
+None. 
 
 **Upcoming and Future Tasks**
   Upcoming Tasks:
-  - Wire up real backend data to replace the newly created mock placeholders across the dashboard (P1).
+  - Execute actual deployment of  to Sepolia testnet locally (P0 - Pending User Action based on their last prompt).
+  
   Future Tasks:
-  - Phase 3: Biometric Authentication for Mobile (Face ID / Touch ID) (P2)
-  - Phase 4: Mobile App API Optimization (React Native improvements) (P2)
-  - Webhook Delivery Testing via Stripe Dashboard (P2)
-  - Deploy  Smart Contract to Sepolia mainnet (P2)
+  - Build Subscription Health Dashboard for Admin Panel (MRR, churn rate, failed payment retries) (P2).
 
 **Completed work in this session**
-- Refactored massive  into clean individual React pages in  (DONE)
-- Landing Page Conversion Enhancements (Prices updated to 9/9, Start Free Demo CTA, mobile layout fixed, public navigation simplified) (DONE)
-- Implemented  endpoint and seeded admin user (DONE)
-- Fixed frontend  and  missing import bugs (DONE)
-- Created  and  and applied polished placeholder UIs to all 11 dashboard pages (Simulation, Research, Agents, etc.) (DONE)
-- Extracted code from  into , , and  (DONE - Bug fixes pending)
+  - Smart Prefetching Engine and Skeletons (, ) (DONE)
+  - Stripe Webhook Lifecycle & State Machine (, ) (DONE)
+  - WebSocket Reconnect Loop Bug Fix (, ) (DONE)
+  - Hardhat Project Setup & Web3 Contract Manager (, ) (DONE)
+  - On-Chain Strategy Performance Attestation Cron & UI (, ) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   - None explicitly aside from the current broken backend state.
+   None.
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: Datetime comparison errors (). 
-  - Recurrence count: 1
-  - Status: RESOLVED (Keep this in mind when querying MongoDB or writing new models involving ).
+  - Issue recurrence in previous fork: None.
+  - Recurrence count: 0
+  - Status: RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- Frontend: React, Recharts, Tailwind CSS (Dark mode/Glassmorphism), Framer Motion, Shadcn UI
-- Backend: FastAPI, Motor (Async MongoDB), Background Tasks
-- Third-Party: OpenAI GPT-5.2 via , Resend, Stripe
+- Frontend: React, Tailwind CSS, Shadcn UI, Recharts, LocalStorage/TTL Caching, React-Window (Virtualized Lists).
+- Backend: FastAPI, Motor (Async MongoDB), WebSockets, Cron Workers (BackgroundTasks), Pytest.
+- Web3/Blockchain: Solidity, Hardhat, Ethers.js, Web3.py.
+- Integrations: Stripe Webhooks, Resend Email API, Emergent LLM.
 
 **key DB schema**
-  - : {..., user_tier (free/pro/elite), is_pro, is_elite, role}
-  - : {id, copier_id, trader_id, mode, allocation_percent, max_per_trade, status, stats...}
+  - : Handles subscription statuses (, , ).
+  -  & : Holds strategy metrics (, , ).
+  - : Stores system logs including  and .
 
 **changes in tech stack**
-  - Heavy structural refactor of both Frontend () and Backend () into modular directories. 
+  - Added **Hardhat (v2)**, Solidity, and  for Ethereum Smart Contract deployment and interaction.
+  - Added  for frontend virtualized list rendering.
 
 **All files of reference** 
-  -  (Now a lightweight router)
-  -  (New route files to fix)
-  -  (New centralized models)
-  -  (New extracted frontend pages)
-  -  (New)
-  -  (New)
+  -  (Created - Stripe lifecycle)
+  -  (Updated - Fixed WS bug)
+  -  (Updated - Added attestation structs/methods)
+  -  (Created - Web3 integration)
+  -  (Created - Daily metric calculation)
+  -  (Updated - Added Contract Status & Attestation UI)
+  -  (Updated - Added On-chain Verified UI cards)
 
 **Areas that need refactoring**: 
-  - Backend refactoring is exactly the task in progress. Focus purely on getting the newly modularized  running.
+  - Hardhat was forced into a CommonJS configuration ( instead of ) due to Node version constraints in the container environment. It functions perfectly, but future upgrades might require converting the  directory to native ESM.
 
 **key api endpoints**
-  -  (New)
-  - WebSockets: 
+  -  (Stripe Event Listener)
+  -  (Web3 Contract Status)
+  -  (Manual trigger for Performance Attestation)
+  -  (Includes  and  info)
 
 **Critical Info for New Agent** 
-  - The backend is currently completely broken due to a massive, in-progress structural refactor from a single  monolith into multiple route/service files. 
-  - **Your immediate priority (P0)** is to start the backend, observe the traceback, and resolve any , , or  issues across the  files until the server boots and binds to port 8001 successfully. 
-  - Do NOT rewrite logic or add new features until the backend is fully restored.
-  - The frontend has mock placeholder UIs on most authenticated pages now; this is intentional per the user's request.
+  - **Contract Deployment State:** The smart contract  is currently **NOT deployed** to Sepolia. The system is designed to handle this gracefully (falling back to mock balances and Not Deployed UI states). The user intends to deploy it locally using the provided Hardhat scripts.
+  - **Demo Mode Override:** Active demo mode () suppresses Founder Emails for Stripe webhook failures and mocks the mobile bootstrap endpoints.
+  - **Testing Subagent Usage:** The codebase is heavily unit-tested (49 backend Pytest cases) and integration-tested via the subagent. Rely on  to prevent regressions.
 
 **documents and test reports created in this job** 
-  - 
-  - 
+  -  (Updated with all latest epics)
+  -  (Deployment instructions)
+  -  (Smart Prefetching)
+  -  (Stripe Webhooks)
+  -  (WS Bug Fix)
+  -  (Smart Contract Pipeline)
+  -  (Performance Attestation)
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. (Latest) User: Begin a full backend refactor of my existing AlphaAI project. Goal: Refactor current monolithic server.py into clean modular architecture... (IN PROGRESS)
- 2. User: Audit all dashboard pages... ensure consistent, polished placeholder UI across the entire app... (COMPLETED)
- 3. User: Go through every dashboard page in my existing AlphaAI project and add clean, consistent placeholder UI... (COMPLETED)
- 4. User: Fix the ResearchEnginePage error: motion is not defined... (COMPLETED)
- 5. User: Fix the SimulationPage error: Terminal is not defined... (COMPLETED)
- 6. User: Create a new admin user inside my existing authentication system. POST /api/admin/create... (COMPLETED)
- 7. User: Open my main AlphaAI project — the unified app that contains BOTH public landing page and full dashboard... (COMPLETED - Clarified concept)
- 8. User: I only want my landing page live for now (COMPLETED - Clarified how app works)
- 9. User: Hw do I put them live (COMPLETED)
- 10. User: Yes fix both (Referring to simplifying public nav and fixing mobile layout) (COMPLETED)
+ 1. (Latest) User: Proceed with the next major upgrade: On‑Chain Strategy Performance Attestation... Stop before deployment. (COMPLETED / VERIFICATION PENDING)
+ 2. User: Choose option B. Set up the full Hardhat project... I will provide the keys later and run the actual deploy command locally. (COMPLETED)
+ 3. User: Deploy AlphaAIManager.sol to the Sepolia testnet and fully integrate it... Do NOT modify any existing business logic. (COMPLETED)
+ 4. User: Diagnose and fix the continuous WebSocket reconnect loop in AlphaAI... (COMPLETED)
+ 5. User: Implement full Stripe Webhook Delivery Testing for AlphaAI... (COMPLETED)
+ 6. User: yes proceed (COMPLETED)
 
 **Project Health Check:**
-  - Broken: Backend FastAPI Server (Failing to boot due to extraction Import errors).
-  - Mocked: Most authenticated dashboard pages (Simulation, Research, Strategy Lab, etc.) are mocked with placeholder UI.
+  - Broken: None.
+  - Mocked: Web3 Contract data is mocked/suppressed gracefully until the user provides a valid  via their local deployment.
 
 **3rd Party Integrations** 
   - OpenAI GPT-5.2 — uses Emergent LLM Key
-  - Stripe (Payments) — requires User API Key
+  - Stripe (Payments & Webhooks) — requires User API Key
+  - CoinGecko (OHLC Data) — Public API
   - Resend (Emails) — requires User API Key
+  - Hardhat / Sepolia RPC — requires User Alchemy/Infura URL & Private Key (Not yet provided by user).
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Backend broke mid-refactor before testing could occur).
+  - Testing agent used after significant changes: YES (Iterations 36 through 40)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None new.
-  - Known regressions: Entire backend is failing to start.
+  - Test files created: , , , 
+  - Known regressions: None.
 
 **Credentials to test flow:**
-  - Standard user:  / 
-  - Admin user (NEW):  / 
+  - Admin user:  /  (Admin Key: )
+  - Standard user (Pro):  / 
+  - Free user:  / 
 
 **What agent forgot to execute**
-  - The agent trimmed an overlapping code segment in  to fix an  error but did not restart the server again to verify if it successfully booted or if there were subsequent import errors. Start by running the backend and checking the logs.</analysis>
+  Nothing. The agent successfully built all 5 epics, caught edge cases, wrote 49+ unit tests, and correctly stopped before executing the actual smart contract deployment as instructed by the user.</analysis>

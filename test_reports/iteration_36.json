@@ -63,7 +63,7 @@
 
   "test_credentials": {
     "demo_mode": "?demo=true URL parameter",
-    "backend_url": "https://idle-cache.preview.emergentagent.com"
+    "backend_url": "https://strategy-attestor.preview.emergentagent.com"
   },
 
   "seed_data_creation": "None - used existing demo mode data",
