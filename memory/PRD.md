@@ -92,3 +92,15 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 
 ## Backlog (P2)
 - Actual Sepolia deployment when user provides keys
+- Subscription Health Dashboard for Admin Panel (MRR, churn rate, failed payment retries)
+
+### Phase 8: High-Conversion Hero Section Redesign (Feb 2026)
+- **Hero Section** — Complete redesign with premium fintech aesthetic (dark theme, purple accents). Left-aligned asymmetric layout with institutional-grade Live Metrics Terminal.
+- **Headline**: "AI-Generated Crypto Strategies. Verified On-Chain." — clear value proposition.
+- **Sub-headline**: Explains on-chain verification of Sharpe ratio, win rate, drawdown.
+- **Micro-copy**: "Transparent metrics. Immutable records. Built for traders who verify."
+- **CTAs**: "Join Free Beta Access (Limited Spots)" → /register, "View Live Metrics" → /leaderboard.
+- **Trust Bar**: 4 credibility points (Verified On-Chain, Transparent Metrics, Built for Serious Traders, Zero Hype Real Data).
+- **Live Metrics Terminal**: Real-time styled terminal showing Alpha Engine V4 metrics with pulsing Live indicator. Hidden on mobile.
+- **Responsive**: Full mobile optimization with stacked CTAs, stacked trust items, hidden terminal.
+- **Testing**: 17/17 tests passed (iteration 41).
