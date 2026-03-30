@@ -42,7 +42,7 @@ const LivePriceTicker = ({ compact = false }) => {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-4 overflow-x-auto py-2 px-4 bg-[#050505]/80 border-y border-zinc-800" data-testid="price-ticker-compact">
+      <div className="relative z-40 flex items-center gap-4 overflow-x-auto py-2 px-4 bg-[#050505]/80 border-y border-zinc-800" data-testid="price-ticker-compact">
         <div className="flex items-center gap-1 text-xs text-zinc-500">
           <Radio className="w-3 h-3 text-[#00FF94] animate-pulse" />
           LIVE
