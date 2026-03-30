@@ -104,3 +104,10 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Live Metrics Terminal**: Real-time styled terminal showing Alpha Engine V4 metrics with pulsing Live indicator. Hidden on mobile.
 - **Responsive**: Full mobile optimization with stacked CTAs, stacked trust items, hidden terminal.
 - **Testing**: 17/17 tests passed (iteration 41).
+
+### Phase 8.1: Dynamic Beta Spots Counter (Feb 2026)
+- **Backend**: `GET /api/public/beta-spots` — public endpoint returning `{total, used, remaining}`. Reads `BETA_SPOTS_TOTAL` from env (default 50). Counts users with `is_beta_tester: true`.
+- **User Model**: Added `is_beta_tester` field (boolean). Set to `true` on new registration via `/api/auth/register`.
+- **Frontend**: Fetches beta spots on load + polls every 30s. Displays "Spots Remaining: X" with green dot. Amber pulse when <=5 remaining. CTA disabled with "Beta Full — Join Waitlist" when 0 remaining.
+- **No fake scarcity**: Counter reflects real signups only.
+- **Testing**: 14/14 tests passed (iteration 42).
