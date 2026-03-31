@@ -108,6 +108,13 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **No trading**: Connectivity + data only. No orders, no live trading.
 - **Testing**: 100% passed (iteration 50). Backend 12/12, frontend all UI verified.
 
+### Free Demo Flow Fix (Mar 2026)
+- **`/demo` route**: Sets sessionStorage + redirects to `/dashboard?demo=true`. No auth required.
+- **Pricing page**: Free tier button changed from disabled "Current Plan" to enabled "Start Free Demo" linking to `/demo`.
+- **Dashboard banner**: Updated to "You are in Demo Mode — upgrade to unlock real-time signals and live trading." with purple Upgrade CTA button.
+- **Behavior**: Demo mode bypasses all subscription/auth checks. Uses mock data only. Pro features locked. No redirect to /upgrade.
+- **Testing**: 13/13 passed (iteration 51).
+
 ### Phase 8.3: Subscription Health Dashboard (Feb 2026)
 - **Backend**: `GET /api/admin/subscription-health` — returns active_subscribers, MRR ($29/pro + $99/elite), 30d churn, 7d failed payments, retry queue, 7d upcoming renewals, and 20 most recent subscription events. Cached 30 seconds.
 - **Frontend**: New "Sub Health" tab in Admin Panel with 6 color-coded metric cards (green/purple/red/amber) and a Recent Subscription Events table sorted newest first with color-coded event types.
