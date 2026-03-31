@@ -21,7 +21,7 @@ const AuthBrandLockup = ({ showSubtitle = true }) => (
     <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center mb-3">
       <Brain className="w-8 h-8 text-white" />
     </div>
-    <span className="text-2xl font-bold font-['Outfit'] tracking-tight">AlphaAI</span>
+    <span className="text-2xl font-bold font-['Outfit'] tracking-tight">My-AlphaAI</span>
     {showSubtitle && (
       <span className="text-xs text-zinc-400 font-light tracking-[0.2em] uppercase mt-1">
         Signal Intelligence System

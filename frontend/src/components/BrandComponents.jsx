@@ -21,7 +21,7 @@ export const BrandLockup = ({
         <div className={`${s.icon} rounded-xl bg-gradient-to-br from-[#7B61FF] to-[#00FF94] flex items-center justify-center mb-2`}>
           <Brain className={`${s.iconInner} text-white`} />
         </div>
-        <span className={`${s.title} font-bold font-['Outfit'] tracking-tight`}>AlphaAI</span>
+        <span className={`${s.title} font-bold font-['Outfit'] tracking-tight`}>My-AlphaAI</span>
         {showSubtitle && (
           <span className={`${s.subtitle} text-zinc-400 font-light tracking-[0.2em] uppercase mt-1`}>
             Signal Intelligence System
@@ -37,7 +37,7 @@ export const BrandLockup = ({
         <Brain className={`${s.iconInner} text-white`} />
       </div>
       <div className="flex flex-col">
-        <span className={`${s.title} font-bold font-['Outfit'] tracking-tight leading-none`}>AlphaAI</span>
+        <span className={`${s.title} font-bold font-['Outfit'] tracking-tight leading-none`}>My-AlphaAI</span>
         {showSubtitle && (
           <span className={`${s.subtitle} text-zinc-400 font-light tracking-[0.15em] uppercase`}>
             Signal Intelligence System
@@ -51,7 +51,7 @@ export const BrandLockup = ({
 export const PoweredByTag = ({ className = '' }) => (
   <div className={`flex items-center justify-center gap-2 text-xs text-zinc-500 ${className}`} data-testid="powered-by-tag">
     <span className="opacity-60">Powered by the</span>
-    <span className="text-[#7B61FF] font-medium">AlphaAI</span>
+    <span className="text-[#7B61FF] font-medium">My-AlphaAI</span>
     <span className="opacity-60">Signal Intelligence System</span>
   </div>
 );

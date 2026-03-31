@@ -107,7 +107,7 @@ const DashboardPage = () => {
         setIsPro(true);
         setShowUpgradePopup(false);
         setIsProcessingPayment(false);
-        toast.success("Welcome to AlphaAI Pro! You now have access to real-time signals.");
+        toast.success("Welcome to My-AlphaAI Pro! You now have access to real-time signals.");
         return;
       } else if (response.data.status === 'expired') {
         toast.error("Payment session expired. Please try again.");

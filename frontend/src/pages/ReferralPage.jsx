@@ -48,7 +48,7 @@ const ReferralPage = () => {
   return (
     <div className="min-h-screen pt-24 pb-12 px-4" data-testid="referral-page">
       <div className="max-w-5xl mx-auto">
-        <PageHeader icon={Users} title="Referral Program" description="Earn commissions by inviting traders to AlphaAI" badge="20% Commission" testId="referral-header" />
+        <PageHeader icon={Users} title="Referral Program" description="Earn commissions by inviting traders to My-AlphaAI" badge="20% Commission" testId="referral-header" />
 
         {loading && !isDemoMode ? <LoadingSkeleton rows={3} /> : error && !isDemoMode ? <ErrorState message="Could not load referral data" onRetry={refetch} /> : (
           <>

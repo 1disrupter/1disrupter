@@ -162,7 +162,7 @@ const PricingPage = () => {
       name: 'Free',
       price: 0,
       period: 'forever',
-      description: 'Explore AlphaAI with paper trading',
+      description: 'Explore My-AlphaAI with paper trading',
       features: [
         { text: 'AI signals (15-min delay)', included: true },
         { text: 'Paper trading', included: true },

@@ -78,7 +78,7 @@ export const DemoModeProvider = ({ children }) => {
     const url = base + '?demo=true';
     navigator.clipboard.writeText(url).then(() => {
       toast.success('Demo link copied!', {
-        description: 'Share it with anyone to let them explore AlphaAI instantly.',
+        description: 'Share it with anyone to let them explore My-AlphaAI instantly.',
       });
     }).catch(() => {
       // Fallback: select text for manual copy
@@ -89,7 +89,7 @@ export const DemoModeProvider = ({ children }) => {
       document.execCommand('copy');
       document.body.removeChild(input);
       toast.success('Demo link copied!', {
-        description: 'Share it with anyone to let them explore AlphaAI instantly.',
+        description: 'Share it with anyone to let them explore My-AlphaAI instantly.',
       });
     });
   }, []);

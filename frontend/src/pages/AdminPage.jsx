@@ -313,7 +313,7 @@ const SmartContractPanel = () => {
           <FileCode className="w-5 h-5 text-[#7B61FF]" />
           Smart Contract (Sepolia Testnet)
         </CardTitle>
-        <CardDescription>Deploy and manage the AlphaAI Manager contract on Ethereum</CardDescription>
+        <CardDescription>Deploy and manage the My-AlphaAI Manager contract on Ethereum</CardDescription>
       </CardHeader>
       <CardContent>
         {/* Contract Status */}

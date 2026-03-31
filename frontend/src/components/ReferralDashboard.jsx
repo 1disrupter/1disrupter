@@ -79,12 +79,12 @@ const ReferralLinkCard = ({ code, link, onCopy }) => {
   };
 
   const shareOnTwitter = () => {
-    const text = encodeURIComponent(`Join me on AlphaAI and get 7 days FREE Pro access! AI-powered crypto trading signals 🚀`);
+    const text = encodeURIComponent(`Join me on My-AlphaAI and get 7 days FREE Pro access! AI-powered crypto trading signals`);
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(link)}`, '_blank');
   };
 
   const shareOnTelegram = () => {
-    const text = encodeURIComponent(`Join me on AlphaAI and get 7 days FREE Pro access!`);
+    const text = encodeURIComponent(`Join me on My-AlphaAI and get 7 days FREE Pro access!`);
     window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`, '_blank');
   };
 
@@ -127,7 +127,7 @@ const ReferralLinkCard = ({ code, link, onCopy }) => {
             Telegram
           </Button>
           <Button variant="outline" size="sm" className="flex-1 border-zinc-700" onClick={() => {
-            navigator.clipboard.writeText(`Join me on AlphaAI and get 7 days FREE Pro access! ${link}`);
+            navigator.clipboard.writeText(`Join me on My-AlphaAI and get 7 days FREE Pro access! ${link}`);
             toast.success('Share text copied!');
           }}>
             <Share2 className="w-4 h-4 mr-2" />
@@ -464,7 +464,7 @@ export const ReferralDashboard = () => {
             <Gift className="w-7 h-7 text-[#7B61FF]" />
             Referral Program
           </h1>
-          <p className="text-zinc-500">Earn commissions and free Pro access by sharing AlphaAI</p>
+          <p className="text-zinc-500">Earn commissions and free Pro access by sharing My-AlphaAI</p>
         </div>
         {stats?.available_earnings >= 25 && (
           <Button 

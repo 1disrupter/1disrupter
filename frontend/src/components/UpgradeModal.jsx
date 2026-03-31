@@ -60,7 +60,7 @@ const UpgradeModal = ({ open, onClose, feature = "This feature" }) => {
                 <div className="mx-auto p-3 rounded-2xl bg-[#7B61FF]/10 border border-[#7B61FF]/20 w-fit mb-3">
                   <Zap className="w-7 h-7 text-[#7B61FF]" />
                 </div>
-                <CardTitle className="text-lg font-['Outfit']">Upgrade to AlphaAI Pro</CardTitle>
+                <CardTitle className="text-lg font-['Outfit']">Upgrade to My-AlphaAI Pro</CardTitle>
                 <p className="text-xs text-zinc-500 mt-1">{feature} requires a Pro subscription</p>
               </CardHeader>
               <CardContent className="p-5 space-y-4">

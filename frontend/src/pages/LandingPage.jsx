@@ -189,7 +189,7 @@ const WaitlistModal = ({ open, onClose }) => {
                       {showEmailError && <p className="font-data text-xs text-red-400 mt-1" data-testid="waitlist-email-error">Please enter a valid email address</p>}
                     </div>
                     <div>
-                      <label className="block font-data text-xs text-white/50 uppercase tracking-widest mb-2">What are you hoping to use AlphaAI for? <span className="text-white/20">(optional)</span></label>
+                      <label className="block font-data text-xs text-white/50 uppercase tracking-widest mb-2">What are you hoping to use My-AlphaAI for? <span className="text-white/20">(optional)</span></label>
                       <textarea
                         value={note}
                         onChange={e => setNote(e.target.value)}
@@ -309,7 +309,7 @@ const LandingPage = () => {
                 transition={{ delay: 0.22, duration: 0.5 }}
                 data-testid="hero-description"
               >
-                AlphaAI deploys quantitative strategies and writes every performance metric — Sharpe ratio, win rate, drawdown — directly to the blockchain. No screenshots. No manipulated backtests. Just verifiable data.
+                My-AlphaAI deploys quantitative strategies and writes every performance metric — Sharpe ratio, win rate, drawdown — directly to the blockchain. No screenshots. No manipulated backtests. Just verifiable data.
               </motion.p>
 
               {/* Micro-copy */}
@@ -518,7 +518,7 @@ const LandingPage = () => {
             {/* Result cards */}
             <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
               <div className="rounded-xl border border-[#00FF94]/20 bg-[#00FF94]/5 p-5">
-                <p className="text-xs text-zinc-500 mb-1">AlphaAI entry</p>
+                <p className="text-xs text-zinc-500 mb-1">My-AlphaAI entry</p>
                 <p className="text-sm text-zinc-300 font-mono">9:41 AM · $64,800</p>
                 <p className="text-xs text-zinc-500 mt-2">Closed at $67,100</p>
                 <p className="text-2xl font-bold font-mono text-[#00FF94] mt-1" data-testid="alpha-result">+3.5%</p>
@@ -691,7 +691,7 @@ const LandingPage = () => {
                       {/* Prices */}
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="text-xs">
-                          <span className="text-zinc-600">AlphaAI flagged </span>
+                          <span className="text-zinc-600">My-AlphaAI flagged </span>
                           <span className="font-mono text-[#00FF94]">{sig.alphaPrice}</span>
                         </div>
                         <div className="text-xs text-right">

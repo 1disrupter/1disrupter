@@ -96,7 +96,7 @@ const SplashScreen = ({ onComplete }) => {
             animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
             transition={{ delay: 0.4, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            AlphaAI
+            My-AlphaAI
           </motion.h1>
         </motion.div>
 
