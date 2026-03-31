@@ -1,7 +1,7 @@
-# AlphaAI — Product Requirements Document
+# My-AlphaAI — Product Requirements Document
 
 ## Original Problem Statement
-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion with AI-powered research, backtesting, strategy management, real-time signals, and admin monitoring.
+My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion with AI-powered research, backtesting, strategy management, real-time signals, and admin monitoring.
 
 ## Core Architecture
 - **Frontend**: React + Tailwind CSS + Shadcn UI + Recharts + Framer Motion
@@ -95,9 +95,12 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Unchanged**: Colors, logo icon, layout, routes, backend logic, code comments, smart contract name.
 - **Testing**: 18/18 passed (iteration 49).
 
-## Backlog (P2)
-- Actual Sepolia deployment when user provides keys
-- Phase 2: Order Execution Engine (pending Phase 1 verification)
+## Backlog
+- **P1**: Order Execution Engine (Phase 2 of Live Trading)
+- **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
+- **P3**: MRR trend chart for subscription health dashboard (Recharts)
+- **P3**: Auto-email waitlist users when spot opens (Resend integration)
+- **P3**: User retention analytics (DAU/MAU ratio)
 
 ### Phase 10: Exchange Integration — Testnet Only (Mar 2026)
 - **Backend**: 5 new endpoints — `POST /api/exchange/connect` (validates + encrypts + stores keys), `POST /api/exchange/validate` (re-validates, fetches balances/positions), `GET /api/exchange/status` (connection status, masked key only), `DELETE /api/exchange/disconnect`, `GET /api/admin/exchanges` (admin view, no secrets).
@@ -113,7 +116,7 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Pricing page**: Free tier button changed from disabled "Current Plan" to enabled "Start Free Demo" linking to `/demo`.
 - **Dashboard banner**: Updated to "You are in Demo Mode — upgrade to unlock real-time signals and live trading." with purple Upgrade CTA button.
 - **Behavior**: Demo mode bypasses all subscription/auth checks. Uses mock data only. Pro features locked. No redirect to /upgrade.
-- **Testing**: 13/13 passed (iteration 51).
+- **Testing**: 13/13 passed (iteration 51). Re-verified iteration 52 (8/8 passed) — confirmed fix works for logged-out, free-tier, and pro-tier users.
 
 ### Phase 8.3: Subscription Health Dashboard (Feb 2026)
 - **Backend**: `GET /api/admin/subscription-health` — returns active_subscribers, MRR ($29/pro + $99/elite), 30d churn, 7d failed payments, retry queue, 7d upcoming renewals, and 20 most recent subscription events. Cached 30 seconds.
