@@ -350,6 +350,15 @@ const LandingPage = () => {
                     </button>
                   </Link>
                 )}
+                <Link to="/demo">
+                  <button
+                    className="h-14 px-8 border border-[#7B61FF]/40 bg-[#7B61FF]/5 text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-[#7B61FF]/15 hover:border-[#7B61FF]/60 focus:ring-2 focus:ring-[#7B61FF]/30"
+                    data-testid="cta-start-demo"
+                  >
+                    Start Free Demo
+                    <ArrowRight className="w-4 h-4 ml-2.5" />
+                  </button>
+                </Link>
                 <Link to="/leaderboard">
                   <button
                     className="h-14 px-8 border border-white/20 bg-transparent text-white font-data text-sm font-semibold tracking-wide flex items-center justify-center transition-all hover:bg-white/5 hover:border-white/40 focus:ring-2 focus:ring-white/20"
