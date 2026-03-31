@@ -173,8 +173,7 @@ const PricingPage = () => {
         { text: 'Copy Trading', included: false },
         { text: 'Advanced analytics', included: false },
       ],
-      cta: userTier === 'free' ? 'Current Plan' : null,
-      disabled: true,
+      cta: 'Start Free Demo',
     },
     {
       id: 'pro',
@@ -313,9 +312,11 @@ const PricingPage = () => {
 
                     <div className="pt-4">
                       {plan.id === 'free' ? (
-                        <Button disabled className="w-full" variant="outline" data-testid="plan-free-btn">
-                          {isCurrentTier ? 'Current Plan' : 'Free Forever'}
-                        </Button>
+                        <Link to="/demo">
+                          <Button className="w-full bg-zinc-800 hover:bg-zinc-700" data-testid="plan-free-btn">
+                            Start Free Demo
+                          </Button>
+                        </Link>
                       ) : (
                         <Button
                           onClick={() => pkgId && handleCheckout(pkgId)}

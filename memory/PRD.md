@@ -97,6 +97,16 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 
 ## Backlog (P2)
 - Actual Sepolia deployment when user provides keys
+- Phase 2: Order Execution Engine (pending Phase 1 verification)
+
+### Phase 10: Exchange Integration — Testnet Only (Mar 2026)
+- **Backend**: 5 new endpoints — `POST /api/exchange/connect` (validates + encrypts + stores keys), `POST /api/exchange/validate` (re-validates, fetches balances/positions), `GET /api/exchange/status` (connection status, masked key only), `DELETE /api/exchange/disconnect`, `GET /api/admin/exchanges` (admin view, no secrets).
+- **Security**: Fernet encryption at rest (EXCHANGE_ENCRYPTION_KEY in .env), rate limiting (5/60s/user), secret keys never returned after submission, never logged.
+- **Frontend**: `/connect-exchange` page with auth guard, exchange selector (Binance Testnet), API/Secret key inputs, security note, success/error states.
+- **Dashboard**: Exchange Account card (balances, positions) if connected, "Connect Exchange" CTA if not.
+- **Admin Panel**: "Exchanges" tab with table (user, exchange, status, last validated).
+- **No trading**: Connectivity + data only. No orders, no live trading.
+- **Testing**: 100% passed (iteration 50). Backend 12/12, frontend all UI verified.
 
 ### Phase 8.3: Subscription Health Dashboard (Feb 2026)
 - **Backend**: `GET /api/admin/subscription-health` — returns active_subscribers, MRR ($29/pro + $99/elite), 30d churn, 7d failed payments, retry queue, 7d upcoming renewals, and 20 most recent subscription events. Cached 30 seconds.

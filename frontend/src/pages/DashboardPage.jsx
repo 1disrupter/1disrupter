@@ -692,11 +692,18 @@ const DashboardPage = () => {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-3 rounded-xl bg-[#7B61FF]/5 border border-[#7B61FF]/20 flex items-center gap-3"
+            className="mb-6 p-4 rounded-xl bg-[#7B61FF]/5 border border-[#7B61FF]/20 flex items-center justify-between"
             data-testid="demo-mode-banner"
           >
-            <Eye className="w-4 h-4 text-[#7B61FF]/70" />
-            <span className="text-sm text-[#7B61FF]/70">All features unlocked for preview. Data is simulated.</span>
+            <div className="flex items-center gap-3">
+              <Eye className="w-4 h-4 text-[#7B61FF]/70" />
+              <span className="text-sm text-[#7B61FF]/70">You are in Demo Mode — upgrade to unlock real-time signals and live trading.</span>
+            </div>
+            <Link to="/pricing">
+              <Button size="sm" className="bg-[#7B61FF] hover:bg-[#6A50E5] text-xs shrink-0 ml-4" data-testid="demo-upgrade-btn">
+                Upgrade
+              </Button>
+            </Link>
           </motion.div>
         )}
 
