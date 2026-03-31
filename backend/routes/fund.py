@@ -167,7 +167,7 @@ async def get_live_prices():
             # Use Kraken API - no rate limits for public endpoints
             response = await client.get(
                 "https://api.kraken.com/0/public/Ticker",
-                params={"pair": "XBTUSD,ETHUSD,SOLUSD,AVAXUSD,MATICUSD,LINKUSD,UNIUSD,AAVEUSD"},
+                params={"pair": "XBTUSD,ETHUSD,XRPUSD,SOLUSD,AVAXUSD,MATICUSD,LINKUSD,UNIUSD,AAVEUSD"},
                 timeout=10.0
             )
             if response.status_code == 200:
@@ -177,6 +177,7 @@ async def get_live_prices():
                 symbol_map = {
                     "XXBTZUSD": ("BTC", "Bitcoin"),
                     "XETHZUSD": ("ETH", "Ethereum"),
+                    "XXRPZUSD": ("XRP", "XRP"),
                     "SOLUSD": ("SOL", "Solana"),
                     "AVAXUSD": ("AVAX", "Avalanche"),
                     "MATICUSD": ("MATIC", "Polygon"),
@@ -208,7 +209,7 @@ async def get_live_prices():
                 
                 if prices:
                     # Sort by a rough market cap estimate
-                    cap_order = {"BTC": 1, "ETH": 2, "SOL": 3, "AVAX": 4, "LINK": 5, "MATIC": 6, "UNI": 7, "AAVE": 8}
+                    cap_order = {"BTC": 1, "ETH": 2, "XRP": 3, "SOL": 4, "AVAX": 5, "LINK": 6, "MATIC": 7, "UNI": 8, "AAVE": 9}
                     prices.sort(key=lambda x: cap_order.get(x["symbol"], 99))
                     
                     return {
@@ -224,6 +225,8 @@ async def get_live_prices():
         "prices": [
             {"id": "bitcoin", "symbol": "BTC", "name": "Bitcoin", "price": 70000, "change_24h": 0, "volume_24h": 0, "market_cap": 0},
             {"id": "ethereum", "symbol": "ETH", "name": "Ethereum", "price": 2000, "change_24h": 0, "volume_24h": 0, "market_cap": 0},
+            {"id": "xrp", "symbol": "XRP", "name": "XRP", "price": 2.20, "change_24h": 0, "volume_24h": 0, "market_cap": 0},
+            {"id": "solana", "symbol": "SOL", "name": "Solana", "price": 140, "change_24h": 0, "volume_24h": 0, "market_cap": 0},
         ],
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "source": "fallback"
