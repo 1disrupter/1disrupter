@@ -114,9 +114,10 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 ### Free Demo Flow Fix (Mar 2026)
 - **`/demo` route**: Sets sessionStorage + redirects to `/dashboard?demo=true`. No auth required.
 - **Pricing page**: Free tier button changed from disabled "Current Plan" to enabled "Start Free Demo" linking to `/demo`.
+- **Homepage hero**: "Start Free Demo" button added next to "Join Free Beta Access" CTA, subtle purple outline style, links to `/demo`. Visible on desktop and mobile.
 - **Dashboard banner**: Updated to "You are in Demo Mode — upgrade to unlock real-time signals and live trading." with purple Upgrade CTA button.
 - **Behavior**: Demo mode bypasses all subscription/auth checks. Uses mock data only. Pro features locked. No redirect to /upgrade.
-- **Testing**: 13/13 passed (iteration 51). Re-verified iteration 52 (8/8 passed) — confirmed fix works for logged-out, free-tier, and pro-tier users.
+- **Testing**: 13/13 passed (iteration 51). Pricing page re-verified iteration 52 (8/8). Hero button verified iteration 53 (7/7).
 
 ### Phase 8.3: Subscription Health Dashboard (Feb 2026)
 - **Backend**: `GET /api/admin/subscription-health` — returns active_subscribers, MRR ($29/pro + $99/elite), 30d churn, 7d failed payments, retry queue, 7d upcoming renewals, and 20 most recent subscription events. Cached 30 seconds.
