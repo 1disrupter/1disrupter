@@ -111,6 +111,11 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Layout verified**: Navbar (z-50, y=0) → Ticker (z-40, y=92) → Hero (auto, y=137). Zero overlap.
 - **Testing**: All tests passed (iteration 47).
 
+### Phase 9: Live User Stats Admin Card (Mar 2026)
+- **Backend**: `GET /api/admin/user-stats` — returns `total_users`, `new_users_7d`, `active_users_24h` from MongoDB. 30-second in-memory cache. No external API calls.
+- **Frontend**: "Live User Stats" card in Admin overview tab with 3 animated metrics: Total Users (purple), New Users 7d (blue), Active 24h (green). Loading skeletons and error handling with retry.
+- **Testing**: All tests passed (iteration 48).
+
 ### Phase 8: High-Conversion Hero Section Redesign (Feb 2026)
 - **Hero Section** — Complete redesign with premium fintech aesthetic (dark theme, purple accents). Left-aligned asymmetric layout with institutional-grade Live Metrics Terminal.
 - **Headline**: "AI-Generated Crypto Strategies. Verified On-Chain." — clear value proposition.
