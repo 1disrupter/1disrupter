@@ -48,6 +48,8 @@ const DashboardPage = () => {
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [exchangeData, setExchangeData] = useState(null);
+  const [exchangeLoading, setExchangeLoading] = useState(true);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState('pro_monthly');
   const [expandedSignal, setExpandedSignal] = useState(null); // Track which signal's AI explanation is expanded
@@ -541,6 +543,21 @@ const DashboardPage = () => {
     }
   }, [wallet]);
 
+  // Fetch exchange status
+  useEffect(() => {
+    if (!authUser) { setExchangeLoading(false); return; }
+    const token = localStorage.getItem('access_token');
+    if (!token) { setExchangeLoading(false); return; }
+    fetch(`${API}/exchange/validate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setExchangeData(d); })
+      .catch(() => {})
+      .finally(() => setExchangeLoading(false));
+  }, [authUser]);
+
   const getSignalColor = (signal) => {
     if (signal === 'BUY') return 'text-[#00FF94] bg-[#00FF94]/10 border-[#00FF94]/30';
     if (signal === 'SELL') return 'text-red-400 bg-red-400/10 border-red-400/30';
@@ -680,6 +697,65 @@ const DashboardPage = () => {
           >
             <Eye className="w-4 h-4 text-[#7B61FF]/70" />
             <span className="text-sm text-[#7B61FF]/70">All features unlocked for preview. Data is simulated.</span>
+          </motion.div>
+        )}
+
+        {/* Exchange Account Card */}
+        {!exchangeLoading && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+            {exchangeData ? (
+              <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="exchange-account-card">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-[#00FF94]" />
+                      {exchangeData.exchange === 'binance_testnet' ? 'Binance Testnet' : exchangeData.exchange}
+                    </CardTitle>
+                    <span className="text-xs font-mono text-[#7B61FF]">${exchangeData.total_balance_usd?.toLocaleString()}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {exchangeData.balances?.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                      {exchangeData.balances.slice(0, 8).map(b => (
+                        <div key={b.asset} className="p-2 bg-[#050505] border border-zinc-800/50 rounded">
+                          <p className="text-[11px] text-zinc-500">{b.asset}</p>
+                          <p className="text-xs font-mono text-white">{b.free < 1 ? b.free.toFixed(6) : b.free.toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {exchangeData.positions?.length > 0 && (
+                    <div>
+                      <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-2">Open Positions</p>
+                      {exchangeData.positions.map((p, i) => (
+                        <div key={i} className="flex justify-between text-xs py-1.5 border-b border-zinc-800/30 last:border-0">
+                          <span className="text-white font-mono">{p.symbol}</span>
+                          <span className="text-zinc-400">{p.side} {p.qty} @ ${p.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Link to="/connect-exchange" className="text-[11px] text-[#7B61FF] hover:underline mt-2 inline-block" data-testid="exchange-manage-link">
+                    Manage Connection
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-[#0A0A0A] border-zinc-800 border-dashed" data-testid="exchange-cta-card">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white font-medium">Connect Exchange</p>
+                    <p className="text-xs text-zinc-500">Link your testnet account to view balances</p>
+                  </div>
+                  <Link to="/connect-exchange">
+                    <Button size="sm" className="bg-[#7B61FF] hover:bg-[#6A50E5] text-xs" data-testid="exchange-connect-cta">
+                      Connect
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
           </motion.div>
         )}
 

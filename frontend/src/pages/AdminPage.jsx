@@ -260,6 +260,64 @@ const WaitlistTab = () => {
   );
 };
 
+/* ─── Connected Exchanges Tab ─── */
+const ExchangesTab = () => {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${API}/admin/exchanges?admin_key=${ADMIN_KEY}`)
+      .then(res => setEntries(res.data.exchanges || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="exchanges-admin-card">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Wallet className="w-5 h-5 text-[#7B61FF]" />
+          Connected Exchanges ({entries.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <p className="text-zinc-500 text-sm">Loading...</p>
+        ) : !entries.length ? (
+          <p className="text-zinc-500 text-sm" data-testid="exchanges-empty">No exchanges connected yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" data-testid="exchanges-table">
+              <thead>
+                <tr className="border-b border-zinc-800 text-xs text-zinc-500 uppercase tracking-wider">
+                  <th className="text-left py-3 px-2">User</th>
+                  <th className="text-left py-3 px-2">Exchange</th>
+                  <th className="text-left py-3 px-2">Status</th>
+                  <th className="text-left py-3 px-2">Last Validated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(e => (
+                  <tr key={e.user_id} className="border-b border-zinc-800/50 hover:bg-white/[0.02]" data-testid={`exchange-row-${e.user_id}`}>
+                    <td className="py-3 px-2 text-xs text-zinc-400">{e.email}</td>
+                    <td className="py-3 px-2 text-xs text-white font-mono">{e.exchange}</td>
+                    <td className="py-3 px-2">
+                      <span className={`text-xs font-mono px-2 py-0.5 rounded ${e.status === 'valid' ? 'bg-[#00FF94]/10 text-[#00FF94]' : 'bg-red-400/10 text-red-400'}`}>
+                        {e.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2 text-xs text-zinc-500 whitespace-nowrap">{e.last_validated ? new Date(e.last_validated).toLocaleString() : 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const SmartContractPanel = () => {
   const [contractInfo, setContractInfo] = useState(null);
   const [deploymentGuide, setDeploymentGuide] = useState(null);
@@ -809,6 +867,7 @@ const AdminPage = () => {
             <TabsTrigger value="security" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-security">Security</TabsTrigger>
             <TabsTrigger value="waitlist" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-waitlist">Waitlist</TabsTrigger>
             <TabsTrigger value="sub-health" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-sub-health">Sub Health</TabsTrigger>
+            <TabsTrigger value="exchanges" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-exchanges">Exchanges</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW TAB */}
@@ -1384,6 +1443,11 @@ const AdminPage = () => {
           {/* SUBSCRIPTION HEALTH TAB */}
           <TabsContent value="sub-health" className="space-y-6">
             <SubscriptionHealthTab />
+          </TabsContent>
+
+          {/* EXCHANGES TAB */}
+          <TabsContent value="exchanges" className="space-y-6">
+            <ExchangesTab />
           </TabsContent>
         </Tabs>
 

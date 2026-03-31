@@ -1034,3 +1034,30 @@ async def admin_user_stats(admin: dict = Depends(verify_admin)):
     _user_stats_cache["expires"] = now_ts + 30
 
     return result
+
+
+# ============= CONNECTED EXCHANGES =============
+
+@router.get("/exchanges")
+async def admin_exchanges(admin: dict = Depends(verify_admin)):
+    """List users with connected exchanges — no secret keys exposed."""
+    users = await db.users.find(
+        {"exchange_credentials": {"$exists": True}},
+        {"_id": 0, "id": 1, "email": 1, "exchange_credentials.exchange": 1,
+         "exchange_credentials.last_validated": 1, "exchange_credentials.status": 1,
+         "exchange_credentials.connected_at": 1}
+    ).to_list(200)
+
+    entries = []
+    for u in users:
+        creds = u.get("exchange_credentials", {})
+        entries.append({
+            "user_id": u["id"],
+            "email": u.get("email", "N/A"),
+            "exchange": creds.get("exchange", "unknown"),
+            "status": creds.get("status", "unknown"),
+            "connected_at": creds.get("connected_at"),
+            "last_validated": creds.get("last_validated"),
+        })
+
+    return {"success": True, "exchanges": entries, "count": len(entries)}

@@ -29,6 +29,7 @@ import ReferralPage from "./pages/ReferralPage";
 import FollowingPage from "./pages/FollowingPage";
 import AlertsPage from "./pages/AlertsPage";
 import AdminTrafficPage from "./pages/AdminTrafficPage";
+import ConnectExchangePage from "./pages/ConnectExchangePage";
 import MobileSettingsPage from "./pages/MobileSettingsPage";
 import MobileNetworkBanner from "./components/MobileNetworkBanner";
 import MobileBottomNav from "./components/MobileBottomNav";
@@ -92,6 +93,7 @@ function App() {
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
               <Route path="/admin/traffic" element={<AdminTrafficPage />} />
+              <Route path="/connect-exchange" element={<ConnectExchangePage />} />
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
