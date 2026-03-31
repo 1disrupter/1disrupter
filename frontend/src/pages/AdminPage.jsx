@@ -509,6 +509,11 @@ const AdminPage = () => {
   const [agents, setAgents] = useState([]);
   const [riskConfig, setRiskConfig] = useState(null);
 
+  // User Stats
+  const [userStats, setUserStats] = useState(null);
+  const [userStatsLoading, setUserStatsLoading] = useState(true);
+  const [userStatsError, setUserStatsError] = useState(null);
+
   const ADMIN_API = `${API}/admin`;
 
   // Admin authentication
@@ -542,7 +547,8 @@ const AdminPage = () => {
         loadSubscriptions(),
         loadLogs(),
         loadFeatures(),
-        loadLegacyData()
+        loadLegacyData(),
+        loadUserStats()
       ]);
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -620,6 +626,16 @@ const AdminPage = () => {
       setAgents(agentsRes.data);
       setRiskConfig(configRes.data);
     } catch (error) { console.error('Legacy data load error:', error); }
+  };
+
+  const loadUserStats = async () => {
+    try {
+      setUserStatsLoading(true);
+      const res = await axios.get(`${ADMIN_API}/user-stats?admin_key=${adminKey}`);
+      setUserStats(res.data);
+      setUserStatsError(null);
+    } catch { setUserStatsError('Failed to load user stats'); }
+    finally { setUserStatsLoading(false); }
   };
 
   // User actions
@@ -826,6 +842,48 @@ const AdminPage = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* User Stats Card */}
+            <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="user-stats-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="w-5 h-5 text-[#7B61FF]" />
+                  Live User Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userStatsLoading ? (
+                  <div className="grid grid-cols-3 gap-4" data-testid="user-stats-skeleton">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="p-4 rounded-lg bg-[#050505]">
+                        <div className="h-3 w-20 bg-zinc-800 rounded animate-pulse mb-3" />
+                        <div className="h-7 w-12 bg-zinc-800 rounded animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : userStatsError ? (
+                  <div className="text-center py-4" data-testid="user-stats-error">
+                    <p className="text-red-400 text-sm">{userStatsError}</p>
+                    <button onClick={loadUserStats} className="mt-2 text-xs text-zinc-500 hover:text-white transition-colors">Retry</button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-4" data-testid="user-stats-grid">
+                    <motion.div className="p-4 rounded-lg bg-[#050505] border border-zinc-800/50" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                      <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Total Users</p>
+                      <motion.p className="text-2xl font-bold font-mono text-[#7B61FF]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} data-testid="user-stats-total">{userStats?.total_users ?? 0}</motion.p>
+                    </motion.div>
+                    <motion.div className="p-4 rounded-lg bg-[#050505] border border-zinc-800/50" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06, duration: 0.3 }}>
+                      <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">New Users (7d)</p>
+                      <motion.p className="text-2xl font-bold font-mono text-blue-400" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.16 }} data-testid="user-stats-new-7d">{userStats?.new_users_7d ?? 0}</motion.p>
+                    </motion.div>
+                    <motion.div className="p-4 rounded-lg bg-[#050505] border border-zinc-800/50" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.3 }}>
+                      <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Active (24h)</p>
+                      <motion.p className="text-2xl font-bold font-mono text-[#00FF94]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }} data-testid="user-stats-active-24h">{userStats?.active_users_24h ?? 0}</motion.p>
+                    </motion.div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Recent Activity */}
             <div className="grid lg:grid-cols-2 gap-6">

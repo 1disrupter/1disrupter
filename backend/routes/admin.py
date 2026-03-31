@@ -995,3 +995,42 @@ async def admin_subscription_health(admin: dict = Depends(verify_admin)):
     _sub_health_cache["expires"] = now_ts + 30
 
     return result
+
+
+# ============= USER STATS =============
+
+_user_stats_cache = {"data": None, "expires": 0}
+
+@router.get("/user-stats")
+async def admin_user_stats(admin: dict = Depends(verify_admin)):
+    """Real-time user stats — cached for 30 seconds."""
+    import time
+    now_ts = time.time()
+    if _user_stats_cache["data"] and now_ts < _user_stats_cache["expires"]:
+        return _user_stats_cache["data"]
+
+    now = datetime.now(timezone.utc)
+    seven_days_ago = now - timedelta(days=7)
+    twenty_four_hours_ago = now - timedelta(hours=24)
+
+    total_users = await db.users.count_documents({})
+
+    new_users_7d = await db.users.count_documents({
+        "created_at": {"$gte": seven_days_ago}
+    })
+
+    active_users_24h = await db.users.count_documents({
+        "last_login": {"$gte": twenty_four_hours_ago}
+    })
+
+    result = {
+        "success": True,
+        "total_users": total_users,
+        "new_users_7d": new_users_7d,
+        "active_users_24h": active_users_24h,
+    }
+
+    _user_stats_cache["data"] = result
+    _user_stats_cache["expires"] = now_ts + 30
+
+    return result
