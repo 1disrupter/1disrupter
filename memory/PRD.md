@@ -105,6 +105,12 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Fix**: Added `pt-[92px]` to LandingPage wrapper, `relative z-40` + solid `bg-[#050505]` to ticker, reduced hero padding. Stacking: navbar (z-50, fixed y=0) → ticker (z-40, y=92) → hero (auto, y=137)
 - **Testing**: 16/16 passed (iteration 46)
 
+### Ticker Extension: XRP + SOL (Mar 2026)
+- **Backend**: Added XRP (`XXRPZUSD`) and SOL to Kraken API query, symbol_map, sort order, and fallback data in `/api/market/live-prices`.
+- **Frontend**: Ticker now displays BTC, ETH, XRP, SOL with consistent formatting. Mobile: horizontal scroll for overflow.
+- **Layout verified**: Navbar (z-50, y=0) → Ticker (z-40, y=92) → Hero (auto, y=137). Zero overlap.
+- **Testing**: All tests passed (iteration 47).
+
 ### Phase 8: High-Conversion Hero Section Redesign (Feb 2026)
 - **Hero Section** — Complete redesign with premium fintech aesthetic (dark theme, purple accents). Left-aligned asymmetric layout with institutional-grade Live Metrics Terminal.
 - **Headline**: "AI-Generated Crypto Strategies. Verified On-Chain." — clear value proposition.
