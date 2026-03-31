@@ -90,6 +90,11 @@ AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversion w
 - **Status**: Pipeline ready. Contract NOT deployed yet — awaiting user credentials (DEPLOYER_PRIVATE_KEY, SEPOLIA_RPC_URL, ETHERSCAN_API_KEY).
 - **Deployment README** at `/app/contracts/README.md` with full instructions.
 
+### Branding Update: AlphaAI → My-AlphaAI (Mar 2026)
+- **Scope**: All user-visible text updated from "AlphaAI" to "My-AlphaAI" across navbar, footer, splash screen, auth pages, landing page, dashboard, admin, pricing, referral, upgrade modal, demo mode, and HTML title tag.
+- **Unchanged**: Colors, logo icon, layout, routes, backend logic, code comments, smart contract name.
+- **Testing**: 18/18 passed (iteration 49).
+
 ## Backlog (P2)
 - Actual Sepolia deployment when user provides keys
 
