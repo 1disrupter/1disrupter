@@ -121,7 +121,16 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
   - `/creator/strategies` — Creator dashboard with summary stats (Total, Published, Subscribers), Published/Draft sections, create form, publish/unpublish actions.
   - `/me/strategies` — User subscriptions page with active subs and Unsubscribe button.
   - Reusable components: `StrategyCard`, `StrategyPerformanceBlock`, `SignalsTable`, `ReviewsList`, `SubscribeButtons`, `EquityCurveChart` in `/app/frontend/src/components/marketplace/`.
-  - Testing: 12/12 frontend tests passed (iteration 55)
+### Stripe Billing for Strategy Marketplace (Apr 2026)
+- **Module**: `/app/backend/routes/marketplace_billing.py`
+- **Endpoints**:
+  - `POST /api/marketplace/strategies/{id}/checkout` — creates Stripe Checkout session ($9.99/mo), returns redirect URL
+  - `GET /api/marketplace/checkout/status/{session_id}` — polls Stripe for payment status, creates subscription on success
+  - `POST /api/webhook/stripe` — handles Stripe webhook events (payment confirmation)
+  - `POST /api/marketplace/strategies/{id}/cancel-subscription` — cancels active subscription
+- **Frontend**: Subscribe button redirects to Stripe Checkout. On return, polls status and shows success/failure toast. Unsubscribe calls cancel-subscription endpoint.
+- **Collections**: `payment_transactions` (checkout session tracking)
+- **Testing**: Backend 12/12, Frontend all flows verified (iteration 56)
 
 ### Phase 10: Exchange Integration — Testnet Only (Mar 2026)
 - **Backend**: 5 new endpoints — `POST /api/exchange/connect` (validates + encrypts + stores keys), `POST /api/exchange/validate` (re-validates, fetches balances/positions), `GET /api/exchange/status` (connection status, masked key only), `DELETE /api/exchange/disconnect`, `GET /api/admin/exchanges` (admin view, no secrets).
