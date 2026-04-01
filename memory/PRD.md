@@ -95,8 +95,26 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Unchanged**: Colors, logo icon, layout, routes, backend logic, code comments, smart contract name.
 - **Testing**: 18/18 passed (iteration 49).
 
+### Execution Engine Phase 2 (Apr 2026)
+- **Backend Services** (`/app/backend/services/execution_engine/`):
+  - `binance_testnet_client.py` — Binance Testnet REST wrapper (place_order, cancel_order, get_balance, get_open_orders)
+  - `executor.py` — executes signal for user (paper mode simulates, testnet mode hits Binance)
+  - `signal_router.py` — routes signal to all active subscribers with enabled execution configs
+- **API Routes** (`/app/backend/routes/execution.py`):
+  - `GET/POST /api/execution/configs/me` — user execution config (mode, position size, enabled toggle)
+  - `GET /api/execution/logs` — user's execution logs with filters
+  - `GET /api/execution/logs/admin` — admin-only all logs
+  - `POST /api/execution/test-order` — test Binance Testnet connectivity
+  - `POST /api/execution/emit-signal` — emit signal + trigger routing (creator-only)
+- **Collections**: `user_execution_configs`, `execution_logs`
+- **Frontend**:
+  - `/me/execution-settings` — config form (toggle, paper/testnet mode, position size) + recent execution logs
+  - `/admin/execution-monitor` — stats dashboard + filterable log table
+- **Safety**: No mainnet, no leverage, no auto-execute without `is_enabled`, paper mode default
+- **Testing**: Backend 16/16, Frontend all flows passed (iteration 57)
+
 ## Backlog
-- **P1**: Order Execution Engine (Phase 2 of Live Trading)
+- **P1**: Order Execution Engine (Phase 2 of Live Trading) ✅ DONE
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
 - **P3**: MRR trend chart for subscription health dashboard (Recharts)
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
