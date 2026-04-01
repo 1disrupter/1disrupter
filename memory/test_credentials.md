@@ -1,8 +1,12 @@
 # Test Credentials
 
-## Admin User
+## Admin Users
 - Email: admin@my-alpha-ai.com
 - Password: Admin1234!
+- Admin Key: alphaai_admin_2026
+
+- Email: martin-admin@alphaai.com
+- Password: Martin2026!
 - Admin Key: alphaai_admin_2026
 
 ## Pro User
