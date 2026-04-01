@@ -276,13 +276,14 @@ const LandingPage = () => {
             <div className="lg:col-span-7 flex flex-col items-start gap-6 lg:gap-8">
               {/* Overline */}
               <motion.span
-                className="font-data text-xs font-bold tracking-[0.2em] uppercase text-[#7B61FF]"
+                className="font-data text-xs font-bold tracking-[0.2em] uppercase text-[#7B61FF] flex items-center gap-2"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                 data-testid="hero-overline"
               >
                 On-Chain Verified Performance
+                <span className="inline-block px-2 py-0.5 text-[10px] rounded bg-[#7B61FF]/20 text-[#7B61FF] font-medium tracking-normal normal-case" data-testid="beta-badge">Beta</span>
               </motion.span>
 
               {/* H1 */}
@@ -798,6 +799,33 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* ===== TRUST BADGES ===== */}
+      <section className="px-4 py-12 relative" data-testid="trust-badges-section">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            className="flex flex-wrap justify-center gap-3"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            {['No Wallet Required', 'No Personal Data Stored', 'On-Chain Verified Signals', 'Cancel Anytime'].map((label, i) => (
+              <motion.div
+                key={label}
+                className="px-4 py-2 bg-white/5 rounded-lg border border-white/10 text-sm text-zinc-300 font-data"
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.4 }}
+                data-testid={`trust-badge-${i}`}
+              >
+                {label}
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ===== HOW IT WORKS ===== */}
       <section className="px-4 py-20 md:py-28 relative" data-testid="how-it-works-section" id="how-it-works">
         <div className="max-w-3xl mx-auto text-center">
@@ -828,6 +856,70 @@ const LandingPage = () => {
                   </div>
                   <h3 className="text-lg font-semibold font-['Outfit'] text-white mb-2">{item.title}</h3>
                   <p className="text-sm text-zinc-500 leading-relaxed">{item.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== SECURITY & PRIVACY ===== */}
+      <section className="px-4 py-20 md:py-28 relative" data-testid="security-section" id="security">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+            <h2 className="text-3xl md:text-4xl font-bold font-['Outfit'] mb-4" data-testid="security-title">Security &amp; Privacy</h2>
+            <p className="text-zinc-400 leading-relaxed">
+              my-AlphaAI is built with a privacy-first architecture. No wallet connection,
+              no trading permissions, and no personal data are ever required to use the platform.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-12 text-left">
+              {[
+                { title: 'No Wallet Required', description: 'You never connect a wallet or grant trading access. Your assets always remain fully under your control.' },
+                { title: 'No Personal Data', description: 'The platform does not store emails, names, or identifiers. Demo mode runs entirely client-side.' },
+                { title: 'Read-Only Architecture', description: 'Signals are generated from market data only. No trading permissions or API keys are ever requested.' },
+                { title: 'Transparent Logic', description: 'All strategies are verifiable, and performance is validated on-chain for full transparency.' },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  data-testid={`security-item-${i}`}
+                >
+                  <h3 className="text-lg font-semibold font-['Outfit'] text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed">{item.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== ROADMAP ===== */}
+      <section className="px-4 py-20 md:py-28 relative border-t border-white/5" data-testid="roadmap-section" id="roadmap">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+            <h2 className="text-3xl md:text-4xl font-bold font-['Outfit'] mb-10" data-testid="roadmap-title">Roadmap</h2>
+
+            <div className="space-y-10 text-left">
+              {[
+                { quarter: 'Q2 2026 — Public Beta Launch', description: 'Landing page, demo mode, and core signal engine released to early users.' },
+                { quarter: 'Q3 2026 — Pro Tier & Live Signals', description: 'Early-access Pro users receive real-time signals with verified timing advantage.' },
+                { quarter: 'Q4 2026 — Strategy Marketplace', description: 'Creators can publish, monetize, and share their own AI-driven strategies.' },
+                { quarter: '2027 — Full Automation Layer', description: 'Optional automation via secure, non-custodial smart contract execution.' },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.quarter}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  data-testid={`roadmap-item-${i}`}
+                >
+                  <h3 className="text-lg font-semibold font-['Outfit'] text-[#7B61FF]">{item.quarter}</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed mt-2">{item.description}</p>
                 </motion.div>
               ))}
             </div>
