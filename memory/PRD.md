@@ -102,6 +102,23 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
 - **P3**: User retention analytics (DAU/MAU ratio)
 
+### Strategy Marketplace Backend (Apr 2026)
+- **Module**: `/app/backend/routes/marketplace.py` — standalone, does not touch Strategy Lab
+- **Collections**: `strategies_mp`, `strategy_performance`, `strategy_signals`, `strategy_subscriptions`, `strategy_reviews`, `creator_payouts`, `automation_webhooks`
+- **Endpoints** (all under `/api/marketplace`):
+  - `POST /strategies/create` — draft mode
+  - `POST /strategies/{id}/publish` / `unpublish` — marketplace visibility
+  - `GET /strategies` — public listing with filters (category, creator, sort by popularity/performance/newest/rating)
+  - `GET /strategies/{id}` — full detail (metadata + performance + signals + reviews)
+  - `POST /strategies/{id}/performance` — upload performance data (creator only)
+  - `POST /strategies/{id}/subscribe` / `unsubscribe` — subscription management
+  - `GET /me/strategies` — user's active subscriptions (enriched with strategy data)
+  - `GET /me/created` — creator's own strategies
+  - `POST /strategies/{id}/review` — rating + comment (one per user, no self-review)
+- **Guards**: Auth required for mutations, owner-only for publish/unpublish/performance, no self-subscribe/review, duplicate prevention
+- **Stripe**: Subscription `stripe_subscription_id` field placeholder ready for integration
+- **Testing**: 12/12 endpoint tests passed + 6/6 edge cases (self-review 400, duplicate 409, non-owner 403, unauth 401, not-found 404, category filter)
+
 ### Phase 10: Exchange Integration — Testnet Only (Mar 2026)
 - **Backend**: 5 new endpoints — `POST /api/exchange/connect` (validates + encrypts + stores keys), `POST /api/exchange/validate` (re-validates, fetches balances/positions), `GET /api/exchange/status` (connection status, masked key only), `DELETE /api/exchange/disconnect`, `GET /api/admin/exchanges` (admin view, no secrets).
 - **Security**: Fernet encryption at rest (EXCHANGE_ENCRYPTION_KEY in .env), rate limiting (5/60s/user), secret keys never returned after submission, never logged.
