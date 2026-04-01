@@ -801,7 +801,7 @@ const LandingPage = () => {
       <footer className="px-4 py-8 border-t border-zinc-800">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
           <BrandLockup size="small" showSubtitle={true} />
-          <p className="text-sm text-zinc-500">© 2026 AlphaAI. Not affiliated with any other Alpha AI or similarly named projects.</p>
+          <p className="text-sm text-zinc-500">© 2026 my-AlphaAI. Not affiliated with any other Alpha AI or similarly named projects.</p>
           <PoweredByTag />
         </div>
       </footer>
