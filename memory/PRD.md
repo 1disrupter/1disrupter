@@ -113,6 +113,15 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Safety**: No mainnet, no leverage, no auto-execute without `is_enabled`, paper mode default
 - **Testing**: Backend 16/16, Frontend all flows passed (iteration 57)
 
+### Admin Demo Mode Toggle & Analytics (Apr 2026)
+- **Config**: `/app/backend/config/demo.py` — DB-backed toggle (`system_config` collection), 5s cache, falls back to DEMO_MODE env var
+- **Endpoints**:
+  - `GET/POST /api/admin/demo-mode` — read/toggle demo mode instantly (no redeploy)
+  - `GET /api/admin/analytics-summary` — returns synthetic data (demo ON) or real counts (demo OFF)
+  - `POST /api/admin/track` — records analytics events (page views, API calls, WS, strategies, checkouts)
+- **Frontend**: Demo Mode banner with toggle switch at top of admin panel, Analytics tab with 5 data cards (Page Views, API Calls, WS Connections, Strategy Interactions, Checkout Events)
+- **Testing**: Backend 11/11, Frontend all flows (iteration 58)
+
 ## Backlog
 - **P1**: Order Execution Engine (Phase 2 of Live Trading) ✅ DONE
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
