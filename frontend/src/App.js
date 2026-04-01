@@ -35,6 +35,7 @@ import MobileSettingsPage from "./pages/MobileSettingsPage";
 import StrategyMarketplacePage from "./pages/StrategyMarketplacePage";
 import StrategyDetailPage from "./pages/StrategyDetailPage";
 import MyStrategiesPage from "./pages/MyStrategiesPage";
+import CreatorDashboardPage from "./pages/CreatorDashboardPage";
 import MobileNetworkBanner from "./components/MobileNetworkBanner";
 import MobileBottomNav from "./components/MobileBottomNav";
 import useMobileOptimizations from "./hooks/useMobileOptimizations";
@@ -101,7 +102,9 @@ function App() {
               <Route path="/demo" element={<DemoPage />} />
               <Route path="/strategy-marketplace" element={<StrategyMarketplacePage />} />
               <Route path="/strategy-marketplace/:id" element={<StrategyDetailPage />} />
-              <Route path="/my-strategies" element={<MyStrategiesPage />} />
+              <Route path="/marketplace/:id" element={<StrategyDetailPage />} />
+              <Route path="/creator/strategies" element={<CreatorDashboardPage />} />
+              <Route path="/me/strategies" element={<MyStrategiesPage />} />
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
