@@ -115,11 +115,13 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
   - `GET /me/strategies` — user's active subscriptions (enriched with strategy data)
   - `GET /me/created` — creator's own strategies
   - `POST /strategies/{id}/review` — rating + comment (one per user, no self-review)
-- **Marketplace Frontend** (Apr 2026):
-  - `/strategy-marketplace` — Browse published strategies with category/sort filters, search, pagination
-  - `/strategy-marketplace/:id` — Strategy detail with performance metrics, signals, reviews, subscribe/unsubscribe
-  - `/my-strategies` — Creator dashboard with Subscribed/Created tabs, create form, publish/unpublish actions
-  - Testing: 12/12 frontend tests passed (iteration 54)
+- **Marketplace Frontend v2** (Apr 2026):
+  - `/strategy-marketplace` — Browse published strategies with category/sort filters, search, pagination. Cards enriched with WR/Sharpe/Return metrics.
+  - `/marketplace/:id` — Strategy detail with PerformanceBlock, EquityCurveChart (SVG), SignalsTable, ReviewsList with form, Subscribe/Unsubscribe buttons, Parameters display.
+  - `/creator/strategies` — Creator dashboard with summary stats (Total, Published, Subscribers), Published/Draft sections, create form, publish/unpublish actions.
+  - `/me/strategies` — User subscriptions page with active subs and Unsubscribe button.
+  - Reusable components: `StrategyCard`, `StrategyPerformanceBlock`, `SignalsTable`, `ReviewsList`, `SubscribeButtons`, `EquityCurveChart` in `/app/frontend/src/components/marketplace/`.
+  - Testing: 12/12 frontend tests passed (iteration 55)
 
 ### Phase 10: Exchange Integration — Testnet Only (Mar 2026)
 - **Backend**: 5 new endpoints — `POST /api/exchange/connect` (validates + encrypts + stores keys), `POST /api/exchange/validate` (re-validates, fetches balances/positions), `GET /api/exchange/status` (connection status, masked key only), `DELETE /api/exchange/disconnect`, `GET /api/admin/exchanges` (admin view, no secrets).
