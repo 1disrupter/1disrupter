@@ -798,6 +798,63 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* ===== HOW IT WORKS ===== */}
+      <section className="px-4 py-20 md:py-28 relative" data-testid="how-it-works-section" id="how-it-works">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+            <h2 className="text-3xl md:text-4xl font-bold font-['Outfit'] mb-4" data-testid="how-it-works-title">How It Works</h2>
+            <p className="text-zinc-400 leading-relaxed">
+              my-AlphaAI analyzes real market data, evaluates strategy conditions, and generates clear buy/sell signals using backtested logic.
+              Everything is displayed on a fast, intuitive dashboard designed for clarity and ease of use.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+              {[
+                { step: '1', title: 'Market Data', description: 'Real market conditions are processed to detect trends, volatility shifts, and momentum changes.' },
+                { step: '2', title: 'Strategy Engine', description: 'AI-powered logic evaluates multiple conditions and generates actionable signal outputs.' },
+                { step: '3', title: 'Signal Dashboard', description: 'Signals are visualized on a clean, responsive dashboard you can explore instantly in demo mode.' },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.step}
+                  className="text-center"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12, duration: 0.5 }}
+                  data-testid={`how-step-${item.step}`}
+                >
+                  <div className="w-10 h-10 rounded-full border border-[#7B61FF]/30 bg-[#7B61FF]/10 flex items-center justify-center mx-auto mb-4">
+                    <span className="font-mono text-sm text-[#7B61FF] font-bold">{item.step}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold font-['Outfit'] text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed">{item.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== ABOUT ===== */}
+      <section className="px-4 py-20 md:py-28 relative border-t border-white/5" data-testid="about-section" id="about">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+            <h2 className="text-3xl md:text-4xl font-bold font-['Outfit'] mb-4" data-testid="about-title">About my-AlphaAI</h2>
+            <p className="text-zinc-400 leading-relaxed">
+              my-AlphaAI is an independent, privacy-focused platform built to make crypto strategy analysis simple, clear, and accessible.
+              No wallet connection, no trading permissions, and no personal data required — you stay fully in control while exploring AI-powered insights.
+            </p>
+            <p className="text-zinc-400 leading-relaxed mt-4">
+              Developed by an independent builder with years of experience in crypto automation and AI tooling, the goal is simple:
+              provide a transparent, trustworthy tool that helps traders understand market conditions with confidence.
+            </p>
+            <p className="text-zinc-600 text-sm mt-6">
+              Not affiliated with any other Alpha AI or similarly named projects.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       <footer className="px-4 py-8 border-t border-zinc-800">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
           <BrandLockup size="small" showSubtitle={true} />
