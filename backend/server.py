@@ -202,6 +202,10 @@ async def startup_db_client():
     init_webhook_handler_db(db)
     init_attestor_db(db)
 
+    # Init demo mode config
+    from config.demo import init_db as init_demo_config_db
+    init_demo_config_db(db)
+
     # Create indexes
     await db.users.create_index("email", unique=True, sparse=True)
     await db.users.create_index("wallet_address", sparse=True)
@@ -218,6 +222,8 @@ async def startup_db_client():
     await db.traffic_events.create_index([("type", 1, )])
     await db.traffic_events.create_index([("user_id", 1)])
     await db.stripe_webhook_events.create_index("event_id", unique=True)
+    await db.analytics_events.create_index([("timestamp", -1)])
+    await db.analytics_events.create_index([("event_type", 1)])
     await db.stripe_webhook_events.create_index([("processed_at", -1)])
     await db.waitlist.create_index("email", unique=True)
 

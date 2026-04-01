@@ -572,6 +572,11 @@ const AdminPage = () => {
   const [userStatsLoading, setUserStatsLoading] = useState(true);
   const [userStatsError, setUserStatsError] = useState(null);
 
+  // Demo Mode & Analytics
+  const [demoMode, setDemoMode] = useState(null);
+  const [demoToggling, setDemoToggling] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState(null);
+
   const ADMIN_API = `${API}/admin`;
 
   // Admin authentication
@@ -606,7 +611,9 @@ const AdminPage = () => {
         loadLogs(),
         loadFeatures(),
         loadLegacyData(),
-        loadUserStats()
+        loadUserStats(),
+        loadDemoMode(),
+        loadAnalytics()
       ]);
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -694,6 +701,33 @@ const AdminPage = () => {
       setUserStatsError(null);
     } catch { setUserStatsError('Failed to load user stats'); }
     finally { setUserStatsLoading(false); }
+  };
+
+  const loadDemoMode = async () => {
+    try {
+      const res = await axios.get(`${ADMIN_API}/demo-mode?admin_key=${adminKey}`);
+      setDemoMode(res.data.demo_mode);
+    } catch { /* ignore */ }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      const res = await axios.get(`${ADMIN_API}/analytics-summary?admin_key=${adminKey}`);
+      setAnalyticsData(res.data);
+    } catch { /* ignore */ }
+  };
+
+  const toggleDemoMode = async () => {
+    setDemoToggling(true);
+    try {
+      const res = await axios.post(`${ADMIN_API}/demo-mode?admin_key=${adminKey}`, { enabled: !demoMode });
+      setDemoMode(res.data.demo_mode);
+      toast.success(res.data.message);
+      loadAnalytics();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to toggle');
+    }
+    setDemoToggling(false);
   };
 
   // User actions
@@ -855,6 +889,30 @@ const AdminPage = () => {
           </Button>
         </div>
 
+        {/* Demo Mode Toggle Banner */}
+        <div className="flex items-center justify-between p-4 rounded-lg border mb-6 transition-colors"
+          style={{ background: demoMode ? 'rgba(123,97,255,0.05)' : 'rgba(0,255,148,0.05)', borderColor: demoMode ? 'rgba(123,97,255,0.2)' : 'rgba(0,255,148,0.2)' }}
+          data-testid="demo-mode-banner"
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-2.5 h-2.5 rounded-full ${demoMode ? 'bg-[#7B61FF] animate-pulse' : 'bg-[#00FF94]'}`} />
+            <div>
+              <p className="text-sm font-medium text-zinc-200">
+                Analytics Mode: <span className={demoMode ? 'text-[#7B61FF]' : 'text-[#00FF94]'}>{demoMode ? 'DEMO (Synthetic Data)' : 'LIVE (Real Traffic)'}</span>
+              </p>
+              <p className="text-[10px] text-zinc-600">{demoMode ? 'Showing synthetic demo data for analytics' : 'Recording and displaying real page views, API calls, and events'}</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleDemoMode}
+            disabled={demoToggling}
+            className={`relative w-14 h-7 rounded-full transition-colors ${demoMode ? 'bg-[#7B61FF]' : 'bg-[#00FF94]'}`}
+            data-testid="demo-mode-toggle"
+          >
+            <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform ${demoMode ? 'translate-x-0.5' : 'translate-x-7'}`} />
+          </button>
+        </div>
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-[#121212] border border-zinc-800 p-1 flex-wrap h-auto">
@@ -868,6 +926,7 @@ const AdminPage = () => {
             <TabsTrigger value="waitlist" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-waitlist">Waitlist</TabsTrigger>
             <TabsTrigger value="sub-health" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-sub-health">Sub Health</TabsTrigger>
             <TabsTrigger value="exchanges" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-exchanges">Exchanges</TabsTrigger>
+            <TabsTrigger value="analytics" className="data-[state=active]:bg-[#7B61FF]" data-testid="tab-analytics">Analytics</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW TAB */}
@@ -1448,6 +1507,95 @@ const AdminPage = () => {
           {/* EXCHANGES TAB */}
           <TabsContent value="exchanges" className="space-y-6">
             <ExchangesTab />
+          </TabsContent>
+
+          {/* ANALYTICS TAB */}
+          <TabsContent value="analytics" className="space-y-6" data-testid="analytics-tab-content">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold font-['Outfit'] text-white">Analytics Dashboard</h2>
+              <Badge className={`text-xs ${analyticsData?.demo_mode ? 'bg-[#7B61FF]/15 text-[#7B61FF]' : 'bg-[#00FF94]/15 text-[#00FF94]'}`}>
+                {analyticsData?.source === 'synthetic' ? 'Synthetic Data' : 'Real Data'}
+              </Badge>
+            </div>
+
+            {analyticsData ? (
+              <div className="space-y-6">
+                {/* Page Views */}
+                <Card className="bg-[#121212] border-zinc-800">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm text-zinc-400">Page Views</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { label: 'Today', value: analyticsData.page_views?.today },
+                        { label: 'This Week', value: analyticsData.page_views?.week },
+                        { label: 'This Month', value: analyticsData.page_views?.month },
+                      ].map(m => (
+                        <div key={m.label} className="text-center p-3 bg-[#0A0A0A] rounded-lg">
+                          <p className="text-[10px] text-zinc-600 uppercase">{m.label}</p>
+                          <p className="text-xl font-bold font-mono text-white">{(m.value || 0).toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* API Calls */}
+                <Card className="bg-[#121212] border-zinc-800">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm text-zinc-400">API Calls</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { label: 'Today', value: analyticsData.api_calls?.today },
+                        { label: 'This Week', value: analyticsData.api_calls?.week },
+                        { label: 'This Month', value: analyticsData.api_calls?.month },
+                      ].map(m => (
+                        <div key={m.label} className="text-center p-3 bg-[#0A0A0A] rounded-lg">
+                          <p className="text-[10px] text-zinc-600 uppercase">{m.label}</p>
+                          <p className="text-xl font-bold font-mono text-white">{(m.value || 0).toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* WebSocket */}
+                  <Card className="bg-[#121212] border-zinc-800">
+                    <CardHeader className="pb-2"><CardTitle className="text-sm text-zinc-400">WS Connections</CardTitle></CardHeader>
+                    <CardContent className="text-center">
+                      <p className="text-2xl font-bold font-mono text-[#7B61FF]">{analyticsData.ws_connections?.current || 0}</p>
+                      <p className="text-[10px] text-zinc-600">current | peak: {analyticsData.ws_connections?.peak_today || 0}</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Strategy Interactions */}
+                  <Card className="bg-[#121212] border-zinc-800">
+                    <CardHeader className="pb-2"><CardTitle className="text-sm text-zinc-400">Strategy Interactions</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between"><span className="text-zinc-500">Views</span><span className="text-white font-mono">{analyticsData.strategy_interactions?.views || 0}</span></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Subscriptions</span><span className="text-[#00FF94] font-mono">{analyticsData.strategy_interactions?.subscriptions || 0}</span></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Signals</span><span className="text-white font-mono">{analyticsData.strategy_interactions?.signals_emitted || 0}</span></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Checkout Events */}
+                  <Card className="bg-[#121212] border-zinc-800">
+                    <CardHeader className="pb-2"><CardTitle className="text-sm text-zinc-400">Checkout Events</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between"><span className="text-zinc-500">Initiated</span><span className="text-white font-mono">{analyticsData.checkout_events?.initiated || 0}</span></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Completed</span><span className="text-[#00FF94] font-mono">{analyticsData.checkout_events?.completed || 0}</span></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Abandoned</span><span className="text-red-400 font-mono">{analyticsData.checkout_events?.abandoned || 0}</span></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-zinc-600 text-sm">Loading analytics...</div>
+            )}
           </TabsContent>
         </Tabs>
 

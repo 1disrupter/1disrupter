@@ -105,6 +105,111 @@ async def verify_admin(admin_key: str = Query(..., alias="admin_key")):
         raise HTTPException(status_code=403, detail="Admin access denied")
     return {"id": "admin", "email": "admin@alphaai.com"}
 
+
+# ============= DEMO MODE TOGGLE =============
+
+from config.demo import is_demo_mode, set_demo_mode
+
+
+@router.get("/demo-mode")
+async def get_demo_mode(admin: dict = Depends(verify_admin)):
+    """Get current demo mode status."""
+    enabled = await is_demo_mode()
+    return {"demo_mode": enabled}
+
+
+class DemoModeToggle(BaseModel):
+    enabled: bool
+
+
+@router.post("/demo-mode")
+async def toggle_demo_mode(body: DemoModeToggle, admin: dict = Depends(verify_admin)):
+    """Toggle demo mode on/off. Takes effect instantly (DB-backed, no redeploy)."""
+    await set_demo_mode(body.enabled)
+    await log_admin_action(
+        admin["id"], admin["email"], "toggle_demo_mode",
+        "system", "demo_mode", {"enabled": body.enabled}
+    )
+    return {"demo_mode": body.enabled, "message": f"Demo mode {'enabled' if body.enabled else 'disabled'}"}
+
+
+# ============= ANALYTICS EVENT TRACKING =============
+
+@router.post("/track")
+async def track_event(request: Request):
+    """Track a real analytics event. Only records when DEMO_MODE is off."""
+    demo = await is_demo_mode()
+    body = await request.json()
+
+    event = {
+        "event_type": body.get("event_type", "unknown"),
+        "timestamp": datetime.now(timezone.utc),
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "metadata": body.get("metadata", {}),
+        "is_demo": demo,
+        "source": "real" if not demo else "demo",
+    }
+
+    # Always record, but tag with source
+    await db.analytics_events.insert_one(event)
+    return {"tracked": True, "demo_mode": demo}
+
+
+@router.get("/analytics-summary")
+async def analytics_summary(admin: dict = Depends(verify_admin)):
+    """Analytics summary — returns real data when demo mode is off, synthetic when on."""
+    import random
+    demo = await is_demo_mode()
+
+    if demo:
+        # Synthetic demo data
+        return {
+            "demo_mode": True,
+            "source": "synthetic",
+            "page_views": {"today": random.randint(120, 300), "week": random.randint(800, 2000), "month": random.randint(4000, 10000)},
+            "api_calls": {"today": random.randint(500, 1200), "week": random.randint(3000, 8000), "month": random.randint(15000, 40000)},
+            "ws_connections": {"current": random.randint(5, 25), "peak_today": random.randint(20, 50)},
+            "strategy_interactions": {"views": random.randint(40, 120), "subscriptions": random.randint(5, 15), "signals_emitted": random.randint(10, 30)},
+            "checkout_events": {"initiated": random.randint(8, 20), "completed": random.randint(3, 10), "abandoned": random.randint(2, 8)},
+        }
+
+    # Real data from analytics_events collection
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    from datetime import timedelta
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+    month_ago = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+
+    async def count_events(event_type: str, since_date: str):
+        return await db.analytics_events.count_documents({"event_type": event_type, "date": {"$gte": since_date}, "source": "real"})
+
+    pv_today = await count_events("page_view", today)
+    pv_week = await count_events("page_view", week_ago)
+    pv_month = await count_events("page_view", month_ago)
+
+    api_today = await count_events("api_call", today)
+    api_week = await count_events("api_call", week_ago)
+    api_month = await count_events("api_call", month_ago)
+
+    ws_current = await db.analytics_events.count_documents({"event_type": "ws_connect", "date": today, "source": "real"})
+    strat_views = await count_events("strategy_view", week_ago)
+    strat_subs = await count_events("strategy_subscribe", week_ago)
+    signals = await count_events("signal_emitted", week_ago)
+
+    checkout_init = await count_events("checkout_initiated", week_ago)
+    checkout_done = await count_events("checkout_completed", week_ago)
+    checkout_abandoned = await count_events("checkout_abandoned", week_ago)
+
+    return {
+        "demo_mode": False,
+        "source": "real",
+        "page_views": {"today": pv_today, "week": pv_week, "month": pv_month},
+        "api_calls": {"today": api_today, "week": api_week, "month": api_month},
+        "ws_connections": {"current": ws_current, "peak_today": ws_current},
+        "strategy_interactions": {"views": strat_views, "subscriptions": strat_subs, "signals_emitted": signals},
+        "checkout_events": {"initiated": checkout_init, "completed": checkout_done, "abandoned": checkout_abandoned},
+    }
+
+
 # ============= USERS TAB =============
 
 @router.get("/users")

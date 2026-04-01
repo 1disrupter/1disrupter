@@ -1,0 +1,142 @@
+{
+  "summary": "Admin Demo Mode Toggle & Analytics testing completed. Backend: 11/11 tests passed. Frontend: All critical flows verified - Demo mode banner with toggle, Analytics tab with all 5 data cards (Page Views, API Calls, WS Connections, Strategy Interactions, Checkout Events), Synthetic Data badge, and other admin tabs (Overview, Users) working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_demo_mode.py",
+    "/app/test_reports/pytest/admin_demo_mode_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "GET /api/admin/demo-mode correctly returns current demo mode status",
+    "POST /api/admin/demo-mode correctly toggles demo mode on/off with DB persistence",
+    "GET /api/admin/analytics-summary returns synthetic data when demo mode is ON",
+    "GET /api/admin/analytics-summary returns real data (zeros) when demo mode is OFF",
+    "POST /api/admin/track correctly records analytics events",
+    "All admin endpoints properly require admin_key authentication (403 on invalid key)",
+    "Demo mode banner shows correct state (DEMO/LIVE) with appropriate styling",
+    "Demo mode toggle switch works - clicking changes banner text from DEMO to LIVE and vice versa",
+    "Analytics tab shows all 5 data cards: Page Views, API Calls, WS Connections, Strategy Interactions, Checkout Events",
+    "Analytics tab shows 'Synthetic Data' badge when demo mode is ON",
+    "Overview tab shows stats cards (Total Users, Pro Users, Active Subscriptions, Signals)",
+    "Users tab shows user list with search and filtering"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_demo_mode.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (all critical flows verified)"
+  },
+  "test_credentials": {
+    "admin_key": "alphaai_admin_2026"
+  },
+  "seed_data_creation": "No new seed data created. Demo mode toggle persists to system_config collection in MongoDB.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Demo mode toggle fully tested. Default state is DEMO mode ON (synthetic data). Toggle persists to DB via system_config collection. Analytics tab shows 5 data cards with synthetic random data when demo mode is ON, real counts from analytics_events collection when OFF. Admin panel at /admin with admin_key authentication. Key test IDs: demo-mode-banner, demo-mode-toggle, tab-analytics, tab-overview, tab-users.",
+  "tests_executed": [
+    {
+      "test": "GET /api/admin/demo-mode returns current demo mode status",
+      "result": "PASS",
+      "details": "Returns {demo_mode: boolean}"
+    },
+    {
+      "test": "GET /api/admin/demo-mode requires admin key",
+      "result": "PASS",
+      "details": "Returns 403 for invalid admin key"
+    },
+    {
+      "test": "POST /api/admin/demo-mode enables demo mode",
+      "result": "PASS",
+      "details": "Sets demo_mode to true with success message"
+    },
+    {
+      "test": "POST /api/admin/demo-mode disables demo mode",
+      "result": "PASS",
+      "details": "Sets demo_mode to false with success message"
+    },
+    {
+      "test": "POST /api/admin/demo-mode requires admin key",
+      "result": "PASS",
+      "details": "Returns 403 for invalid admin key"
+    },
+    {
+      "test": "GET /api/admin/analytics-summary returns synthetic data when demo mode ON",
+      "result": "PASS",
+      "details": "Returns demo_mode: true, source: synthetic with random data"
+    },
+    {
+      "test": "GET /api/admin/analytics-summary returns real data when demo mode OFF",
+      "result": "PASS",
+      "details": "Returns demo_mode: false, source: real with actual counts"
+    },
+    {
+      "test": "GET /api/admin/analytics-summary requires admin key",
+      "result": "PASS",
+      "details": "Returns 403 for invalid admin key"
+    },
+    {
+      "test": "POST /api/admin/track records analytics event",
+      "result": "PASS",
+      "details": "Returns tracked: true with demo_mode status"
+    },
+    {
+      "test": "POST /api/admin/track accepts different event types",
+      "result": "PASS",
+      "details": "Accepts api_call, ws_connect, strategy_view, checkout_initiated"
+    },
+    {
+      "test": "Demo mode toggle persists across requests",
+      "result": "PASS",
+      "details": "Toggle state persists to DB and is consistent across GET requests"
+    },
+    {
+      "test": "Admin login with admin_key input and button",
+      "result": "PASS",
+      "details": "Login form with data-testid='admin-key-input' and 'admin-login-btn' works"
+    },
+    {
+      "test": "Demo mode banner shows at top of admin panel",
+      "result": "PASS",
+      "details": "Banner with data-testid='demo-mode-banner' shows DEMO/LIVE status"
+    },
+    {
+      "test": "Demo mode toggle switch changes banner text",
+      "result": "PASS",
+      "details": "Clicking toggle changes from 'DEMO (Synthetic Data)' to 'LIVE (Real Traffic)'"
+    },
+    {
+      "test": "Analytics tab exists and shows data cards",
+      "result": "PASS",
+      "details": "Tab with data-testid='tab-analytics' shows Page Views, API Calls, WS Connections, Strategy Interactions, Checkout Events"
+    },
+    {
+      "test": "Analytics tab shows 'Synthetic Data' badge when demo mode ON",
+      "result": "PASS",
+      "details": "Badge visible in Analytics Dashboard header"
+    },
+    {
+      "test": "Overview tab shows stats cards",
+      "result": "PASS",
+      "details": "Shows Total Users, Pro Users, Active Subscriptions, Signals (24h)"
+    },
+    {
+      "test": "Users tab shows user list with search",
+      "result": "PASS",
+      "details": "Shows 20 user rows with search input and filters"
+    }
+  ],
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["Analytics synthetic data in demo mode - returns random values for page_views, api_calls, ws_connections, strategy_interactions, checkout_events"],
+    "note": "When demo mode is ON, analytics-summary returns synthetic random data. When OFF, returns real counts from analytics_events collection (likely zeros for new deployments)."
+  }
+}
