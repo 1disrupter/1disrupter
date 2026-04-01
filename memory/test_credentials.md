@@ -9,6 +9,10 @@
 - Password: Martin2026!
 - Admin Key: alphaai_admin_2026
 
+- Email: mar-brick@hotmail.com
+- Password: Martin2026!
+- Admin Key: alphaai_admin_2026
+
 ## Pro User
 - Email: demo_test2@my-alpha-ai.com
 - Password: NewPass1234!

@@ -13,20 +13,32 @@ export const SubscribeButton = ({ strategyId, token, onDone }) => {
     if (!token) { toast.error("Please sign in to subscribe"); return; }
     setLoading(true);
     try {
-      await axios.post(`${API}/marketplace/strategies/${strategyId}/subscribe`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success("Subscribed successfully!");
-      if (onDone) onDone();
+      const origin = window.location.origin;
+      const res = await axios.post(
+        `${API}/marketplace/strategies/${strategyId}/checkout`,
+        { origin_url: origin },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      } else {
+        toast.error("Failed to create checkout session");
+      }
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to subscribe");
+      const detail = err.response?.data?.detail;
+      if (detail === "Already subscribed to this strategy") {
+        toast.info("You are already subscribed");
+        if (onDone) onDone();
+      } else {
+        toast.error(detail || "Failed to start checkout");
+      }
     }
     setLoading(false);
   };
 
   return (
     <Button onClick={handle} disabled={loading} className="bg-[#7B61FF] hover:bg-[#7B61FF]/90" data-testid="subscribe-btn">
-      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe"}
+      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe — $9.99/mo"}
     </Button>
   );
 };
@@ -37,13 +49,22 @@ export const UnsubscribeButton = ({ strategyId, token, onDone, size = "default" 
   const handle = async () => {
     setLoading(true);
     try {
-      await axios.post(`${API}/marketplace/strategies/${strategyId}/unsubscribe`, {}, {
+      await axios.post(`${API}/marketplace/strategies/${strategyId}/cancel-subscription`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success("Unsubscribed");
+      toast.success("Subscription canceled");
       if (onDone) onDone();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to unsubscribe");
+      // Fallback to old unsubscribe for free subs
+      try {
+        await axios.post(`${API}/marketplace/strategies/${strategyId}/unsubscribe`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Unsubscribed");
+        if (onDone) onDone();
+      } catch (err2) {
+        toast.error(err2.response?.data?.detail || "Failed to unsubscribe");
+      }
     }
     setLoading(false);
   };

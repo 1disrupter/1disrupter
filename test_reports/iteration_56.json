@@ -1,0 +1,139 @@
+{
+  "summary": "Stripe subscription billing integration testing completed. Backend: 12/12 tests passed. Frontend: All critical flows verified - Subscribe button shows $9.99/mo, redirects to Stripe Checkout, owner view shows 'Your Strategy' badge without subscribe button, Creator Dashboard and My Subscriptions pages work correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "MarketplacePage (/marketplace)",
+        "issues": ["Shows 'Could not load marketplace' error - this page uses /api/marketplace/items endpoint which returns 404. The strategy marketplace is at /strategy-marketplace which works correctly."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_marketplace_billing.py",
+    "/app/test_reports/pytest/marketplace_billing_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Stripe integration is working correctly with test mode (sk_test_emergent)",
+    "Checkout endpoint correctly returns Stripe URL and session_id",
+    "Self-subscription correctly rejected with 400 error",
+    "Cancel-subscription returns 404 when no active subscription exists (correct behavior)",
+    "Status polling endpoint returns 404 for invalid sessions (correct behavior)",
+    "Subscribe button correctly shows '$9.99/mo' price",
+    "Owner view correctly shows 'Your Strategy' badge without subscribe/unsubscribe buttons",
+    "WebSocket errors for alerts are non-critical (expected behavior for free tier)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_marketplace_billing.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (all critical flows verified)"
+  },
+  "test_credentials": {
+    "free_user_creator": "test_free_user_iter29@my-alpha-ai.com / TestPass123!",
+    "pro_user_subscriber": "demo_test2@my-alpha-ai.com / NewPass1234!"
+  },
+  "seed_data_creation": "No new seed data created",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Stripe billing integration fully tested. Pro user can subscribe to strategies via Stripe Checkout ($9.99/mo). Strategy owner sees 'Your Strategy' badge without subscribe button. Cancel-subscription endpoint works. Note: /marketplace page (not /strategy-marketplace) has a 404 error for /api/marketplace/items - this is a separate page from the strategy marketplace.",
+  "tests_executed": [
+    {
+      "test": "POST /api/marketplace/strategies/{id}/checkout returns Stripe URL for valid subscriber",
+      "result": "PASS",
+      "details": "Returns checkout URL starting with https://checkout.stripe.com"
+    },
+    {
+      "test": "Checkout rejects self-subscription (creator trying to subscribe to own strategy)",
+      "result": "PASS",
+      "details": "Returns 400 with 'Cannot subscribe to your own strategy'"
+    },
+    {
+      "test": "Checkout requires authentication",
+      "result": "PASS",
+      "details": "Returns 401 without auth token"
+    },
+    {
+      "test": "Checkout returns 404 for invalid strategy",
+      "result": "PASS",
+      "details": "Returns 404 for non-existent strategy ID"
+    },
+    {
+      "test": "Cancel-subscription returns 404 when no active subscription exists",
+      "result": "PASS",
+      "details": "Returns 404 with 'No active subscription found'"
+    },
+    {
+      "test": "Cancel-subscription requires authentication",
+      "result": "PASS",
+      "details": "Returns 401 without auth token"
+    },
+    {
+      "test": "Status polling returns 404 for invalid session",
+      "result": "PASS",
+      "details": "Returns 404 with 'Transaction not found'"
+    },
+    {
+      "test": "Status polling requires authentication",
+      "result": "PASS",
+      "details": "Returns 401 without auth token"
+    },
+    {
+      "test": "Marketplace listing still works",
+      "result": "PASS",
+      "details": "Returns 4 strategies"
+    },
+    {
+      "test": "Strategy detail still works",
+      "result": "PASS",
+      "details": "Returns strategy with performance, signals, reviews"
+    },
+    {
+      "test": "Creator dashboard endpoint still works",
+      "result": "PASS",
+      "details": "/api/marketplace/me/created returns strategies"
+    },
+    {
+      "test": "My subscriptions endpoint still works",
+      "result": "PASS",
+      "details": "/api/marketplace/me/strategies returns subscriptions"
+    },
+    {
+      "test": "Strategy detail page shows 'Subscribe — $9.99/mo' button for logged-in non-owner",
+      "result": "PASS",
+      "details": "Button visible with correct price text"
+    },
+    {
+      "test": "Clicking Subscribe button redirects to Stripe Checkout",
+      "result": "PASS",
+      "details": "Redirects to https://checkout.stripe.com with US$9.99 payment"
+    },
+    {
+      "test": "Strategy detail page shows 'Your Strategy' badge for owner",
+      "result": "PASS",
+      "details": "Green badge shown, no subscribe/unsubscribe buttons"
+    },
+    {
+      "test": "Creator Dashboard at /creator/strategies works",
+      "result": "PASS",
+      "details": "Shows Total: 6, Published: 4, Subscribers: 0 with strategy list"
+    },
+    {
+      "test": "My Subscriptions at /me/strategies works",
+      "result": "PASS",
+      "details": "Page loads correctly"
+    }
+  ],
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": [],
+    "note": "Stripe payments are in test mode (sk_test_emergent). Checkout sessions are real Stripe test sessions."
+  }
+}

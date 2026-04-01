@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Users, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, Star, Users, Clock, Loader2 } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { useAuth } from "../contexts/AuthContext";
@@ -16,12 +17,14 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const StrategyDetailPage = () => {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, tokens } = useAuth();
   const token = tokens?.access_token;
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [polling, setPolling] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
@@ -34,6 +37,7 @@ const StrategyDetailPage = () => {
     setLoading(false);
   }, [id]);
 
+  // Check subscription status
   useEffect(() => {
     if (!token) return;
     (async () => {
@@ -45,6 +49,57 @@ const StrategyDetailPage = () => {
   }, [token, id]);
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
+
+  // Poll for Stripe checkout status on return from payment
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    const success = searchParams.get("success");
+    if (!sessionId || !token || !success) return;
+
+    let attempts = 0;
+    const maxAttempts = 5;
+    setPolling(true);
+
+    const poll = async () => {
+      try {
+        const res = await axios.get(`${API}/marketplace/checkout/status/${sessionId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.payment_status === "paid") {
+          toast.success("Payment successful! You are now subscribed.");
+          setIsSubscribed(true);
+          setPolling(false);
+          setSearchParams({});
+          fetchDetail();
+          return;
+        }
+        if (res.data.status === "expired") {
+          toast.error("Payment session expired. Please try again.");
+          setPolling(false);
+          setSearchParams({});
+          return;
+        }
+      } catch { /* ignore */ }
+
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(poll, 2000);
+      } else {
+        toast.info("Payment is being processed. Please refresh in a moment.");
+        setPolling(false);
+        setSearchParams({});
+      }
+    };
+    poll();
+  }, [searchParams, token, fetchDetail, setSearchParams]);
+
+  // Handle cancel return
+  useEffect(() => {
+    if (searchParams.get("canceled")) {
+      toast.info("Checkout canceled.");
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   const refresh = () => { fetchDetail(); };
   const onSubscribeChange = () => { setIsSubscribed(!isSubscribed); refresh(); };
@@ -77,6 +132,14 @@ const StrategyDetailPage = () => {
   return (
     <div className="min-h-screen pt-24 pb-12 px-4" data-testid="strategy-detail-page">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Payment processing banner */}
+        {polling && (
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-[#7B61FF]/10 border border-[#7B61FF]/20" data-testid="payment-processing">
+            <Loader2 className="w-4 h-4 text-[#7B61FF] animate-spin" />
+            <span className="text-sm text-zinc-300">Processing payment...</span>
+          </div>
+        )}
+
         {/* Back */}
         <Link to="/marketplace" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300 transition-colors" data-testid="back-to-marketplace">
           <ArrowLeft className="w-4 h-4" /> Marketplace

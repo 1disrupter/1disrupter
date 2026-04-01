@@ -54,6 +54,7 @@ from routes.attestation import router as attestation_router, init_db as init_att
 from routes.beta import router as beta_router
 from routes.exchange import router as exchange_router
 from routes.marketplace import router as marketplace_router
+from routes.marketplace_billing import router as marketplace_billing_router
 from services.stripe_webhook_handler import init_db as init_webhook_handler_db
 from cron.performance_attestor import init_db as init_attestor_db
 
@@ -102,6 +103,7 @@ app.include_router(attestation_router)
 app.include_router(beta_router)
 app.include_router(exchange_router)
 app.include_router(marketplace_router)
+app.include_router(marketplace_billing_router)
 
 
 # ============= BACKGROUND TASKS =============
