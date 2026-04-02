@@ -144,19 +144,24 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Testing**: 100% passed (iteration 59)
 
 ### Stripe Billing Portal (Apr 2026)
-- **Module**: `/app/backend/routes/billing.py` — 3 endpoints
+- **Module**: `/app/backend/routes/billing.py` — 4 endpoints
 - **Endpoints**:
   - `GET /api/billing/overview` — billing summary (active subs, monthly cost, total spent, total payments)
   - `GET /api/billing/subscriptions` — active + canceled subscriptions with strategy details
   - `GET /api/billing/payments` — payment transaction history
+  - `POST /api/billing/portal` — creates Stripe Billing Portal session, returns hosted portal URL
+- **Stripe Integration**: Uses `stripe` SDK v14.4.0 via Emergent proxy (`api_base = https://integrations.emergentagent.com/stripe`). Auto-creates Stripe customers on first portal access, validates existing customer IDs, handles stale IDs by recreating.
 - **Frontend**: `/billing` route — `BillingPortalPage.jsx` with:
+  - **"Manage Billing" button** (purple, primary CTA) — creates Stripe portal session, redirects to Stripe's hosted billing portal
   - 4 overview metric cards (Active Subscriptions, Monthly Cost, Total Spent, Total Payments)
   - Subscriptions tab: active subs with Unsubscribe, canceled subs with Resubscribe link
   - Payments tab: payment history table (date, strategy, amount, status)
   - Auth guard (redirects to /login if unauthenticated)
   - "Browse Marketplace" button linking to /strategy-marketplace
-- **Integration**: "Manage Billing" button added to MyStrategiesPage (/me/strategies)
-- **Testing**: Backend 14/14, Frontend 100% (iteration 59)
+  - Loading spinner on Manage Billing button while creating session
+- **User DB**: Stores `stripe_customer_id` on users collection for Stripe customer association
+- **Integration**: "Manage Billing" button also on MyStrategiesPage (/me/strategies) linking to /billing
+- **Testing**: Backend 11/11, Frontend 100% (iteration 60)
 
 ### Strategy Marketplace Backend (Apr 2026)
 - **Module**: `/app/backend/routes/marketplace.py` — standalone, does not touch Strategy Lab
