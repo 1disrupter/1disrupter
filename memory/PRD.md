@@ -126,8 +126,13 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **P1**: Order Execution Engine (Phase 2 of Live Trading) ✅ DONE
 - **P1**: Automatic Frontend Tracking Middleware ✅ DONE
 - **P1**: Stripe Billing Portal (self-serve subscription management) ✅ DONE
+- **P1**: Analytics Time Filters (Today/7d/30d) ✅ DONE
+- **P1**: MRR & Subscription Trend Charts ✅ DONE
+- **P1**: Signal History Chart ✅ DONE
+- **P1**: Onboarding Modal (First-Time UX) ✅ DONE
+- **P1**: UI Polish & Micro-Interactions ✅ DONE
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
-- **P3**: MRR trend chart for subscription health dashboard (Recharts)
+- **P3**: MRR trend chart for subscription health dashboard (Recharts) ✅ DONE (merged into MRR trends)
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
 - **P3**: User retention analytics (DAU/MAU ratio)
 
@@ -162,6 +167,35 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **User DB**: Stores `stripe_customer_id` on users collection for Stripe customer association
 - **Integration**: "Manage Billing" button also on MyStrategiesPage (/me/strategies) linking to /billing
 - **Testing**: Backend 11/11, Frontend 100% (iteration 60)
+
+### Analytics Time Filters & Charts (Apr 2026)
+- **Backend**: 3 new admin endpoints:
+  - `GET /api/admin/analytics-filtered?range=today|7d|30d` — Platform metrics with time range filter
+  - `GET /api/admin/mrr-trends` — 30-day MRR, subscriptions, cancellations, net & cumulative revenue
+  - `GET /api/admin/signal-history` — 30-day signal volume with 7-day moving average
+- **Frontend**: Admin Analytics tab enhanced with:
+  - 7 stat cards (Total Users, Pro Users, Elite Users, Active Subs, Signals, Page Views, API Calls) with time range dropdown
+  - 4 MRR/Subscription trend charts (Recharts): MRR Over Time (area), Subs vs Cancellations (bar), Net Revenue (bar), Cumulative Revenue (area)
+  - Signal Volume chart (composed bar + line for 7d MA)
+  - Loading skeletons and smooth transitions
+- **Component**: `/app/frontend/src/components/AdminCharts.jsx`
+- **Testing**: Backend 16/16, Frontend 100% (iteration 61)
+
+### Onboarding Modal (Apr 2026)
+- **Component**: `/app/frontend/src/components/OnboardingModal.jsx`
+- 3-step modal: Welcome to AlphaAI, How Signals Work, Flexible Subscriptions
+- Shows only on first login (localStorage key `alphaai_onboarded`)
+- Skip and Next buttons with smooth fade transitions
+- Dark theme with accent color per step
+- **Testing**: All flows verified (iteration 61)
+
+### UI Polish & Micro-Interactions (Apr 2026)
+- Card hover lift with subtle border glow
+- Button press scale effect (scale 0.97)
+- Improved skeleton shimmer animation
+- Custom scrollbar styling (dark theme)
+- Smooth page transitions via CSS keyframes
+- Applied to `/app/frontend/src/index.css`
 
 ### Strategy Marketplace Backend (Apr 2026)
 - **Module**: `/app/backend/routes/marketplace.py` — standalone, does not touch Strategy Lab
