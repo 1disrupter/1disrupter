@@ -25,6 +25,7 @@ import PerformanceMetrics from "../components/PerformanceMetrics";
 import NotificationSettings from "../components/NotificationSettings";
 import { PoweredByTag } from "../components/BrandComponents";
 import LivePriceTicker from "../components/LivePriceTicker";
+import OnboardingModal from "../components/OnboardingModal";
 import { API } from "../lib/constants";
 
 const WalletConnectButton = () => {
@@ -656,6 +657,7 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen pt-24 px-4 pb-12">
+      <OnboardingModal />
       <div className="max-w-4xl mx-auto">
         
         {/* Free Tier Upgrade Banner */}

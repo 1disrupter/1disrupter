@@ -964,6 +964,164 @@ async def save_analytics_goals(payload: GoalsPayload, admin: dict = Depends(veri
     return {"status": "saved", **_goals_cache["data"]}
 
 
+# ============= ANALYTICS WITH RANGE FILTER =============
+
+@router.get("/analytics-filtered")
+async def analytics_filtered(
+    admin: dict = Depends(verify_admin),
+    range: str = Query("7d", regex="^(today|7d|30d)$"),
+):
+    """Analytics summary with time range filter for dashboard cards."""
+    import random
+    demo = await is_demo_mode()
+    now = datetime.now(timezone.utc)
+
+    if range == "today":
+        cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif range == "7d":
+        cutoff = now - timedelta(days=7)
+    else:
+        cutoff = now - timedelta(days=30)
+
+    if demo:
+        mult = {"today": 1, "7d": 7, "30d": 30}[range]
+        return {
+            "range": range,
+            "demo_mode": True,
+            "total_users": random.randint(8, 15) * mult,
+            "pro_users": random.randint(2, 5) * mult,
+            "elite_users": random.randint(0, 2) * mult,
+            "active_subscriptions": random.randint(3, 12),
+            "signals": random.randint(5, 20) * mult,
+            "page_views": random.randint(50, 200) * mult,
+            "api_calls": random.randint(200, 600) * mult,
+        }
+
+    date_str = cutoff.strftime("%Y-%m-%d")
+    total_users = await db.users.count_documents({"created_at": {"$gte": cutoff}})
+    pro_users = await db.users.count_documents({"created_at": {"$gte": cutoff}, "is_pro": True})
+    elite_users = await db.users.count_documents({"created_at": {"$gte": cutoff}, "is_elite": True})
+    active_subs = await db.strategy_subscriptions.count_documents({"status": "active"})
+    signals = await db.strategy_signals.count_documents({"created_at": {"$gte": cutoff}})
+    page_views = await db.analytics_events.count_documents({"event_type": "page_view", "date": {"$gte": date_str}, "source": "real"})
+    api_calls = await db.analytics_events.count_documents({"event_type": "api_call", "date": {"$gte": date_str}, "source": "real"})
+
+    return {
+        "range": range,
+        "demo_mode": False,
+        "total_users": total_users,
+        "pro_users": pro_users,
+        "elite_users": elite_users,
+        "active_subscriptions": active_subs,
+        "signals": signals,
+        "page_views": page_views,
+        "api_calls": api_calls,
+    }
+
+
+# ============= MRR & SUBSCRIPTION TRENDS =============
+
+@router.get("/mrr-trends")
+async def mrr_trends(admin: dict = Depends(verify_admin)):
+    """MRR and subscription trend data for charts."""
+    import random
+    demo = await is_demo_mode()
+    now = datetime.now(timezone.utc)
+
+    days = 30
+    dates = [(now - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days - 1, -1, -1)]
+
+    if demo:
+        base_mrr = 150
+        data = []
+        for i, d in enumerate(dates):
+            new_subs = random.randint(0, 3)
+            cancels = random.randint(0, 1)
+            base_mrr += (new_subs - cancels) * 9.99
+            data.append({
+                "date": d,
+                "mrr": round(max(base_mrr, 50), 2),
+                "new_subscriptions": new_subs,
+                "cancellations": cancels,
+                "net_revenue": round((new_subs - cancels) * 9.99, 2),
+                "cumulative_revenue": round(base_mrr * (i + 1) / 30, 2),
+            })
+        return {"demo_mode": True, "trends": data}
+
+    # Real data: aggregate subscriptions by date
+    data = []
+    cumulative = 0
+    for d in dates:
+        day_start = datetime.strptime(d, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        day_end = day_start + timedelta(days=1)
+
+        new_subs = await db.strategy_subscriptions.count_documents(
+            {"subscribed_at": {"$gte": day_start, "$lt": day_end}, "status": {"$in": ["active", "canceled"]}}
+        )
+        cancels = await db.strategy_subscriptions.count_documents(
+            {"canceled_at": {"$gte": day_start, "$lt": day_end}}
+        )
+        active_on_day = await db.strategy_subscriptions.count_documents(
+            {"subscribed_at": {"$lte": day_end}, "status": "active"}
+        )
+        daily_mrr = round(active_on_day * 9.99, 2)
+        net = round((new_subs - cancels) * 9.99, 2)
+        cumulative += new_subs * 9.99
+
+        data.append({
+            "date": d,
+            "mrr": daily_mrr,
+            "new_subscriptions": new_subs,
+            "cancellations": cancels,
+            "net_revenue": net,
+            "cumulative_revenue": round(cumulative, 2),
+        })
+
+    return {"demo_mode": False, "trends": data}
+
+
+# ============= SIGNAL HISTORY =============
+
+@router.get("/signal-history")
+async def signal_history(admin: dict = Depends(verify_admin)):
+    """Daily signal volume over the last 30 days with 7-day moving average."""
+    import random
+    demo = await is_demo_mode()
+    now = datetime.now(timezone.utc)
+
+    days = 30
+    dates = [(now - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days - 1, -1, -1)]
+
+    if demo:
+        raw = [random.randint(2, 18) for _ in dates]
+        data = []
+        for i, d in enumerate(dates):
+            window = raw[max(0, i - 6):i + 1]
+            ma7 = round(sum(window) / len(window), 1)
+            data.append({"date": d, "count": raw[i], "ma7": ma7})
+        return {"demo_mode": True, "signals": data}
+
+    # Real: aggregate signals by day
+    pipeline = [
+        {"$match": {"created_at": {"$gte": now - timedelta(days=days)}}},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}},
+    ]
+    agg = {doc["_id"]: doc["count"] async for doc in db.strategy_signals.aggregate(pipeline)}
+
+    raw = [agg.get(d, 0) for d in dates]
+    data = []
+    for i, d in enumerate(dates):
+        window = raw[max(0, i - 6):i + 1]
+        ma7 = round(sum(window) / len(window), 1)
+        data.append({"date": d, "count": raw[i], "ma7": ma7})
+
+    return {"demo_mode": False, "signals": data}
+
+
 # ============= CONTRACT STATUS =============
 
 @router.get("/contract/status")

@@ -258,3 +258,74 @@ code, .mono {
 [data-debug-wrapper="true"] {
     display: contents !important;
 }
+
+/* ─── UI Polish: Micro-Interactions ─── */
+
+/* Smooth page transitions */
+.page-enter {
+    animation: page-fade-in 0.35s ease-out;
+}
+
+@keyframes page-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Interactive card lift with glow */
+.glass-card,
+[class*="bg-[#0A0A0A]"][class*="border-zinc"] {
+    transition: border-color 0.3s ease, transform 0.25s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover,
+[class*="bg-[#0A0A0A]"][class*="border-zinc"]:hover {
+    border-color: rgba(123, 97, 255, 0.15);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Button press effect */
+button:not(:disabled):active {
+    transform: scale(0.97);
+}
+
+/* Smooth skeleton pulse */
+@keyframes skeleton-shine {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+.animate-pulse {
+    background: linear-gradient(90deg, #1a1a1a 0px, #252525 40px, #1a1a1a 80px) !important;
+    background-size: 200px 100% !important;
+    animation: skeleton-shine 1.5s ease-in-out infinite !important;
+}
+
+/* Toast styling */
+[data-sonner-toaster] [data-sonner-toast] {
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

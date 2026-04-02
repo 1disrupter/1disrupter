@@ -25,6 +25,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "../components/ui/select";
 import { BrandLockup } from "../components/BrandComponents";
+import { AnalyticsFilteredCards, MRRTrendCharts, SignalHistoryChart } from "../components/AdminCharts";
 import { API } from "../lib/constants";
 
 const ADMIN_KEY = localStorage.getItem("adminKey") || "alphaai_admin_2026";
@@ -1517,6 +1518,15 @@ const AdminPage = () => {
                 {analyticsData?.source === 'synthetic' ? 'Synthetic Data' : 'Real Data'}
               </Badge>
             </div>
+
+            {/* Filtered Stat Cards with Range Selector */}
+            <AnalyticsFilteredCards />
+
+            {/* MRR & Subscription Trend Charts */}
+            <MRRTrendCharts />
+
+            {/* Signal History Chart */}
+            <SignalHistoryChart />
 
             {analyticsData ? (
               <div className="space-y-6">
