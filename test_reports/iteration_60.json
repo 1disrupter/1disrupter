@@ -1,0 +1,147 @@
+{
+  "summary": "Stripe Billing Portal Integration testing completed. Backend: 11/11 tests passed. Frontend: All critical flows verified - POST /api/billing/portal creates Stripe Billing Portal sessions returning URLs starting with https://billing.stripe.com, requires authentication (401 without token), requires return_url field (422 without it), creates Stripe customers for users without one, reuses existing valid Stripe customer IDs. Billing page at /billing shows 'Manage Billing' button with loading state. MyStrategiesPage at /me/strategies has 'Manage Billing' button linking to /billing. Unauthenticated users correctly redirected to /login.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_billing_portal.py",
+    "/app/test_reports/pytest/billing_portal_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "POST /api/billing/portal correctly creates Stripe Billing Portal session via Emergent proxy (stripe.api_base = 'https://integrations.emergentagent.com/stripe')",
+    "POST /api/billing/portal returns URL starting with https://billing.stripe.com/p/session/test_...",
+    "POST /api/billing/portal requires authentication (returns 401 without token)",
+    "POST /api/billing/portal requires return_url field in request body (returns 422 without it)",
+    "_get_or_create_stripe_customer validates existing customer IDs with Stripe and creates new ones if stale/missing",
+    "stripe_customer_id is stored in users collection after creation",
+    "GET /api/billing/overview, GET /api/billing/subscriptions, GET /api/billing/payments all work correctly",
+    "Billing page 'Manage Billing' button (data-testid='manage-stripe-billing-btn') shows loading spinner while creating portal session",
+    "MyStrategiesPage 'Manage Billing' button (data-testid='manage-billing-btn') correctly links to /billing",
+    "Unauthenticated user is correctly redirected to /login when accessing /billing"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_billing_portal.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (all critical flows verified)"
+  },
+  "test_credentials": {
+    "pro_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "free_user": "test_free_user_iter29@my-alpha-ai.com / TestPass123!",
+    "admin_key": "alphaai_admin_2026"
+  },
+  "seed_data_creation": "No new seed data created. Pro user has stripe_customer_id stored from portal session creation.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Stripe Billing Portal fully tested. POST /api/billing/portal creates real Stripe test sessions via Emergent proxy. Pro user demo_test2@my-alpha-ai.com now has stripe_customer_id stored. Free user test_free_user_iter29@my-alpha-ai.com also has stripe_customer_id after testing. Key test IDs: manage-stripe-billing-btn (on /billing page), manage-billing-btn (on /me/strategies page). The portal URL returned is a real Stripe test URL that redirects to Stripe's hosted billing portal.",
+  "tests_executed": [
+    {
+      "test": "POST /api/billing/portal requires authentication",
+      "result": "PASS",
+      "details": "Returns 401 without auth token"
+    },
+    {
+      "test": "POST /api/billing/portal requires return_url field",
+      "result": "PASS",
+      "details": "Returns 422 for missing required field"
+    },
+    {
+      "test": "POST /api/billing/portal creates session for pro user",
+      "result": "PASS",
+      "details": "Returns URL starting with https://billing.stripe.com"
+    },
+    {
+      "test": "POST /api/billing/portal creates Stripe customer for free user",
+      "result": "PASS",
+      "details": "Creates new Stripe customer and returns portal URL"
+    },
+    {
+      "test": "POST /api/billing/portal reuses existing Stripe customer",
+      "result": "PASS",
+      "details": "Both consecutive calls succeed (customer reuse is internal)"
+    },
+    {
+      "test": "GET /api/billing/overview works correctly",
+      "result": "PASS",
+      "details": "Returns active_subscriptions, monthly_cost, total_spent, total_payments, currency"
+    },
+    {
+      "test": "GET /api/billing/subscriptions works correctly",
+      "result": "PASS",
+      "details": "Returns active, canceled arrays with counts"
+    },
+    {
+      "test": "GET /api/billing/payments works correctly",
+      "result": "PASS",
+      "details": "Returns payments array with count"
+    },
+    {
+      "test": "GET /api/billing/overview requires auth",
+      "result": "PASS",
+      "details": "Returns 401 without auth token"
+    },
+    {
+      "test": "GET /api/billing/subscriptions requires auth",
+      "result": "PASS",
+      "details": "Returns 401 without auth token"
+    },
+    {
+      "test": "GET /api/billing/payments requires auth",
+      "result": "PASS",
+      "details": "Returns 401 without auth token"
+    },
+    {
+      "test": "Unauthenticated user redirected to /login",
+      "result": "PASS",
+      "details": "Accessing /billing without auth redirects to /login"
+    },
+    {
+      "test": "Billing portal page loads with overview cards",
+      "result": "PASS",
+      "details": "Shows Active Subscriptions: 1, Monthly Cost: $9.99, Total Spent: $0.00, Total Payments: 0"
+    },
+    {
+      "test": "Manage Billing button exists on /billing",
+      "result": "PASS",
+      "details": "Button with data-testid='manage-stripe-billing-btn' found and enabled"
+    },
+    {
+      "test": "Manage Billing button shows loading state",
+      "result": "PASS",
+      "details": "Button shows spinner (animate-spin) when clicked"
+    },
+    {
+      "test": "Subscriptions tab shows active and canceled subscriptions",
+      "result": "PASS",
+      "details": "1 active subscription, 4 canceled subscriptions displayed"
+    },
+    {
+      "test": "Payment History tab shows payment table",
+      "result": "PASS",
+      "details": "4 payment rows displayed with Date, Strategy, Amount, Status columns"
+    },
+    {
+      "test": "MyStrategiesPage has Manage Billing button",
+      "result": "PASS",
+      "details": "Button with data-testid='manage-billing-btn' links to /billing"
+    },
+    {
+      "test": "Clicking Manage Billing on MyStrategiesPage navigates to /billing",
+      "result": "PASS",
+      "details": "Successfully navigates to billing portal page"
+    }
+  ],
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": [],
+    "note": "All billing APIs use real Stripe test mode via Emergent proxy (https://integrations.emergentagent.com/stripe). Portal sessions return real Stripe test URLs."
+  }
+}

@@ -3,11 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CreditCard, ArrowUpRight, Receipt, DollarSign,
-  Layers, CheckCircle, XCircle, Clock, AlertCircle
+  Layers, CheckCircle, XCircle, Clock, AlertCircle, ExternalLink, Loader2
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { UnsubscribeButton } from "../components/marketplace/SubscribeButtons";
 import axios from "axios";
@@ -43,6 +44,7 @@ const BillingPortalPage = () => {
   const [subscriptions, setSubscriptions] = useState({ active: [], canceled: [] });
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [tab, setTab] = useState("subscriptions");
 
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -69,6 +71,21 @@ const BillingPortalPage = () => {
     if (!token) { navigate("/login"); return; }
     fetchAll();
   }, [token, fetchAll, navigate]);
+
+  const openStripePortal = async () => {
+    setPortalLoading(true);
+    try {
+      const res = await axios.post(`${API}/billing/portal`, {
+        return_url: window.location.href,
+      }, { headers });
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to open billing portal");
+      setPortalLoading(false);
+    }
+  };
 
   const OverviewCards = () => {
     if (!overview) return null;
@@ -106,11 +123,22 @@ const BillingPortalPage = () => {
             <h1 className="text-2xl font-bold font-['Outfit'] text-white" data-testid="billing-title">Billing & Subscriptions</h1>
             <p className="text-sm text-zinc-500 mt-1">Manage your subscriptions and payment history</p>
           </div>
-          <Link to="/strategy-marketplace">
-            <Button variant="outline" className="border-zinc-700 text-zinc-300 text-sm" data-testid="browse-marketplace-btn">
-              <Layers className="w-3.5 h-3.5 mr-1.5" /> Browse Marketplace
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              onClick={openStripePortal}
+              disabled={portalLoading}
+              className="bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-sm"
+              data-testid="manage-stripe-billing-btn"
+            >
+              {portalLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <ExternalLink className="w-3.5 h-3.5 mr-1.5" />}
+              Manage Billing
             </Button>
-          </Link>
+            <Link to="/strategy-marketplace">
+              <Button variant="outline" className="border-zinc-700 text-zinc-300 text-sm" data-testid="browse-marketplace-btn">
+                <Layers className="w-3.5 h-3.5 mr-1.5" /> Browse Marketplace
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         {loading ? (
