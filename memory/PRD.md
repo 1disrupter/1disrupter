@@ -124,10 +124,39 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 
 ## Backlog
 - **P1**: Order Execution Engine (Phase 2 of Live Trading) ✅ DONE
+- **P1**: Automatic Frontend Tracking Middleware ✅ DONE
+- **P1**: Stripe Billing Portal (self-serve subscription management) ✅ DONE
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
 - **P3**: MRR trend chart for subscription health dashboard (Recharts)
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
 - **P3**: User retention analytics (DAU/MAU ratio)
+
+### Automatic Frontend Tracking Middleware (Apr 2026)
+- **Module**: `/app/frontend/src/lib/trackingMiddleware.js` — axios interceptor + sendBeacon tracker
+- **Tracking Points**:
+  - Auto-tracks every API call via axios interceptor (endpoint, method, status, latency_ms)
+  - Tracks page views on every route change via `trackPageViewEvent`
+  - Sends all events to `POST /api/admin/track` (fire-and-forget, never blocks UI)
+  - Uses `navigator.sendBeacon` for reliability on page unload
+  - Skips tracking its own `/admin/track` endpoint to prevent infinite loop
+- **Integration**: `useTracking` hook in App.js initializes middleware on mount
+- **Backend**: `POST /api/admin/track` records events in `analytics_events` collection with `is_demo` tag
+- **Testing**: 100% passed (iteration 59)
+
+### Stripe Billing Portal (Apr 2026)
+- **Module**: `/app/backend/routes/billing.py` — 3 endpoints
+- **Endpoints**:
+  - `GET /api/billing/overview` — billing summary (active subs, monthly cost, total spent, total payments)
+  - `GET /api/billing/subscriptions` — active + canceled subscriptions with strategy details
+  - `GET /api/billing/payments` — payment transaction history
+- **Frontend**: `/billing` route — `BillingPortalPage.jsx` with:
+  - 4 overview metric cards (Active Subscriptions, Monthly Cost, Total Spent, Total Payments)
+  - Subscriptions tab: active subs with Unsubscribe, canceled subs with Resubscribe link
+  - Payments tab: payment history table (date, strategy, amount, status)
+  - Auth guard (redirects to /login if unauthenticated)
+  - "Browse Marketplace" button linking to /strategy-marketplace
+- **Integration**: "Manage Billing" button added to MyStrategiesPage (/me/strategies)
+- **Testing**: Backend 14/14, Frontend 100% (iteration 59)
 
 ### Strategy Marketplace Backend (Apr 2026)
 - **Module**: `/app/backend/routes/marketplace.py` — standalone, does not touch Strategy Lab
