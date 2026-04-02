@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Star, Layers } from "lucide-react";
+import { ArrowUpRight, Star, Layers, CreditCard } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -47,6 +47,9 @@ const MyStrategiesPage = () => {
           </div>
           <Link to="/marketplace">
             <Button variant="outline" className="border-zinc-700 text-zinc-300 text-sm"><Layers className="w-3.5 h-3.5 mr-1.5" /> Browse Marketplace</Button>
+          </Link>
+          <Link to="/billing">
+            <Button variant="outline" className="border-zinc-700 text-zinc-300 text-sm" data-testid="manage-billing-btn"><CreditCard className="w-3.5 h-3.5 mr-1.5" /> Manage Billing</Button>
           </Link>
         </motion.div>
 

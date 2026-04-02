@@ -38,6 +38,7 @@ import MyStrategiesPage from "./pages/MyStrategiesPage";
 import CreatorDashboardPage from "./pages/CreatorDashboardPage";
 import ExecutionSettingsPage from "./pages/ExecutionSettingsPage";
 import ExecutionMonitorPage from "./pages/ExecutionMonitorPage";
+import BillingPortalPage from "./pages/BillingPortalPage";
 import MobileNetworkBanner from "./components/MobileNetworkBanner";
 import MobileBottomNav from "./components/MobileBottomNav";
 import useMobileOptimizations from "./hooks/useMobileOptimizations";
@@ -109,6 +110,7 @@ function App() {
               <Route path="/me/strategies" element={<MyStrategiesPage />} />
               <Route path="/me/execution-settings" element={<ExecutionSettingsPage />} />
               <Route path="/admin/execution-monitor" element={<ExecutionMonitorPage />} />
+              <Route path="/billing" element={<BillingPortalPage />} />
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />

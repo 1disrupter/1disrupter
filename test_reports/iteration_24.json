@@ -73,7 +73,7 @@
 
   "test_credentials": {
     "admin_key": "alphaai_admin_2026",
-    "admin_analytics_url": "https://alpha-ai-preview.preview.emergentagent.com/admin/analytics?admin_key=alphaai_admin_2026"
+    "admin_analytics_url": "https://alpha-trading-hub.preview.emergentagent.com/admin/analytics?admin_key=alphaai_admin_2026"
   },
 
   "seed_data_creation": "None - used existing analytics_events data",

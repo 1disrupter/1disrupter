@@ -57,7 +57,7 @@ class TestCheckoutEndpoint:
         """Pro user (not owner) should get a Stripe checkout URL"""
         response = api_client.post(
             f"{BASE_URL}/api/marketplace/strategies/{STRATEGY_ID}/checkout",
-            json={"origin_url": "https://alpha-ai-preview.preview.emergentagent.com"},
+            json={"origin_url": "https://alpha-trading-hub.preview.emergentagent.com"},
             headers={"Authorization": f"Bearer {pro_user_token}"}
         )
         
@@ -79,7 +79,7 @@ class TestCheckoutEndpoint:
         """Creator cannot subscribe to their own strategy"""
         response = api_client.post(
             f"{BASE_URL}/api/marketplace/strategies/{STRATEGY_ID}/checkout",
-            json={"origin_url": "https://alpha-ai-preview.preview.emergentagent.com"},
+            json={"origin_url": "https://alpha-trading-hub.preview.emergentagent.com"},
             headers={"Authorization": f"Bearer {free_user_token}"}
         )
         
@@ -92,7 +92,7 @@ class TestCheckoutEndpoint:
         """Checkout should require authentication"""
         response = api_client.post(
             f"{BASE_URL}/api/marketplace/strategies/{STRATEGY_ID}/checkout",
-            json={"origin_url": "https://alpha-ai-preview.preview.emergentagent.com"}
+            json={"origin_url": "https://alpha-trading-hub.preview.emergentagent.com"}
         )
         
         assert response.status_code in [401, 403], f"Expected 401/403 without auth, got {response.status_code}"
@@ -102,7 +102,7 @@ class TestCheckoutEndpoint:
         """Checkout should return 404 for non-existent strategy"""
         response = api_client.post(
             f"{BASE_URL}/api/marketplace/strategies/invalid-strategy-id-12345/checkout",
-            json={"origin_url": "https://alpha-ai-preview.preview.emergentagent.com"},
+            json={"origin_url": "https://alpha-trading-hub.preview.emergentagent.com"},
             headers={"Authorization": f"Bearer {pro_user_token}"}
         )
         
