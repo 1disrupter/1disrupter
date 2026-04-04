@@ -151,6 +151,14 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Cookie Consent Banner** — `CookieConsent.jsx` bottom banner with Accept/Reject. Stores consent in `localStorage` key `alphaai_cookie_consent`. Hidden once consent given.
 - **Testing**: 25/25 tests passed (iteration 64). All items verified, no regressions.
 
+### Strategy Leaderboard (Apr 4, 2026)
+- **Leaderboard Page** — `/strategies` route with sortable table of all 7 public strategies. Columns: rank, name, risk badge, return%, Sharpe, win rate, max drawdown, category, View button.
+- **Backend Endpoint** — `GET /api/marketplace/strategies/leaderboard` with `sort_by` and `order` params. 60s cache TTL. Enriched with performance data from `strategy_performance` collection.
+- **Sorting** — Client-side column header clicks toggle sort direction (desc/asc). Supported: total_return, sharpe_ratio, win_rate, max_drawdown.
+- **Homepage Integration** — "View Full Leaderboard" button under Featured Strategies section links to `/strategies`.
+- **Loading Skeletons** — RowSkeleton component renders 6 placeholder rows during data fetch.
+- **Testing**: 100% pass (iteration 66). 20 backend + all frontend tests passed. No regressions.
+
 ### Strategy Interactions & Featured Strategies (Apr 4, 2026)
 - **3 Featured AI Strategies Seeded** — Alpha Momentum BTC (Medium), ETH Reversal Sniper (Medium-High), SOL Breakout Pulse (High). Each with full metadata: Sharpe ratio, win rate, max drawdown, total return, logic description, risk label.
 - **Featured Strategies Section** — New landing page section ("Top-Performing AI Strategies") showing 3 performance cards with metrics, risk labels, and "View Strategy" buttons.
