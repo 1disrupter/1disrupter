@@ -17,7 +17,7 @@ import os
 import uuid
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://alpha-trading-hub.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://crypto-signals-web2.preview.emergentagent.com')
 
 # Test credentials from test_credentials.md
 PRO_USER_EMAIL = "demo_test2@my-alpha-ai.com"

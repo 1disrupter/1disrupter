@@ -122,7 +122,19 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Frontend**: Demo Mode banner with toggle switch at top of admin panel, Analytics tab with 5 data cards (Page Views, API Calls, WS Connections, Strategy Interactions, Checkout Events)
 - **Testing**: Backend 11/11, Frontend all flows (iteration 58)
 
+### Go-Live Readiness — P0 SaaS-Only Fixes (Apr 4, 2026)
+- **P0-1: Dashboard Wallet Un-Gating** — Authenticated users without a wallet now see the full dashboard (no "Connect to unlock" prompt). Logic: `DashboardPage.jsx` line 574 checks `authUser` and falls through to full render.
+- **P0-2: Live Crypto Price Feed Fix** — Fixed missing `httpx` import in `fund.py`. `GET /api/market/live-prices` now returns real Kraken data with `source: "kraken"`.
+- **P0-3: Hero SaaS Copy** — Removed all blockchain/Web3/MetaMask messaging from `LandingPage.jsx` hero. Now reads "AI-Generated Crypto Strategies. Verified In Real-Time."
+- **P0-4: 404 Catch-All Route** — Added `<Route path="*" element={<NotFoundPage />} />` to `App.js`. New `NotFoundPage.jsx` with branded 404 UI + Home/Go Back buttons.
+- **P0-5: Favicon** — Added SVG favicon (`/public/favicon.svg`) and `<link rel="icon">` to `index.html`.
+- **P0-6: Meta Description** — Updated from "A product of emergent.sh" to "My-AlphaAI — AI-powered crypto trading strategies..."
+- **P0-7: Wallet Navigation Cleanup** — Removed wallet connect/disconnect menu items, network badge, and ETH balance from `Navigation.jsx` user dropdown.
+- **Refactoring**: Removed stale `Dashboard.jsx` (438 lines dead code). Fixed `DashboardPage.jsx` token key from `access_token` to `alphaai_tokens`.
+- **Testing**: All 7 fixes verified via curl + Playwright + testing agent.
+
 ## Backlog
+- **P0**: Go-Live SaaS-Only P0 Fixes ✅ DONE (Apr 4, 2026)
 - **P1**: Order Execution Engine (Phase 2 of Live Trading) ✅ DONE
 - **P1**: Automatic Frontend Tracking Middleware ✅ DONE
 - **P1**: Stripe Billing Portal (self-serve subscription management) ✅ DONE
@@ -132,7 +144,14 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **P1**: Onboarding Modal (First-Time UX) ✅ DONE
 - **P1**: UI Polish & Micro-Interactions ✅ DONE
 - **P1**: Affiliate Program (Phase 1 — Referral System) ✅ DONE
+- **P1**: Terms of Service & Privacy Policy pages (Go-Live)
+- **P1**: ErrorBoundary component in React route tree (Go-Live)
+- **P1**: OpenGraph / Twitter meta tags in index.html (Go-Live)
+- **P1**: manifest.json & robots.txt (Go-Live)
+- **P2**: Automated referral commission tracking (Phase 2)
+- **P2**: Invoice download / email receipts in billing page
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
+- **P2**: Real-time live events feed via WebSocket (analytics)
 - **P3**: MRR trend chart for subscription health dashboard (Recharts) ✅ DONE (merged into MRR trends)
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
 - **P3**: User retention analytics (DAU/MAU ratio)

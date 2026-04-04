@@ -206,26 +206,7 @@ const Navigation = () => {
                   </Badge>
                 )}
                 
-                {wallet && (
-                  <>
-                    {chainId && (
-                      <Badge 
-                        className={`hidden lg:flex ${isOnSepolia ? 'bg-[#00FF94]/20 text-[#00FF94]' : 'bg-[#FFB800]/20 text-[#FFB800] cursor-pointer'}`}
-                        onClick={!isOnSepolia ? switchToSepolia : undefined}
-                        data-testid="network-badge"
-                      >
-                        {isOnSepolia ? 'Sepolia' : 'Wrong Net'}
-                      </Badge>
-                    )}
-                    
-                    {ethBalance && (
-                      <div className="hidden xl:flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-800/50 border border-zinc-700">
-                        <span className="text-[10px] text-zinc-400">ETH</span>
-                        <span className="text-xs font-mono font-bold text-white">{parseFloat(ethBalance).toFixed(4)}</span>
-                      </div>
-                    )}
-                  </>
-                )}
+                {/* Wallet controls hidden for SaaS-only launch (Phase 2 Web3) */}
                 
                 {isAuthenticated ? (
                   <>
@@ -247,23 +228,7 @@ const Navigation = () => {
                         <p className="text-xs text-zinc-500">{user?.email}</p>
                       </div>
                       
-                      {wallet ? (
-                        <>
-                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(wallet)}>
-                            <Copy className="w-4 h-4 mr-2" />Copy Wallet
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => window.open(`https://sepolia.etherscan.io/address/${wallet}`, '_blank')}>
-                            <ExternalLink className="w-4 h-4 mr-2" />View on Etherscan
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={disconnectWallet} className="text-[#FFB800]">
-                            <Wallet className="w-4 h-4 mr-2" />Disconnect Wallet
-                          </DropdownMenuItem>
-                        </>
-                      ) : (
-                        <DropdownMenuItem onClick={connectWallet}>
-                          <Wallet className="w-4 h-4 mr-2" />Connect Wallet
-                        </DropdownMenuItem>
-                      )}
+                      {/* Wallet connect/disconnect hidden for SaaS-only launch */}
                       
                       <DropdownMenuItem onClick={logout} className="text-red-400">
                         <LogOut className="w-4 h-4 mr-2" />Sign Out

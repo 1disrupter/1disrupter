@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://alpha-trading-hub.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://crypto-signals-web2.preview.emergentagent.com')
 ADMIN_KEY = "alphaai_admin_2026"
 
 

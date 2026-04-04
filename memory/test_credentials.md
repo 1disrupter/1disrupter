@@ -1,22 +1,20 @@
-# Test Credentials
+# Test Credentials for My-AlphaAI
 
-## Admin Users
-- Email: admin@my-alpha-ai.com
-- Password: Admin1234!
-- Admin Key: alphaai_admin_2026
+## User Accounts
+| Role | Email | Password | Notes |
+|------|-------|----------|-------|
+| Admin (Elite) | mar-brick@hotmail.com | Martin2026! | Full admin access, admin_key: alphaai_admin_2026 |
+| Pro User | demo_test2@my-alpha-ai.com | NewPass1234! | Referral code: KLYYBMTS |
+| Free User | test_free_user_iter29@my-alpha-ai.com | TestPass123! | Basic tier |
 
-- Email: martin-admin@alphaai.com
-- Password: Martin2026!
-- Admin Key: alphaai_admin_2026
+## App URL
+- Preview: https://crypto-signals-web2.preview.emergentagent.com
 
-- Email: mar-brick@hotmail.com
-- Password: Martin2026!
-- Admin Key: alphaai_admin_2026
+## API Auth
+- Login: POST /api/auth/login with {"email": "...", "password": "..."}
+- Token field in response: `access_token`
+- localStorage key: `alphaai_tokens` (JSON with access_token + refresh_token)
 
-## Pro User
-- Email: demo_test2@my-alpha-ai.com
-- Password: NewPass1234!
-
-## Free User
-- Email: test_free_user_iter29@my-alpha-ai.com
-- Password: TestPass123!
+## Admin Access
+- Admin key for admin endpoints: `alphaai_admin_2026`
+- Stripe test key: `sk_test_emergent` (via Emergent proxy)

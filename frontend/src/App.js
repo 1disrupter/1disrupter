@@ -39,6 +39,7 @@ import CreatorDashboardPage from "./pages/CreatorDashboardPage";
 import ExecutionSettingsPage from "./pages/ExecutionSettingsPage";
 import ExecutionMonitorPage from "./pages/ExecutionMonitorPage";
 import BillingPortalPage from "./pages/BillingPortalPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import MobileNetworkBanner from "./components/MobileNetworkBanner";
 import MobileBottomNav from "./components/MobileBottomNav";
 import useMobileOptimizations from "./hooks/useMobileOptimizations";
@@ -124,6 +125,8 @@ function App() {
               <Route path="/following" element={<FollowingPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/settings" element={<MobileSettingsPage />} />
+              {/* 404 Catch-All */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
             </TrackingWrapper>
           </BrowserRouter>

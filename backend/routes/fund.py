@@ -7,6 +7,7 @@ from typing import List, Optional, Dict
 from datetime import datetime, timezone
 import uuid
 import random
+import httpx
 from database import db, logger
 from models.schemas import Investor, InvestorCreate, DepositRequest, WithdrawRequest, StatusCheck, StatusCheckCreate
 from services.signal_service import signal_service

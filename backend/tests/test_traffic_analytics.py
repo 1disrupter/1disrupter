@@ -8,7 +8,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://alpha-trading-hub.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://crypto-signals-web2.preview.emergentagent.com')
 ADMIN_KEY = "alphaai_admin_2026"
 WRONG_ADMIN_KEY = "wrong_key_123"
 

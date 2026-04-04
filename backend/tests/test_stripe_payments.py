@@ -49,7 +49,7 @@ class TestStripePaymentEndpoints:
     
     def test_create_checkout_monthly(self):
         """Test POST /api/payments/checkout - Creates checkout session for monthly"""
-        origin_url = "https://alpha-trading-hub.preview.emergentagent.com"
+        origin_url = "https://crypto-signals-web2.preview.emergentagent.com"
         test_wallet = f"TEST_wallet_{uuid.uuid4().hex[:8]}"
         
         payload = {
@@ -87,7 +87,7 @@ class TestStripePaymentEndpoints:
     
     def test_create_checkout_yearly(self):
         """Test POST /api/payments/checkout - Creates checkout session for yearly"""
-        origin_url = "https://alpha-trading-hub.preview.emergentagent.com"
+        origin_url = "https://crypto-signals-web2.preview.emergentagent.com"
         test_wallet = f"TEST_wallet_{uuid.uuid4().hex[:8]}"
         
         payload = {
@@ -119,7 +119,7 @@ class TestStripePaymentEndpoints:
     
     def test_create_checkout_without_wallet(self):
         """Test POST /api/payments/checkout - Works without wallet address"""
-        origin_url = "https://alpha-trading-hub.preview.emergentagent.com"
+        origin_url = "https://crypto-signals-web2.preview.emergentagent.com"
         
         payload = {
             "package_id": "pro_monthly",
@@ -139,7 +139,7 @@ class TestStripePaymentEndpoints:
     
     def test_create_checkout_invalid_package(self):
         """Test POST /api/payments/checkout - Invalid package returns error"""
-        origin_url = "https://alpha-trading-hub.preview.emergentagent.com"
+        origin_url = "https://crypto-signals-web2.preview.emergentagent.com"
         
         payload = {
             "package_id": "invalid_package",
@@ -159,7 +159,7 @@ class TestStripePaymentEndpoints:
     def test_get_payment_status(self):
         """Test GET /api/payments/status/{session_id} - Gets payment status"""
         # First create a checkout session to get a valid session_id
-        origin_url = "https://alpha-trading-hub.preview.emergentagent.com"
+        origin_url = "https://crypto-signals-web2.preview.emergentagent.com"
         test_wallet = f"TEST_wallet_{uuid.uuid4().hex[:8]}"
         
         checkout_payload = {
@@ -250,7 +250,7 @@ class TestPaymentIntegrationFlow:
     
     def test_full_checkout_flow_creation(self):
         """Test complete checkout flow creation"""
-        origin_url = "https://alpha-trading-hub.preview.emergentagent.com"
+        origin_url = "https://crypto-signals-web2.preview.emergentagent.com"
         test_wallet = f"TEST_wallet_{uuid.uuid4().hex[:8]}"
         
         # Step 1: Get packages

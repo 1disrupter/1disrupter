@@ -30,7 +30,7 @@ const LiveMetricsTerminal = () => {
     { label: "Win Rate", value: "68.3%", color: "text-[#00FF94]" },
     { label: "Max Drawdown", value: "-4.2%", color: "text-white" },
     { label: "Execution Latency", value: "12ms", color: "text-white" },
-    { label: "Network", value: "Ethereum Sepolia", color: "text-white/80" },
+    { label: "Data Source", value: "Real-Time Feed", color: "text-white/80" },
   ];
 
   return (
@@ -85,10 +85,10 @@ const LiveMetricsTerminal = () => {
       {/* Footer */}
       <div className="border-t border-white/5 px-6 py-3 lg:px-8 flex items-center justify-between">
         <span className="font-data text-[10px] text-white/25 uppercase tracking-widest">
-          Last attestation: 2 hrs ago
+          Updated: Real-time
         </span>
         <span className="font-data text-[10px] text-[#7B61FF]/60 uppercase tracking-widest">
-          On-Chain Verified
+          Live Performance
         </span>
       </div>
     </motion.div>
@@ -282,7 +282,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                 data-testid="hero-overline"
               >
-                On-Chain Verified Performance
+                AI-Powered Crypto Strategy Performance
                 <span className="inline-block px-2 py-0.5 text-[10px] rounded bg-[#7B61FF]/20 text-[#7B61FF] font-medium tracking-normal normal-case" data-testid="beta-badge">Beta</span>
               </motion.span>
 
@@ -299,7 +299,7 @@ const LandingPage = () => {
                 Strategies.{' '}
                 <span className="text-[#7B61FF]">Verified</span>{' '}
                 <br className="hidden lg:block" />
-                On-Chain.
+                In Real-Time.
               </motion.h1>
 
               {/* Sub-headline */}
@@ -310,7 +310,7 @@ const LandingPage = () => {
                 transition={{ delay: 0.22, duration: 0.5 }}
                 data-testid="hero-description"
               >
-                My-AlphaAI deploys quantitative strategies and writes every performance metric — Sharpe ratio, win rate, drawdown — directly to the blockchain. No screenshots. No manipulated backtests. Just verifiable data.
+                My-AlphaAI deploys quantitative strategies and tracks every performance metric — Sharpe ratio, win rate, drawdown — with full transparency. No screenshots. No manipulated backtests. Just verifiable data.
               </motion.p>
 
               {/* Micro-copy */}
@@ -321,7 +321,7 @@ const LandingPage = () => {
                 transition={{ delay: 0.32, duration: 0.4 }}
                 data-testid="hero-microcopy"
               >
-                Transparent metrics. Immutable records. Built for traders who verify.
+                Transparent metrics. Auditable records. Built for traders who verify.
               </motion.p>
 
               {/* CTA Buttons */}
@@ -426,7 +426,7 @@ const LandingPage = () => {
             data-testid="trust-bar"
           >
             {[
-              { icon: ShieldCheck, title: "Verified On-Chain", sub: "Metrics written to Ethereum" },
+              { icon: ShieldCheck, title: "Live Performance", sub: "Metrics tracked and verified in real-time" },
               { icon: Database, title: "Transparent Metrics", sub: "Sharpe, drawdown, win rate — public" },
               { icon: Terminal, title: "Built for Serious Traders", sub: "Institutional-grade quantitative engine" },
               { icon: Activity, title: "Zero Hype, Real Data", sub: "No screenshots. No manipulation." },
@@ -809,7 +809,7 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            {['No Wallet Required', 'No Personal Data Stored', 'On-Chain Verified Signals', 'Cancel Anytime'].map((label, i) => (
+            {['No Credit Card Required', 'No Personal Data Stored', 'Real-Time Verified Signals', 'Cancel Anytime'].map((label, i) => (
               <motion.div
                 key={label}
                 className="px-4 py-2 bg-white/5 rounded-lg border border-white/10 text-sm text-zinc-300 font-data"

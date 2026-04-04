@@ -547,7 +547,8 @@ const DashboardPage = () => {
   // Fetch exchange status
   useEffect(() => {
     if (!authUser) { setExchangeLoading(false); return; }
-    const token = localStorage.getItem('access_token');
+    const stored = localStorage.getItem('alphaai_tokens');
+    const token = stored ? JSON.parse(stored).access_token : null;
     if (!token) { setExchangeLoading(false); return; }
     fetch(`${API}/exchange/validate`, {
       method: 'POST',
@@ -572,87 +573,96 @@ const DashboardPage = () => {
   };
 
   if (!wallet && !demoMode) {
-    return (
-      <div className="min-h-screen pt-24 px-4 pb-12" data-testid="dashboard-onboarding">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-[#7B61FF]/10">
-                <BarChart3 className="w-6 h-6 text-[#7B61FF]" />
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold font-['Outfit'] tracking-tight">Dashboard</h1>
-            </div>
-            <p className="text-zinc-500 text-sm md:text-base ml-0 md:ml-14">Real-time AI signals, portfolio tracking, and trading controls</p>
-          </motion.div>
-
-          {/* Preview Stats */}
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: 'Active Signals', value: '12', sub: 'Real-time' },
-              { label: 'Win Rate', value: '68%', sub: 'Last 30 days' },
-              { label: 'Avg Return', value: '+4.2%', sub: 'Per signal' },
-              { label: 'Active Pairs', value: '8', sub: 'BTC, ETH, SOL...' },
-            ].map((s, i) => (
-              <Card key={i} className="bg-[#0A0A0A] border-zinc-800/50">
-                <CardContent className="p-5">
-                  <p className="text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">{s.label}</p>
-                  <p className="text-xl font-bold font-['JetBrains_Mono'] text-white/40">{s.value}</p>
-                  <p className="text-[11px] text-zinc-700 mt-1">{s.sub}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </motion.div>
-
-          {/* Connect Card */}
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <Card className="bg-[#0A0A0A] border-zinc-800/50" data-testid="connect-wallet-prompt">
-              <CardContent className="p-8 text-center">
-                <Wallet className="w-12 h-12 mx-auto mb-4 text-[#7B61FF]" />
-                <h2 className="text-xl font-bold font-['Outfit'] mb-2">Connect to unlock your dashboard</h2>
-                <p className="text-sm text-zinc-500 mb-6 max-w-md mx-auto">
-                  Connect your wallet to view live AI signals, track your portfolio, and start trading
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <WalletConnectButton />
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setGlobalDemoMode()}
-                    className="rounded-full border-zinc-700 hover:border-[#7B61FF] hover:text-[#7B61FF]"
-                    data-testid="try-demo-btn"
-                  >
-                    <Eye className="w-4 h-4 mr-2" /> Try Demo Mode
-                  </Button>
+    // SaaS mode: authenticated users bypass wallet gate
+    if (authUser) {
+      // Fall through to render the full dashboard below
+    } else {
+      return (
+        <div className="min-h-screen pt-24 px-4 pb-12" data-testid="dashboard-onboarding">
+          <div className="max-w-5xl mx-auto">
+            {/* Header */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-[#7B61FF]/10">
+                  <BarChart3 className="w-6 h-6 text-[#7B61FF]" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <h1 className="text-3xl md:text-4xl font-bold font-['Outfit'] tracking-tight">Dashboard</h1>
+              </div>
+              <p className="text-zinc-500 text-sm md:text-base ml-0 md:ml-14">Real-time AI signals, portfolio tracking, and trading controls</p>
+            </motion.div>
 
-          {/* Preview Signal Cards */}
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-8">
-            <h3 className="text-sm text-zinc-600 uppercase tracking-wider mb-4">Recent Signal Preview</h3>
-            <div className="grid md:grid-cols-3 gap-4 opacity-50">
+            {/* Preview Stats */}
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { pair: 'BTC/USD', side: 'BUY', conf: 87, price: '$67,240' },
-                { pair: 'ETH/USD', side: 'SELL', conf: 74, price: '$1,984' },
-                { pair: 'SOL/USD', side: 'BUY', conf: 69, price: '$82.10' },
+                { label: 'Active Signals', value: '12', sub: 'Real-time' },
+                { label: 'Win Rate', value: '68%', sub: 'Last 30 days' },
+                { label: 'Avg Return', value: '+4.2%', sub: 'Per signal' },
+                { label: 'Active Pairs', value: '8', sub: 'BTC, ETH, SOL...' },
               ].map((s, i) => (
                 <Card key={i} className="bg-[#0A0A0A] border-zinc-800/50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-mono font-bold">{s.pair}</span>
-                      <Badge className={s.side === 'BUY' ? 'bg-[#00FF94]/15 text-[#00FF94]' : 'bg-[#ef4444]/15 text-[#ef4444]'}>{s.side}</Badge>
-                    </div>
-                    <p className="text-lg font-mono font-bold text-white/60">{s.price}</p>
-                    <p className="text-xs text-zinc-600 mt-1">{s.conf}% confidence</p>
+                  <CardContent className="p-5">
+                    <p className="text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">{s.label}</p>
+                    <p className="text-xl font-bold font-['JetBrains_Mono'] text-white/40">{s.value}</p>
+                    <p className="text-[11px] text-zinc-700 mt-1">{s.sub}</p>
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </motion.div>
+            </motion.div>
+
+            {/* Sign In / Demo Card */}
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Card className="bg-[#0A0A0A] border-zinc-800/50" data-testid="dashboard-signin-prompt">
+                <CardContent className="p-8 text-center">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-4 text-[#7B61FF]" />
+                  <h2 className="text-xl font-bold font-['Outfit'] mb-2">Sign in to access your dashboard</h2>
+                  <p className="text-sm text-zinc-500 mb-6 max-w-md mx-auto">
+                    Log in to view live AI signals, track your portfolio, and start trading
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link to="/login">
+                      <Button className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 px-6">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setGlobalDemoMode()}
+                      className="rounded-full border-zinc-700 hover:border-[#7B61FF] hover:text-[#7B61FF]"
+                      data-testid="try-demo-btn"
+                    >
+                      <Eye className="w-4 h-4 mr-2" /> Try Demo Mode
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Preview Signal Cards */}
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-8">
+              <h3 className="text-sm text-zinc-600 uppercase tracking-wider mb-4">Recent Signal Preview</h3>
+              <div className="grid md:grid-cols-3 gap-4 opacity-50">
+                {[
+                  { pair: 'BTC/USD', side: 'BUY', conf: 87, price: '$67,240' },
+                  { pair: 'ETH/USD', side: 'SELL', conf: 74, price: '$1,984' },
+                  { pair: 'SOL/USD', side: 'BUY', conf: 69, price: '$82.10' },
+                ].map((s, i) => (
+                  <Card key={i} className="bg-[#0A0A0A] border-zinc-800/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-mono font-bold">{s.pair}</span>
+                        <Badge className={s.side === 'BUY' ? 'bg-[#00FF94]/15 text-[#00FF94]' : 'bg-[#ef4444]/15 text-[#ef4444]'}>{s.side}</Badge>
+                      </div>
+                      <p className="text-lg font-mono font-bold text-white/60">{s.price}</p>
+                      <p className="text-xs text-zinc-600 mt-1">{s.conf}% confidence</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   return (
