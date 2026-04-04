@@ -40,6 +40,10 @@ import ExecutionSettingsPage from "./pages/ExecutionSettingsPage";
 import ExecutionMonitorPage from "./pages/ExecutionMonitorPage";
 import BillingPortalPage from "./pages/BillingPortalPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ErrorBoundary from "./components/ErrorBoundary";
+import CookieConsent from "./components/CookieConsent";
 import MobileNetworkBanner from "./components/MobileNetworkBanner";
 import MobileBottomNav from "./components/MobileBottomNav";
 import useMobileOptimizations from "./hooks/useMobileOptimizations";
@@ -76,6 +80,7 @@ function App() {
   };
 
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <WalletProvider>
         <DemoModeProvider>
@@ -125,16 +130,21 @@ function App() {
               <Route path="/following" element={<FollowingPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/settings" element={<MobileSettingsPage />} />
+              {/* Legal Pages */}
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
               {/* 404 Catch-All */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
             </TrackingWrapper>
           </BrowserRouter>
           <Toaster position="top-center" theme="dark" toastOptions={{ className: "md:!bottom-auto" }} />
+          <CookieConsent />
         </div>
         </DemoModeProvider>
       </WalletProvider>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -983,6 +983,11 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
           <BrandLockup size="small" showSubtitle={true} />
           <p className="text-sm text-zinc-500">© 2026 Martin Maughan My-Alpha Ai. All rights reserved. Not affiliated with any other Alpha AI or similarly named projects.</p>
+          <div className="flex items-center gap-4 text-xs text-zinc-600">
+            <Link to="/terms" className="hover:text-zinc-400 transition-colors" data-testid="footer-terms-link">Terms of Service</Link>
+            <span>·</span>
+            <Link to="/privacy" className="hover:text-zinc-400 transition-colors" data-testid="footer-privacy-link">Privacy Policy</Link>
+          </div>
           <PoweredByTag />
         </div>
       </footer>
