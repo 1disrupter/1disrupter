@@ -151,6 +151,28 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Cookie Consent Banner** — `CookieConsent.jsx` bottom banner with Accept/Reject. Stores consent in `localStorage` key `alphaai_cookie_consent`. Hidden once consent given.
 - **Testing**: 25/25 tests passed (iteration 64). All items verified, no regressions.
 
+### Phase 2 Features (Apr 4, 2026)
+
+**Automated Referral Commission Tracking (20% Recurring)**
+- Recurring commission processing in `track-conversion` endpoint. When a referred user renews their subscription, a new `referral_commissions` record is created with 20% commission.
+- Admin commission analytics: `GET /api/referrals/admin/commissions` returns recurring, first-time, total commissions, and pending payouts.
+- Tier-based commission rates preserved (20% bronze → 35% platinum).
+
+**Invoice PDF Generation + Download**
+- `GET /api/invoices` — list user's invoices
+- `POST /api/invoices/generate/{transaction_id}` — generate invoice for a payment
+- `GET /api/invoices/download/{invoice_id}` — download branded PDF invoice (dark theme, Alpha AI branding)
+- "Download Invoice" button added to Billing page payments table
+- Uses `reportlab` for PDF generation.
+
+**Real-Time Events Feed (WebSocket)**
+- `WS /api/ws/events` — broadcasts signal, trade, and update events every 4–12 seconds (demo mode)
+- `LiveEventsFeed.jsx` panel on Dashboard with animated event entries, WS status indicator, auto-reconnect
+- Toast notifications for new signal events via `sonner`
+- Graceful fallback: shows "Waiting for events..." when disconnected, auto-reconnects every 5s
+
+**Testing**: 94% backend (1 minor test path issue) / 100% frontend (iteration 67). All features verified.
+
 ### Strategy Leaderboard (Apr 4, 2026)
 - **Leaderboard Page** — `/strategies` route with sortable table of all 7 public strategies. Columns: rank, name, risk badge, return%, Sharpe, win rate, max drawdown, category, View button.
 - **Backend Endpoint** — `GET /api/marketplace/strategies/leaderboard` with `sort_by` and `order` params. 60s cache TTL. Enriched with performance data from `strategy_performance` collection.
@@ -193,10 +215,10 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **P1**: Onboarding Modal (First-Time UX) ✅ DONE
 - **P1**: UI Polish & Micro-Interactions ✅ DONE
 - **P1**: Affiliate Program (Phase 1 — Referral System) ✅ DONE
-- **P2**: Automated referral commission tracking (Phase 2)
-- **P2**: Invoice download / email receipts in billing page
+- **P2**: Automated referral commission tracking (Phase 2) ✅ DONE (Apr 4, 2026)
+- **P2**: Invoice download / email receipts in billing page ✅ DONE (Apr 4, 2026) — PDF only, email via Resend deferred
+- **P2**: Real-time live events feed via WebSocket (analytics) ✅ DONE (Apr 4, 2026)
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
-- **P2**: Real-time live events feed via WebSocket (analytics)
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
 - **P3**: User retention analytics (DAU/MAU ratio)
 
