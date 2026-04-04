@@ -48,7 +48,7 @@ const LivePriceTicker = ({ compact = false }) => {
           LIVE
         </div>
         {prices.slice(0, 6).map((coin) => (
-          <div key={coin.id} className="flex items-center gap-2 whitespace-nowrap">
+          <div key={coin.id} className="flex items-center gap-2 whitespace-nowrap" data-testid={`ticker-item-${coin.symbol.toLowerCase()}`}>
             <span className="font-mono font-bold text-sm">{coin.symbol}</span>
             <span className="font-mono text-sm">{formatPrice(coin.price)}</span>
             <span className={`text-xs font-mono ${coin.change_24h >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
@@ -56,6 +56,15 @@ const LivePriceTicker = ({ compact = false }) => {
             </span>
           </div>
         ))}
+        {/* Signal ticker items — ready for live signal data
+          Template per item:
+          <div className="ticker-item flex items-center gap-2 whitespace-nowrap">
+            <span className="pair font-mono font-bold text-sm">{pair}</span>
+            {direction} · {confidence}% conf
+            <span className={changeClass}>{change}</span>
+            <span className="price font-mono text-sm">{price}</span>
+          </div>
+        */}
       </div>
     );
   }

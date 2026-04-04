@@ -417,6 +417,22 @@ const LandingPage = () => {
             </motion.div>
           </div>
 
+          {/* Hero Product Screenshot */}
+          <motion.div
+            className="flex justify-center mt-8"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+            data-testid="hero-screenshot-container"
+          >
+            <img
+              className="w-full max-w-[900px] rounded-xl border border-zinc-800 shadow-[0_0_40px_rgba(124,92,252,0.15)]"
+              src="/images/dashboard-preview.jpeg"
+              alt="AlphaAI Dashboard"
+              data-testid="hero-screenshot"
+            />
+          </motion.div>
+
           {/* Trust Bar */}
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pt-14 mt-14 border-t border-white/10 w-full"
@@ -445,6 +461,11 @@ const LandingPage = () => {
               </motion.div>
             ))}
           </motion.div>
+
+          {/* Trust Strip */}
+          <p className="font-mono text-xs text-zinc-500 text-center mt-5" data-testid="trust-strip">
+            Trusted by traders in 32+ countries &middot; Signals updated in real-time &middot; Backtested before going live
+          </p>
         </div>
       </section>
 
@@ -543,6 +564,9 @@ const LandingPage = () => {
 
             <p className="text-center text-zinc-500 text-sm mt-8">Same asset. Same day. <span className="text-white">15 minutes apart.</span></p>
             <p className="text-center text-zinc-600 text-xs mt-1">One trader profited. One became exit liquidity.</p>
+            <p className="font-mono text-[11px] text-zinc-700 mt-3 text-center" data-testid="legal-note">
+              Simulated results. Past performance does not guarantee future returns.
+            </p>
           </motion.div>
         </div>
       </section>
@@ -728,6 +752,9 @@ const LandingPage = () => {
                 </Button>
               </Link>
               <p className="text-[11px] text-zinc-600 mt-3">No credit card. Cancel anytime.</p>
+              <Link to="/dashboard" className="font-mono text-xs text-zinc-500 hover:underline inline-block mt-3" data-testid="section-link-signals">
+                View all signals &rarr;
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -747,6 +774,11 @@ const LandingPage = () => {
                 <p className="text-xs text-zinc-600 mt-3">— {t.who}</p>
               </motion.div>
             ))}
+          </div>
+          <div className="text-center mt-3">
+            <Link to="/leaderboard" className="font-mono text-xs text-zinc-500 hover:underline inline-block" data-testid="section-link-leaderboard">
+              View full leaderboard &rarr;
+            </Link>
           </div>
         </div>
       </section>
