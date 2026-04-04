@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CreditCard, ArrowUpRight, Receipt, DollarSign,
-  Layers, CheckCircle, XCircle, Clock, AlertCircle, ExternalLink, Loader2
+  Layers, CheckCircle, XCircle, Clock, AlertCircle, ExternalLink, Loader2, Download
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -14,6 +14,53 @@ import { UnsubscribeButton } from "../components/marketplace/SubscribeButtons";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const InvoiceBtn = ({ txnId, token }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!txnId || !token) return;
+    setLoading(true);
+    try {
+      // Generate invoice first
+      const genRes = await axios.post(`${API}/invoices/generate/${txnId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const invoiceId = genRes.data.invoice?.id;
+      if (!invoiceId) throw new Error("No invoice ID");
+
+      // Download PDF
+      const pdfRes = await axios.get(`${API}/invoices/download/${invoiceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([pdfRes.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${txnId.slice(0, 8)}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded");
+    } catch (e) {
+      toast.error("Failed to generate invoice");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="h-7 rounded-full text-xs text-zinc-500 hover:text-[#7B61FF]"
+      onClick={handleDownload}
+      disabled={loading}
+      data-testid={`download-invoice-btn-${txnId}`}
+    >
+      {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+    </Button>
+  );
+};
 
 const statusConfig = {
   paid: { icon: CheckCircle, color: "text-emerald-400", bg: "bg-emerald-400/10", label: "Paid" },
@@ -281,6 +328,9 @@ const BillingPortalPage = () => {
                                 </td>
                                 <td className="p-3">
                                   <StatusBadge status={p.payment_status} />
+                                </td>
+                                <td className="p-3 text-center">
+                                  <InvoiceBtn txnId={p.id} token={token} />
                                 </td>
                               </tr>
                             ))}

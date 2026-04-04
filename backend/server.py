@@ -57,6 +57,8 @@ from routes.marketplace import router as marketplace_router
 from routes.marketplace_billing import router as marketplace_billing_router
 from routes.execution import router as execution_router
 from routes.billing import router as billing_router
+from routes.invoices import router as invoices_router
+from routes.ws_events import router as ws_events_router
 from services.stripe_webhook_handler import init_db as init_webhook_handler_db
 from cron.performance_attestor import init_db as init_attestor_db
 
@@ -108,6 +110,8 @@ app.include_router(marketplace_router)
 app.include_router(marketplace_billing_router)
 app.include_router(execution_router)
 app.include_router(billing_router)
+app.include_router(invoices_router)
+app.include_router(ws_events_router)
 
 
 # ============= HEALTH CHECK =============

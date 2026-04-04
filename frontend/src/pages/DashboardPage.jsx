@@ -23,6 +23,7 @@ import { useDemoMode } from "../contexts/DemoModeContext";
 import { UpgradeBanner, PaperTradingBadge } from "./PricingPage";
 import PerformanceMetrics from "../components/PerformanceMetrics";
 import NotificationSettings from "../components/NotificationSettings";
+import LiveEventsFeed from "../components/LiveEventsFeed";
 import { PoweredByTag } from "../components/BrandComponents";
 import LivePriceTicker from "../components/LivePriceTicker";
 import OnboardingModal from "../components/OnboardingModal";
@@ -1232,6 +1233,16 @@ const DashboardPage = () => {
             <NotificationSettings walletAddress={wallet || 'demo_user'} isPro={effectivePro} />
           </motion.div>
         )}
+
+        {/* LIVE EVENTS FEED */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.24 }}
+          className="mb-8"
+        >
+          <LiveEventsFeed />
+        </motion.div>
 
         {/* RECENT SIGNALS - TRUST BUILDER */}
         {!effectivePro && (

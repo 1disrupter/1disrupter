@@ -541,8 +541,43 @@ async def track_referral_conversion(
         return {"tracked": False, "reason": "No referral found"}
     
     if referral.get("status") == "converted":
-        # Handle recurring commission
-        pass
+        # Handle recurring commission — create a new commission event
+        ref_code = await db.referral_codes.find_one(
+            {"user_id": referral["referrer_id"]}, {"_id": 0}
+        )
+        conversions = ref_code.get("total_conversions", 0) if ref_code else 0
+        tier = get_tier_for_referrals(conversions)
+        commission_rate = tier["commission_rate"]
+        commission_amount = amount * commission_rate
+
+        now = datetime.now(timezone.utc)
+        commission_event = {
+            "id": str(uuid.uuid4()),
+            "referral_id": referral["id"],
+            "referrer_id": referral["referrer_id"],
+            "referee_id": referee_id,
+            "type": "recurring",
+            "plan": plan,
+            "amount": amount,
+            "commission_rate": commission_rate,
+            "commission_amount": commission_amount,
+            "created_at": now,
+        }
+        await db.referral_commissions.insert_one(commission_event)
+
+        await db.referral_codes.update_one(
+            {"user_id": referral["referrer_id"]},
+            {"$inc": {"total_earnings": commission_amount, "pending_earnings": commission_amount}}
+        )
+
+        logger.info(f"Recurring commission: ${commission_amount:.2f} for {referral['referrer_id']}")
+
+        return {
+            "tracked": True,
+            "type": "recurring",
+            "commission_amount": commission_amount,
+            "commission_rate": commission_rate,
+        }
     
     # Get referrer's tier
     ref_code = await db.referral_codes.find_one(
@@ -803,4 +838,70 @@ async def admin_referral_events(
         "range": time_range,
         "totals": {"signups": signups, "conversions": conversions},
         "daily": daily,
+    }
+
+
+@router.get("/admin/commissions")
+async def admin_commission_analytics(
+    admin_key: str = Query(...),
+    time_range: str = Query("30d", alias="range", regex="^(today|7d|30d|all)$"),
+):
+    """Admin-only: Commission analytics (recurring + first-time)."""
+    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+        raise HTTPException(status_code=403, detail="Admin access denied")
+
+    now = datetime.now(timezone.utc)
+    match_filter = {}
+    if time_range != "all":
+        cutoff = {
+            "today": now.replace(hour=0, minute=0, second=0, microsecond=0),
+            "7d": now - timedelta(days=7),
+            "30d": now - timedelta(days=30),
+        }[time_range]
+        match_filter = {"created_at": {"$gte": cutoff}}
+
+    # Total recurring commissions
+    pipeline = [
+        {"$match": match_filter} if match_filter else {"$match": {}},
+        {"$group": {
+            "_id": None,
+            "total_amount": {"$sum": "$commission_amount"},
+            "count": {"$sum": 1},
+            "avg_commission": {"$avg": "$commission_amount"},
+        }}
+    ]
+    agg = await db.referral_commissions.aggregate(pipeline).to_list(1)
+    totals = agg[0] if agg else {"total_amount": 0, "count": 0, "avg_commission": 0}
+
+    # From first-time conversions
+    first_time_pipeline = [
+        {"$match": {"status": "converted", **({"converted_at": {"$gte": cutoff}} if match_filter else {})}},
+        {"$group": {"_id": None, "total": {"$sum": "$commission_amount"}, "count": {"$sum": 1}}}
+    ]
+    first_agg = await db.referrals.aggregate(first_time_pipeline).to_list(1)
+    first_totals = first_agg[0] if first_agg else {"total": 0, "count": 0}
+
+    # Pending payouts
+    pending_pipeline = [
+        {"$match": {"pending_earnings": {"$gt": 0}}},
+        {"$group": {"_id": None, "total": {"$sum": "$pending_earnings"}}}
+    ]
+    pending_agg = await db.referral_codes.aggregate(pending_pipeline).to_list(1)
+    pending_total = pending_agg[0]["total"] if pending_agg else 0
+
+    return {
+        "range": time_range,
+        "recurring": {
+            "total_amount": round(totals.get("total_amount", 0), 2),
+            "count": totals.get("count", 0),
+            "avg_commission": round(totals.get("avg_commission", 0), 2),
+        },
+        "first_time": {
+            "total_amount": round(first_totals.get("total", 0), 2),
+            "count": first_totals.get("count", 0),
+        },
+        "total_commissions": round(
+            totals.get("total_amount", 0) + first_totals.get("total", 0), 2
+        ),
+        "pending_payouts": round(pending_total, 2),
     }
