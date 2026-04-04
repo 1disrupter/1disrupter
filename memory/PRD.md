@@ -141,8 +141,23 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Legal Disclaimer** — "Simulated results. Past performance does not guarantee future returns." under simulation result cards.
 - **Testing**: 11/11 tests passed (iteration 63). All additions verified, no regressions.
 
+### P1 Go-Live Polish (Apr 4, 2026)
+- **Terms of Service** — `/terms` route with `TermsOfService.jsx` (11 sections). Linked in landing page footer.
+- **Privacy Policy** — `/privacy` route with `PrivacyPolicy.jsx` (10 sections). Linked in landing page footer.
+- **ErrorBoundary** — `ErrorBoundary.jsx` class component wrapping entire App. Shows "Something went wrong. Please refresh." with refresh button on unhandled errors.
+- **OpenGraph + Twitter Meta Tags** — Added `og:title`, `og:description`, `og:image`, `og:url`, `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image` to `index.html`.
+- **manifest.json** — PWA manifest with `name: "Alpha AI"`, `theme_color: "#7c5cfc"`, `background_color: "#04040f"`.
+- **robots.txt** — `User-agent: * / Allow: /` with sitemap link.
+- **Cookie Consent Banner** — `CookieConsent.jsx` bottom banner with Accept/Reject. Stores consent in `localStorage` key `alphaai_cookie_consent`. Hidden once consent given.
+- **Testing**: 25/25 tests passed (iteration 64). All items verified, no regressions.
+
 ## Backlog
 - **P0**: Go-Live SaaS-Only P0 Fixes ✅ DONE (Apr 4, 2026)
+- **P1**: Terms of Service & Privacy Policy ✅ DONE (Apr 4, 2026)
+- **P1**: ErrorBoundary ✅ DONE (Apr 4, 2026)
+- **P1**: OpenGraph / Twitter meta tags ✅ DONE (Apr 4, 2026)
+- **P1**: manifest.json & robots.txt ✅ DONE (Apr 4, 2026)
+- **P1**: Cookie Consent Banner ✅ DONE (Apr 4, 2026)
 - **P1**: Order Execution Engine (Phase 2 of Live Trading) ✅ DONE
 - **P1**: Automatic Frontend Tracking Middleware ✅ DONE
 - **P1**: Stripe Billing Portal (self-serve subscription management) ✅ DONE
@@ -152,15 +167,10 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **P1**: Onboarding Modal (First-Time UX) ✅ DONE
 - **P1**: UI Polish & Micro-Interactions ✅ DONE
 - **P1**: Affiliate Program (Phase 1 — Referral System) ✅ DONE
-- **P1**: Terms of Service & Privacy Policy pages (Go-Live)
-- **P1**: ErrorBoundary component in React route tree (Go-Live)
-- **P1**: OpenGraph / Twitter meta tags in index.html (Go-Live)
-- **P1**: manifest.json & robots.txt (Go-Live)
 - **P2**: Automated referral commission tracking (Phase 2)
 - **P2**: Invoice download / email receipts in billing page
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
 - **P2**: Real-time live events feed via WebSocket (analytics)
-- **P3**: MRR trend chart for subscription health dashboard (Recharts) ✅ DONE (merged into MRR trends)
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
 - **P3**: User retention analytics (DAU/MAU ratio)
 
