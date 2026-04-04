@@ -225,6 +225,112 @@ const WaitlistModal = ({ open, onClose }) => {
   );
 };
 
+const FeaturedStrategies = () => {
+  const [strategies, setStrategies] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API}/api/marketplace/featured`);
+        if (res.ok) {
+          const data = await res.json();
+          setStrategies(data.strategies || []);
+        }
+      } catch { /* silent */ }
+    })();
+  }, []);
+
+  if (!strategies.length) return null;
+
+  const riskColor = (label) => {
+    if (label === "High") return { bg: "bg-red-500/15", text: "text-red-400" };
+    if (label === "Medium-High") return { bg: "bg-orange-500/15", text: "text-orange-400" };
+    if (label === "Medium") return { bg: "bg-amber-500/15", text: "text-amber-400" };
+    return { bg: "bg-green-500/15", text: "text-green-400" };
+  };
+
+  return (
+    <section className="px-4 py-20 md:py-28 relative" data-testid="featured-strategies-section">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-14">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+            <div className="inline-block px-3 py-1 rounded-full bg-[#7B61FF]/10 border border-[#7B61FF]/20 text-[#7B61FF] text-xs font-mono mb-4">Featured Strategies</div>
+            <h2 className="text-3xl md:text-4xl font-bold font-['Outfit'] mb-4" data-testid="featured-strategies-title">Top-Performing AI Strategies</h2>
+            <p className="text-zinc-400 max-w-xl mx-auto">Explore verified strategies with transparent metrics. View performance, copy to your lab, or follow live.</p>
+          </motion.div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {strategies.map((s, i) => {
+            const p = s._perf || {};
+            const rc = riskColor(s.risk_label);
+            return (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                data-testid={`featured-strategy-${i}`}
+              >
+                <Card className="bg-[#0A0A0A] border-zinc-800/50 hover:border-[#7B61FF]/30 transition-all h-full group">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="text-base font-semibold font-['Outfit'] text-white group-hover:text-[#7B61FF] transition-colors" data-testid={`featured-name-${i}`}>{s.name}</h3>
+                        <p className="text-[11px] text-zinc-600 mt-0.5">by {s.creator_name}</p>
+                      </div>
+                      <Badge className={`text-[10px] ${rc.bg} ${rc.text}`} data-testid={`featured-risk-${i}`}>{s.risk_label}</Badge>
+                    </div>
+                    <p className="text-xs text-zinc-500 mb-4 line-clamp-2">{s.description}</p>
+
+                    {/* Performance metrics */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <div className="p-2.5 rounded-lg bg-[#050505] border border-zinc-800/20">
+                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider">Return</p>
+                        <p className={`text-sm font-mono font-bold ${(p.total_return || 0) >= 0 ? 'text-[#00FF94]' : 'text-red-400'}`}>
+                          {p.total_return != null ? `${p.total_return > 0 ? '+' : ''}${p.total_return}%` : '—'}
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#050505] border border-zinc-800/20">
+                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider">Win Rate</p>
+                        <p className="text-sm font-mono font-bold text-white">{p.win_rate != null ? `${p.win_rate}%` : '—'}</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#050505] border border-zinc-800/20">
+                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider">Sharpe</p>
+                        <p className="text-sm font-mono font-bold text-white">{p.sharpe_ratio != null ? p.sharpe_ratio : '—'}</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#050505] border border-zinc-800/20">
+                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider">Max DD</p>
+                        <p className="text-sm font-mono font-bold text-red-400">{p.max_drawdown != null ? `${p.max_drawdown}%` : '—'}</p>
+                      </div>
+                    </div>
+
+                    {/* Logic tag */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <Badge className="bg-zinc-800 text-zinc-400 text-[10px]">{s.category}</Badge>
+                      <span className="text-[10px] text-zinc-600">{s.parameters?.logic || s.category}</span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      <Link to={`/marketplace/${s.id}`} className="flex-1">
+                        <Button size="sm" className="w-full h-8 rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-xs" data-testid={`featured-view-${i}`}>
+                          View Strategy
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const LandingPage = () => {
   const [betaSpots, setBetaSpots] = useState(null);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
@@ -797,6 +903,9 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* ===== FEATURED STRATEGIES ===== */}
+      <FeaturedStrategies />
 
       {/* ===== FINAL CTA ===== */}
       <section className="px-4 py-20 md:py-28 relative overflow-hidden" data-testid="final-cta-section">

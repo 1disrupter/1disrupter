@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { ArrowLeft, Star, Users, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Star, Users, Clock, Loader2, Copy } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 import StrategyPerformanceBlock from "../components/marketplace/StrategyPerformanceBlock";
@@ -166,7 +167,33 @@ const StrategyDetailPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {s.risk_label && (
+                <Badge className={`text-xs ${
+                  s.risk_label === 'High' ? 'bg-red-500/15 text-red-400' :
+                  s.risk_label === 'Medium-High' ? 'bg-orange-500/15 text-orange-400' :
+                  s.risk_label === 'Medium' ? 'bg-amber-500/15 text-amber-400' :
+                  'bg-green-500/15 text-green-400'
+                }`} data-testid="strategy-risk-label">{s.risk_label} Risk</Badge>
+              )}
               {isOwner && <Badge className="bg-[#00FF94]/15 text-[#00FF94] text-xs">Your Strategy</Badge>}
+              {!isOwner && token && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full border-zinc-700 hover:border-[#7B61FF] text-xs"
+                  data-testid="copy-strategy-btn"
+                  onClick={async () => {
+                    try {
+                      await axios.post(`${API}/marketplace/strategies/${id}/copy`, {}, { headers: { Authorization: `Bearer ${token}` } });
+                      toast.success("Strategy copied to your collection!");
+                    } catch (e) {
+                      toast.error(e.response?.data?.detail || "Failed to copy strategy");
+                    }
+                  }}
+                >
+                  <Copy className="w-3.5 h-3.5 mr-1" />Copy Strategy
+                </Button>
+              )}
               {!isOwner && (
                 isSubscribed
                   ? <UnsubscribeButton strategyId={id} token={token} onDone={onSubscribeChange} />

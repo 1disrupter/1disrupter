@@ -400,3 +400,60 @@ async def my_created_strategies(user: dict = Depends(get_current_user)):
     ).sort("created_at", -1)
     items = await cursor.to_list(length=100)
     return {"strategies": items, "total": len(items)}
+
+
+# ═══════════════════════════════════════════
+#  FEATURED STRATEGIES (public, no auth)
+# ═══════════════════════════════════════════
+
+@router.get("/featured")
+async def featured_strategies():
+    """Return published featured strategies with their performance data."""
+    query = {"status": "published", "is_public": True, "featured": True}
+    cursor = strategies_col.find(query, {"_id": 0}).sort("subscriber_count", -1).limit(6)
+    items = await cursor.to_list(length=6)
+
+    # Enrich with latest performance
+    for s in items:
+        perf = await performance_col.find_one(
+            {"strategy_id": s["id"]}, {"_id": 0}, sort=[("uploaded_at", -1)]
+        )
+        s["_perf"] = perf or {}
+
+    return {"strategies": items}
+
+
+# ═══════════════════════════════════════════
+#  COPY STRATEGY
+# ═══════════════════════════════════════════
+
+@router.post("/strategies/{strategy_id}/copy")
+async def copy_strategy(strategy_id: str, user: dict = Depends(get_current_user)):
+    """Copy a published strategy into the user's own collection."""
+    source = await _get_strategy_or_404(strategy_id)
+
+    if source["status"] != "published":
+        raise HTTPException(status_code=400, detail="Can only copy published strategies")
+
+    now = datetime.now(timezone.utc).isoformat()
+    new_strategy = {
+        "id": str(uuid.uuid4()),
+        "creator_id": user["id"],
+        "creator_name": user.get("name", "Unknown"),
+        "name": f"{source['name']} (Copy)",
+        "description": source.get("description", ""),
+        "category": source.get("category", "other"),
+        "parameters": source.get("parameters", {}),
+        "created_at": now,
+        "updated_at": now,
+        "is_public": False,
+        "status": "draft",
+        "subscriber_count": 0,
+        "avg_rating": 0.0,
+        "review_count": 0,
+        "copied_from": strategy_id,
+        "featured": False,
+    }
+    await strategies_col.insert_one(new_strategy)
+    return {"message": "Strategy copied to your collection", "strategy": _sanitize(new_strategy)}
+
