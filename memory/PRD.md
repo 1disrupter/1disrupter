@@ -151,6 +151,15 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Cookie Consent Banner** — `CookieConsent.jsx` bottom banner with Accept/Reject. Stores consent in `localStorage` key `alphaai_cookie_consent`. Hidden once consent given.
 - **Testing**: 25/25 tests passed (iteration 64). All items verified, no regressions.
 
+### Deployment Fix (Apr 4, 2026)
+- **Backend /health endpoint** — Added `GET /health` and `GET /api/health` to `server.py` returning `{"status": "healthy"}`.
+- **Frontend web3/ethers removed** — Removed `ethers@5.7.2` and `web3@4.16.0` from package.json. Replaced `WalletContext.jsx` with a no-op stub (all consumers get null wallet). Build size dropped from ~8MB to 1.8MB.
+- **Frontend health check enabled** — Set `ENABLE_HEALTH_CHECK=true` in frontend `.env`.
+- **Build output** — `craco build` outputs to `build/`. Symlink `dist -> build` added for NGINX compatibility.
+- **Security** — Added `memory/test_credentials.md` to `.gitignore`.
+- **API resilience** — All frontend API calls already have try/catch with fallback values. Backend `/market/top-coins` returns mock data on CoinGecko failure.
+- **Deployment agent** — Passed all checks (✅ READY).
+
 ## Backlog
 - **P0**: Go-Live SaaS-Only P0 Fixes ✅ DONE (Apr 4, 2026)
 - **P1**: Terms of Service & Privacy Policy ✅ DONE (Apr 4, 2026)
