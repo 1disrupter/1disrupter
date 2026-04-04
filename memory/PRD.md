@@ -133,6 +133,14 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Refactoring**: Removed stale `Dashboard.jsx` (438 lines dead code). Fixed `DashboardPage.jsx` token key from `access_token` to `alphaai_tokens`.
 - **Testing**: All 7 fixes verified via curl + Playwright + testing agent.
 
+### Landing Page Improvements (Apr 4, 2026)
+- **Hero Product Screenshot** — Dashboard preview image (`/images/dashboard-preview.jpeg`) centered below hero CTAs with border, glow, and rounded corners.
+- **Trust Strip** — "Trusted by traders in 32+ countries · Signals updated in real-time · Backtested before going live" in monospace under the trust bar.
+- **Ticker Template** — Signal ticker template added as JSX comment in `LivePriceTicker.jsx` for future live signal data (`pair`, `direction`, `confidence`, `change`, `price`).
+- **Section Links** — "View all signals →" under Today's Signals section (→ /dashboard), "View full leaderboard →" under Social Proof (→ /leaderboard).
+- **Legal Disclaimer** — "Simulated results. Past performance does not guarantee future returns." under simulation result cards.
+- **Testing**: 11/11 tests passed (iteration 63). All additions verified, no regressions.
+
 ## Backlog
 - **P0**: Go-Live SaaS-Only P0 Fixes ✅ DONE (Apr 4, 2026)
 - **P1**: Order Execution Engine (Phase 2 of Live Trading) ✅ DONE
