@@ -326,6 +326,15 @@ const FeaturedStrategies = () => {
             );
           })}
         </div>
+
+        {/* View Full Leaderboard CTA */}
+        <div className="text-center mt-10">
+          <Link to="/strategies">
+            <Button variant="outline" className="rounded-full border-zinc-700 hover:border-[#7B61FF] px-8 h-11" data-testid="view-full-leaderboard-btn">
+              View Full Leaderboard<ArrowUpRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </div>
       </div>
     </section>
   );

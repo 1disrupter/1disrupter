@@ -188,6 +188,55 @@ async def list_strategies(
     }
 
 
+# ═══════════════════════════════════════════
+#  STRATEGY LEADERBOARD (public, sorted, cached)
+# ═══════════════════════════════════════════
+
+_leaderboard_cache = {"data": None, "ts": 0}
+LEADERBOARD_TTL = 60  # seconds
+
+@router.get("/strategies/leaderboard")
+async def strategy_leaderboard(
+    sort_by: str = Query("total_return", description="Sort: total_return, sharpe_ratio, win_rate, max_drawdown"),
+    order: str = Query("desc", description="asc or desc"),
+):
+    """Public strategy leaderboard with performance metrics. Cached for 60s."""
+    import time
+    now = time.time()
+
+    # Check cache
+    if _leaderboard_cache["data"] and (now - _leaderboard_cache["ts"]) < LEADERBOARD_TTL:
+        cached = _leaderboard_cache["data"]
+    else:
+        query = {"status": "published", "is_public": True}
+        cursor = strategies_col.find(query, {"_id": 0})
+        items = await cursor.to_list(length=200)
+
+        # Enrich with latest performance
+        for s in items:
+            perf = await performance_col.find_one(
+                {"strategy_id": s["id"]}, {"_id": 0}, sort=[("uploaded_at", -1)]
+            )
+            s["_perf"] = perf or {}
+
+        cached = items
+        _leaderboard_cache["data"] = cached
+        _leaderboard_cache["ts"] = now
+
+    # Sort
+    valid_sort = {"total_return", "sharpe_ratio", "win_rate", "max_drawdown"}
+    sort_field = sort_by if sort_by in valid_sort else "total_return"
+    reverse = order != "asc"
+
+    sorted_items = sorted(
+        cached,
+        key=lambda s: s.get("_perf", {}).get(sort_field) or 0,
+        reverse=reverse,
+    )
+
+    return {"strategies": sorted_items, "total": len(sorted_items)}
+
+
 @router.get("/strategies/{strategy_id}")
 async def get_strategy_detail(strategy_id: str):
     """Full strategy details including performance, recent signals, and reviews."""
@@ -456,4 +505,3 @@ async def copy_strategy(strategy_id: str, user: dict = Depends(get_current_user)
     }
     await strategies_col.insert_one(new_strategy)
     return {"message": "Strategy copied to your collection", "strategy": _sanitize(new_strategy)}
-

@@ -34,6 +34,7 @@ import DemoPage from "./pages/DemoPage";
 import MobileSettingsPage from "./pages/MobileSettingsPage";
 import StrategyMarketplacePage from "./pages/StrategyMarketplacePage";
 import StrategyDetailPage from "./pages/StrategyDetailPage";
+import StrategyLeaderboardPage from "./pages/StrategyLeaderboardPage";
 import MyStrategiesPage from "./pages/MyStrategiesPage";
 import CreatorDashboardPage from "./pages/CreatorDashboardPage";
 import ExecutionSettingsPage from "./pages/ExecutionSettingsPage";
@@ -112,6 +113,7 @@ function App() {
               <Route path="/connect-exchange" element={<ConnectExchangePage />} />
               <Route path="/demo" element={<DemoPage />} />
               <Route path="/strategy-marketplace" element={<StrategyMarketplacePage />} />
+              <Route path="/strategies" element={<StrategyLeaderboardPage />} />
               <Route path="/strategy-marketplace/:id" element={<StrategyDetailPage />} />
               <Route path="/marketplace/:id" element={<StrategyDetailPage />} />
               <Route path="/creator/strategies" element={<CreatorDashboardPage />} />

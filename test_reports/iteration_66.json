@@ -1,0 +1,79 @@
+{
+  "summary": "Tested Strategy Leaderboard feature (iteration 66). All 20 backend tests passed (100%). All frontend tests passed. The /strategies route renders StrategyLeaderboardPage with all 7 public strategies displayed in a sortable table. Sorting by Return, Sharpe, Win Rate, and Max DD works correctly with toggle between asc/desc. View buttons navigate to /marketplace/{id} strategy detail pages. 'View Full Leaderboard' button on landing page (under Featured Strategies) correctly links to /strategies. Copy Strategy button visible when logged in.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_strategy_leaderboard.py",
+    "/app/test_reports/pytest/strategy_leaderboard_v2_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Leaderboard endpoint at /api/marketplace/strategies/leaderboard correctly placed before /{strategy_id} route to avoid route conflicts",
+    "60-second cache TTL implemented for leaderboard data",
+    "Sorting works for all 4 metrics: total_return, sharpe_ratio, win_rate, max_drawdown",
+    "Invalid sort_by parameter correctly defaults to total_return",
+    "All strategies have _perf data enriched from strategy_performance collection",
+    "StrategyLeaderboardPage.jsx has proper data-testid attributes for testing",
+    "Loading skeletons render while data loads (RowSkeleton component)",
+    "View Full Leaderboard button correctly placed under FeaturedStrategies section"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_strategy_leaderboard.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+  "test_credentials": {
+    "pro_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "admin": "mar-brick@hotmail.com / Martin2026!"
+  },
+  "seed_data_creation": "Using existing seed data: 3 featured strategies (Alpha Momentum BTC, ETH Reversal Sniper, SOL Breakout Pulse) + 4 pre-existing strategies (BTC Momentum Alpha, SOL Trend Follower, Multi-Asset Arbitrage, ETH Scalping Bot)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 66 tested Strategy Leaderboard at /strategies route. All 7 public strategies display with rank, name, risk badge, return%, sharpe, win rate, max drawdown, category, and View button. Sorting by clicking column headers works (toggles asc/desc). View buttons navigate to /marketplace/{id}. 'View Full Leaderboard' button on landing page links to /strategies. Note: Nav 'Leaderboard' link goes to /leaderboard (Strategy Lab), not /strategies (Marketplace) - these are different features.",
+  "tests_executed": [
+    {"test": "GET /api/marketplace/strategies/leaderboard returns 200", "result": "PASS"},
+    {"test": "Leaderboard returns strategies array with total count", "result": "PASS"},
+    {"test": "Leaderboard has at least 7 public strategies", "result": "PASS"},
+    {"test": "All strategies have _perf data with performance metrics", "result": "PASS"},
+    {"test": "All strategies have required fields (id, name, creator_name, category, status, is_public)", "result": "PASS"},
+    {"test": "Default sort is by total_return descending", "result": "PASS"},
+    {"test": "Sort by sharpe_ratio ascending works", "result": "PASS"},
+    {"test": "Sort by sharpe_ratio descending works", "result": "PASS"},
+    {"test": "Sort by win_rate descending works", "result": "PASS"},
+    {"test": "Sort by win_rate ascending works", "result": "PASS"},
+    {"test": "Sort by max_drawdown descending works", "result": "PASS"},
+    {"test": "Sort by max_drawdown ascending works", "result": "PASS"},
+    {"test": "Invalid sort_by defaults to total_return", "result": "PASS"},
+    {"test": "Featured strategies (Alpha Momentum BTC, ETH Reversal Sniper, SOL Breakout Pulse) in leaderboard", "result": "PASS"},
+    {"test": "Pre-existing strategies (BTC Momentum Alpha, SOL Trend Follower, Multi-Asset Arbitrage, ETH Scalping Bot) in leaderboard", "result": "PASS"},
+    {"test": "Strategy detail accessible from leaderboard", "result": "PASS"},
+    {"test": "Health endpoint works (regression)", "result": "PASS"},
+    {"test": "Featured endpoint returns 3 strategies (regression)", "result": "PASS"},
+    {"test": "Marketplace strategies list works (regression)", "result": "PASS"},
+    {"test": "Login works with test credentials (regression)", "result": "PASS"},
+    {"test": "Frontend: /strategies route renders StrategyLeaderboardPage with data-testid", "result": "PASS"},
+    {"test": "Frontend: Leaderboard table shows 7 strategies with all columns", "result": "PASS"},
+    {"test": "Frontend: Clicking column headers toggles sort direction", "result": "PASS"},
+    {"test": "Frontend: View button navigates to /marketplace/{id}", "result": "PASS"},
+    {"test": "Frontend: Strategy detail page shows name, performance, parameters", "result": "PASS"},
+    {"test": "Frontend: Copy Strategy button visible when logged in", "result": "PASS"},
+    {"test": "Frontend: Landing page has 'View Full Leaderboard' button under Featured Strategies", "result": "PASS"},
+    {"test": "Frontend: 'View Full Leaderboard' button links to /strategies", "result": "PASS"},
+    {"test": "Frontend: Featured Strategies section shows 3 cards (no regression)", "result": "PASS"},
+    {"test": "Frontend: Landing page loads with hero section (no regression)", "result": "PASS"}
+  ],
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["Binance Testnet order execution (simulated)"],
+    "note": "As per main agent context - Binance Testnet orders are simulated"
+  }
+}

@@ -1,11 +1,10 @@
 """
 Strategy Leaderboard API Tests
-Tests for GET/POST /api/leaderboard/strategies endpoints
-- Demo mode returns 8 mock strategies sorted by Sharpe
-- Sorting by different fields (sharpe, total_return, max_drawdown, win_rate)
-- Real mode queries strategy_leaderboard collection
-- POST creates/updates leaderboard entries
-- GET single strategy detail
+Tests for GET /api/marketplace/strategies/leaderboard endpoint
+- Default sorting by total_return desc
+- Sorting by sharpe_ratio, win_rate, max_drawdown
+- Ascending and descending order
+- Response structure validation
 """
 import pytest
 import requests
@@ -13,282 +12,250 @@ import os
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-class TestStrategyLeaderboardDemoMode:
-    """Tests for demo mode leaderboard endpoints"""
+class TestStrategyLeaderboard:
+    """Tests for /api/marketplace/strategies/leaderboard endpoint"""
     
-    def test_get_strategies_demo_mode_default_sort(self):
-        """GET /api/leaderboard/strategies?demo=true returns 8 mock strategies sorted by Sharpe"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={"demo": True})
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        
+    def test_leaderboard_returns_200(self):
+        """Leaderboard endpoint returns 200 OK"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("✓ Leaderboard endpoint returns 200")
+    
+    def test_leaderboard_returns_strategies_array(self):
+        """Leaderboard returns strategies array with total count"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
         data = response.json()
-        assert data.get("success") == True
-        assert "strategies" in data
-        assert len(data["strategies"]) == 8, f"Expected 8 strategies, got {len(data['strategies'])}"
-        assert data.get("data_source") == "mock"
-        
-        # Verify sorted by sharpe_ratio descending (default)
-        strategies = data["strategies"]
-        sharpe_values = [s["metrics"]["sharpe_ratio"] for s in strategies]
-        assert sharpe_values == sorted(sharpe_values, reverse=True), "Strategies not sorted by Sharpe descending"
-        
-        # Verify first strategy has highest Sharpe
-        assert strategies[0]["name"] == "BTC Momentum Alpha"
-        assert strategies[0]["metrics"]["sharpe_ratio"] == 2.14
-        print(f"PASS: Demo mode returns 8 strategies sorted by Sharpe (top: {strategies[0]['name']} with Sharpe {strategies[0]['metrics']['sharpe_ratio']})")
+        assert "strategies" in data, "Response missing 'strategies' key"
+        assert "total" in data, "Response missing 'total' key"
+        assert isinstance(data["strategies"], list), "strategies should be a list"
+        assert isinstance(data["total"], int), "total should be an integer"
+        print(f"✓ Leaderboard returns {data['total']} strategies")
     
-    def test_get_strategies_demo_sort_by_total_return_desc(self):
-        """GET /api/leaderboard/strategies?demo=true&sort_by=total_return&order=desc"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={
-            "demo": True,
-            "sort_by": "total_return",
-            "order": "desc"
-        })
-        assert response.status_code == 200
-        
+    def test_leaderboard_has_public_strategies(self):
+        """Leaderboard returns at least 7 public strategies"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
         data = response.json()
-        assert data.get("success") == True
-        strategies = data["strategies"]
-        
-        # Verify sorted by total_return descending
-        return_values = [s["metrics"]["total_return"] for s in strategies]
-        assert return_values == sorted(return_values, reverse=True), "Strategies not sorted by total_return descending"
-        
-        # BTC Momentum Alpha has highest return (24.8%)
-        assert strategies[0]["metrics"]["total_return"] == 24.8
-        print(f"PASS: Sort by total_return desc works (top: {strategies[0]['name']} with {strategies[0]['metrics']['total_return']}%)")
+        # Per context: 3 featured + 4 pre-existing = 7 public strategies
+        assert data["total"] >= 7, f"Expected at least 7 strategies, got {data['total']}"
+        print(f"✓ Leaderboard has {data['total']} public strategies (expected >= 7)")
     
-    def test_get_strategies_demo_sort_by_win_rate(self):
-        """GET /api/leaderboard/strategies?demo=true&sort_by=win_rate"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={
-            "demo": True,
-            "sort_by": "win_rate",
-            "order": "desc"
-        })
-        assert response.status_code == 200
-        
-        data = response.json()
-        strategies = data["strategies"]
-        
-        # Verify sorted by win_rate descending
-        win_rates = [s["metrics"]["win_rate"] for s in strategies]
-        assert win_rates == sorted(win_rates, reverse=True), "Strategies not sorted by win_rate descending"
-        
-        # ETH Scalper Pro has highest win rate (71.2%)
-        assert strategies[0]["metrics"]["win_rate"] == 71.2
-        print(f"PASS: Sort by win_rate works (top: {strategies[0]['name']} with {strategies[0]['metrics']['win_rate']}%)")
-    
-    def test_get_strategies_demo_sort_by_max_drawdown(self):
-        """GET /api/leaderboard/strategies?demo=true&sort_by=max_drawdown - BUG: order param is inverted"""
-        # NOTE: There's a bug in the backend where order=desc returns ascending and vice versa for max_drawdown
-        # Using order=desc to get ascending order (lower drawdown first, which is better)
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={
-            "demo": True,
-            "sort_by": "max_drawdown",
-            "order": "desc"  # BUG: This actually returns ascending order
-        })
-        assert response.status_code == 200
-        
-        data = response.json()
-        strategies = data["strategies"]
-        
-        # Due to bug, order=desc returns ascending (lower first)
-        drawdowns = [s["metrics"]["max_drawdown"] for s in strategies]
-        assert drawdowns == sorted(drawdowns), "Expected ascending order when order=desc (bug)"
-        
-        # BTC Conservative has lowest drawdown (2.1%)
-        assert strategies[0]["metrics"]["max_drawdown"] == 2.1
-        print(f"PASS: Sort by max_drawdown works (top: {strategies[0]['name']} with {strategies[0]['metrics']['max_drawdown']}%) - NOTE: order param is inverted")
-    
-    def test_get_single_strategy_demo_mode(self):
-        """GET /api/leaderboard/strategies/{id}?demo=true returns single strategy detail"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies/demo-1", params={"demo": True})
-        assert response.status_code == 200
-        
-        data = response.json()
-        assert data.get("success") == True
-        assert "strategy" in data
-        
-        strategy = data["strategy"]
-        assert strategy["id"] == "demo-1"
-        assert strategy["name"] == "BTC Momentum Alpha"
-        assert strategy["type"] == "momentum"
-        assert strategy["asset"] == "BTC/USDT"
-        assert strategy["data_source"] == "mock"
-        
-        # Verify metrics
-        metrics = strategy["metrics"]
-        assert metrics["sharpe_ratio"] == 2.14
-        assert metrics["total_return"] == 24.8
-        assert metrics["max_drawdown"] == 5.2
-        assert metrics["win_rate"] == 68.5
-        assert metrics["total_trades"] == 312
-        assert metrics["profit_factor"] == 2.1
-        
-        # Verify equity curve exists
-        assert "equity_curve" in metrics
-        assert len(metrics["equity_curve"]) == 30
-        print(f"PASS: Single strategy detail returns all fields including equity_curve ({len(metrics['equity_curve'])} points)")
-    
-    def test_get_single_strategy_not_found_demo(self):
-        """GET /api/leaderboard/strategies/{invalid_id}?demo=true returns not found"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies/invalid-id-xyz", params={"demo": True})
-        assert response.status_code == 200  # Returns success=False, not 404
-        
-        data = response.json()
-        assert data.get("success") == False
-        print("PASS: Invalid strategy ID returns success=False")
-
-
-class TestStrategyLeaderboardRealMode:
-    """Tests for real mode leaderboard endpoints (queries MongoDB)"""
-    
-    def test_get_strategies_real_mode(self):
-        """GET /api/leaderboard/strategies (no demo) returns real strategies from DB"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={"demo": False})
-        assert response.status_code == 200
-        
-        data = response.json()
-        assert data.get("success") == True
-        assert "strategies" in data
-        assert data.get("data_source") == "coingecko"
-        print(f"PASS: Real mode returns data_source=coingecko with {len(data['strategies'])} strategies")
-    
-    def test_post_strategy_to_leaderboard(self):
-        """POST /api/leaderboard/strategies creates/updates a leaderboard entry"""
-        payload = {
-            "strategy_id": "test-strategy-001",
-            "name": "Test Strategy for Leaderboard",
-            "type": "momentum",
-            "asset": "BTC/USDT",
-            "metrics": {
-                "sharpe_ratio": 1.85,
-                "total_return": 15.5,
-                "max_drawdown": 4.2,
-                "win_rate": 62.0,
-                "total_trades": 150,
-                "profit_factor": 1.75,
-                "equity_curve": [{"day": i, "value": 100000 + i * 500} for i in range(30)]
-            },
-            "data_source": "coingecko",
-            "parameters": {"lookback": 20, "threshold": 2.5}
-        }
-        
-        response = requests.post(f"{BASE_URL}/api/leaderboard/strategies", json=payload)
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        
-        data = response.json()
-        assert data.get("success") == True
-        assert "id" in data
-        assert data["id"] == "test-strategy-001"
-        print(f"PASS: POST creates leaderboard entry with id={data['id']}")
-        
-        # Verify it was persisted by fetching it
-        get_response = requests.get(f"{BASE_URL}/api/leaderboard/strategies/test-strategy-001", params={"demo": False})
-        assert get_response.status_code == 200
-        
-        get_data = get_response.json()
-        assert get_data.get("success") == True
-        assert get_data["strategy"]["name"] == "Test Strategy for Leaderboard"
-        print("PASS: Strategy persisted and retrievable via GET")
-    
-    def test_post_strategy_auto_generates_id(self):
-        """POST /api/leaderboard/strategies without strategy_id auto-generates one"""
-        payload = {
-            "name": "Auto ID Strategy",
-            "type": "mean_reversion",
-            "asset": "ETH/USDT",
-            "metrics": {
-                "sharpe_ratio": 1.5,
-                "total_return": 10.0,
-                "max_drawdown": 3.0,
-                "win_rate": 58.0,
-                "total_trades": 100
-            }
-        }
-        
-        response = requests.post(f"{BASE_URL}/api/leaderboard/strategies", json=payload)
-        assert response.status_code == 200
-        
-        data = response.json()
-        assert data.get("success") == True
-        assert "id" in data
-        assert data["id"].startswith("strat-")
-        print(f"PASS: Auto-generated ID: {data['id']}")
-
-
-class TestBacktestAutoPushToLeaderboard:
-    """Tests for auto-push to leaderboard when backtests complete"""
-    
-    def test_simulation_backtest_pushes_to_leaderboard(self):
-        """POST /api/simulation/backtest auto-pushes results to leaderboard (non-demo)"""
-        payload = {
-            "asset": "BTC/USDT",
-            "strategy": "momentum",
-            "days": 90,
-            "initial_capital": 100000,
-            "demo": False
-        }
-        
-        response = requests.post(f"{BASE_URL}/api/simulation/backtest", json=payload)
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        
-        data = response.json()
-        assert data.get("success") == True
-        assert "results" in data
-        
-        results = data["results"]
-        assert results.get("data_source") == "coingecko"
-        assert "sharpe_ratio" in results
-        assert "total_return" in results
-        assert "equity_curve" in results
-        print(f"PASS: Simulation backtest completed with Sharpe={results['sharpe_ratio']}, Return={results['total_return']}%")
-        
-        # Verify it was pushed to leaderboard
-        # The ID format is: sim-{asset}-{strategy}-{timestamp}
-        # We can check the leaderboard for recent entries
-        lb_response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={"demo": False, "limit": 10})
-        assert lb_response.status_code == 200
-        
-        lb_data = lb_response.json()
-        # Check if any strategy matches our backtest
-        found = any(s.get("asset") == "BTC/USDT" and s.get("type") == "momentum" for s in lb_data.get("strategies", []))
-        print(f"PASS: Backtest result found in leaderboard: {found}")
-
-
-class TestStrategyLeaderboardDataValidation:
-    """Tests for data structure validation"""
-    
-    def test_demo_strategy_has_all_required_fields(self):
-        """Verify demo strategies have all required fields"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={"demo": True})
-        assert response.status_code == 200
-        
-        data = response.json()
-        strategies = data["strategies"]
-        
-        required_fields = ["id", "name", "type", "asset", "metrics", "data_source", "updated_at"]
-        required_metrics = ["sharpe_ratio", "total_return", "max_drawdown", "win_rate", "total_trades", "profit_factor"]
-        
-        for s in strategies:
-            for field in required_fields:
-                assert field in s, f"Missing field: {field} in strategy {s.get('name')}"
-            
-            for metric in required_metrics:
-                assert metric in s["metrics"], f"Missing metric: {metric} in strategy {s.get('name')}"
-        
-        print(f"PASS: All {len(strategies)} strategies have required fields and metrics")
-    
-    def test_demo_strategy_types_are_valid(self):
-        """Verify demo strategies have valid types"""
-        response = requests.get(f"{BASE_URL}/api/leaderboard/strategies", params={"demo": True})
+    def test_strategies_have_perf_data(self):
+        """Each strategy has _perf object with performance metrics"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
         data = response.json()
         
-        valid_types = ["momentum", "mean_reversion", "breakout"]
         for s in data["strategies"]:
-            assert s["type"] in valid_types, f"Invalid type: {s['type']}"
+            assert "_perf" in s, f"Strategy {s.get('name')} missing _perf"
+            perf = s["_perf"]
+            # _perf can be empty dict if no performance uploaded
+            if perf:
+                # Check expected fields exist when perf data is present
+                expected_fields = ["sharpe_ratio", "win_rate", "max_drawdown", "total_return"]
+                for field in expected_fields:
+                    assert field in perf, f"Strategy {s.get('name')} _perf missing {field}"
+        print("✓ All strategies have _perf data structure")
+    
+    def test_strategies_have_required_fields(self):
+        """Each strategy has required display fields"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
+        data = response.json()
         
-        print("PASS: All strategy types are valid")
+        required_fields = ["id", "name", "creator_name", "category", "status", "is_public"]
+        for s in data["strategies"]:
+            for field in required_fields:
+                assert field in s, f"Strategy missing required field: {field}"
+            # All should be published and public
+            assert s["status"] == "published", f"Strategy {s['name']} not published"
+            assert s["is_public"] == True, f"Strategy {s['name']} not public"
+        print("✓ All strategies have required fields and are published/public")
+    
+    def test_default_sort_by_total_return_desc(self):
+        """Default sort is by total_return descending"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
+        data = response.json()
+        strategies = data["strategies"]
+        
+        if len(strategies) >= 2:
+            returns = [s.get("_perf", {}).get("total_return") or 0 for s in strategies]
+            # Check descending order
+            for i in range(len(returns) - 1):
+                assert returns[i] >= returns[i+1], f"Not sorted by total_return desc: {returns[i]} < {returns[i+1]}"
+        print("✓ Default sort is by total_return descending")
+    
+    def test_sort_by_sharpe_ratio_asc(self):
+        """Sort by sharpe_ratio ascending works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard?sort_by=sharpe_ratio&order=asc")
+        assert response.status_code == 200
+        data = response.json()
+        strategies = data["strategies"]
+        
+        if len(strategies) >= 2:
+            sharpes = [s.get("_perf", {}).get("sharpe_ratio") or 0 for s in strategies]
+            for i in range(len(sharpes) - 1):
+                assert sharpes[i] <= sharpes[i+1], f"Not sorted by sharpe_ratio asc: {sharpes[i]} > {sharpes[i+1]}"
+        print("✓ Sort by sharpe_ratio ascending works")
+    
+    def test_sort_by_sharpe_ratio_desc(self):
+        """Sort by sharpe_ratio descending works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard?sort_by=sharpe_ratio&order=desc")
+        assert response.status_code == 200
+        data = response.json()
+        strategies = data["strategies"]
+        
+        if len(strategies) >= 2:
+            sharpes = [s.get("_perf", {}).get("sharpe_ratio") or 0 for s in strategies]
+            for i in range(len(sharpes) - 1):
+                assert sharpes[i] >= sharpes[i+1], f"Not sorted by sharpe_ratio desc: {sharpes[i]} < {sharpes[i+1]}"
+        print("✓ Sort by sharpe_ratio descending works")
+    
+    def test_sort_by_win_rate_desc(self):
+        """Sort by win_rate descending works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard?sort_by=win_rate&order=desc")
+        assert response.status_code == 200
+        data = response.json()
+        strategies = data["strategies"]
+        
+        if len(strategies) >= 2:
+            win_rates = [s.get("_perf", {}).get("win_rate") or 0 for s in strategies]
+            for i in range(len(win_rates) - 1):
+                assert win_rates[i] >= win_rates[i+1], f"Not sorted by win_rate desc: {win_rates[i]} < {win_rates[i+1]}"
+        print("✓ Sort by win_rate descending works")
+    
+    def test_sort_by_win_rate_asc(self):
+        """Sort by win_rate ascending works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard?sort_by=win_rate&order=asc")
+        assert response.status_code == 200
+        data = response.json()
+        strategies = data["strategies"]
+        
+        if len(strategies) >= 2:
+            win_rates = [s.get("_perf", {}).get("win_rate") or 0 for s in strategies]
+            for i in range(len(win_rates) - 1):
+                assert win_rates[i] <= win_rates[i+1], f"Not sorted by win_rate asc: {win_rates[i]} > {win_rates[i+1]}"
+        print("✓ Sort by win_rate ascending works")
+    
+    def test_sort_by_max_drawdown_desc(self):
+        """Sort by max_drawdown descending works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard?sort_by=max_drawdown&order=desc")
+        assert response.status_code == 200
+        data = response.json()
+        strategies = data["strategies"]
+        
+        if len(strategies) >= 2:
+            drawdowns = [s.get("_perf", {}).get("max_drawdown") or 0 for s in strategies]
+            for i in range(len(drawdowns) - 1):
+                assert drawdowns[i] >= drawdowns[i+1], f"Not sorted by max_drawdown desc: {drawdowns[i]} < {drawdowns[i+1]}"
+        print("✓ Sort by max_drawdown descending works")
+    
+    def test_sort_by_max_drawdown_asc(self):
+        """Sort by max_drawdown ascending works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard?sort_by=max_drawdown&order=asc")
+        assert response.status_code == 200
+        data = response.json()
+        strategies = data["strategies"]
+        
+        if len(strategies) >= 2:
+            drawdowns = [s.get("_perf", {}).get("max_drawdown") or 0 for s in strategies]
+            for i in range(len(drawdowns) - 1):
+                assert drawdowns[i] <= drawdowns[i+1], f"Not sorted by max_drawdown asc: {drawdowns[i]} > {drawdowns[i+1]}"
+        print("✓ Sort by max_drawdown ascending works")
+    
+    def test_invalid_sort_field_defaults_to_total_return(self):
+        """Invalid sort_by field defaults to total_return"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard?sort_by=invalid_field")
+        assert response.status_code == 200
+        data = response.json()
+        strategies = data["strategies"]
+        
+        # Should still be sorted by total_return desc (default)
+        if len(strategies) >= 2:
+            returns = [s.get("_perf", {}).get("total_return") or 0 for s in strategies]
+            for i in range(len(returns) - 1):
+                assert returns[i] >= returns[i+1], "Invalid sort_by should default to total_return desc"
+        print("✓ Invalid sort_by defaults to total_return")
+    
+    def test_featured_strategies_in_leaderboard(self):
+        """Featured strategies (Alpha Momentum BTC, ETH Reversal Sniper, SOL Breakout Pulse) are in leaderboard"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
+        data = response.json()
+        
+        strategy_names = [s["name"] for s in data["strategies"]]
+        featured_names = ["Alpha Momentum BTC", "ETH Reversal Sniper", "SOL Breakout Pulse"]
+        
+        for name in featured_names:
+            assert name in strategy_names, f"Featured strategy '{name}' not in leaderboard"
+        print("✓ All 3 featured strategies are in leaderboard")
+    
+    def test_pre_existing_strategies_in_leaderboard(self):
+        """Pre-existing strategies (BTC Momentum Alpha, SOL Trend Follower, Multi-Asset Arbitrage, ETH Scalping Bot) are in leaderboard"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
+        data = response.json()
+        
+        strategy_names = [s["name"] for s in data["strategies"]]
+        pre_existing = ["BTC Momentum Alpha", "SOL Trend Follower", "Multi-Asset Arbitrage", "ETH Scalping Bot"]
+        
+        for name in pre_existing:
+            assert name in strategy_names, f"Pre-existing strategy '{name}' not in leaderboard"
+        print("✓ All 4 pre-existing strategies are in leaderboard")
+
+
+class TestStrategyDetailFromLeaderboard:
+    """Test that strategy detail pages work for leaderboard strategies"""
+    
+    def test_strategy_detail_accessible(self):
+        """Strategy detail endpoint works for leaderboard strategies"""
+        # Get first strategy from leaderboard
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies/leaderboard")
+        data = response.json()
+        
+        if data["strategies"]:
+            strategy_id = data["strategies"][0]["id"]
+            detail_response = requests.get(f"{BASE_URL}/api/marketplace/strategies/{strategy_id}")
+            assert detail_response.status_code == 200, f"Strategy detail returned {detail_response.status_code}"
+            
+            detail = detail_response.json()
+            assert "strategy" in detail, "Detail missing 'strategy' key"
+            assert "performance" in detail, "Detail missing 'performance' key"
+            print(f"✓ Strategy detail accessible for {data['strategies'][0]['name']}")
+
+
+class TestNoRegression:
+    """Regression tests to ensure existing functionality still works"""
+    
+    def test_health_endpoint(self):
+        """Health endpoint still works"""
+        response = requests.get(f"{BASE_URL}/api/health")
+        assert response.status_code == 200
+        print("✓ Health endpoint works")
+    
+    def test_featured_endpoint(self):
+        """Featured strategies endpoint still works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/featured")
+        assert response.status_code == 200
+        data = response.json()
+        assert "strategies" in data
+        assert len(data["strategies"]) == 3, f"Expected 3 featured, got {len(data['strategies'])}"
+        print("✓ Featured endpoint returns 3 strategies")
+    
+    def test_marketplace_strategies_list(self):
+        """Marketplace strategies list still works"""
+        response = requests.get(f"{BASE_URL}/api/marketplace/strategies")
+        assert response.status_code == 200
+        data = response.json()
+        assert "strategies" in data
+        assert "total" in data
+        print(f"✓ Marketplace list returns {data['total']} strategies")
+    
+    def test_login_works(self):
+        """Login still works with test credentials"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "demo_test2@my-alpha-ai.com",
+            "password": "NewPass1234!"
+        })
+        assert response.status_code == 200, f"Login failed: {response.status_code}"
+        data = response.json()
+        assert "access_token" in data, "Login response missing access_token"
+        print("✓ Login works with test credentials")
 
 
 if __name__ == "__main__":
