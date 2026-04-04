@@ -131,6 +131,7 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **P1**: Signal History Chart ✅ DONE
 - **P1**: Onboarding Modal (First-Time UX) ✅ DONE
 - **P1**: UI Polish & Micro-Interactions ✅ DONE
+- **P1**: Affiliate Program (Phase 1 — Referral System) ✅ DONE
 - **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
 - **P3**: MRR trend chart for subscription health dashboard (Recharts) ✅ DONE (merged into MRR trends)
 - **P3**: Auto-email waitlist users when spot opens (Resend integration)
@@ -196,6 +197,23 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - Custom scrollbar styling (dark theme)
 - Smooth page transitions via CSS keyframes
 - Applied to `/app/frontend/src/index.css`
+
+### Affiliate Program — Phase 1 (Apr 2026)
+- **Backend**: `/app/backend/routes/referrals.py` — Comprehensive referral system
+  - `GET /api/referrals/validate/{ref}` — validates by referral code OR user ID, auto-creates code if needed
+  - `GET /api/referrals/stats` — authenticated user referral stats (code, total_referrals, active_referrals, earnings, tier)
+  - `GET /api/referrals/activity` — authenticated user referral activity feed
+  - `POST /api/referrals/track-click?code=X` — tracks referral link clicks
+  - `GET /api/referrals/admin/summary?admin_key=X` — admin overview (total referrals, active subs from referrals, revenue, commissions owed, top referrers)
+  - `GET /api/referrals/admin/events?admin_key=X&range=today|7d|30d` — admin event breakdown with daily chart data
+- **Auth Integration**: `POST /api/auth/register` now accepts optional `ref_code`. On signup with valid ref_code: creates referral linkage, increments referrer stats, marks user as referred with 7-day Pro bonus.
+- **Anti-Fraud**: No self-referrals, no duplicate referrals, graceful failure on invalid ref_code
+- **Commission Model**: 20% recurring (hardcoded), tiered (Starter 20% → Legend 35%), manual payouts only (Phase 1)
+- **Frontend — Referral Capture**: `useReferralCapture` hook in App.js reads `?ref=` URL param, validates via API, stores in localStorage (`alphaai_referral_code`), cleans URL
+- **Frontend — User Referral Page**: `/referrals` route with copy-able referral link, stats cards (Total Referrals, Active Users, Earnings, Conversion Rate), reward tiers, activity feed
+- **Frontend — Admin Analytics**: `AdminReferralAnalytics` component added to Analytics tab with summary cards (Total Referrals, Active Subs, Revenue, Commissions Owed), Referral Signups line chart, Signups vs Conversions bar chart, Top Referrers table with time range filter
+- **DB Collections**: `referral_codes`, `referrals`, `referral_events`
+- **Testing**: Backend 23/23, Frontend all flows verified (iteration 62)
 
 ### Strategy Marketplace Backend (Apr 2026)
 - **Module**: `/app/backend/routes/marketplace.py` — standalone, does not touch Strategy Lab
