@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowUpRight, ArrowRight, Activity, Zap, X,
   Check, Clock, Brain, TestTube, Beaker, Trophy,
-  Rocket, Shield, Lock, ShieldCheck, Database, Terminal
+  Rocket, Shield, Lock, ShieldCheck, Database, Terminal,
+  TrendingUp, Bot
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -469,6 +470,20 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* ===== DEMO MODE EXPLANATION ===== */}
+      <section className="px-4 py-20 md:py-28 relative" data-testid="demo-mode-section">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+            <div className="inline-block px-3 py-1 rounded-full bg-[#7B61FF]/10 border border-[#7B61FF]/20 text-[#7B61FF] text-xs font-mono mb-4" data-testid="demo-mode-label">Free Demo</div>
+            <h2 className="text-3xl md:text-4xl font-bold font-['Outfit'] mb-4" data-testid="demo-mode-title">Try everything — no setup needed</h2>
+            <p className="text-zinc-400 leading-relaxed" data-testid="demo-mode-sub">
+              Explore the full platform instantly in Demo Mode. No exchange connection, no API keys, and no credit card required.
+              See real AI signals, strategy performance, and the dashboard experience — all risk-free.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ===== SECTION 1: MISSED vs CAPTURED ===== */}
       <section className="px-4 py-20 md:py-28 relative overflow-hidden" data-testid="missed-vs-captured-section">
         <div className="absolute inset-0 bg-[#0B0B0F]" />
@@ -796,6 +811,50 @@ const LandingPage = () => {
             </Link>
             <p className="text-zinc-600 text-sm mt-6">No credit card required. Free tier included. Cancel anytime.</p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* ===== HOW IT WORKS (WORKFLOW) ===== */}
+      <section className="px-4 py-20 md:py-28 relative" data-testid="workflow-section">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+              <div className="inline-block px-3 py-1 rounded-full bg-[#00FF94]/10 border border-[#00FF94]/20 text-[#00FF94] text-xs font-mono mb-4" data-testid="workflow-label">How it works</div>
+              <h2 className="text-3xl md:text-4xl font-bold font-['Outfit'] mb-4" data-testid="workflow-title">From signal to execution in minutes</h2>
+              <p className="text-zinc-400 max-w-2xl mx-auto" data-testid="workflow-sub">
+                Alpha AI gives you a complete trading workflow — from AI-generated signals to automated execution.
+                Start in Demo Mode, explore strategies, and go live whenever you're ready.
+              </p>
+            </motion.div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: Zap, label: "1. Start in Demo Mode", desc: "Instant access. No exchange connection or credit card needed.", color: "#7B61FF" },
+              { icon: TrendingUp, label: "2. Explore live signals", desc: "See real-time AI signals with confidence scores and reasoning.", color: "#00FF94" },
+              { icon: Trophy, label: "3. Follow top strategies", desc: "Use the public leaderboard to find high-performing strategies.", color: "#FFB800" },
+              { icon: Bot, label: "4. Automate when ready", desc: "Connect an exchange (optional) to mirror trades automatically.", color: "#00D4FF" },
+            ].map((step, i) => (
+              <motion.div
+                key={step.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                data-testid={`workflow-step-${i + 1}`}
+              >
+                <Card className="glass-card card-hover h-full">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${step.color}20` }}>
+                      <step.icon className="w-6 h-6" style={{ color: step.color }} />
+                    </div>
+                    <h3 className="text-base font-semibold mb-2 font-['Outfit']">{step.label}</h3>
+                    <p className="text-zinc-500 text-sm">{step.desc}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
