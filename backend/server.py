@@ -110,7 +110,15 @@ app.include_router(execution_router)
 app.include_router(billing_router)
 
 
-# ============= BACKGROUND TASKS =============
+# ============= HEALTH CHECK =============
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+@app.get("/api/health")
+async def api_health_check():
+    return {"status": "healthy"}
+
 async def signal_generation_task():
     """Periodically generates AI trading signals."""
     while True:
