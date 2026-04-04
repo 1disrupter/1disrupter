@@ -122,11 +122,17 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password, name) => {
     try {
+      // Check for stored referral code
+      const refCode = localStorage.getItem('alphaai_referral_code');
       const response = await axios.post(`${API}/auth/register`, {
         email,
         password,
-        name
+        name,
+        ref_code: refCode || undefined,
       });
+      
+      // Clear referral code after successful signup
+      if (refCode) localStorage.removeItem('alphaai_referral_code');
       
       const newTokens = {
         access_token: response.data.access_token,

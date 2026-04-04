@@ -640,3 +640,167 @@ async def get_referral_config():
         "min_payout": f"${REFERRAL_CONFIG['min_payout_amount']}",
         "payout_methods": REFERRAL_CONFIG["payout_methods"]
     }
+
+
+# ============= VALIDATE BY REF PARAM (code OR user ID) =============
+
+@router.get("/validate/{ref_param}")
+async def validate_referral_param(ref_param: str):
+    """Validate a referral from ?ref= URL param. Accepts referral code OR user ID."""
+    # Try as referral code first
+    ref_code = await db.referral_codes.find_one(
+        {"code": ref_param.upper(), "is_active": True},
+        {"_id": 0, "user_id": 1, "user_email": 1, "code": 1}
+    )
+    if ref_code:
+        return {
+            "valid": True,
+            "referral_code": ref_code["code"],
+            "referrer_id": ref_code["user_id"],
+            "referrer_name": mask_email(ref_code.get("user_email", "")),
+            "bonus": f"{REFERRAL_CONFIG['referee_free_days']} days free Pro access",
+        }
+
+    # Try as user ID
+    user = await db.users.find_one({"id": ref_param}, {"_id": 0, "id": 1, "email": 1, "name": 1})
+    if user:
+        # Auto-create referral code for this user if not exists
+        existing = await db.referral_codes.find_one({"user_id": user["id"]}, {"_id": 0})
+        if not existing:
+            code = generate_referral_code()
+            while await db.referral_codes.find_one({"code": code}):
+                code = generate_referral_code()
+            await db.referral_codes.insert_one({
+                "code": code,
+                "user_id": user["id"],
+                "user_email": user.get("email", ""),
+                "created_at": datetime.now(timezone.utc),
+                "total_clicks": 0,
+                "total_signups": 0,
+                "total_conversions": 0,
+                "total_earnings": 0.0,
+                "pending_earnings": 0.0,
+                "available_earnings": 0.0,
+                "free_days_earned": 0,
+                "is_active": True,
+            })
+            existing = await db.referral_codes.find_one({"user_id": user["id"]}, {"_id": 0})
+
+        return {
+            "valid": True,
+            "referral_code": existing["code"],
+            "referrer_id": user["id"],
+            "referrer_name": user.get("name") or mask_email(user.get("email", "")),
+            "bonus": f"{REFERRAL_CONFIG['referee_free_days']} days free Pro access",
+        }
+
+    return {"valid": False}
+
+
+# ============= ADMIN REFERRAL ANALYTICS =============
+
+@router.get("/admin/summary")
+async def admin_referral_summary(admin_key: str = Query(...)):
+    """Admin-only: Referral program summary."""
+    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+        raise HTTPException(status_code=403, detail="Admin access denied")
+
+    total_referrals = await db.referrals.count_documents({})
+    total_converted = await db.referrals.count_documents({"status": "converted"})
+    total_pending = await db.referrals.count_documents({"status": "pending"})
+
+    # Revenue from referred users
+    pipeline = [
+        {"$match": {"status": "converted"}},
+        {"$group": {"_id": None, "total": {"$sum": "$commission_amount"}}}
+    ]
+    earnings_agg = await db.referrals.aggregate(pipeline).to_list(1)
+    total_commissions = earnings_agg[0]["total"] if earnings_agg else 0
+
+    # Active subscribers from referrals
+    referred_ids = [r["referee_id"] async for r in db.referrals.find({}, {"_id": 0, "referee_id": 1})]
+    active_subs_from_referrals = 0
+    if referred_ids:
+        active_subs_from_referrals = await db.strategy_subscriptions.count_documents(
+            {"user_id": {"$in": referred_ids}, "status": "active"}
+        )
+
+    revenue_from_referrals = round(active_subs_from_referrals * 9.99, 2)
+
+    # Top referrers
+    top_pipeline = [
+        {"$match": {"is_active": True, "total_signups": {"$gt": 0}}},
+        {"$sort": {"total_conversions": -1}},
+        {"$limit": 10},
+        {"$project": {"_id": 0, "user_id": 1, "user_email": 1, "code": 1, "total_signups": 1, "total_conversions": 1, "total_earnings": 1}},
+    ]
+    top_referrers = await db.referral_codes.aggregate(top_pipeline).to_list(10)
+
+    return {
+        "total_referrals": total_referrals,
+        "total_converted": total_converted,
+        "total_pending": total_pending,
+        "active_subscribers_from_referrals": active_subs_from_referrals,
+        "total_revenue_from_referrals": revenue_from_referrals,
+        "total_commissions_owed": round(total_commissions, 2),
+        "top_referrers": [
+            {
+                "email": mask_email(r.get("user_email", "")),
+                "code": r.get("code"),
+                "signups": r.get("total_signups", 0),
+                "conversions": r.get("total_conversions", 0),
+                "earnings": r.get("total_earnings", 0),
+            }
+            for r in top_referrers
+        ],
+    }
+
+
+@router.get("/admin/events")
+async def admin_referral_events(
+    admin_key: str = Query(...),
+    time_range: str = Query("7d", alias="range", regex="^(today|7d|30d)$"),
+):
+    """Admin-only: Referral events over time for charts."""
+    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+        raise HTTPException(status_code=403, detail="Admin access denied")
+
+    now = datetime.now(timezone.utc)
+    if time_range == "today":
+        cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif time_range == "7d":
+        cutoff = now - timedelta(days=7)
+    else:
+        cutoff = now - timedelta(days=30)
+
+    signups = await db.referrals.count_documents({"created_at": {"$gte": cutoff}})
+    conversions = await db.referrals.count_documents({"converted_at": {"$gte": cutoff}})
+
+    # Daily breakdown
+    days = {"today": 1, "7d": 7, "30d": 30}[time_range]
+    dates = [(now - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days - 1, -1, -1)]
+
+    # Signup daily
+    signup_pipeline = [
+        {"$match": {"created_at": {"$gte": cutoff}}},
+        {"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}}, "count": {"$sum": 1}}},
+    ]
+    signup_agg = {d["_id"]: d["count"] async for d in db.referrals.aggregate(signup_pipeline)}
+
+    # Conversion daily
+    conv_pipeline = [
+        {"$match": {"converted_at": {"$gte": cutoff, "$ne": None}}},
+        {"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$converted_at"}}, "count": {"$sum": 1}}},
+    ]
+    conv_agg = {d["_id"]: d["count"] async for d in db.referrals.aggregate(conv_pipeline)}
+
+    daily = [
+        {"date": d, "signups": signup_agg.get(d, 0), "conversions": conv_agg.get(d, 0)}
+        for d in dates
+    ]
+
+    return {
+        "range": time_range,
+        "totals": {"signups": signups, "conversions": conversions},
+        "daily": daily,
+    }

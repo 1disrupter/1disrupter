@@ -63,6 +63,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
     name: str = Field(..., min_length=2)
+    ref_code: Optional[str] = None
 
 class UserLogin(UserBase):
     password: str
@@ -242,6 +243,50 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks):
     
     await db.users.insert_one(new_user)
     
+    # Track referral if ref_code provided
+    if user_data.ref_code:
+        try:
+            from routes.referrals import db as ref_db
+            # Look up the referral code
+            ref_record = await db.referral_codes.find_one(
+                {"code": user_data.ref_code.upper(), "is_active": True},
+                {"_id": 0}
+            )
+            if ref_record and ref_record["user_id"] != user_id:
+                # Create referral record
+                await db.referrals.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "referrer_id": ref_record["user_id"],
+                    "referrer_code": ref_record["code"],
+                    "referee_id": user_id,
+                    "referee_email": user_data.email.lower(),
+                    "status": "pending",
+                    "created_at": now,
+                    "converted_at": None,
+                    "converted_plan": None,
+                    "commission_amount": 0,
+                    "commission_paid": False,
+                })
+                # Update code stats
+                await db.referral_codes.update_one(
+                    {"code": ref_record["code"]},
+                    {"$inc": {"total_signups": 1}}
+                )
+                # Mark user as referred
+                await db.users.update_one(
+                    {"id": user_id},
+                    {"$set": {
+                        "referred_by": ref_record["code"],
+                        "referral_source": "affiliate",
+                        "referred_at": now,
+                        "referral_bonus_days": 7,
+                        "referral_bonus_expires": now + timedelta(days=7),
+                    }}
+                )
+                logger.info(f"Referral signup tracked: {user_data.email} via {ref_record['code']}")
+        except Exception as e:
+            logger.warning(f"Referral tracking failed for {user_data.email}: {e}")
+
     # Send verification email (background task)
     background_tasks.add_task(
         send_verification_email,

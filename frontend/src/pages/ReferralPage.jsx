@@ -19,7 +19,7 @@ const ReferralPage = () => {
   const { data: refActivity } = useApiData('/referrals/activity', { skip: isDemoMode || !token, token });
 
   const referralCode = refStats?.referral_code || 'YOUR_CODE';
-  const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
+  const referralLink = `${window.location.origin}/?ref=${referralCode}`;
 
   const stats = isDemoMode || !refStats ? [
     { label: 'Total Referrals', value: '0', change: 'Get started', positive: true },

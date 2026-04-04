@@ -26,6 +26,7 @@ import {
 } from "../components/ui/select";
 import { BrandLockup } from "../components/BrandComponents";
 import { AnalyticsFilteredCards, MRRTrendCharts, SignalHistoryChart } from "../components/AdminCharts";
+import AdminReferralAnalytics from "../components/AdminReferralAnalytics";
 import { API } from "../lib/constants";
 
 const ADMIN_KEY = localStorage.getItem("adminKey") || "alphaai_admin_2026";
@@ -1527,6 +1528,9 @@ const AdminPage = () => {
 
             {/* Signal History Chart */}
             <SignalHistoryChart />
+
+            {/* Affiliate Performance */}
+            <AdminReferralAnalytics />
 
             {analyticsData ? (
               <div className="space-y-6">
