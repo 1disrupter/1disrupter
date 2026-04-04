@@ -151,6 +151,15 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Cookie Consent Banner** — `CookieConsent.jsx` bottom banner with Accept/Reject. Stores consent in `localStorage` key `alphaai_cookie_consent`. Hidden once consent given.
 - **Testing**: 25/25 tests passed (iteration 64). All items verified, no regressions.
 
+### Strategy Interactions & Featured Strategies (Apr 4, 2026)
+- **3 Featured AI Strategies Seeded** — Alpha Momentum BTC (Medium), ETH Reversal Sniper (Medium-High), SOL Breakout Pulse (High). Each with full metadata: Sharpe ratio, win rate, max drawdown, total return, logic description, risk label.
+- **Featured Strategies Section** — New landing page section ("Top-Performing AI Strategies") showing 3 performance cards with metrics, risk labels, and "View Strategy" buttons.
+- **Strategy Detail Pages** — Each strategy has a unique URL at `/marketplace/{id}` with full info, performance block, parameters, and reviews.
+- **Copy Strategy** — `POST /api/marketplace/strategies/{id}/copy` creates a draft copy in the user's collection. Button visible for authenticated non-owner users.
+- **Featured Endpoint** — `GET /api/marketplace/featured` returns published featured strategies enriched with latest performance data.
+- **Fallback Safety** — FeaturedStrategies component returns null if API fails. StrategyDetailPage shows "Strategy not found" for invalid IDs.
+- **Testing**: 100% pass rate (iteration 65). All backend + frontend tests passed.
+
 ### Deployment Fix (Apr 4, 2026)
 - **Backend /health endpoint** — Added `GET /health` and `GET /api/health` to `server.py` returning `{"status": "healthy"}`.
 - **Frontend web3/ethers removed** — Removed `ethers@5.7.2` and `web3@4.16.0` from package.json. Replaced `WalletContext.jsx` with a no-op stub (all consumers get null wallet). Build size dropped from ~8MB to 1.8MB.
