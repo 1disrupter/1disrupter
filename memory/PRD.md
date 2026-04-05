@@ -8,7 +8,7 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Backend**: FastAPI + Motor (Async MongoDB) + WebSockets
 - **Integrations**: OpenAI GPT-5.2 (Emergent LLM Key), Stripe, CoinGecko, Resend
 
-## Implemented Features (All Passing — Iterations 25-70)
+## Implemented Features (All Passing — Iterations 25-71)
 
 ### Phase 1-6: Core Platform through WebSocket Fix
 - Auth (JWT, 2FA, password reset), Dashboard, Strategy Lab, Marketplace, Copy Trading
@@ -30,25 +30,37 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - Testing: 19/19 passed (iteration 70), 167 real emails delivered
 
 ### Frontend Deployment Fix (Apr 5, 2026)
-- **Root Cause**: React build directory (`/app/frontend/build/`) was never generated — NGINX served its default page
-- **Fix**: Ran `craco build`, verified output (index.html, JS/CSS bundles), confirmed `dist -> build` symlink
-- **Additional fixes**: Bounded remaining unbounded queries in `leaderboard_service.py` (trades query: 10000 → 2000 with projection) and `leaderboard.py` (users query: 10000 → 5000 with projection)
-- **Deployment agent**: `status: pass` — zero findings, zero blockers
+- Root cause: build/ gitignored, NGINX had nothing to serve
+- Fix: Removed build/dist from .gitignore, rebuilt frontend
+- Deployment agent: PASS with zero blockers
+
+### Full Live Mode System (Apr 5, 2026)
+- **`GET /api/demo-mode/status`**: Public endpoint, frontend syncs on mount + every 30s
+- **`GET /api/signals/live`**: Returns real signals from DB when DEMO_MODE=false, synthetic demo when true. Supports user_id param for followed-strategy filtering.
+- **`GET /api/portfolio/me`**: Real user portfolio (PnL, win rate, Sharpe, drawdown, trades) when live. Demo portfolio (PnL: $1,247.83) when demo mode ON.
+- **WebSocket `/api/ws/events`**: Rewritten to be demo-mode aware. Live mode fetches real signals/trades from DB. Demo mode generates synthetic events. Shows LIVE/DEMO badge.
+- **Frontend DemoModeContext**: Syncs with backend `/api/demo-mode/status` on mount. URL param `?demo=true` always forces demo mode. SessionStorage fallback.
+- **DashboardPage**: Removed all hardcoded initial signal/performance arrays. Fetches from `/api/signals/live` and `/api/portfolio/me`. Null-safe rendering with loading states.
+- **LiveEventsFeed**: Shows real-time LIVE/DEMO badge based on WebSocket connected message.
+- **Admin Toggle**: `POST /api/admin/demo-mode?admin_key=...` with `{enabled: true/false}` body. Instant switch, DB-backed with 5s cache TTL.
+- Testing: 21/21 backend + all frontend UI checks passed (iteration 71). Zero issues.
 
 ## Key Endpoints
 | Endpoint | Method | Description |
 |---|---|---|
+| `/api/demo-mode/status` | GET | Public demo mode flag |
+| `/api/signals/live` | GET | Live signals (demo-mode aware) |
+| `/api/portfolio/me` | GET | User portfolio (demo-mode aware) |
+| `/api/admin/demo-mode` | POST | Toggle demo mode (admin) |
 | `/api/digest/unsubscribe` | GET | Unsubscribe from weekly digest |
 | `/api/digest/admin/analytics` | GET | Digest delivery analytics |
 | `/api/digest/admin/trigger` | POST | Manual digest trigger (admin) |
 | `/api/marketplace/strategies` | GET | Public strategy listing (paginated) |
-| `/api/marketplace/strategies/leaderboard` | GET | Leaderboard (cached 60s) |
-| `/api/waitlist` | POST | Waitlist signup + email drip |
-| `/api/invoices/download/{id}` | GET | PDF invoice download |
+| `/api/ws/events` | WS | Live events feed |
 
 ## Backlog
 - **P2**: Strategy Signal Email/Push Alerts
-- **P2**: User Portfolio Performance Dashboard
+- **P2**: User Portfolio Performance Dashboard (full page with charts)
 - **P3**: Public Strategy Social Cards (dynamic OG images)
 - **P3**: Strategy Comparison Tool
 - **P3**: Sepolia Smart Contract deployment (awaiting user keys)
