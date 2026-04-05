@@ -26,9 +26,9 @@ next-env.d.ts
 *.tsbuildinfo
 
 # Production builds
-/build
-dist/
-dist
+# /build  -- removed: React build must be deployed
+# dist/   -- removed: symlink to build/ must be deployed
+# dist    -- removed
 
 # Environment files (comprehensive coverage)
 

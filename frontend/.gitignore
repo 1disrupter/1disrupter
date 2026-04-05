@@ -9,7 +9,7 @@
 /coverage
 
 # production
-/build
+# /build  -- removed: React build must be deployed with the app
 
 # misc
 .DS_Store
