@@ -258,9 +258,14 @@ async def startup_db_client():
 
     # ── Deploy frontend build to NGINX html directory ──
     # Production NGINX serves from /var/www/html/ — copy React build there
+    # Also install custom nginx.conf for SPA routing
     import shutil
+    import subprocess
     build_dir = Path(__file__).parent.parent / "frontend" / "build"
     nginx_dir = Path("/var/www/html")
+    nginx_conf_src = Path(__file__).parent.parent / "frontend" / "nginx.conf"
+    nginx_conf_dest = Path("/etc/nginx/sites-available/default")
+
     if build_dir.exists() and nginx_dir.exists():
         try:
             for item in nginx_dir.iterdir():
@@ -277,6 +282,15 @@ async def startup_db_client():
             logger.info(f"Deployed frontend build to {nginx_dir}")
         except Exception as e:
             logger.warning(f"Could not copy frontend build to nginx: {e}")
+
+    # Install custom nginx config for SPA routing + API proxy
+    if nginx_conf_src.exists() and nginx_conf_dest.exists():
+        try:
+            shutil.copy2(nginx_conf_src, nginx_conf_dest)
+            subprocess.run(["nginx", "-s", "reload"], capture_output=True, timeout=5)
+            logger.info("Installed custom nginx.conf and reloaded NGINX")
+        except Exception as e:
+            logger.warning(f"Could not install nginx config: {e}")
 
     # Start background tasks
     asyncio.create_task(signal_generation_task())
