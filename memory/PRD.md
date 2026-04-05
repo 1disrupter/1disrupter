@@ -60,6 +60,12 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 | `/api/digest/admin/analytics` | GET | Digest delivery analytics |
 | `/api/admin/demo-mode` | POST | Toggle demo mode (admin) |
 
+### Automated Frontend Build on Startup (Apr 5, 2026)
+- `server.py` startup hook now runs `yarn install --frozen-lockfile` + `yarn build` before copying build artifacts to `/var/www/html/`
+- Ensures every container start/deployment serves the latest compiled React code
+- Graceful fallback: if build fails or times out, existing build is used
+- Eliminates stale-build deployment issues (recurring NGINX default page bug — resolved)
+
 ## Backlog
 - **P2**: Strategy Signal Email/Push Alerts (email when followed strategy fires signal)
 - **P2**: Full Portfolio Performance page with equity curves and trade history charts

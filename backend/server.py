@@ -256,15 +256,28 @@ async def startup_db_client():
     await db.weekly_digest_logs.create_index([("user_id", 1)])
     await db.digest_preferences.create_index("email", unique=True)
 
-    # ── Deploy frontend build to NGINX html directory ──
-    # Production NGINX serves from /var/www/html/ — copy React build there
-    # Also install custom nginx.conf for SPA routing
+    # ── Build and deploy frontend to NGINX html directory ──
     import shutil
     import subprocess
-    build_dir = Path(__file__).parent.parent / "frontend" / "build"
+    frontend_dir = Path(__file__).parent.parent / "frontend"
+    build_dir = frontend_dir / "build"
     nginx_dir = Path("/var/www/html")
-    nginx_conf_src = Path(__file__).parent.parent / "frontend" / "nginx.conf"
+    nginx_conf_src = frontend_dir / "nginx.conf"
     nginx_conf_dest = Path("/etc/nginx/sites-available/default")
+
+    # Run yarn install + yarn build to compile latest React source
+    try:
+        logger.info("Running yarn install in /app/frontend ...")
+        subprocess.run(["yarn", "install", "--frozen-lockfile"], cwd=str(frontend_dir), check=True, timeout=120)
+        logger.info("Running yarn build in /app/frontend ...")
+        subprocess.run(["yarn", "build"], cwd=str(frontend_dir), check=True, timeout=300, env={**__import__('os').environ, "CI": "false"})
+        logger.info("Frontend build completed successfully")
+    except subprocess.TimeoutExpired:
+        logger.warning("Frontend build timed out — will use existing build if available")
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"Frontend build failed (exit {e.returncode}) — will use existing build if available")
+    except Exception as e:
+        logger.warning(f"Frontend build error: {e} — will use existing build if available")
 
     if build_dir.exists() and nginx_dir.exists():
         try:
