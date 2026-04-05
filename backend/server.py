@@ -63,6 +63,7 @@ from routes.ws_events import router as ws_events_router
 from routes.waitlist import router as waitlist_router
 from routes.digest import router as digest_router
 from routes.live_mode import router as live_mode_router
+from routes.agents_api import router as agents_api_router
 from services.stripe_webhook_handler import init_db as init_webhook_handler_db
 from cron.performance_attestor import init_db as init_attestor_db
 
@@ -120,6 +121,7 @@ app.include_router(ws_events_router)
 app.include_router(waitlist_router)
 app.include_router(digest_router)
 app.include_router(live_mode_router)
+app.include_router(agents_api_router)
 
 
 # ============= HEALTH CHECK =============
@@ -262,6 +264,9 @@ async def startup_db_client():
 
     from cron.weekly_digest import start_weekly_digest_scheduler
     asyncio.create_task(start_weekly_digest_scheduler())
+
+    from cron.agent_workers import start_agent_workers
+    asyncio.create_task(start_agent_workers())
 
     logger.info("AlphaAI Platform started successfully")
 

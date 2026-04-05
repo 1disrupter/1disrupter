@@ -1,219 +1,325 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
-import { Bot, Activity, Target, Zap, Shield, Brain, Sparkles, X, Settings, Clock } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { PageHeader, StatsRow, LoadingSkeleton, ErrorState } from "../components/PlaceholderUI";
-import { mockAgents } from "../lib/mockData";
-import { useDemoMode } from "../contexts/DemoModeContext";
-import { useAuth } from "../contexts/AuthContext";
-import { useApiData } from "../lib/useApiData";
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bot, Activity, TrendingUp, Zap, BarChart3, Shield, ArrowUpRight, ArrowDownRight, MinusCircle, Settings, Eye, X, ChevronRight, Wifi } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { useDemoMode } from '../contexts/DemoModeContext';
+import axios from 'axios';
 
-const statusDot = { active: "bg-[#00FF94]", idle: "bg-yellow-400", offline: "bg-zinc-600" };
-const ASSETS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "AVAX/USDT", "LINK/USDT"];
-const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1D"];
-const RISK_LEVELS = ["conservative", "moderate", "aggressive"];
-const FREQUENCIES = ["realtime", "5min", "15min", "1h", "4h"];
+const API = process.env.REACT_APP_BACKEND_URL;
+
+const agentIcons = {
+  'technical': TrendingUp,
+  'nlp': Zap,
+  'on-chain': Activity,
+  'statistical': BarChart3,
+};
+
+const typeColors = {
+  'technical': '#7B61FF',
+  'nlp': '#00FF94',
+  'on-chain': '#FFB800',
+  'statistical': '#FF6B6B',
+};
+
+const signalColors = { BUY: '#00FF94', SELL: '#FF6B6B', HOLD: '#FFB800' };
+const signalIcons = { BUY: ArrowUpRight, SELL: ArrowDownRight, HOLD: MinusCircle };
 
 const AgentsPage = () => {
-  const { isDemoMode, demoAgents } = useDemoMode();
-  const { tokens } = useAuth();
-  const token = tokens?.access_token;
+  const { isDemoMode } = useDemoMode();
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [agentSignals, setAgentSignals] = useState([]);
+  const [signalsLoading, setSignalsLoading] = useState(false);
+  const [configAgent, setConfigAgent] = useState(null);
+  const [configForm, setConfigForm] = useState({});
 
-  const { data: apiAgents, loading, error, refetch } = useApiData("/agents", { skip: isDemoMode, token });
-  const agents = isDemoMode ? demoAgents : (apiAgents?.agents || apiAgents || mockAgents);
-  const arr = Array.isArray(agents) ? agents : [];
-
-  const [configModal, setConfigModal] = useState(null);
-  const [signalsModal, setSignalsModal] = useState(null);
-  const [configs, setConfigs] = useState({});
-
-  const stats = [
-    { label: "Active Agents", value: String(arr.filter(a => a.status === "active").length || arr.length), change: "Running", positive: true },
-    { label: "Signals Today", value: String(arr.reduce((s, a) => s + (a.signals || a.signalCount || 0), 0) || 48), change: "Generated", positive: true },
-    { label: "Avg Accuracy", value: `${Math.round(arr.reduce((s, a) => s + (a.accuracy || 0), 0) / (arr.length || 1)) || 87}%`, change: "Hit rate", positive: true },
-    { label: "Total P&L", value: "+$2,847", change: "Today", positive: true },
-  ];
-
-  const openConfigure = (agent, idx) => {
-    setConfigModal({ ...agent, idx, ...configs[idx] });
-  };
-
-  const saveConfig = (idx) => {
-    setConfigs(prev => ({
-      ...prev,
-      [idx]: {
-        asset: configModal.configAsset || "BTC/USDT",
-        timeframe: configModal.configTimeframe || "1h",
-        risk: configModal.configRisk || "moderate",
-        frequency: configModal.configFrequency || "15min"
+  // Fetch agents
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const res = await axios.get(`${API}/api/agents`);
+        setAgents(res.data.agents || []);
+      } catch (e) {
+        console.error('Failed to fetch agents:', e);
+      } finally {
+        setLoading(false);
       }
-    }));
-    setConfigModal(null);
-    toast.success("Agent configuration saved");
-  };
+    };
+    fetchAgents();
+    const interval = setInterval(fetchAgents, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const openSignals = (agent, idx) => {
-    const mockSignals = [
-      { time: "2 min ago", type: "LONG", asset: agent.asset || "BTC/USDT", entry: "$67,250", confidence: 84, status: "active" },
-      { time: "18 min ago", type: "SHORT", asset: agent.asset || "ETH/USDT", entry: "$3,420", confidence: 76, status: "closed" },
-      { time: "1h ago", type: "LONG", asset: agent.asset || "SOL/USDT", entry: "$142.50", confidence: 91, status: "profit" },
-      { time: "3h ago", type: "LONG", asset: agent.asset || "BTC/USDT", entry: "$66,800", confidence: 88, status: "profit" },
-    ];
-    setSignalsModal({ agent, signals: mockSignals });
-  };
+  // Fetch signals for selected agent
+  const openSignals = useCallback(async (agent) => {
+    setSelectedAgent(agent);
+    setSignalsLoading(true);
+    try {
+      const res = await axios.get(`${API}/api/agents/${agent.id}/signals?limit=20`);
+      setAgentSignals(res.data.signals || []);
+    } catch (e) {
+      console.error('Failed to fetch signals:', e);
+      setAgentSignals([]);
+    } finally {
+      setSignalsLoading(false);
+    }
+  }, []);
+
+  const openConfig = useCallback((agent) => {
+    setConfigAgent(agent);
+    setConfigForm(agent.config || { risk_level: 'moderate', timeframe: '1h', signal_frequency: '15min' });
+  }, []);
+
+  const saveConfig = useCallback(async () => {
+    if (!configAgent) return;
+    try {
+      await axios.put(`${API}/api/agents/${configAgent.id}/config`, configForm);
+      setConfigAgent(null);
+    } catch (e) {
+      console.error('Config save error:', e);
+    }
+  }, [configAgent, configForm]);
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4" data-testid="agents-page">
-      <div className="max-w-7xl mx-auto">
-        <PageHeader icon={Bot} title="AI Agents" description="Autonomous trading agents powered by advanced ML models" testId="agents-header" />
-
-        {loading && !isDemoMode ? <LoadingSkeleton rows={3} /> : error && !isDemoMode ? <ErrorState message="Could not load agents" onRetry={refetch} /> : (
-          <>
-            <StatsRow stats={stats} />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-              {arr.map((agent, i) => {
-                const cfg = configs[i];
-                return (
-                  <motion.div key={i} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i }}>
-                    <Card className="bg-[#0A0A0A] border-zinc-800/50 hover:border-zinc-700/50 transition-all">
-                      <CardContent className="p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${statusDot[agent.status] || "bg-zinc-600"}`} />
-                            <span className="text-sm font-medium text-zinc-200">{agent.name}</span>
-                          </div>
-                          <Badge className="bg-zinc-800 text-zinc-500 text-[10px]">{agent.type || "ML"}</Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                          <div className="p-2 rounded bg-[#050505] border border-zinc-800/30">
-                            <p className="text-[10px] text-zinc-600">Accuracy</p>
-                            <p className="text-sm font-mono text-[#00FF94]">{agent.accuracy || 85}%</p>
-                          </div>
-                          <div className="p-2 rounded bg-[#050505] border border-zinc-800/30">
-                            <p className="text-[10px] text-zinc-600">Signals</p>
-                            <p className="text-sm font-mono text-white">{agent.signals || agent.signalCount || 12}</p>
-                          </div>
-                        </div>
-                        {cfg && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            <Badge className="bg-[#7B61FF]/10 text-[#7B61FF] text-[9px]">{cfg.asset}</Badge>
-                            <Badge className="bg-zinc-800 text-zinc-400 text-[9px]">{cfg.timeframe}</Badge>
-                            <Badge className="bg-zinc-800 text-zinc-400 text-[9px]">{cfg.risk}</Badge>
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <Button onClick={() => openConfigure(agent, i)} size="sm" variant="outline" className="flex-1 rounded-full border-zinc-800 hover:border-[#7B61FF]/50 text-xs cursor-pointer" data-testid={`configure-agent-${i}`}><Settings className="w-3 h-3 mr-1" /> Configure</Button>
-                          <Button onClick={() => openSignals(agent, i)} size="sm" className="flex-1 rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white text-xs cursor-pointer" data-testid={`view-signals-${i}`}><Sparkles className="w-3 h-3 mr-1" /> View Signals</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Deploy Agent CTA */}
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <Card className="bg-[#0A0A0A] border-zinc-800/50 border-dashed">
-                <CardContent className="p-6 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-zinc-300 mb-1">Deploy Custom Agent</h3>
-                    <p className="text-xs text-zinc-600">Create and train a new agent with your custom parameters</p>
-                  </div>
-                  <Button onClick={() => toast.info("Custom agent deployment coming in v2.0")} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white border border-[#7B61FF]/30 cursor-pointer" data-testid="deploy-agent-btn"><Zap className="w-4 h-4 mr-2" /> Deploy Agent</Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </>
-        )}
-
-        {/* Configure Modal */}
-        <AnimatePresence>
-          {configModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setConfigModal(null)}>
-              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={e => e.stopPropagation()} className="w-full max-w-md mx-4">
-                <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="config-modal">
-                  <CardHeader className="border-b border-zinc-800/50 pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2"><Settings className="w-4 h-4 text-[#7B61FF]" /> Configure: {configModal.name}</CardTitle>
-                      <button onClick={() => setConfigModal(null)} className="p-1 rounded hover:bg-white/5"><X className="w-4 h-4 text-zinc-500" /></button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-5 space-y-4">
-                    <div>
-                      <label className="text-xs text-zinc-500 mb-2 block">Trading Pair</label>
-                      <div className="flex flex-wrap gap-2">
-                        {ASSETS.map(a => (<button key={a} onClick={() => setConfigModal(p => ({ ...p, configAsset: a }))} className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${(configModal.configAsset || "BTC/USDT") === a ? "bg-[#7B61FF] text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`} data-testid={`cfg-asset-${a}`}>{a}</button>))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-zinc-500 mb-2 block">Timeframe</label>
-                      <div className="flex flex-wrap gap-2">
-                        {TIMEFRAMES.map(t => (<button key={t} onClick={() => setConfigModal(p => ({ ...p, configTimeframe: t }))} className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${(configModal.configTimeframe || "1h") === t ? "bg-[#7B61FF] text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`} data-testid={`cfg-tf-${t}`}>{t}</button>))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-zinc-500 mb-2 block">Risk Level</label>
-                      <div className="flex gap-2">
-                        {RISK_LEVELS.map(r => (<button key={r} onClick={() => setConfigModal(p => ({ ...p, configRisk: r }))} className={`flex-1 px-3 py-2 rounded-lg text-xs capitalize transition-all ${(configModal.configRisk || "moderate") === r ? "bg-[#7B61FF] text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`} data-testid={`cfg-risk-${r}`}>{r}</button>))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-zinc-500 mb-2 block">Signal Frequency</label>
-                      <div className="flex flex-wrap gap-2">
-                        {FREQUENCIES.map(f => (<button key={f} onClick={() => setConfigModal(p => ({ ...p, configFrequency: f }))} className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${(configModal.configFrequency || "15min") === f ? "bg-[#7B61FF] text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`} data-testid={`cfg-freq-${f}`}>{f}</button>))}
-                      </div>
-                    </div>
-                    <Button onClick={() => saveConfig(configModal.idx)} className="w-full rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white mt-2" data-testid="save-config-btn">Save Configuration</Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
+    <div className="min-h-screen bg-[#050505] text-white p-6 md:p-8" data-testid="agents-page">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <Bot className="w-6 h-6 text-[#7B61FF]" />
+          <h1 className="text-2xl md:text-3xl font-bold">Trading Agents</h1>
+          {isDemoMode ? (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#7B61FF]/10 text-[#7B61FF] border border-[#7B61FF]/20" data-testid="agents-demo-badge">DEMO</span>
+          ) : (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#00FF94]/10 text-[#00FF94] border border-[#00FF94]/20 flex items-center gap-1" data-testid="agents-live-badge">
+              <Wifi className="w-2.5 h-2.5" /> LIVE
+            </span>
           )}
-        </AnimatePresence>
-
-        {/* Signals Modal */}
-        <AnimatePresence>
-          {signalsModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSignalsModal(null)}>
-              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={e => e.stopPropagation()} className="w-full max-w-lg mx-4">
-                <Card className="bg-[#0A0A0A] border-zinc-800" data-testid="signals-modal">
-                  <CardHeader className="border-b border-zinc-800/50 pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2"><Activity className="w-4 h-4 text-[#00FF94]" /> Signals — {signalsModal.agent.name}</CardTitle>
-                      <button onClick={() => setSignalsModal(null)} className="p-1 rounded hover:bg-white/5"><X className="w-4 h-4 text-zinc-500" /></button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-5 space-y-3">
-                    {signalsModal.signals.map((sig, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-[#050505] border border-zinc-800/30 flex items-center justify-between" data-testid={`signal-${i}`}>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge className={sig.type === "LONG" ? "bg-[#00FF94]/15 text-[#00FF94]" : "bg-red-400/15 text-red-400"}>{sig.type}</Badge>
-                            <span className="text-xs font-mono text-zinc-300">{sig.asset}</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] text-zinc-600">
-                            <span>Entry: {sig.entry}</span>
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {sig.time}</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-mono text-white">{sig.confidence}%</p>
-                          <Badge className={sig.status === "profit" ? "bg-[#00FF94]/10 text-[#00FF94] text-[9px]" : sig.status === "active" ? "bg-[#7B61FF]/10 text-[#7B61FF] text-[9px]" : "bg-zinc-700 text-zinc-400 text-[9px]"}>{sig.status}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </div>
+        <p className="text-sm text-zinc-500">
+          {isDemoMode
+            ? 'Viewing demo agent data — enable live mode in admin panel for real signals'
+            : '4 AI agents analyzing markets in real time — generating live trading signals'}
+        </p>
       </div>
+
+      {/* Agent Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="bg-[#0A0A0A] border border-zinc-800 rounded-xl h-48 animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {agents.map((agent, idx) => {
+            const Icon = agentIcons[agent.type] || Bot;
+            const color = typeColors[agent.type] || '#7B61FF';
+            return (
+              <motion.div
+                key={agent.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.08 }}
+              >
+                <Card className="bg-[#0A0A0A] border-zinc-800 hover:border-zinc-700 transition-colors" data-testid={`agent-card-${agent.id}`}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${color}15`, border: `1px solid ${color}30` }}>
+                          <Icon className="w-5 h-5" style={{ color }} />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-semibold text-white">{agent.name}</CardTitle>
+                          <p className="text-xs text-zinc-500 mt-0.5">{agent.type}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-2 h-2 rounded-full ${agent.status === 'active' ? 'bg-[#00FF94]' : 'bg-zinc-600'}`} />
+                        <span className="text-[10px] text-zinc-500 font-mono uppercase">{agent.status}</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-zinc-500 mb-4 leading-relaxed">{agent.description}</p>
+
+                    {/* Metrics */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="text-center">
+                        <p className="text-lg font-bold font-['JetBrains_Mono']" style={{ color }}>{agent.accuracy || 0}%</p>
+                        <p className="text-[10px] text-zinc-600">Accuracy</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-bold font-['JetBrains_Mono'] text-white">{agent.signals || 0}</p>
+                        <p className="text-[10px] text-zinc-600">Today</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-bold font-['JetBrains_Mono'] text-white">{agent.total_signals || 0}</p>
+                        <p className="text-[10px] text-zinc-600">Total</p>
+                      </div>
+                    </div>
+
+                    {/* Assets */}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {(agent.assets || []).map(a => (
+                        <span key={a} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">{a}</span>
+                      ))}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openSignals(agent)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors text-xs text-zinc-300 font-medium"
+                        data-testid={`view-signals-${agent.id}`}
+                      >
+                        <Eye className="w-3 h-3" /> View Signals
+                      </button>
+                      <button
+                        onClick={() => openConfig(agent)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors text-xs text-zinc-300 font-medium"
+                        data-testid={`configure-${agent.id}`}
+                      >
+                        <Settings className="w-3 h-3" /> Configure
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Signals Modal */}
+      <AnimatePresence>
+        {selectedAgent && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setSelectedAgent(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#0A0A0A] border border-zinc-800 rounded-xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+              onClick={e => e.stopPropagation()}
+              data-testid="signals-modal"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">{selectedAgent.name} Signals</h3>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">{agentSignals.length} recent signals</p>
+                </div>
+                <button onClick={() => setSelectedAgent(null)} className="text-zinc-500 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[60vh] p-4 space-y-2">
+                {signalsLoading ? (
+                  <div className="text-center py-8 text-zinc-600 text-xs">Loading signals...</div>
+                ) : agentSignals.length === 0 ? (
+                  <div className="text-center py-8 text-zinc-600 text-xs">No signals generated yet — agent is scanning markets</div>
+                ) : (
+                  agentSignals.map((sig, i) => {
+                    const SIcon = signalIcons[sig.signal_type] || MinusCircle;
+                    const sColor = signalColors[sig.signal_type] || '#FFB800';
+                    return (
+                      <div key={sig.id || i} className="flex items-center gap-3 p-3 rounded-lg bg-[#050505] border border-zinc-800/50" data-testid={`signal-item-${i}`}>
+                        <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: `${sColor}15`, border: `1px solid ${sColor}30` }}>
+                          <SIcon className="w-4 h-4" style={{ color: sColor }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-white">{sig.symbol}</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                              style={{ color: sColor, backgroundColor: `${sColor}10` }}>
+                              {sig.signal_type}
+                            </span>
+                            <span className="text-[10px] text-zinc-500 font-mono">{sig.confidence}%</span>
+                          </div>
+                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">{sig.analysis}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs text-zinc-400 font-mono">${Number(sig.price_at_signal || 0).toLocaleString()}</p>
+                          <p className="text-[10px] text-zinc-600">{sig.generated_at ? new Date(sig.generated_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ''}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Config Modal */}
+      <AnimatePresence>
+        {configAgent && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setConfigAgent(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#0A0A0A] border border-zinc-800 rounded-xl w-full max-w-sm"
+              onClick={e => e.stopPropagation()}
+              data-testid="config-modal"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+                <h3 className="text-sm font-semibold text-white">Configure {configAgent.name}</h3>
+                <button onClick={() => setConfigAgent(null)} className="text-zinc-500 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="text-xs text-zinc-500 mb-1 block">Risk Level</label>
+                  <select value={configForm.risk_level || 'moderate'}
+                    onChange={e => setConfigForm(prev => ({ ...prev, risk_level: e.target.value }))}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white"
+                    data-testid="config-risk-level">
+                    <option value="conservative">Conservative</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="aggressive">Aggressive</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-zinc-500 mb-1 block">Timeframe</label>
+                  <select value={configForm.timeframe || '1h'}
+                    onChange={e => setConfigForm(prev => ({ ...prev, timeframe: e.target.value }))}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white"
+                    data-testid="config-timeframe">
+                    <option value="15m">15 minutes</option>
+                    <option value="1h">1 hour</option>
+                    <option value="4h">4 hours</option>
+                    <option value="1d">Daily</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-zinc-500 mb-1 block">Signal Frequency</label>
+                  <select value={configForm.signal_frequency || '15min'}
+                    onChange={e => setConfigForm(prev => ({ ...prev, signal_frequency: e.target.value }))}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white"
+                    data-testid="config-frequency">
+                    <option value="5min">Every 5 min</option>
+                    <option value="15min">Every 15 min</option>
+                    <option value="1h">Every hour</option>
+                  </select>
+                </div>
+                <button onClick={saveConfig}
+                  className="w-full py-2.5 rounded-lg bg-[#7B61FF] hover:bg-[#6B51EF] text-white text-sm font-semibold transition-colors"
+                  data-testid="save-config-btn">
+                  Save Configuration
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -314,27 +314,14 @@ async def get_supported_tokens():
     }
 
 # ============= AGENTS ROUTES =============
+# New trading agents system is in routes/agents_api.py
+# This legacy endpoint redirects to the new system
 
-@router.get("/agents", response_model=List[TradingAgent])
+@router.get("/agents")
 async def get_trading_agents():
-    agents = await db.trading_agents.find({}, {"_id": 0}).to_list(100)
-    if not agents:
-        default_agents = [
-            TradingAgent(name="DataCollectorAgent", type="data", description="Collects market data from exchanges, on-chain data, and sentiment signals", strategy="Data Aggregation", capital_allocation=0),
-            TradingAgent(name="DecisionAgent", type="analysis", description="Analyzes market signals and generates trading recommendations using AI", strategy="AI Signal Generation", performance_7d=round(random.uniform(2, 8), 2), performance_30d=round(random.uniform(10, 25), 2), total_trades=random.randint(100, 500), win_rate=round(random.uniform(55, 75), 1), capital_allocation=25.0),
-            TradingAgent(name="StrategyAgent", type="strategy", description="Selects active strategies and optimizes capital allocation", strategy="Multi-Strategy Optimization", performance_7d=round(random.uniform(3, 10), 2), performance_30d=round(random.uniform(12, 30), 2), total_trades=random.randint(200, 800), win_rate=round(random.uniform(58, 72), 1), capital_allocation=35.0),
-            TradingAgent(name="ExecutionAgent", type="execution", description="Executes trades with optimal gas fees and slippage management", strategy="Smart Order Routing", performance_7d=round(random.uniform(1, 5), 2), performance_30d=round(random.uniform(5, 15), 2), total_trades=random.randint(500, 2000), win_rate=round(random.uniform(60, 80), 1), capital_allocation=30.0),
-            TradingAgent(name="RiskAgent", type="risk", description="Enforces stop loss, monitors portfolio risk, and prevents large drawdowns", strategy="Risk Management", total_trades=random.randint(50, 200), win_rate=round(random.uniform(85, 98), 1), capital_allocation=10.0),
-        ]
-        for agent in default_agents:
-            doc = agent.model_dump()
-            doc['created_at'] = doc['created_at'].isoformat()
-            await db.trading_agents.insert_one(doc)
-        return default_agents
-    for agent in agents:
-        if isinstance(agent.get('created_at'), str):
-            agent['created_at'] = datetime.fromisoformat(agent['created_at'])
-    return [TradingAgent(**a) for a in agents]
+    """Legacy agents endpoint — delegates to agents_api."""
+    from routes.agents_api import list_agents
+    return await list_agents()
 
 # ============= TRADES ROUTES =============
 

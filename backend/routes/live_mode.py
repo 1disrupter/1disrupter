@@ -219,3 +219,125 @@ async def get_my_portfolio(
         "period_days": days,
         "followed_strategies": len(followed_sids),
     }
+
+
+# ═══════════════════════════════════════════
+#  PORTFOLIO PERFORMANCE / TRADES / SUMMARY
+# ═══════════════════════════════════════════
+
+DEMO_TRADES = [
+    {"symbol": "BTC", "side": "BUY", "entry_price": 64200, "exit_price": 67430, "pnl": 342.50, "pnl_pct": 5.03, "status": "closed", "timestamp": "2026-04-03T14:22:00Z"},
+    {"symbol": "ETH", "side": "BUY", "entry_price": 3280, "exit_price": 3521, "pnl": 241.00, "pnl_pct": 7.35, "status": "closed", "timestamp": "2026-04-02T10:15:00Z"},
+    {"symbol": "SOL", "side": "SELL", "entry_price": 155, "exit_price": 142, "pnl": 130.00, "pnl_pct": 8.39, "status": "closed", "timestamp": "2026-04-01T08:45:00Z"},
+    {"symbol": "BTC", "side": "BUY", "entry_price": 66800, "exit_price": 67200, "pnl": 42.00, "pnl_pct": 0.60, "status": "closed", "timestamp": "2026-03-31T16:30:00Z"},
+    {"symbol": "ETH", "side": "SELL", "entry_price": 3550, "exit_price": 3600, "pnl": -50.00, "pnl_pct": -1.41, "status": "closed", "timestamp": "2026-03-30T11:00:00Z"},
+]
+
+
+@router.get("/portfolio/performance")
+async def get_portfolio_performance(
+    user_id: str = Query(...),
+    days: int = Query(default=30, le=90),
+):
+    """Portfolio performance over time (equity curve data)."""
+    demo = await is_demo_mode()
+
+    if demo:
+        # Generate demo equity curve
+        points = []
+        equity = 10000
+        now = datetime.now(timezone.utc)
+        for i in range(days):
+            day = now - timedelta(days=days - i)
+            change = random.uniform(-1.5, 2.5)
+            equity *= (1 + change / 100)
+            points.append({"date": day.strftime("%Y-%m-%d"), "equity": round(equity, 2)})
+        return {"equity_curve": points, "demo_mode": True}
+
+    # Real: aggregate trades into daily P&L
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    trades = await db.trades.find(
+        {"user_id": user_id, "status": "closed"},
+        {"_id": 0, "pnl": 1, "timestamp": 1}
+    ).sort("timestamp", 1).limit(500).to_list(500)
+
+    equity = 10000.0
+    points = []
+    for t in trades:
+        equity += t.get("pnl", 0)
+        ts = t.get("timestamp", "")
+        date = str(ts)[:10] if ts else ""
+        points.append({"date": date, "equity": round(equity, 2)})
+
+    return {"equity_curve": points if points else [{"date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "equity": 10000}], "demo_mode": False}
+
+
+@router.get("/portfolio/trades")
+async def get_portfolio_trades(
+    user_id: str = Query(...),
+    limit: int = Query(default=20, le=100),
+):
+    """Recent trade history."""
+    demo = await is_demo_mode()
+
+    if demo:
+        return {"trades": DEMO_TRADES[:limit], "demo_mode": True}
+
+    trades = await db.trades.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(limit).to_list(limit)
+
+    for t in trades:
+        for k in ("timestamp", "created_at"):
+            if isinstance(t.get(k), datetime):
+                t[k] = t[k].isoformat()
+
+    return {"trades": trades, "demo_mode": False}
+
+
+@router.get("/portfolio/summary")
+async def get_portfolio_summary(user_id: str = Query(...)):
+    """Aggregated portfolio summary."""
+    demo = await is_demo_mode()
+
+    if demo:
+        return {
+            "total_pnl": 1247.83,
+            "total_return_pct": 12.48,
+            "total_trades": 47,
+            "open_positions": 3,
+            "best_asset": "BTC",
+            "worst_asset": "SOL",
+            "today_pnl": 342.50,
+            "demo_mode": True,
+        }
+
+    # Real summary from trades
+    trades = await db.trades.find(
+        {"user_id": user_id, "status": "closed"},
+        {"_id": 0, "pnl": 1, "symbol": 1}
+    ).limit(500).to_list(500)
+
+    total_pnl = sum(t.get("pnl", 0) for t in trades)
+    open_count = await db.trades.count_documents({"user_id": user_id, "status": "open"})
+
+    # Best/worst asset
+    asset_pnl = {}
+    for t in trades:
+        sym = t.get("symbol", "?")
+        asset_pnl[sym] = asset_pnl.get(sym, 0) + t.get("pnl", 0)
+
+    best = max(asset_pnl, key=asset_pnl.get) if asset_pnl else None
+    worst = min(asset_pnl, key=asset_pnl.get) if asset_pnl else None
+
+    return {
+        "total_pnl": round(total_pnl, 2),
+        "total_return_pct": round(total_pnl / 10000 * 100, 2),
+        "total_trades": len(trades),
+        "open_positions": open_count,
+        "best_asset": best,
+        "worst_asset": worst,
+        "today_pnl": 0,
+        "demo_mode": False,
+    }

@@ -1,0 +1,77 @@
+{
+  "summary": "Agents Live Mode System testing complete. All 19 backend tests passed. Frontend /agents page loads correctly with 4 agent cards showing real data, LIVE badge visible, View Signals modal shows 12 real signals, Configure modal works with all form elements.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_agents_live_mode.py",
+    "/app/test_reports/pytest/agents_live_mode_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Agents API correctly returns 4 agents with real metrics from MongoDB",
+    "Demo mode toggle works correctly with admin_key authentication",
+    "Agent signals endpoint returns real signals with proper structure (symbol, signal_type, confidence, price_at_signal, analysis)",
+    "Portfolio endpoints (performance, trades, summary) all functional and demo-mode aware",
+    "Frontend AgentsPage correctly fetches from /api/agents and displays LIVE badge when demo mode OFF",
+    "Whale Tracker and Volatility Engine show 0 signals - expected due to CoinGecko rate limits as noted in context"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_agents_live_mode.py"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "admin": "mar-brick@hotmail.com / Martin2026!",
+    "admin_key": "alphaai_admin_2026"
+  },
+  "seed_data_creation": "None - used existing agent data from background workers",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Agents Live Mode fully tested and working. 4 agents (Momentum Scanner, Sentiment Analyzer, Whale Tracker, Volatility Engine) are running as background workers. Momentum Scanner has 12 signals, Sentiment Analyzer has 44 signals. Whale Tracker and Volatility Engine have 0 signals due to CoinGecko rate limits - this is expected. Demo mode is currently OFF. Key endpoints: GET /api/agents, GET /api/agents/{id}/signals, PUT /api/agents/{id}/config, GET /api/signals/live, GET /api/portfolio/performance, GET /api/portfolio/trades, GET /api/portfolio/summary, GET /api/demo-mode/status, POST /api/admin/demo-mode?admin_key=alphaai_admin_2026.",
+  "tests_executed": [
+    {"test": "GET /api/demo-mode/status", "result": "PASS"},
+    {"test": "POST /api/admin/demo-mode toggle ON", "result": "PASS"},
+    {"test": "POST /api/admin/demo-mode toggle OFF", "result": "PASS"},
+    {"test": "POST /api/admin/demo-mode invalid key (403)", "result": "PASS"},
+    {"test": "GET /api/agents returns 4 agents", "result": "PASS"},
+    {"test": "GET /api/agents demo mode returns demo data", "result": "PASS"},
+    {"test": "GET /api/agents/momentum-scanner/signals", "result": "PASS"},
+    {"test": "GET /api/agents/sentiment-analyzer/signals", "result": "PASS"},
+    {"test": "PUT /api/agents/momentum-scanner/config", "result": "PASS"},
+    {"test": "PUT /api/agents/momentum-scanner/config empty body (400)", "result": "PASS"},
+    {"test": "GET /api/signals/live", "result": "PASS"},
+    {"test": "GET /api/signals/live demo mode", "result": "PASS"},
+    {"test": "GET /api/portfolio/performance", "result": "PASS"},
+    {"test": "GET /api/portfolio/trades", "result": "PASS"},
+    {"test": "GET /api/portfolio/summary", "result": "PASS"},
+    {"test": "POST /api/auth/login", "result": "PASS"},
+    {"test": "GET /api/marketplace/strategies/leaderboard", "result": "PASS"},
+    {"test": "Full demo mode toggle flow", "result": "PASS"},
+    {"test": "GET /api/health", "result": "PASS"},
+    {"test": "Frontend /agents page loads", "result": "PASS"},
+    {"test": "Frontend 4 agent cards displayed", "result": "PASS"},
+    {"test": "Frontend LIVE badge visible", "result": "PASS"},
+    {"test": "Frontend View Signals modal opens", "result": "PASS"},
+    {"test": "Frontend 12 signals in modal", "result": "PASS"},
+    {"test": "Frontend Configure modal opens", "result": "PASS"},
+    {"test": "Frontend config form elements present", "result": "PASS"}
+  ],
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "contract_manager.py (web3 blockchain calls)",
+      "Demo mode endpoints return synthetic data when DEMO_MODE=true"
+    ],
+    "note": "When demo mode is ON, /api/agents, /api/signals/live, and /api/portfolio/* return synthetic demo data. When OFF, they return real data from MongoDB."
+  },
+  "demo_mode_current_state": "OFF (false)"
+}
