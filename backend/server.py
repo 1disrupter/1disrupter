@@ -61,6 +61,7 @@ from routes.billing import router as billing_router
 from routes.invoices import router as invoices_router
 from routes.ws_events import router as ws_events_router
 from routes.waitlist import router as waitlist_router
+from routes.digest import router as digest_router
 from services.stripe_webhook_handler import init_db as init_webhook_handler_db
 from cron.performance_attestor import init_db as init_attestor_db
 
@@ -116,6 +117,7 @@ app.include_router(billing_router)
 app.include_router(invoices_router)
 app.include_router(ws_events_router)
 app.include_router(waitlist_router)
+app.include_router(digest_router)
 
 
 # ============= HEALTH CHECK =============
@@ -245,11 +247,19 @@ async def startup_db_client():
     await db.stripe_webhook_events.create_index([("processed_at", -1)])
     await db.waitlist.create_index("email", unique=True)
 
+    # Create indexes for weekly digest
+    await db.weekly_digest_logs.create_index([("sent_at", -1)])
+    await db.weekly_digest_logs.create_index([("user_id", 1)])
+    await db.digest_preferences.create_index("email", unique=True)
+
     # Start background tasks
     asyncio.create_task(signal_generation_task())
     asyncio.create_task(price_broadcast_task())
     asyncio.create_task(strategy_alerts_task())
     asyncio.create_task(rule_engine_loop())
+
+    from cron.weekly_digest import start_weekly_digest_scheduler
+    asyncio.create_task(start_weekly_digest_scheduler())
 
     logger.info("AlphaAI Platform started successfully")
 

@@ -1,0 +1,74 @@
+{
+  "summary": "Weekly Digest Feature testing complete. All 19 tests passed (1 skipped to avoid sending 84+ real emails). New digest endpoints working: unsubscribe, resubscribe, admin analytics, admin trigger. No regressions on existing endpoints (health, auth, marketplace, waitlist, billing, invoices, referrals).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_weekly_digest.py",
+    "/app/test_reports/pytest/weekly_digest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Digest feature implementation is solid - proper async/await, MongoDB indexes created, rate limiting (0.2s delay) for email sends",
+    "Admin key validation working correctly (403 for invalid keys)",
+    "Unsubscribe/resubscribe flow properly updates digest_preferences collection",
+    "Email sending uses REAL Resend API (not mocked) - 167 emails successfully delivered with 100% delivery rate",
+    "Cron scheduler runs in background (checks every 60s, fires Mondays at 09:00 UTC)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_weekly_digest.py"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 passed, 1 skipped intentionally)"
+  },
+  "test_credentials": {
+    "admin": "mar-brick@hotmail.com / Martin2026!",
+    "pro_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
+    "free_user": "test_free_user_iter29@my-alpha-ai.com / TestPass123!",
+    "admin_key": "alphaai_admin_2026"
+  },
+  "seed_data_creation": "Created test unsubscribe entries for testing: test_digest_unsub_iter70@my-alpha-ai.com, test_pref_check_*, test_resub_check_*, verify_test_iter70@test.com",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Weekly Digest feature fully tested and working. Key stats from admin analytics: 167 total digests sent (84 first batch + 83 second batch), 100% delivery rate, 9 pro users, 158 free users, 4 unsubscribed users. Admin trigger endpoint sends real emails via Resend API - use with caution (takes 15-20s due to rate limiting). Cron scheduler runs Mondays at 09:00 UTC. mar-brick@hotmail.com was unsubscribed from digest in testing.",
+  "tests_executed": [
+    {"test": "GET /api/health returns healthy", "result": "PASS"},
+    {"test": "POST /api/auth/login admin user", "result": "PASS"},
+    {"test": "POST /api/auth/login pro user", "result": "PASS"},
+    {"test": "GET /api/digest/unsubscribe?email=... marks user as unsubscribed", "result": "PASS"},
+    {"test": "GET /api/digest/resubscribe?email=... re-subscribes user", "result": "PASS"},
+    {"test": "Admin user unsubscribe count >= 1", "result": "PASS"},
+    {"test": "GET /api/digest/admin/analytics returns delivery stats", "result": "PASS"},
+    {"test": "GET /api/digest/admin/analytics invalid key returns 403", "result": "PASS"},
+    {"test": "GET /api/digest/admin/analytics missing key returns 422", "result": "PASS"},
+    {"test": "Admin analytics shows non-zero total_digests_sent (167)", "result": "PASS"},
+    {"test": "POST /api/digest/admin/trigger invalid key returns 403", "result": "PASS"},
+    {"test": "POST /api/digest/admin/trigger missing key returns 422", "result": "PASS"},
+    {"test": "POST /api/digest/admin/trigger valid key", "result": "SKIPPED (to avoid sending 84+ emails)"},
+    {"test": "GET /api/marketplace/strategies/leaderboard still works", "result": "PASS"},
+    {"test": "GET /api/waitlist/admin/analytics still works", "result": "PASS"},
+    {"test": "GET /api/billing/overview with auth still works", "result": "PASS"},
+    {"test": "GET /api/invoices with auth still works", "result": "PASS"},
+    {"test": "GET /api/referrals/admin/summary still works", "result": "PASS"},
+    {"test": "Unsubscribe creates preference record", "result": "PASS"},
+    {"test": "Resubscribe updates preference record", "result": "PASS"}
+  ],
+  "digest_analytics_snapshot": {
+    "total_digests_sent": 167,
+    "last_7d": {"sent": 167, "errors": 0, "delivery_rate": 100.0},
+    "pro_vs_free": {"pro": 9, "free": 158},
+    "unsubscribed_total": 4,
+    "latest_batch": {"sent_at": "2026-04-05T09:30:43.264024+00:00", "week_label": "Mar 29 – Apr 05, 2026"}
+  },
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["contract_manager.py (web3 blockchain calls)"],
+    "note": "Email sending via Resend is REAL (not mocked) - 167 emails successfully delivered"
+  }
+}
