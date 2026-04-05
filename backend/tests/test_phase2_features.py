@@ -13,7 +13,7 @@ import websockets
 import json
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://crypto-signals-web2.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://trading-strategy-hub-7.preview.emergentagent.com')
 
 # Test credentials
 PRO_USER_EMAIL = "demo_test2@my-alpha-ai.com"

@@ -212,12 +212,23 @@ async def strategy_leaderboard(
         cursor = strategies_col.find(query, {"_id": 0})
         items = await cursor.to_list(length=200)
 
-        # Enrich with latest performance
+        # Batch fetch performance data (avoids N+1)
+        strategy_ids = [s["id"] for s in items]
+        perf_cursor = performance_col.find(
+            {"strategy_id": {"$in": strategy_ids}},
+            {"_id": 0}
+        ).sort("uploaded_at", -1)
+        all_perfs = await perf_cursor.to_list(length=1000)
+
+        # Map latest perf per strategy
+        perf_map = {}
+        for p in all_perfs:
+            sid = p["strategy_id"]
+            if sid not in perf_map:
+                perf_map[sid] = p
+
         for s in items:
-            perf = await performance_col.find_one(
-                {"strategy_id": s["id"]}, {"_id": 0}, sort=[("uploaded_at", -1)]
-            )
-            s["_perf"] = perf or {}
+            s["_perf"] = perf_map.get(s["id"], {})
 
         cached = items
         _leaderboard_cache["data"] = cached
@@ -462,12 +473,16 @@ async def featured_strategies():
     cursor = strategies_col.find(query, {"_id": 0}).sort("subscriber_count", -1).limit(6)
     items = await cursor.to_list(length=6)
 
-    # Enrich with latest performance
+    # Batch fetch performance
+    sids = [s["id"] for s in items]
+    perf_cursor = performance_col.find({"strategy_id": {"$in": sids}}, {"_id": 0}).sort("uploaded_at", -1)
+    all_perfs = await perf_cursor.to_list(100)
+    perf_map = {}
+    for p in all_perfs:
+        if p["strategy_id"] not in perf_map:
+            perf_map[p["strategy_id"]] = p
     for s in items:
-        perf = await performance_col.find_one(
-            {"strategy_id": s["id"]}, {"_id": 0}, sort=[("uploaded_at", -1)]
-        )
-        s["_perf"] = perf or {}
+        s["_perf"] = perf_map.get(s["id"], {})
 
     return {"strategies": items}
 

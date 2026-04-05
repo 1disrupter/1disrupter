@@ -8,7 +8,7 @@
 | Free User | test_free_user_iter29@my-alpha-ai.com | TestPass123! | Basic tier |
 
 ## App URL
-- Preview: https://crypto-signals-web2.preview.emergentagent.com
+- Preview: https://trading-strategy-hub-7.preview.emergentagent.com
 
 ## API Auth
 - Login: POST /api/auth/login with {"email": "...", "password": "..."}

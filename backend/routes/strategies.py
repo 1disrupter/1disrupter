@@ -23,11 +23,14 @@ async def get_daily_report():
     """Generate daily performance report"""
     config = await db.simulation_config.find_one({}, {"_id": 0})
     today = datetime.now(timezone.utc).date()
+    today_str = str(today)
     
-    # Get today's trades
-    trades = await db.trades.find({}, {"_id": 0}).to_list(1000)
-    today_trades = [t for t in trades if t.get('timestamp', '').startswith(str(today)) or 
-                   (isinstance(t.get('timestamp'), str) and t['timestamp'][:10] == str(today))]
+    # Get today's trades (filtered by date)
+    trades = await db.trades.find(
+        {"timestamp": {"$regex": f"^{today_str}"}},
+        {"_id": 0, "pnl": 1, "timestamp": 1}
+    ).to_list(500)
+    today_trades = trades
     
     # Calculate daily metrics
     daily_pnl = sum(t.get('pnl', 0) for t in today_trades)
