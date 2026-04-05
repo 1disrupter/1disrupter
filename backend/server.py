@@ -256,6 +256,28 @@ async def startup_db_client():
     await db.weekly_digest_logs.create_index([("user_id", 1)])
     await db.digest_preferences.create_index("email", unique=True)
 
+    # ── Deploy frontend build to NGINX html directory ──
+    # Production NGINX serves from /var/www/html/ — copy React build there
+    import shutil
+    build_dir = Path(__file__).parent.parent / "frontend" / "build"
+    nginx_dir = Path("/var/www/html")
+    if build_dir.exists() and nginx_dir.exists():
+        try:
+            for item in nginx_dir.iterdir():
+                if item.is_file():
+                    item.unlink()
+                elif item.is_dir():
+                    shutil.rmtree(item)
+            for item in build_dir.iterdir():
+                dest = nginx_dir / item.name
+                if item.is_dir():
+                    shutil.copytree(item, dest)
+                else:
+                    shutil.copy2(item, dest)
+            logger.info(f"Deployed frontend build to {nginx_dir}")
+        except Exception as e:
+            logger.warning(f"Could not copy frontend build to nginx: {e}")
+
     # Start background tasks
     asyncio.create_task(signal_generation_task())
     asyncio.create_task(price_broadcast_task())
