@@ -151,6 +151,18 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Cookie Consent Banner** — `CookieConsent.jsx` bottom banner with Accept/Reject. Stores consent in `localStorage` key `alphaai_cookie_consent`. Hidden once consent given.
 - **Testing**: 25/25 tests passed (iteration 64). All items verified, no regressions.
 
+### Waitlist Automation (Apr 4, 2026)
+- **3-Email Drip Sequence** via Resend (REAL sending):
+  - Email #1 (Welcome) — sent immediately on signup
+  - Email #2 (Activation) — scheduled +24h, links to Strategy Leaderboard
+  - Email #3 (Conversion) — scheduled +72h, CTA to upgrade to Pro
+- **POST /api/waitlist** — idempotent signup, stores entry with delivery_logs, schedules 3 email jobs
+- **Background Scheduler** — runs every 30s, processes pending email jobs when scheduled_for is reached
+- **Admin Analytics** — `GET /api/waitlist/admin/analytics`: total waitlist, funnel (pending → activated → converted), activation/conversion rates, per-step email delivery stats
+- **Unsubscribe** — `GET /api/waitlist/unsubscribe?email=x` updates status, cancels pending jobs
+- Dark-themed HTML email templates matching app branding
+- **Testing**: 100% pass (iteration 68). 24 tests, zero regressions.
+
 ### Phase 2 Features (Apr 4, 2026)
 
 **Automated Referral Commission Tracking (20% Recurring)**
