@@ -1,11 +1,14 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
+import axios from 'axios';
 import analytics from '../lib/analytics';
 import {
   mockSignals, mockPortfolioStats, mockAgents, mockStrategies,
   mockMarketplaceItems, mockEventAgents, mockResearchQueries,
   mockSimulationResults, mockCopyTraders, mockChartData, mockLeaderboard
 } from '../lib/mockData';
+
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const DemoModeContext = createContext(null);
 
@@ -35,6 +38,32 @@ export const DemoModeProvider = ({ children }) => {
     }
     return sessionStorage.getItem('alphaai_demo_mode') === 'true';
   });
+
+  // Sync with backend demo mode flag on mount
+  const [backendDemoMode, setBackendDemoMode] = useState(null);
+  useEffect(() => {
+    const syncDemoMode = async () => {
+      try {
+        const res = await axios.get(`${API}/api/demo-mode/status`);
+        const backendFlag = res.data.demo_mode;
+        setBackendDemoMode(backendFlag);
+        // If URL param demo=true, always use demo mode regardless of backend
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('demo') === 'true') return;
+        // Otherwise, sync with backend
+        if (backendFlag !== isDemoMode) {
+          setIsDemoMode(backendFlag);
+          sessionStorage.setItem('alphaai_demo_mode', String(backendFlag));
+        }
+      } catch {
+        // Fallback: keep current state
+      }
+    };
+    syncDemoMode();
+    // Re-sync every 30s
+    const interval = setInterval(syncDemoMode, 30000);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Live-updating demo data
   const [demoSignals, setDemoSignals] = useState(mockSignals);
@@ -81,7 +110,6 @@ export const DemoModeProvider = ({ children }) => {
         description: 'Share it with anyone to let them explore My-AlphaAI instantly.',
       });
     }).catch(() => {
-      // Fallback: select text for manual copy
       const input = document.createElement('input');
       input.value = url;
       document.body.appendChild(input);
@@ -94,7 +122,7 @@ export const DemoModeProvider = ({ children }) => {
     });
   }, []);
 
-  // Simulate live updates every 3-5 seconds
+  // Simulate live updates every 3-5 seconds only when demo mode is on
   useEffect(() => {
     if (!isDemoMode) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -102,7 +130,6 @@ export const DemoModeProvider = ({ children }) => {
     }
 
     const tick = () => {
-      // Signals — fluctuate prices and confidence
       setDemoSignals(prev => prev.map(s => ({
         ...s,
         confidence: Math.min(99, Math.max(50, s.confidence + Math.floor(Math.random() * 5 - 2))),
@@ -111,7 +138,6 @@ export const DemoModeProvider = ({ children }) => {
         status: randomPick(['active', 'active', 'active', 'closed']),
       })));
 
-      // Portfolio stats — slight changes
       setDemoStats(prev => prev.map(s => {
         if (s.label === 'Portfolio Value') {
           const base = jitter(12480, 0.004);
@@ -124,7 +150,6 @@ export const DemoModeProvider = ({ children }) => {
         return s;
       }));
 
-      // Chart — append a new point, slide window
       setDemoChart(prev => {
         const last = prev[prev.length - 1]?.value || 12480;
         const next = jitter(last, 0.01);
@@ -133,7 +158,6 @@ export const DemoModeProvider = ({ children }) => {
         return [...prev.slice(-6), newPoint];
       });
 
-      // Agents — fluctuate signals count
       setDemoAgents(prev => prev.map(a => ({
         ...a,
         signals: Math.max(0, a.signals + Math.floor(Math.random() * 3 - 1)),
@@ -141,9 +165,8 @@ export const DemoModeProvider = ({ children }) => {
       })));
     };
 
-    // First tick immediately
     tick();
-    const interval = 3000 + Math.random() * 2000; // 3-5s
+    const interval = 3000 + Math.random() * 2000;
     timerRef.current = setInterval(tick, interval);
 
     return () => {
@@ -153,6 +176,7 @@ export const DemoModeProvider = ({ children }) => {
 
   const value = {
     isDemoMode,
+    backendDemoMode,
     toggleDemoMode,
     shareDemoLink,
     demoSignals,

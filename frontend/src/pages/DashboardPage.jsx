@@ -40,13 +40,9 @@ const DashboardPage = () => {
   const { user: authUser } = useAuth();
   const { isDemoMode, toggleDemoMode: setGlobalDemoMode } = useDemoMode();
   const demoMode = isDemoMode;
-  const [signals, setSignals] = useState([
-    { symbol: 'BTC', signal: 'BUY', confidence: 87, price: 67432 },
-    { symbol: 'ETH', signal: 'HOLD', confidence: 72, price: 3521 },
-    { symbol: 'SOL', signal: 'SELL', confidence: 65, price: 142 },
-  ]);
-  const [aiSummary, setAiSummary] = useState("Market showing bullish momentum on BTC. ETH consolidating near support. Consider taking profits on SOL.");
-  const [performance, setPerformance] = useState({ return_30d: 12.4, win_rate: 68, max_drawdown: 4.2, total_signals: 847 });
+  const [signals, setSignals] = useState([]);
+  const [aiSummary, setAiSummary] = useState("");
+  const [performance, setPerformance] = useState(null);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isPro, setIsPro] = useState(false);
@@ -92,6 +88,28 @@ const DashboardPage = () => {
       }).catch(console.error);
     }
   }, [wallet]);
+
+  // Fetch live performance data from backend (respects demo mode)
+  useEffect(() => {
+    const userId = authUser?.id || wallet || 'demo_user';
+    axios.get(`${API}/portfolio/me?user_id=${userId}&days=30`).then(res => {
+      const d = res.data;
+      setPerformance({
+        return_30d: d.total_return_pct || 0,
+        win_rate: d.win_rate || 0,
+        max_drawdown: d.max_drawdown || 0,
+        total_signals: d.total_trades || 0,
+      });
+      if (d.demo_mode && !aiSummary) {
+        setAiSummary("Market showing bullish momentum on BTC. ETH consolidating near support. Consider taking profits on SOL.");
+      }
+    }).catch(() => {
+      // Fallback for when API is unavailable
+      if (!performance) {
+        setPerformance({ return_30d: 0, win_rate: 0, max_drawdown: 0, total_signals: 0 });
+      }
+    });
+  }, [authUser?.id, wallet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pollPaymentStatus = async (sessionId, attempts = 0) => {
     const maxAttempts = 10;
@@ -457,53 +475,69 @@ const DashboardPage = () => {
     };
   }, [effectivePro, exitPopupShown]);
 
-  // Fetch signals from tiered backend API
+  // Fetch signals from live endpoint (respects backend demo mode)
   useEffect(() => {
     const fetchSignals = async () => {
       try {
-        // Use tiered endpoint with wallet if available
-        const endpoint = wallet 
-          ? `${API}/signals/tiered?wallet_address=${wallet}`
-          : `${API}/signals/free`;
+        // Primary: Use /signals/live which respects DEMO_MODE flag
+        const userId = authUser?.id || '';
+        const liveRes = await axios.get(`${API}/signals/live?limit=10${userId ? `&user_id=${userId}` : ''}`);
         
-        const res = await axios.get(endpoint);
-        
-        if (res.data.signals && res.data.signals.length > 0) {
-          // Update signals from backend with AI explanations
-          const newSignals = res.data.signals.map(s => ({
+        if (liveRes.data.signals && liveRes.data.signals.length > 0) {
+          const newSignals = liveRes.data.signals.map(s => ({
             symbol: s.symbol,
-            signal: s.signal_type,
+            signal: s.signal_type || s.signal || 'HOLD',
             confidence: s.confidence,
-            price: s.price_at_signal,
+            price: s.price_at_signal || s.price,
             analysis: s.analysis,
             isDelayed: s.is_delayed,
             generatedAt: s.generated_at,
-            // AI Signal Intelligence fields
+            isDemo: s.is_demo || false,
             explanation: s.explanation,
             reasoning: s.reasoning,
             trendAnalysis: s.trend_analysis,
             marketSentiment: s.market_sentiment,
             keyIndicators: s.key_indicators,
-            riskLevel: s.risk_level,
+            riskLevel: s.risk_level || s.risk_level,
             confidenceFactors: s.confidence_factors,
             potentialCatalysts: s.potential_catalysts,
-            suggestedAction: s.suggested_action
+            suggestedAction: s.suggested_action,
           }));
           setSignals(newSignals);
-          
-          // Update Pro status based on response
-          if (res.data.tier !== 'free') {
-            setIsPro(true);
+        } else {
+          // Fallback to tiered endpoint
+          const endpoint = wallet 
+            ? `${API}/signals/tiered?wallet_address=${wallet}`
+            : `${API}/signals/free`;
+          const res = await axios.get(endpoint);
+          if (res.data.signals && res.data.signals.length > 0) {
+            const newSignals = res.data.signals.map(s => ({
+              symbol: s.symbol,
+              signal: s.signal_type,
+              confidence: s.confidence,
+              price: s.price_at_signal,
+              analysis: s.analysis,
+              isDelayed: s.is_delayed,
+              generatedAt: s.generated_at,
+              explanation: s.explanation,
+              reasoning: s.reasoning,
+              trendAnalysis: s.trend_analysis,
+              marketSentiment: s.market_sentiment,
+              keyIndicators: s.key_indicators,
+              riskLevel: s.risk_level,
+              confidenceFactors: s.confidence_factors,
+              potentialCatalysts: s.potential_catalysts,
+              suggestedAction: s.suggested_action,
+            }));
+            setSignals(newSignals);
+            if (res.data.tier !== 'free') setIsPro(true);
           }
+          const refreshRate = res.data?.refresh_rate_seconds || 300;
+          setNextUpdateTimer(refreshRate);
         }
-        
-        // Update refresh timer based on tier
-        const refreshRate = res.data.refresh_rate_seconds || 300;
-        setNextUpdateTimer(refreshRate);
-        
       } catch (error) {
         console.error("Signal fetch error:", error);
-        // Fallback to live prices
+        // Final fallback to live prices
         try {
           const priceRes = await axios.get(`${API}/live-prices`);
           if (priceRes.data.prices) {
@@ -1151,6 +1185,7 @@ const DashboardPage = () => {
               </div>
               
               {/* Performance Summary Under Signals */}
+              {performance && (
               <div className="mt-6 pt-6 border-t border-zinc-800/50">
                 <p className="text-sm text-zinc-500 mb-3 font-medium">Last 30 Days Performance:</p>
                 <div className="flex flex-wrap items-center gap-6">
@@ -1170,6 +1205,7 @@ const DashboardPage = () => {
                   </div>
                 </div>
               </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -1192,20 +1228,20 @@ const DashboardPage = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
                   <p className="text-zinc-500 text-sm mb-1">Last 30 Days</p>
-                  <p className="text-3xl font-bold text-[#00FF94] font-['JetBrains_Mono']">+{performance.return_30d}%</p>
+                  <p className="text-3xl font-bold text-[#00FF94] font-['JetBrains_Mono']">+{performance?.return_30d || 0}%</p>
                   <p className="text-xs text-zinc-600 mt-1">(paper trading)</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
                   <p className="text-zinc-500 text-sm mb-1">Win Rate</p>
-                  <p className="text-3xl font-bold font-['JetBrains_Mono']">{performance.win_rate}%</p>
+                  <p className="text-3xl font-bold font-['JetBrains_Mono']">{performance?.win_rate || 0}%</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
                   <p className="text-zinc-500 text-sm mb-1">Max Drawdown</p>
-                  <p className="text-3xl font-bold text-yellow-400 font-['JetBrains_Mono']">-{performance.max_drawdown}%</p>
+                  <p className="text-3xl font-bold text-yellow-400 font-['JetBrains_Mono']">-{performance?.max_drawdown || 0}%</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[#050505] border border-zinc-800 text-center">
-                  <p className="text-zinc-500 text-sm mb-1">Total Signals</p>
-                  <p className="text-3xl font-bold font-['JetBrains_Mono']">{performance.total_signals}</p>
+                  <p className="text-zinc-500 text-sm mb-1">Total Trades</p>
+                  <p className="text-3xl font-bold font-['JetBrains_Mono']">{performance?.total_signals || 0}</p>
                 </div>
               </div>
             </CardContent>

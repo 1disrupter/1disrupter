@@ -62,6 +62,7 @@ from routes.invoices import router as invoices_router
 from routes.ws_events import router as ws_events_router
 from routes.waitlist import router as waitlist_router
 from routes.digest import router as digest_router
+from routes.live_mode import router as live_mode_router
 from services.stripe_webhook_handler import init_db as init_webhook_handler_db
 from cron.performance_attestor import init_db as init_attestor_db
 
@@ -118,6 +119,7 @@ app.include_router(invoices_router)
 app.include_router(ws_events_router)
 app.include_router(waitlist_router)
 app.include_router(digest_router)
+app.include_router(live_mode_router)
 
 
 # ============= HEALTH CHECK =============
