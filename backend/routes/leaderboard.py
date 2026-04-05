@@ -157,7 +157,7 @@ async def refresh_all_rankings(
         raise HTTPException(status_code=403, detail="Admin access required")
     
     # Update all trader stats
-    users = await db.users.find({}, {"id": 1}).to_list(10000)
+    users = await db.users.find({}, {"_id": 0, "id": 1}).limit(5000).to_list(5000)
     
     for user in users:
         try:

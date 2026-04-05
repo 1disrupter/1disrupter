@@ -163,7 +163,10 @@ class LeaderboardService:
             return
         
         # Calculate all-time stats
-        all_trades = await db.trades.find({"user_id": user_id}).to_list(10000)
+        all_trades = await db.trades.find(
+            {"user_id": user_id},
+            {"_id": 0, "pnl": 1, "timestamp": 1}
+        ).limit(2000).to_list(2000)
         
         if not all_trades:
             return
@@ -243,7 +246,7 @@ class LeaderboardService:
         for metric in metrics:
             traders = await db.trader_stats.find(
                 {"is_public": True}
-            ).sort(f"stats.{metric}", -1).to_list(10000)
+            ).sort(f"stats.{metric}", -1).limit(5000).to_list(5000)
             
             for rank, trader in enumerate(traders, 1):
                 rank_key = metric.replace("_percentage", "").replace("total_", "")
