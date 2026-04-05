@@ -8,7 +8,10 @@ from typing import Optional
 from datetime import datetime, timezone, timedelta
 import uuid
 import random
+import logging
 from database import db, EMERGENT_LLM_KEY, logger
+
+logger_strats = logging.getLogger("AlphaAI.Strategies")
 from models.schemas import StrategyGenerateRequest, BacktestRequest
 from services.signal_service import signal_service
 from services.trading_service import live_trading_service
@@ -89,9 +92,15 @@ async def get_weekly_report():
     config = await db.simulation_config.find_one({}, {"_id": 0})
     today = datetime.now(timezone.utc)
     week_start = today - timedelta(days=7)
+    week_start_str = str(week_start.date())
     
-    # Get week's trades
-    trades = await db.trades.find({}, {"_id": 0}).to_list(5000)
+    # Get week's trades (bounded by date)
+    trades = await db.trades.find(
+        {"timestamp": {"$gte": week_start_str}},
+        {"_id": 0, "pnl": 1, "timestamp": 1}
+    ).to_list(2000)
+    if len(trades) >= 2000:
+        logger.warning("Weekly report: trades query hit 2000 limit — results may be truncated")
     
     # Calculate weekly metrics
     weekly_pnl = sum(t.get('pnl', 0) for t in trades)
@@ -111,8 +120,11 @@ async def get_weekly_report():
     strategies = await db.strategies.find({}, {"_id": 0}).to_list(100)
     ranked_strategies = sorted(strategies, key=lambda x: x.get('sharpe_ratio', 0), reverse=True)[:10]
     
-    # Get all risk events
-    alerts = await db.risk_alerts.find({}, {"_id": 0}).to_list(500)
+    # Get risk events for the past week
+    alerts = await db.risk_alerts.find(
+        {"timestamp": {"$gte": week_start_str}},
+        {"_id": 0}
+    ).to_list(500)
     
     report = {
         "report_type": "weekly",
