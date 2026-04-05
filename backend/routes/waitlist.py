@@ -306,7 +306,7 @@ async def unsubscribe(email: str = Query(...)):
 @router.get("/admin/analytics")
 async def waitlist_analytics(admin_key: str = Query(...)):
     """Admin: Waitlist funnel analytics."""
-    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+    if admin_key != os.environ.get("ADMIN_SECRET"):
         raise HTTPException(status_code=403, detail="Admin access denied")
 
     total = await waitlist_col.count_documents({})

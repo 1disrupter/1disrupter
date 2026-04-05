@@ -17,7 +17,7 @@ logger = logging.getLogger("AlphaAI.Traffic")
 
 router = APIRouter(prefix="/api", tags=["traffic"])
 
-ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "alphaai_admin_2026")
+ADMIN_SECRET = os.environ.get("ADMIN_SECRET")
 
 # Database reference (set in server.py startup)
 db = None

@@ -97,7 +97,7 @@ async def log_admin_action(admin_id: str, admin_email: str, action: str,
 
 # ============= ADMIN AUTH (Simple for now) =============
 
-ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "alphaai_admin_2026")
+ADMIN_SECRET = os.environ.get("ADMIN_SECRET")
 
 async def verify_admin(admin_key: str = Query(..., alias="admin_key")):
     """Verify admin access - in production, use proper JWT with admin role"""

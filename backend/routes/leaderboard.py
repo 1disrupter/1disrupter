@@ -2,6 +2,7 @@
 AlphaAI Leaderboard API Routes
 Public trader rankings and profiles.
 """
+import os
 import logging
 from datetime import datetime, timezone
 from typing import Optional
@@ -152,7 +153,7 @@ async def refresh_all_rankings(
 ):
     """Admin endpoint to refresh all rankings"""
     # Simple admin check
-    if admin_key != "alphaai_admin_2026":
+    if admin_key != os.environ.get("ADMIN_SECRET"):
         raise HTTPException(status_code=403, detail="Admin access required")
     
     # Update all trader stats

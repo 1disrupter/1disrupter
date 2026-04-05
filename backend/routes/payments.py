@@ -229,7 +229,7 @@ async def simulate_stripe_webhook(body: SimulateWebhookRequest, request: Request
     """
     admin_key = request.query_params.get("admin_key", "")
     import os as _os
-    if admin_key != _os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+    if admin_key != _os.environ.get("ADMIN_SECRET"):
         raise HTTPException(status_code=403, detail="Admin access denied")
 
     import json

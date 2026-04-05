@@ -737,7 +737,7 @@ async def validate_referral_param(ref_param: str):
 @router.get("/admin/summary")
 async def admin_referral_summary(admin_key: str = Query(...)):
     """Admin-only: Referral program summary."""
-    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+    if admin_key != os.environ.get("ADMIN_SECRET"):
         raise HTTPException(status_code=403, detail="Admin access denied")
 
     total_referrals = await db.referrals.count_documents({})
@@ -797,7 +797,7 @@ async def admin_referral_events(
     time_range: str = Query("7d", alias="range", regex="^(today|7d|30d)$"),
 ):
     """Admin-only: Referral events over time for charts."""
-    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+    if admin_key != os.environ.get("ADMIN_SECRET"):
         raise HTTPException(status_code=403, detail="Admin access denied")
 
     now = datetime.now(timezone.utc)
@@ -847,7 +847,7 @@ async def admin_commission_analytics(
     time_range: str = Query("30d", alias="range", regex="^(today|7d|30d|all)$"),
 ):
     """Admin-only: Commission analytics (recurring + first-time)."""
-    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+    if admin_key != os.environ.get("ADMIN_SECRET"):
         raise HTTPException(status_code=403, detail="Admin access denied")
 
     now = datetime.now(timezone.utc)

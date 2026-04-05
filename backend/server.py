@@ -39,7 +39,8 @@ from routes.fund import router as fund_router
 from routes.signals import router as signals_router
 from routes.trading import router as trading_router
 from routes.research import router as research_router
-from routes.web3_routes import router as web3_router
+# web3_routes disabled for SaaS-only deployment (Phase 2 Web3)
+# from routes.web3_routes import router as web3_router
 from routes.event_agents import router as event_agents_router
 from routes.marketing import router as marketing_router
 from routes.payments import router as payments_router
@@ -93,7 +94,8 @@ app.include_router(simulation_router)
 app.include_router(strategies_router)
 app.include_router(trading_router)
 app.include_router(research_router)
-app.include_router(web3_router)
+# web3_router disabled for SaaS-only deployment
+# app.include_router(web3_router)
 app.include_router(event_agents_router)
 app.include_router(marketing_router)
 app.include_router(payments_router)

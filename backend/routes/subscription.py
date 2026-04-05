@@ -96,7 +96,7 @@ async def get_webhook_events(request: Request, limit: int = 20):
     """Admin endpoint to view recent webhook events (for testing/debugging)."""
     admin_key = request.query_params.get("admin_key", "")
     import os
-    if admin_key != os.environ.get("ADMIN_SECRET", "alphaai_admin_2026"):
+    if admin_key != os.environ.get("ADMIN_SECRET"):
         raise HTTPException(status_code=403, detail="Admin access denied")
 
     events = await db.stripe_webhook_events.find(
