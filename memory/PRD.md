@@ -8,7 +8,7 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - **Backend**: FastAPI + Motor (Async MongoDB) + WebSockets
 - **Integrations**: OpenAI GPT-5.2 (Emergent LLM Key), Stripe, CoinGecko, Resend
 
-## Implemented Features (All Passing — Iterations 25-69)
+## Implemented Features (All Passing — Iterations 25-70)
 
 ### Phase 1: Core Platform
 - Auth (JWT, 2FA, password reset, email verification), Dashboard, Agents, Strategy Lab
@@ -22,69 +22,58 @@ My-AlphaAI is a B2C/SaaS crypto trading signals platform optimized for conversio
 - Event Logging, Summary/Timeseries/Raw Events, Frontend Tracking
 - Admin Dashboard, WebSocket admin event stream, Live Event Stream panel
 - Rule Engine (6 anomaly rules), Alert events, Founder email alerts
-- Responsive Navigation (priority split + More dropdown)
 
-### Phase 4: Mobile API Optimization (March 29, 2026)
-- Bootstrap Endpoint, Mobile Refresh, Mobile API Client, Mobile Cache
-- WebSocket Reconnection, MobileNetworkBanner, MobileBottomNav
-- MobileSettingsPage, Compact Mode, Safe Area Support
+### Phase 4-6: Mobile Optimization + Performance + WebSocket Fix
+- Bootstrap/Refresh endpoints, Prefetch engine, Skeleton loaders, Pull-to-refresh
+- WS three-state reconnect, Stripe webhook handler (9 event types)
 
-### Phase 5: Smart Prefetching & Performance Polish (March 29, 2026)
-- Smart Prefetch Engine, TTL Cache, Skeleton Loaders, Virtualized Alert Lists
-- Compact Mode, Pull-to-Refresh, Offline Behavior, usePrefetch Hook
+### Phase 7: Contract Pipeline (Ready, Web3 removed for SaaS deployment)
 
-### Phase 6.1: WebSocket Reconnect Loop Fix (March 29, 2026)
-- Three-state connected: null → true → false. Rapid-close detection, cooldown guards.
+### Phase 8-10: Hero Redesign, Beta Spots, Waitlist, Exchange Integration
+- High-conversion hero, dynamic beta counter, waitlist modal, subscription health
+- Binance Testnet connectivity (data only)
 
-### Phase 6.2: Stripe Webhook Handler
-- 9 event types, subscription state machine, idempotency, admin stream, founder alerts
-
-### Phase 7: AlphaAI Manager Contract Pipeline (March 29, 2026)
-- Hardhat project, deploy/verify scripts, contract manager service
-- **Status**: Pipeline ready but Web3 code removed for SaaS-only deployment
-
-### Phase 8: Hero Section Redesign + Beta Spots + Waitlist (Feb-Mar 2026)
-- High-conversion hero, dynamic beta spots counter, waitlist modal, subscription health dashboard
-
-### Phase 9-10: Live User Stats, Exchange Integration (Mar 2026)
-- Admin user stats card, Binance Testnet connectivity (data only, no trading)
-
-### Execution Engine Phase 2 (Apr 2026)
-- Paper/Testnet modes, signal routing, execution configs, admin monitor
-
-### Admin Demo Mode Toggle & Analytics (Apr 2026)
-- DB-backed toggle, analytics events, synthetic/real data modes
+### Execution Engine Phase 2 + Admin Demo Toggle (Apr 2026)
+- Paper/Testnet modes, signal routing, DB-backed demo toggle, analytics events
 
 ### Go-Live Readiness (Apr 4, 2026)
-- P0 fixes (404 page, favicon, dashboard un-gating, live prices, hero copy)
-- P1 polish (ToS, Privacy, ErrorBoundary, OG tags, manifest, robots.txt, cookies)
-- Landing page improvements (screenshots, trust strip, legal disclaimers)
-- Strategy interactions (3 featured strategies, leaderboard, copy strategy)
-- Waitlist automation (3-email Resend drip)
-- Phase 2 features (20% referral commissions, PDF invoices, WebSocket events feed)
+- P0 fixes, P1 polish (ToS, Privacy, ErrorBoundary, OG tags, manifest, cookies)
+- Landing page improvements, strategy interactions, waitlist automation, Phase 2 features
 
 ### Deployment Fix — P0 Blockers (Apr 5, 2026)
-- **Bounded DB queries**: Fixed `strategies.py` weekly report to use date filters (`$gte` on timestamp) with 2000-doc limit instead of unbounded `to_list(5000)`. Added warning logs for truncated results.
-- **Web3/blockchain removal**: Deleted `/app/backend/contracts/` (AlphaAIManager.sol), `/app/backend/web3/` (contract_abi.py), `/app/backend/routes/web3_routes.py`. Rewrote `contract_manager.py` as pure mock stub with zero web3 imports.
-- **Dead code cleanup**: Deleted 8 unused `generate_*.py` scripts (kept 5 that are referenced by marketing.py/payments.py).
-- **Deployment agent**: Passes all checks — no blockchain deps, no hardcoded secrets, no unbounded queries.
-- **Testing**: 18/18 tests passed (iteration 69). All core endpoints verified. Frontend serves React app correctly.
+- Bounded DB queries, web3/blockchain removal, dead code cleanup
+- Testing: 18/18 passed (iteration 69)
+
+### Weekly Performance Digest Email (Apr 5, 2026)
+- **Cron Scheduler**: Background loop checks every 60s, fires Mondays at 09:00 UTC. Uses `_last_digest_week` guard to prevent duplicate sends.
+- **Data Collection**: Top 5 strategies by 7-day return from `strategies_mp` + `strategy_performance`. Per-user followed-strategy performance from `followed_strategies` + `strategy_leaderboard`.
+- **Free vs Pro Gating**: Free users see top 3 global strategies + blurred rows + "Upgrade to Pro" CTA. Pro users see full global + personalized metrics (Sharpe, win rate, signals).
+- **Email Template**: Dark-themed HTML matching AlphaAI brand. Sections: header, global top strategies table, personalized followed strategies (or discovery CTA), upgrade banner (free), dashboard/leaderboard CTAs, footer with unsubscribe.
+- **Unsubscribe**: `GET /api/digest/unsubscribe?email=...` + `GET /api/digest/resubscribe?email=...`. Uses `digest_preferences` collection.
+- **Delivery Logging**: `weekly_digest_logs` collection — user_id, email, is_pro, strategy_count, status, week_label, sent_at.
+- **Admin Analytics**: `GET /api/digest/admin/analytics?admin_key=...` — total sent, last 7d stats, pro vs free distribution, unsubscribed count, latest batch info, open_rate placeholder.
+- **Manual Trigger**: `POST /api/digest/admin/trigger?admin_key=...` — admin-only immediate send for testing.
+- **Rate Limiting**: 0.2s delay between sends to avoid Resend rate limits.
+- **Testing**: 19/19 passed (iteration 70). 167 real emails delivered, 100% delivery rate. Zero regressions.
 
 ## Key Endpoints
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/mobile/bootstrap` | GET | Mobile initialization (demo + auth) |
-| `/api/mobile/refresh` | POST | Lightweight token refresh |
-| `/api/admin/events` | POST | Log traffic event |
-| `/api/admin/traffic/summary` | GET | Aggregated metrics |
-| `/api/ws/alerts/{client_id}` | WS | Strategy alerts |
+| `/api/digest/unsubscribe` | GET | Unsubscribe from weekly digest |
+| `/api/digest/resubscribe` | GET | Re-subscribe to weekly digest |
+| `/api/digest/admin/analytics` | GET | Digest delivery analytics |
+| `/api/digest/admin/trigger` | POST | Manual digest trigger (admin) |
 | `/api/marketplace/strategies` | GET | Public strategy listing (paginated) |
-| `/api/marketplace/strategies/leaderboard` | GET | Leaderboard with performance (cached 60s) |
+| `/api/marketplace/strategies/leaderboard` | GET | Leaderboard (cached 60s) |
 | `/api/waitlist` | POST | Waitlist signup + email drip |
 | `/api/invoices/download/{id}` | GET | PDF invoice download |
 | `/api/billing/overview` | GET | Billing summary |
 
 ## Backlog
-- **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys — restore web3 when needed)
+- **P2**: Actual Sepolia Smart Contract deployment (awaiting user keys)
+- **P2**: Strategy Signal Email/Push Alerts (email when followed strategy fires signal)
+- **P2**: User Portfolio Performance Dashboard (aggregated P&L across followed strategies)
+- **P3**: Public Strategy Social Cards (dynamic OG images for sharing)
+- **P3**: Strategy Comparison Tool (side-by-side metrics)
 - **P3**: User retention analytics (DAU/MAU ratio)
-- **P3**: Background task queue migration (asyncio.sleep → Celery/Redis for waitlist drip reliability)
+- **P3**: Background task queue migration (asyncio.sleep → Celery/Redis)
