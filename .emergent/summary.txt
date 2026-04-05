@@ -1,137 +1,177 @@
-<analysis>**original_problem_statement**: 
-The user is building My-AlphaAI, a B2C/SaaS crypto trading signals platform. The goal of this session was to finalize the application for a Web2 SaaS-only public launch by verifying P0 fixes, adding UX/legal polish, implementing Phase 2 features (Referral commissions, PDF Invoices, WebSocket events), adding a Resend-powered automated waitlist email drip, and fixing critical deployment blockers (removing all Web3/blockchain dependencies so the app can be deployed on the platform).
+<analysis>### Handover Summary
+
+**original_problem_statement**: 
+The user's goal is to ensure the My-AlphaAI application always serves the LATEST React frontend (including the Agents page and all new features) with no stale builds. Because the Emergent deployment environment does not automatically execute  for this project structure, the agent must automate the frontend build process by injecting yarn install v1.22.22
+[1/4] Resolving packages...
+[2/4] Fetching packages...
+[3/4] Linking dependencies...
+[4/4] Building fresh packages...
+success Saved lockfile.
+Done in 0.03s. and yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. into the FastAPI backend's startup hook (inside ), right before it copies the generated build files to NGINX's  directory.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A production-ready React + FastAPI + MongoDB SaaS platform. Features include a Strategy Marketplace with a public Leaderboard, automated Waitlist email drips via Resend, Stripe Billing, an Affiliate system with 20% recurring commissions, real-time WebSocket event feeds, and PDF invoice generation. All  and  dependencies have been entirely stripped from the frontend and backend to comply with platform deployment rules, with  cleanly stubbed out.
+A production-ready SaaS platform that includes:
+- Web3/ethers entirely removed to clear deployment blockers.
+- A Weekly Performance Digest email system powered by Resend via a cron job.
+- Full Live Mode with an Admin-controlled Demo Mode toggle (). 
+- 4 real-time AI Agent background workers (Momentum Scanner, Sentiment Analyzer, Whale Tracker, Volatility Engine) that fetch real CoinGecko data and store actual signals in MongoDB.
+- A FastAPI backend startup hook that copies  to  and installs a custom  for SPA routing.
 
 **Last working item**: 
-    - Last item agent was working: Fixing the final deployment blockers identified by the . Specifically, the agent removed , , and  from the backend , deleted the  directory, fixed hardcoded  values across endpoints, and was in the middle of fixing N+1 queries and unbounded trades queries in  and .
+    - Last item agent was working: Modifying the FastAPI startup hook in  to run yarn install v1.22.22
+[1/4] Resolving packages...
+success Already up-to-date.
+Done in 0.02s. and yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. in the  directory *before* it copies the build artifacts to .
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? backend testing agent
+    - Which testing method agent to use? manual testing by curl / screenshot tool (verify the React app loads via the preview URL and reflects the latest code).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-  Issue 1: Frontend Deployment Fails (Shows NGINX default page)
-     - Attempted fixes: The agent verified the React build is correctly generating in . It then found that  was blocking deployment due to leftover  backend dependencies and N+1 database queries. The agent removed the dependencies and applied DB query fixes.
+  Issue 1: Production frontend serves stale/outdated React build
+     - Attempted fixes: The agent successfully made the backend copy the  folder to  (NGINX's serving directory) and moved CRA tools to . However, the  folder itself is outdated because the Emergent platform does not natively rebuild React for this repo structure upon deployment.
      - Next debug checklist: 
-       - Finish the refactor of unbounded queries in .
-       - Run  to confirm NO blockers or warnings remain.
-       - If the deployment agent passes, ensure the React app correctly serves on the live URL (bypassing the NGINX default page).
-     - Why fix this issue and what will be achieved with the fix? Fixes a critical production blocker so users can access the actual built React application instead of an empty NGINX screen.
+       - Open .
+       - In the startup hook (around line 260), add  and .
+       - Ensure these commands execute *before* the  logic that moves the build to .
+     - Why fix this issue and what will be achieved with the fix? It ensures that every time the container starts/deploys, the React source code is compiled into a fresh build, guaranteeing users always see the latest UI and live features.
      - Status: IN PROGRESS
-     - Is recurring issue? Y (deployment blocked multiple times due to web3)
+     - Is recurring issue? Y (Deployment NGINX issues have occurred 3 times, slowly being resolved layer by layer).
      - Should Test frontend/backend/both after fix? both
      - Blocked on other issue: None
 
 **In progress Task List**:
-  Task 1: Finalize Deployment Fixes
-     - Where to resume: Resume from the last code edit in  where unbounded queries were being constrained. Validate backend endpoints, run the , and verify the live frontend no longer shows the NGINX default page.
-     - What will be achieved with this? A successful, clean production deployment of the SaaS-only platform.
+  Task 1: Automate Deterministic Frontend Builds
+     - Where to resume:  (FastAPI lifecycle startup events).
+     - What will be achieved with this? End-to-end continuous deployment where any frontend source code change is guaranteed to reach the NGINX web server on container restart.
      - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix? both
+     - Should Test frontend/backend/both after fix? frontend
      - Blocked on something: None
 
 **Upcoming and Future Tasks**
+    Upcoming Tasks:
+    - P1: Agent Performance Leaderboard (Page ranking agents by accuracy, win rate, and total P&L, allowing users to follow top-performing agents).
+    - P1: Milestone Performance Alerts (Real-time Resend emails triggered when followed strategies hit significant milestones like ATH, +5% daily return, or a stop-loss).
+
     Future Tasks:
-    - P3: Actual Sepolia Smart Contract deployment (Phase 3 — restore  when blockchain support is desired/allowed).
-    - P3: User retention analytics (DAU/MAU ratio).
+    - P2: Full Portfolio Performance page with detailed equity curve charts.
+    - P2: Public Strategy Social Cards (dynamic OG images for sharing strategies).
+    - P3: Actual Sepolia Smart Contract deployment (Phase 3 — restore web3 dependencies).
+    - P3: User retention analytics and task queue migration for background jobs.
 
 **Completed work in this session**
-- Verified and fixed 7 P0 Go-Live Blockers (Missing 404 page, favicon, etc.) (DONE)
-- Landing Page Polish (Product screenshot, Trust strip, Demo Mode section, How It Works section, Ticker templates, Legal disclaimer) (DONE)
-- P1 Go-Live Polish (Terms of Service, Privacy Policy, React ErrorBoundary, OpenGraph/Twitter Meta tags, manifest.json, robots.txt, Cookie Consent banner) (DONE)
-- Web3/Blockchain Decoupling (Stubbed WalletContext, uninstalled  and  to pass deployment constraints) (DONE)
-- Strategy Interactions (Created , , , added Featured Strategies UI, created full  Leaderboard page) (DONE)
-- Phase 2: Referral Commissions (20% recurring backend logic) (DONE)
-- Phase 2: PDF Invoices (Generated via , added Download button in Billing) (DONE)
-- Phase 2: WebSocket Events Feed (Added  to Dashboard) (DONE)
-- Waitlist Automation (Created  with delayed task logic and REAL 3-step email drip via Resend) (DONE)
+- Fixed P0 deployment blockers: stubbed , deleted , and constrained unbounded DB queries in  and  (DONE)
+- Built Weekly Performance Digest Email system with Resend and Cron () (DONE)
+- Built Live Mode vs Demo Mode architecture with an admin toggle affecting all APIs (DONE)
+- Developed 4 AI Agent Background Workers that run continuously and save live signals to MongoDB (DONE)
+- Refactored  and Dashboard to consume real API endpoints instead of hardcoded demo arrays (DONE)
+- Moved  and CSS dependencies from  to  (DONE)
+- Configured backend to auto-install  and copy React files to  (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-None
+   Issue 1: CoinGecko API Rate Limits
+   - Debug checklist: Background agent workers occasionally hit CoinGecko rate limit hit, using fallback in the logs.
+   - Why to solve this issue and what will be achieved with this? Constant rate limiting could degrade live signal accuracy if fallbacks are used too frequently.
+   - Should Test frontend/backend/both after fix: backend
+   - Is recurring issue? Y
+
+   Issue 2: LiteLLM Budget Exceeded for AI Explanations
+   - Debug checklist: During startup or signal generation, the Emergent LLM key occasionally throws .
+   - Why to solve this issue and what will be achieved with this? Prevents AI explanations from silently degrading. Currently caught gracefully, but rate-limiting the LLM requests could prevent budget burn.
+   - Should Test frontend/backend/both after fix: backend
+   - Is recurring issue? Y
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: None
-  - Recurrence count: 0
-  - Status: RESOLVED
+  - Issue recurrence in previous fork: Deployment serving the NGINX default page instead of the React application.
+  - Recurrence count: 3 (First due to , second due to , third due to NGINX root mismatches and stale builds).
+  - Status: IN PROGRESS (Almost resolved, just needs the yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. step in the startup hook).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- Frontend: React, Tailwind CSS, Framer Motion
-- Backend: FastAPI, Motor (Async MongoDB),  (PDF generation),  (Email delivery).
-- WebSockets: FastApi WebSocket route for live dashboard event streaming.
-- Delayed Jobs: Background tasks for the Waitlist email drip (immediate, +24h, +72h).
+- Frontend: React, Tailwind CSS, Framer Motion, CRA (Craco).
+- Backend: FastAPI, Motor (Async MongoDB), Background Tasks (asyncio tasks for agents and cron).
+- External Services: Resend (Email), CoinGecko (Live Crypto Prices).
+- Infrastructure: NGINX functioning as a reverse proxy and static file server inside the container, configured dynamically by the FastAPI startup hook.
 
 **key DB schema**
-  - : , ,  (pending, activated, converted),  (array).
-  - : , , , , , .
-  - : Tracks recurring commissions and stats.
+  - : config for the 4 AI agent workers.
+  - : generated by agents, containing , , , , .
+  - : tracks user_id, email, status, strategy_count for email deliveries.
 
 **changes in tech stack**
-  - Removed: , , ,  (to clear Emergent deployment blockers).
-  - Added:  for PDF generation,  for transactional emails.
+  - No new technologies added, but the backend  has taken on Dev-Ops responsibilities (building the frontend via  and provisioning NGINX) to circumvent limitations of the locked base container image.
 
 **All files of reference** 
-  -  (Currently modifying to fix N+1 / unbounded queries)
-  -  (Waitlist email logic)
-  -  (New leaderboard UI)
-  -  (New WebSocket UI)
+  -  (Focus file: Needs  in the startup hook)
+  -  (Contains yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. scripts and dependencies)
+  -  (Ensures SPA fallback routing)
+  -  (The newly live background workers)
 
 **Areas that need refactoring**: 
-  - Backend Background Tasks: The waitlist scheduled emails (+24h, +72h) are currently reliant on the server remaining alive (via simple  or basic background tasks). For true production readiness, this might eventually need a robust task queue (like Celery/Redis).
+  -  is becoming a monolith by handling database indexing, cron job instantiation, agent worker instantiation, AND filesystem operations (NGINX config + React builds). Consider moving the startup lifecycle tasks to a separate  or .
 
 **key api endpoints**
-  -  (Registers email and triggers Resend drip)
-  -  (Strategy leaderboard ranking)
-  -  (WebSocket for live feeds)
-  -  (PDF Generation)
+  -  (Public endpoint to sync frontend with backend demo mode)
+  -  (Admin toggle for demo mode)
+  -  (Live WebSockets fallback/stream for signals)
+  -  (Returns live stats for the 4 Agent Background Workers)
 
 **Critical Info for New Agent** 
-  - **Deployment Blocker Protocol**: The Emergent platform STRICTLY blocks applications containing Web3 dependencies (, , smart contract files). These were aggressively removed. *DO NOT reintroduce them.*
-  - **Waitlist Emails**: They are configured to use REAL sending via the Resend API key present in the backend .
-  - **Admin Secrets**: Hardcoded admin fallbacks () were removed to satisfy deployment security checks. Use .
+  - **React Build Automation**: Do NOT try to modify Dockerfiles. The Emergent base image is immutable at the docker level for this run. You MUST add the yarn install v1.22.22
+[1/4] Resolving packages...
+success Already up-to-date.
+Done in 0.02s. and yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. commands to the FastAPI startup hook () in  *before* the  logic.
+  - **NGINX Pathing**: The frontend build must end up at  to be served by NGINX.
+  - **No Web3**: Web3 dependencies have been purged to satisfy deployment requirements. Do not re-add them.
+  - **LLM Rate Limits**: Be aware that the  service occasionally exhausts the LLM budget on startup. It is wrapped in a  and falls back gracefully. Do not halt operations if you see this error in the logs.
 
 **documents and test reports created in this job** 
-  -  to  (100% passing)
-  -  (Continuously updated)
+  -  to 
+  -  (Updated with completed Live Mode and Digest features)
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. (Latest) User: Fix the frontend deployment. The backend is healthy, but the frontend is serving the default NGINX page... Confirm the correct build directory... Fix the Dockerfile... Add logging... Rebuild and redeploy... The live site should no longer show the NGINX default page.
- 2. User: Implement Waitlist Automation using REAL email sending via Resend... 3-email sequence... Send immediately, +24h, +72h...
- 3. User: Referral Commission: 20% recurring. Invoices: PDF generation + download only. WebSocket Events: Live Feed panel...
- 4. User: (Approving ask_human)
- 5. User: Proceed with Phase 2 implementation: 1. Automated referral commission tracking... 2. Invoice download... 3. Real-time events feed...
- 6. User: Create a full Strategy Leaderboard page for all public strategies with the following requirements...
- 7. User: yes (Approving ask_human for Strategy Interactions)
- 8. User: I want to activate Strategy Interactions on my platform. Create and publish 3 public AI strategies...
- 9. User: ok (Acknowledging Demo Mode sections addition)
- 10. User: Apply the following additions to the landing page HTML... Add Demo Mode section... Add How It Works section...
+ 1. (Latest) User: Ensure My-AlphaAI always serves the LATEST React frontend... In the deployment/startup process, run npm install and npm run build... This must overwrite the existing /app/frontend/build folder...
+ 2. User: Fix the deployment so NGINX serves the React build correctly... Correct Dockerfile pattern... (Note: Agent couldn't use Dockerfile so it updated startup hooks instead).
+ 3. User: Use deployment agent to identify the issues. Sharing build error logs... (Agent moved craco to dependencies and set up NGINX copy logic).
+ 4. User: I want to activate full Live Mode for all agents in the system... Convert each agent into a real backend worker.
+ 5. User: Use deployment agent to identify the issues. Sharing build error logs... (Agent found  issues).
+ 6. User: I want to turn the entire platform fully live. Enable all real data pipelines and disable all demo-mode placeholders unless Demo Mode is explicitly enabled...
+ 7. User: My deployment passed backend health checks but failed the frontend health check with: DETECTED: nginx default page...
+ 8. User: Build the Weekly Performance Digest Email system for AlphaAI... Every Monday at 09:00 UTC...
+ 9. User: Analyze the current state of AlphaAI and propose the next highest‑impact feature to build.
+ 10. User: Fix all P0 deployment blockers so the platform can deploy cleanly to production... Fix unbounded DB queries, clean up contracts directory...
 
 **Project Health Check:**
-  - Broken: Deployment is currently failing (serving NGINX default page instead of React build) due to remaining backend violations.
-  - Mocked: Binance Testnet orders (simulated).
+  - Broken: Automated frontend compilation (Currently being worked on in ).
+  - Mocked: Synthetic data generation available *only* when  (controlled via admin API).
 
 **3rd Party Integrations** 
+  - OpenAI GPT / LiteLLM — uses Emergent LLM Key (Signal Explanations)
   - Stripe (Payments) — uses Emergent proxy
-  - OpenAI GPT-5.2 — uses Emergent LLM Key
-  - Kraken / CoinGecko (Live Crypto Prices) — Public APIs
-  - Resend (Waitlist Emails) — requires User API Key ( present in backend )
+  - Resend (Emails) — requires User API Key (Present in backend )
+  - CoinGecko (Live Crypto Prices) — Public API (Rate limits heavily encountered)
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Iterations 63-68)
+  - Testing agent used after significant changes: YES (iterations 69-72, 100% pass)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None newly created
-  - Known regressions: None (Only deployment platform blockers)
+  - Test files created: None newly created in this fork
+  - Known regressions: None functional, but deployment pipeline automation is the final hurdle.
 
 **Credentials to test flow:**
   - Admin user:  / 
   - Standard user (Pro):  / 
-  - Free user:  / 
 
 **What agent forgot to execute**
-The agent was in the process of fixing the N+1 queries and unbounded trades queries in  per the deployment agent's warnings, but ran out of time. The next agent must complete this, re-run  to verify all Web3 and DB query blockers are fully clear, and finally confirm that the React frontend is successfully being served in production.</analysis>
+The agent realized the required solution to rebuild the React app via 's startup hook, but the session ended before writing the  lines into . You must implement this logic immediately to satisfy the user's latest prompt. Ensure to use the  argument when running yarn install v1.22.22
+[1/4] Resolving packages...
+success Already up-to-date.
+Done in 0.02s..</analysis>

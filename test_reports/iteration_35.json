@@ -76,7 +76,7 @@
   "test_credentials": {
     "pro_user": "demo_test2@my-alpha-ai.com / NewPass1234!",
     "demo_mode": "?demo=true URL parameter",
-    "backend_url": "https://trading-strategy-hub-7.preview.emergentagent.com"
+    "backend_url": "https://signal-ui-latest.preview.emergentagent.com"
   },
 
   "seed_data_creation": "None - used existing demo mode data",

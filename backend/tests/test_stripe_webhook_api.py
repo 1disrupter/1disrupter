@@ -8,7 +8,7 @@ import requests
 import time
 
 # Base URL from environment
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://trading-strategy-hub-7.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://signal-ui-latest.preview.emergentagent.com").rstrip("/")
 ADMIN_KEY = "alphaai_admin_2026"
 
 # Test customer ID linked to demo_test2@my-alpha-ai.com

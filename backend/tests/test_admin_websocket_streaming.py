@@ -12,7 +12,7 @@ import os
 import uuid
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://trading-strategy-hub-7.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://signal-ui-latest.preview.emergentagent.com')
 WS_BASE_URL = BASE_URL.replace("https://", "wss://").replace("http://", "ws://")
 ADMIN_KEY = "alphaai_admin_2026"
 WRONG_ADMIN_KEY = "wrong_key_123"
