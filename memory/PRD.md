@@ -84,6 +84,12 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - Navigation: "Live Signals" in primary nav (Activity icon), Alerts moved to overflow menu
 - Auto-refresh: 8s (live), 12s (demo)
 
+### Phase 6: Live Agent Performance Page (Complete - Apr 6, 2026)
+- Created `LiveAgentPerformance.jsx` — fetches `GET /api/agents/performance`, displays 4-metric cards (Accuracy, Win Rate, P&L, Trades) per agent
+- Rewrote `AgentsPage.jsx`: LIVE mode renders `<LiveAgentPerformance />`, DEMO mode shows clean placeholder
+- Removed all demo agent cards, demo stats components, demo imports
+- No toasts on the page, auto-refresh every 15s
+
 ## Backlog
 - P1: Agent Performance Leaderboard (rank by accuracy, win rate, P&L)
 - P1: Milestone Performance Alerts (Resend emails on ATH, +5% daily, stop-loss)
