@@ -309,3 +309,114 @@ async def get_feature_analytics(feature: str, days: int = 7):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============= WEBSOCKET ENDPOINT =============
+
+
+# ============= TOUR ANALYTICS =============
+
+class TourEvent(BaseModel):
+    event_type: str  # 'step_view', 'step_next', 'step_back', 'skip', 'complete', 'cta_click', 'restart'
+    step_id: str
+    step_index: int
+    session_id: Optional[str] = None
+
+@router.post("/analytics/tour")
+async def track_tour_event(event: TourEvent):
+    """Track a guided tour interaction event"""
+    try:
+        doc = {
+            "event_type": event.event_type,
+            "step_id": event.step_id,
+            "step_index": event.step_index,
+            "session_id": event.session_id,
+            "timestamp": datetime.now(timezone.utc),
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        }
+        await db.tour_events.insert_one(doc)
+        return {"status": "tracked"}
+    except Exception as e:
+        logger.error(f"Tour analytics error: {str(e)}")
+        return {"status": "error"}
+
+@router.get("/analytics/tour/summary")
+async def get_tour_summary(days: int = Query(default=30, ge=1, le=90)):
+    """Aggregated tour analytics for admin dashboard"""
+    try:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+        pipeline_totals = [
+            {"$match": {"timestamp": {"$gte": cutoff}}},
+            {"$group": {
+                "_id": "$event_type",
+                "count": {"$sum": 1}
+            }}
+        ]
+        totals_raw = await db.tour_events.aggregate(pipeline_totals).to_list(50)
+        totals = {r["_id"]: r["count"] for r in totals_raw}
+
+        # Funnel: how many users viewed each step
+        pipeline_funnel = [
+            {"$match": {"timestamp": {"$gte": cutoff}, "event_type": "step_view"}},
+            {"$group": {
+                "_id": {"step_id": "$step_id", "step_index": "$step_index"},
+                "views": {"$sum": 1},
+                "unique_sessions": {"$addToSet": "$session_id"}
+            }},
+            {"$project": {
+                "_id": 0,
+                "step_id": "$_id.step_id",
+                "step_index": "$_id.step_index",
+                "views": 1,
+                "unique_sessions": {"$size": "$unique_sessions"}
+            }},
+            {"$sort": {"step_index": 1}}
+        ]
+        funnel = await db.tour_events.aggregate(pipeline_funnel).to_list(20)
+
+        # Daily trend
+        pipeline_daily = [
+            {"$match": {"timestamp": {"$gte": cutoff}}},
+            {"$group": {
+                "_id": {"date": "$date", "event_type": "$event_type"},
+                "count": {"$sum": 1}
+            }},
+            {"$sort": {"_id.date": 1}}
+        ]
+        daily_raw = await db.tour_events.aggregate(pipeline_daily).to_list(500)
+        daily = {}
+        for r in daily_raw:
+            d = r["_id"]["date"]
+            if d not in daily:
+                daily[d] = {}
+            daily[d][r["_id"]["event_type"]] = r["count"]
+
+        # Dropoff: where users skip
+        pipeline_dropoff = [
+            {"$match": {"timestamp": {"$gte": cutoff}, "event_type": "skip"}},
+            {"$group": {
+                "_id": {"step_id": "$step_id", "step_index": "$step_index"},
+                "count": {"$sum": 1}
+            }},
+            {"$project": {"_id": 0, "step_id": "$_id.step_id", "step_index": "$_id.step_index", "count": 1}},
+            {"$sort": {"step_index": 1}}
+        ]
+        dropoff = await db.tour_events.aggregate(pipeline_dropoff).to_list(20)
+
+        starts = totals.get("step_view", 0)
+        completes = totals.get("complete", 0)
+        cta_clicks = totals.get("cta_click", 0)
+
+        return {
+            "period_days": days,
+            "totals": totals,
+            "starts": starts,
+            "completes": completes,
+            "cta_clicks": cta_clicks,
+            "completion_rate": round((completes / starts) * 100, 1) if starts else 0,
+            "cta_rate": round((cta_clicks / starts) * 100, 1) if starts else 0,
+            "funnel": funnel,
+            "dropoff": dropoff,
+            "daily": [{"date": d, **v} for d, v in sorted(daily.items())],
+        }
+    except Exception as e:
+        logger.error(f"Tour summary error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

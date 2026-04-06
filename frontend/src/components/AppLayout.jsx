@@ -47,6 +47,7 @@ const overflowItems = [
 const adminItems = [
   { path: "/admin", label: "Admin Panel", icon: Shield },
   { path: "/admin/analytics", label: "Demo Analytics", icon: BarChart3 },
+  { path: "/admin/tour-analytics", label: "Tour Analytics", icon: Brain },
   { path: "/admin/traffic", label: "Traffic", icon: Activity },
 ];
 

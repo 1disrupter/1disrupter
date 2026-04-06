@@ -42,6 +42,7 @@ import CreatorDashboardPage from "./pages/CreatorDashboardPage";
 import ExecutionSettingsPage from "./pages/ExecutionSettingsPage";
 import ExecutionMonitorPage from "./pages/ExecutionMonitorPage";
 import BillingPortalPage from "./pages/BillingPortalPage";
+import TourAnalyticsPage from "./pages/TourAnalyticsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -137,6 +138,7 @@ function App() {
                 <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
                 <Route path="/admin/traffic" element={<AdminTrafficPage />} />
                 <Route path="/admin/execution-monitor" element={<ExecutionMonitorPage />} />
+                <Route path="/admin/tour-analytics" element={<TourAnalyticsPage />} />
               </Route>
 
               {/* 404 Catch-All */}

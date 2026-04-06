@@ -3,8 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, X, Brain, Crown, BarChart3, Activity, Beaker, FlaskConical, Bot, Radio } from "lucide-react";
 import { Button } from "./ui/button";
+import axios from "axios";
 
+const API = process.env.REACT_APP_BACKEND_URL;
 const TOUR_KEY = "alphaTourSeen";
+
+const sessionId = `tour_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+const trackTour = (eventType, stepId, stepIndex) => {
+  axios.post(`${API}/api/analytics/tour`, {
+    event_type: eventType,
+    step_id: stepId,
+    step_index: stepIndex,
+    session_id: sessionId,
+  }).catch(() => {});
+};
 
 const steps = [
   {
@@ -109,30 +122,53 @@ export default function GuidedTour() {
   // Auto-start for new demo users
   useEffect(() => {
     if (localStorage.getItem(TOUR_KEY)) return;
-    const t = setTimeout(() => setActive(true), 800);
+    const t = setTimeout(() => {
+      setActive(true);
+      trackTour("step_view", steps[0].id, 0);
+    }, 800);
     return () => clearTimeout(t);
   }, []);
 
   // Restart event listener
   useEffect(() => {
-    const handler = () => { setStep(0); setActive(true); };
+    const handler = () => {
+      setStep(0);
+      setActive(true);
+      trackTour("restart", steps[0].id, 0);
+      trackTour("step_view", steps[0].id, 0);
+    };
     window.addEventListener("alphaai-restart-tour", handler);
     return () => window.removeEventListener("alphaai-restart-tour", handler);
   }, []);
 
   const close = useCallback(() => {
+    trackTour("skip", current.id, step);
     setActive(false);
     localStorage.setItem(TOUR_KEY, "true");
-  }, []);
+  }, [current, step]);
 
   const next = useCallback(() => {
-    if (isLast) { close(); navigate("/pricing"); }
-    else setStep(s => s + 1);
-  }, [isLast, close, navigate]);
+    if (isLast) {
+      trackTour("cta_click", current.id, step);
+      trackTour("complete", current.id, step);
+      close();
+      navigate("/pricing");
+    } else {
+      trackTour("step_next", current.id, step);
+      const nextIdx = step + 1;
+      trackTour("step_view", steps[nextIdx].id, nextIdx);
+      setStep(nextIdx);
+    }
+  }, [isLast, close, navigate, current, step]);
 
   const back = useCallback(() => {
-    if (!isFirst) setStep(s => s - 1);
-  }, [isFirst]);
+    if (!isFirst) {
+      trackTour("step_back", current.id, step);
+      const prevIdx = step - 1;
+      trackTour("step_view", steps[prevIdx].id, prevIdx);
+      setStep(prevIdx);
+    }
+  }, [isFirst, current, step]);
 
   if (!active) return null;
 

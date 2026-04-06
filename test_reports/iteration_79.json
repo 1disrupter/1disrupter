@@ -1,0 +1,83 @@
+{
+  "summary": "Tour Analytics feature testing completed. All backend API tests passed (20/20). Frontend GuidedTour analytics tracking verified - fires events on step_view, step_next, step_back, skip, complete, cta_click, restart. TourAnalyticsPage loads correctly with KPI cards, funnel chart, dropoff chart, daily trend, and step breakdown table. Tour Analytics link visible in More dropdown under Admin section.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_tour_analytics.py",
+    "/app/test_reports/pytest/tour_analytics_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_tour_analytics.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+  "test_credentials": {
+    "admin_user": "mar-brick@hotmail.com / Martin2026!",
+    "demo_mode_url": "https://routing-split.preview.emergentagent.com/dashboard?demo=true"
+  },
+  "seed_data_creation": "Created test tour events via POST /api/analytics/tour during backend testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Tour Analytics feature is fully functional. Backend: POST /api/analytics/tour tracks events (step_view, step_next, step_back, skip, complete, cta_click, restart) with session_id. GET /api/analytics/tour/summary returns totals, funnel, dropoff, daily data with completion_rate and cta_rate. Frontend: GuidedTour.jsx calls trackTour() at each interaction. TourAnalyticsPage.jsx at /admin/tour-analytics shows KPIs, charts, and table. Tour Analytics link in More dropdown under Admin section. All data-testids work: tour-analytics-page, tour-analytics-title, tour-period-7d/30d/90d, tour-refresh-btn, tour-step-table.",
+  "features_tested": {
+    "backend_post_tour_endpoint": [
+      "POST /api/analytics/tour with step_view event - PASS",
+      "POST /api/analytics/tour with step_next event - PASS",
+      "POST /api/analytics/tour with step_back event - PASS",
+      "POST /api/analytics/tour with skip event - PASS",
+      "POST /api/analytics/tour with complete event - PASS",
+      "POST /api/analytics/tour with cta_click event - PASS",
+      "POST /api/analytics/tour with restart event - PASS",
+      "POST /api/analytics/tour without session_id (optional) - PASS",
+      "POST /api/analytics/tour with missing required fields returns 422 - PASS"
+    ],
+    "backend_summary_endpoint": [
+      "GET /api/analytics/tour/summary default 30 days - PASS",
+      "GET /api/analytics/tour/summary?days=7 - PASS",
+      "GET /api/analytics/tour/summary?days=90 - PASS",
+      "Summary response has correct data types - PASS",
+      "Summary funnel structure correct - PASS",
+      "Summary dropoff structure correct - PASS",
+      "Summary daily structure correct - PASS",
+      "Summary handles zero starts (no division by zero) - PASS",
+      "Summary rejects days=0 with 422 - PASS",
+      "Summary rejects days=100 with 422 - PASS"
+    ],
+    "backend_integration": [
+      "Full tour flow tracking and verification in summary - PASS"
+    ],
+    "frontend_guided_tour_tracking": [
+      "Tour auto-start fires step_view event - PASS",
+      "Next button fires step_next + step_view events - PASS",
+      "Back button fires step_back + step_view events - PASS",
+      "Skip/Close fires skip event - PASS",
+      "CTA click fires cta_click + complete events - PASS",
+      "All 8 tour steps navigable - PASS"
+    ],
+    "frontend_tour_analytics_page": [
+      "Page loads at /admin/tour-analytics - PASS",
+      "KPI cards display (Tour Starts, Completions, CTA Clicks, Skip Rate) - PASS",
+      "Period filter buttons (7d, 30d, 90d) work - PASS",
+      "Refresh button works - PASS",
+      "Step Funnel chart displays - PASS",
+      "Drop-off Points chart displays - PASS",
+      "Daily Tour Activity chart displays - PASS",
+      "Step breakdown table displays - PASS"
+    ],
+    "frontend_navigation": [
+      "Tour Analytics link visible in More dropdown Admin section - PASS",
+      "Clicking Tour Analytics navigates to /admin/tour-analytics - PASS"
+    ]
+  }
+}
