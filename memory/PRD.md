@@ -33,81 +33,61 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - Weekly Performance Digest email system (Resend + cron)
 
 ### Phase 3: Build Automation (Complete - Apr 5-6, 2026)
-- Automated frontend build in FastAPI startup hook with yarn → npm fallback chain
-- Build artifacts copied to `/var/www/html/` for NGINX serving
-- Creates NGINX directory if missing, uses `print()` for deployment-visible logging
+- Automated frontend build in FastAPI startup hook with yarn -> npm fallback chain
+- Build artifacts copied to /var/www/html/ for NGINX serving
 - Graceful fallback: if no build tool available, uses pre-committed build artifacts
-- Pre-built React bundle committed to git (not gitignored) for production resilience
-- Fixed `os` import issue, removed `npx` direct build (unreliable)
 
 ### Phase 4: Full LIVE/DEMO Mode System (Complete - Apr 6, 2026)
-**Backend:**
-- `GET /api/system/mode` — single source of truth for system mode
-- `POST /api/system/mode` — admin-only mode switch (live/demo)
-- `GET /api/alerts/live` — real agent signals in LIVE, demo alerts in DEMO
-- `GET /api/events/live` — real events in LIVE, demo events in DEMO
-- `GET /api/agents/performance` — real agent stats in LIVE, demo stats in DEMO
-- `GET /api/analytics/summary` — real signal analytics in LIVE, demo analytics in DEMO
-- Demo generators: `services/demo_generators.py` (alerts, analytics, agent stats, events)
-
-**Frontend:**
-- `useSystemMode()` hook — mode, isDemo, isLive, setMode, loading
-- Navigation badge: LIVE MODE (green) / DEMO MODE (purple)
-- DemoModeBanner: global purple banner visible only in DEMO mode
-- AlertsPage: "Live Alerts" vs "Demo Alerts" with mode-aware data
-- AnalyticsPage: "LIVE DATA" vs "DEMO DATA" badge, real charts vs demo charts
-- AgentsPage: LIVE/DEMO badge, mode-aware description
-- AdminPage: System mode toggle (LIVE/DEMO switch)
-- All hardcoded demo text conditionally hidden in LIVE mode
-
-## Key Endpoints
-- `GET /api/system/mode` — system mode status
-- `POST /api/system/mode?admin_key=...` — toggle mode
-- `GET /api/alerts/live` — mode-aware alerts
-- `GET /api/events/live` — mode-aware events
-- `GET /api/agents/performance` — mode-aware agent stats
-- `GET /api/analytics/summary` — mode-aware analytics
-- `GET /api/demo-mode/status` — legacy compat
-
-## Key DB Collections
-- `system_config` — demo_mode flag (single source of truth)
-- `trading_signals` — real signals from agent workers
-- `event_agents` — agent configurations
-- `analytics_events` — conversion/tracking analytics
-- `weekly_digest_logs` — email delivery logs
+- GET/POST /api/system/mode — single source of truth for system mode
+- Mode-aware endpoints for alerts, events, agents, analytics
+- Demo generators: services/demo_generators.py
+- useSystemMode() hook, DemoModeBanner, mode badges on all pages
 
 ### Phase 5: Live Signals Page (Complete - Apr 6, 2026)
-- Created `/live-signals` route with `LiveSignalsPage.jsx` — dedicated vertical real-time signal feed
-- Shows stats bar (Total Signals, Long, Short counts), signal table with action/asset/confidence/agent/price/time
-- Mode-aware: LIVE badge with real data, DEMO badge with synthetic data
-- Removed toast notifications from WebSocket handler (`useStrategyAlerts.js`)
-- Navigation: "Live Signals" in primary nav (Activity icon), Alerts moved to overflow menu
-- Auto-refresh: 8s (live), 12s (demo)
+- /live-signals route with real-time vertical signal feed
+- Stats bar, signal table, mode-aware LIVE/DEMO badges, auto-refresh
 
 ### Phase 6: Live Agent Performance Page (Complete - Apr 6, 2026)
-- Created `LiveAgentPerformance.jsx` — fetches `GET /api/agents/performance`, displays 4-metric cards (Accuracy, Win Rate, P&L, Trades) per agent
-- Rewrote `AgentsPage.jsx`: LIVE mode renders `<LiveAgentPerformance />`, DEMO mode shows clean placeholder
-- Removed all demo agent cards, demo stats components, demo imports
-- No toasts on the page, auto-refresh every 15s
+- LiveAgentPerformance.jsx with 4-metric cards per agent
+- Agents page renders live component in LIVE mode, placeholder in DEMO
 
 ### Phase 7: Admin Login & Auto-Elevation (Complete - Apr 6, 2026)
-- Added `role` field to `UserResponse` model; admins auto-elevated to `elite` tier with `is_pro=true`, `is_elite=true`
-- Added `isAdmin` to AuthContext; `isPro`/`isElite` always true for admins
-- Admin Badge: purple outline with Shield icon in header, visible on all pages for admin users only
-- Admin Login: Shield-icon link in mobile hamburger menu, navigates to `/admin`
-- `useSystemMode()` overrides demo mode to live for admin users (reads from localStorage)
+- Admin users auto-elevated to elite tier with is_pro=true, is_elite=true
+- Admin Badge (purple Shield), Admin Login link in mobile menu
+- useSystemMode() overrides demo mode to live for admin users
 
 ### Phase 8: True LIVE Mode for Alerts, Analytics, Dashboard (Complete - Apr 6, 2026)
-- Created `LiveAlerts.jsx` — fetches `/api/alerts/live`, 12s auto-refresh, action badges, agent names, prices, timestamps
-- Created `LiveAnalytics.jsx` — fetches `/api/analytics/live`, 20s auto-refresh, 4 charts (Signal Distribution, Win Rate, Agent Accuracy, Daily Volume)
-- Created `LiveDashboard.jsx` — fetches `/api/dashboard/live`, 15s auto-refresh, 4 metric cards + Agent Status + Recent Alerts panels
-- Added backend endpoints: `GET /api/analytics/live` (by_pair, by_agent, daily aggregations), `GET /api/dashboard/live` (24h signals, agent status, recent alerts)
-- Rewrote AlertsPage, AnalyticsPage, DashboardPage as clean wrappers: LIVE renders live component, DEMO shows placeholder
-- DashboardPage reduced from 1892 lines to ~100 lines
-- All pages: no demo imports, no demo components in LIVE mode, no toast notifications on load
+- LiveAlerts.jsx, LiveAnalytics.jsx, LiveDashboard.jsx
+- Backend endpoints: /api/analytics/live, /api/dashboard/live
+- All pages: no demo imports in LIVE mode
+
+### Phase 9: Frontend Routing Separation & Route Guards (Complete - Feb 2026)
+- **AppLayout.jsx**: Authenticated navigation shell (Dashboard, Live Signals, Research, Strategy Lab, AI Agents, More dropdown with Alerts/Simulation/Event Agents/Marketplace/Copy Trading/Following/Referrals/Leaderboard/Pricing + Admin section, user dropdown, system mode badge, DemoModeBanner, MobileBottomNav)
+- **MarketingLayout.jsx**: Public navigation shell (Home, Leaderboard, Pricing, Sign In/Get Started; shows "Dashboard" button for already-authenticated users)
+- **RouteGuards.jsx**: ProtectedRoute (redirects to /login unless authenticated or in demo mode), PublicOnlyRoute (redirects to /dashboard if already authenticated)
+- **App.js refactored**: React Router v6 nested routes with <Outlet /> pattern. Public routes wrapped in MarketingLayout, authenticated routes wrapped in ProtectedRoute + AppLayout
+- Old monolithic Navigation.jsx no longer used in routing (retained in codebase for reference)
+- MobileBottomNav only appears on authenticated app routes
+- All 14 frontend tests passed (100%)
+
+## Key Endpoints
+- GET /api/system/mode — system mode status
+- POST /api/system/mode?admin_key=... — toggle mode
+- GET /api/alerts/live — mode-aware alerts
+- GET /api/events/live — mode-aware events
+- GET /api/agents/performance — mode-aware agent stats
+- GET /api/analytics/live — mode-aware analytics
+- GET /api/dashboard/live — mode-aware dashboard
+- GET /api/auth/me — user profile
+
+## Key DB Collections
+- system_config — demo_mode flag
+- trading_signals — real signals from agent workers
+- event_agents — agent configurations
+- analytics_events — conversion/tracking analytics
+- weekly_digest_logs — email delivery logs
 
 ## Backlog
-- P1: Agent Performance Leaderboard (rank by accuracy, win rate, P&L)
 - P1: Milestone Performance Alerts (Resend emails on ATH, +5% daily, stop-loss)
 - P2: Full Portfolio Performance page with equity curve charts
 - P2: Public Strategy Social Cards (dynamic OG images)
@@ -115,3 +95,4 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - P3: Sepolia Smart Contract deployment
 - P3: User retention analytics & task queue migration
 - Refactoring: Extract startup lifecycle from server.py into startup.py
+- Cleanup: Delete unused Navigation.jsx once layout split is fully validated
