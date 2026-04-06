@@ -39,13 +39,14 @@ const Navigation = () => {
   // Priority-ordered: first 5 are always visible, rest go into "More"
   const primaryItems = [
     { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
+    { path: "/live-signals", label: "Live Signals", icon: Activity },
     { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
     { path: "/research", label: "Research", icon: Beaker },
     { path: "/lab", label: "Strategy Lab", icon: FlaskConical },
-    { path: "/alerts", label: "Alerts", icon: Radio },
   ];
 
   const overflowItems = [
+    { path: "/alerts", label: "Alerts", icon: Radio },
     { path: "/simulation", label: "Simulation", icon: Radio },
     { path: "/agents", label: "AI Agents", icon: Bot },
     { path: "/events", label: "Event Agents", icon: Eye },

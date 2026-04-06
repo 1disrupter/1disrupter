@@ -1,0 +1,65 @@
+{
+  "summary": "Comprehensive testing of Live Signals Page feature. All 10 backend API tests passed (100%). All frontend UI tests passed - LiveSignalsPage renders correctly with mode-aware badges, stats bar, and signal feed. Navigation shows 'Live Signals' link for logged-in users. Toast notifications removed from WebSocket handler.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Dashboard",
+        "issues": ["React key warnings: 'Encountered two children with the same key' for SOL, ETH, BTC - minor issue, not blocking"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_live_signals_page.py",
+    "/app/test_reports/pytest/live_signals_page_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: Dashboard has React key warnings for duplicate keys (SOL, ETH, BTC) - should use unique keys like `${symbol}-${index}` or timestamp"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_live_signals_page.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+  "test_credentials": {
+    "admin_key": "alphaai_admin_2026",
+    "admin_user": "mar-brick@hotmail.com / Martin2026!"
+  },
+  "seed_data_creation": "None - used existing system data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Live Signals Page feature is fully functional. Backend endpoint GET /api/alerts/live returns mode-aware data (real signals in LIVE mode, demo signals in DEMO mode). Frontend LiveSignalsPage at /live-signals shows: LIVE/DEMO badge, stats bar (Total Signals, Long, Short counts), signal feed with action/asset/confidence/agent/price/time. Navigation shows 'Live Signals' link in primaryItems for logged-in users. Alerts page moved to overflowItems (accessible via More menu). Toast notifications removed from useStrategyAlerts.js WebSocket handler - signals are now only displayed on the Live Signals page.",
+  "features_tested": {
+    "backend_api": [
+      "GET /api/alerts/live returns 200 with alerts array - PASS",
+      "GET /api/alerts/live?limit=5 respects limit parameter - PASS",
+      "Alert object structure has all required fields (action, asset, message, confidence, price, strategy_name, timestamp, is_demo) - PASS",
+      "LIVE mode returns alerts with is_demo=false - PASS",
+      "DEMO mode returns alerts with is_demo=true - PASS",
+      "GET /api/system/mode returns current mode - PASS",
+      "POST /api/system/mode requires admin_key - PASS",
+      "POST /api/system/mode rejects invalid admin_key - PASS",
+      "POST /api/system/mode can switch to demo - PASS",
+      "POST /api/system/mode can switch to live - PASS"
+    ],
+    "frontend_ui": [
+      "/live-signals route renders LiveSignalsPage - PASS",
+      "LiveSignalsPage shows 'LIVE' badge when system is in live mode - PASS",
+      "LiveSignalsPage shows 'DEMO' badge when system is in demo mode - PASS",
+      "LiveSignalsPage shows stats bar: Total Signals, Long, Short counts - PASS",
+      "LiveSignalsPage signal rows show action, asset, confidence, agent, price, time - PASS",
+      "No toast notifications fire when WebSocket receives strategy_alert - PASS (verified in code and UI test)",
+      "Navigation shows 'Live Signals' link for logged-in users - PASS",
+      "Dashboard page loads without signal toasts appearing - PASS",
+      "/alerts page still accessible via More menu - PASS"
+    ]
+  }
+}

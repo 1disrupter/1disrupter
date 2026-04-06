@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { toast } from "sonner";
 import { useDemoMode } from "../contexts/DemoModeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { BACKEND_URL } from "../lib/constants";
@@ -90,10 +89,6 @@ const useStrategyAlerts = () => {
             if (data.type === "strategy_alert") {
               setAlerts((prev) => [data, ...prev].slice(0, MAX_ALERTS));
               trackEvent("signal", { strategy_id: data.strategy_id, action: data.action });
-              toast(data.message, {
-                description: data.asset || data.strategy_name || "",
-                duration: 6000,
-              });
             }
           } catch {
             // Ignore parse errors

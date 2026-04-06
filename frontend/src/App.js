@@ -28,6 +28,7 @@ import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ReferralPage from "./pages/ReferralPage";
 import FollowingPage from "./pages/FollowingPage";
 import AlertsPage from "./pages/AlertsPage";
+import LiveSignalsPage from "./pages/LiveSignalsPage";
 import AdminTrafficPage from "./pages/AdminTrafficPage";
 import ConnectExchangePage from "./pages/ConnectExchangePage";
 import DemoPage from "./pages/DemoPage";
@@ -131,6 +132,7 @@ function App() {
               <Route path="/referrals" element={<ReferralPage />} />
               <Route path="/following" element={<FollowingPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
+              <Route path="/live-signals" element={<LiveSignalsPage />} />
               <Route path="/settings" element={<MobileSettingsPage />} />
               {/* Legal Pages */}
               <Route path="/terms" element={<TermsOfService />} />
