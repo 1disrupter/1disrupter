@@ -17,7 +17,7 @@ import os
 import uuid
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://signal-ui-latest.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://routing-split.preview.emergentagent.com')
 
 # Test data
 TEST_USER_PREFIX = "TEST_AUTH_"

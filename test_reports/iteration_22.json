@@ -57,7 +57,7 @@
   },
 
   "test_credentials": {
-    "demo_url": "https://signal-ui-latest.preview.emergentagent.com/dashboard?demo=true",
+    "demo_url": "https://routing-split.preview.emergentagent.com/dashboard?demo=true",
     "test_user": "demo_test2@my-alpha-ai.com / NewPass1234!"
   },
 

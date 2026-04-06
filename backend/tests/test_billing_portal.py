@@ -53,7 +53,7 @@ class TestBillingPortalEndpoint:
     def test_portal_requires_authentication(self, api_client):
         """POST /api/billing/portal returns 401 without auth token"""
         response = api_client.post(f"{BASE_URL}/api/billing/portal", json={
-            "return_url": "https://signal-ui-latest.preview.emergentagent.com/billing"
+            "return_url": "https://routing-split.preview.emergentagent.com/billing"
         })
         assert response.status_code == 401, f"Expected 401, got {response.status_code}: {response.text}"
         print("PASS: POST /api/billing/portal requires authentication (401 without token)")
@@ -70,7 +70,7 @@ class TestBillingPortalEndpoint:
         """POST /api/billing/portal creates Stripe Billing Portal session and returns URL"""
         headers = {"Authorization": f"Bearer {pro_user_token}"}
         response = api_client.post(f"{BASE_URL}/api/billing/portal", json={
-            "return_url": "https://signal-ui-latest.preview.emergentagent.com/billing"
+            "return_url": "https://routing-split.preview.emergentagent.com/billing"
         }, headers=headers)
         
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
@@ -85,7 +85,7 @@ class TestBillingPortalEndpoint:
         """POST /api/billing/portal creates Stripe customer for users without one"""
         headers = {"Authorization": f"Bearer {free_user_token}"}
         response = api_client.post(f"{BASE_URL}/api/billing/portal", json={
-            "return_url": "https://signal-ui-latest.preview.emergentagent.com/billing"
+            "return_url": "https://routing-split.preview.emergentagent.com/billing"
         }, headers=headers)
         
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
@@ -102,11 +102,11 @@ class TestBillingPortalEndpoint:
         
         # Call twice to verify customer reuse
         response1 = api_client.post(f"{BASE_URL}/api/billing/portal", json={
-            "return_url": "https://signal-ui-latest.preview.emergentagent.com/billing"
+            "return_url": "https://routing-split.preview.emergentagent.com/billing"
         }, headers=headers)
         
         response2 = api_client.post(f"{BASE_URL}/api/billing/portal", json={
-            "return_url": "https://signal-ui-latest.preview.emergentagent.com/billing"
+            "return_url": "https://routing-split.preview.emergentagent.com/billing"
         }, headers=headers)
         
         assert response1.status_code == 200, f"First call failed: {response1.status_code}"

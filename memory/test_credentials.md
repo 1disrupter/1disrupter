@@ -8,7 +8,7 @@
 | Free User | test_free_user_iter29@my-alpha-ai.com | TestPass123! | Basic tier |
 
 ## App URL
-- Preview: https://signal-ui-latest.preview.emergentagent.com
+- Preview: https://routing-split.preview.emergentagent.com
 
 ## API Auth
 - Login: POST /api/auth/login with {"email": "...", "password": "..."}
