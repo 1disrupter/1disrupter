@@ -133,6 +133,22 @@ async def toggle_demo_mode(body: DemoModeToggle, admin: dict = Depends(verify_ad
     return {"demo_mode": body.enabled, "message": f"Demo mode {'enabled' if body.enabled else 'disabled'}"}
 
 
+@router.post("/toggle-demo")
+async def toggle_demo_on(admin: dict = Depends(verify_admin)):
+    """Convenience: enable demo mode instantly."""
+    await set_demo_mode(True)
+    await log_admin_action(admin["id"], admin["email"], "toggle_demo", "system", "demo_mode", {"enabled": True})
+    return {"mode": "demo", "demo_mode": True, "message": "Demo mode ENABLED"}
+
+
+@router.post("/toggle-live")
+async def toggle_live_on(admin: dict = Depends(verify_admin)):
+    """Convenience: disable demo mode, switch to live."""
+    await set_demo_mode(False)
+    await log_admin_action(admin["id"], admin["email"], "toggle_live", "system", "demo_mode", {"enabled": False})
+    return {"mode": "live", "demo_mode": False, "message": "Live mode ENABLED"}
+
+
 # ============= ANALYTICS EVENT TRACKING =============
 
 @router.post("/track")

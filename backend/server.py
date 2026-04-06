@@ -132,7 +132,70 @@ async def health_check():
 
 @app.get("/api/health")
 async def api_health_check():
-    return {"status": "healthy"}
+    """Detailed health check including worker status and signal freshness."""
+    from datetime import datetime, timezone, timedelta
+    from config.demo import is_demo_mode as _is_demo
+
+    health = {"status": "healthy", "api": "running"}
+
+    try:
+        demo = await _is_demo()
+        health["mode"] = "demo" if demo else "live"
+        health["demo_mode"] = demo
+        health["live_mode"] = not demo
+    except Exception:
+        health["mode"] = "unknown"
+
+    # Worker heartbeat
+    try:
+        hb = await db.system_config.find_one({"key": "worker_heartbeat"}, {"_id": 0})
+        if hb and hb.get("last_beat"):
+            last = datetime.fromisoformat(hb["last_beat"])
+            age = (datetime.now(timezone.utc) - last).total_seconds()
+            health["worker"] = {
+                "status": "running" if age < 120 else "stale",
+                "last_heartbeat": hb["last_beat"],
+                "age_seconds": round(age),
+                "pid": hb.get("pid"),
+            }
+        else:
+            health["worker"] = {"status": "no_heartbeat"}
+    except Exception:
+        health["worker"] = {"status": "unknown"}
+
+    # Latest signal freshness
+    try:
+        latest = await db.trading_signals.find_one(
+            {}, {"_id": 0, "generated_at": 1, "agent_id": 1, "symbol": 1},
+            sort=[("generated_at", -1)]
+        )
+        if latest and latest.get("generated_at"):
+            ts = latest["generated_at"]
+            if isinstance(ts, str):
+                ts = datetime.fromisoformat(ts)
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            age = (datetime.now(timezone.utc) - ts).total_seconds()
+            health["signals"] = {
+                "status": "fresh" if age < 600 else "stale",
+                "latest_at": ts.isoformat(),
+                "age_seconds": round(age),
+                "agent": latest.get("agent_id"),
+                "symbol": latest.get("symbol"),
+            }
+        else:
+            health["signals"] = {"status": "no_signals"}
+    except Exception:
+        health["signals"] = {"status": "unknown"}
+
+    # Agent count
+    try:
+        count = await db.trading_signals.count_documents({})
+        health["total_signals"] = count
+    except Exception:
+        pass
+
+    return health
 
 async def signal_generation_task():
     """Periodically generates AI trading signals."""
