@@ -4,6 +4,7 @@ Lightweight orchestrator that registers routers and manages app lifecycle.
 """
 import asyncio
 import logging
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -265,45 +266,81 @@ async def startup_db_client():
     nginx_conf_src = frontend_dir / "nginx.conf"
     nginx_conf_dest = Path("/etc/nginx/sites-available/default")
 
-    # Run yarn install + yarn build to compile latest React source
-    try:
-        logger.info("Running yarn install in /app/frontend ...")
-        subprocess.run(["yarn", "install", "--frozen-lockfile"], cwd=str(frontend_dir), check=True, timeout=120)
-        logger.info("Running yarn build in /app/frontend ...")
-        subprocess.run(["yarn", "build"], cwd=str(frontend_dir), check=True, timeout=300, env={**__import__('os').environ, "CI": "false"})
-        logger.info("Frontend build completed successfully")
-    except subprocess.TimeoutExpired:
-        logger.warning("Frontend build timed out — will use existing build if available")
-    except subprocess.CalledProcessError as e:
-        logger.warning(f"Frontend build failed (exit {e.returncode}) — will use existing build if available")
-    except Exception as e:
-        logger.warning(f"Frontend build error: {e} — will use existing build if available")
-
-    if build_dir.exists() and nginx_dir.exists():
+    # Try to compile latest React source (yarn → npm → npx fallbacks)
+    build_commands = [
+        (["yarn", "install", "--frozen-lockfile"], ["yarn", "build"]),
+        (["npm", "install", "--legacy-peer-deps"], ["npm", "run", "build"]),
+    ]
+    build_success = False
+    for install_cmd, build_cmd in build_commands:
         try:
-            for item in nginx_dir.iterdir():
-                if item.is_file():
-                    item.unlink()
-                elif item.is_dir():
-                    shutil.rmtree(item)
+            tool = install_cmd[0]
+            print(f"Trying frontend build with {tool}...")
+            env = {**os.environ, "CI": "false", "GENERATE_SOURCEMAP": "false"}
+            subprocess.run(install_cmd, cwd=str(frontend_dir), check=True, timeout=120, env=env, capture_output=True)
+            subprocess.run(build_cmd, cwd=str(frontend_dir), check=True, timeout=300, env=env, capture_output=True)
+            print(f"Frontend build completed successfully with {tool}")
+            build_success = True
+            break
+        except FileNotFoundError:
+            print(f"{tool} not found, trying next...")
+            continue
+        except subprocess.TimeoutExpired:
+            print(f"Frontend build with {tool} timed out")
+            continue
+        except subprocess.CalledProcessError as e:
+            print(f"Frontend build with {tool} failed (exit {e.returncode})")
+            continue
+        except Exception as e:
+            print(f"Frontend build with {tool} error: {e}")
+            continue
+
+    if not build_success:
+        print("No build tool available — using pre-built frontend artifacts")
+
+    # Ensure NGINX directory exists
+    if not nginx_dir.exists():
+        try:
+            nginx_dir.mkdir(parents=True, exist_ok=True)
+            print(f"Created {nginx_dir}")
+        except Exception as e:
+            print(f"Could not create {nginx_dir}: {e}")
+
+    # Copy build to NGINX serving directory
+    if build_dir.exists():
+        print(f"Build directory found at {build_dir} — copying to {nginx_dir}")
+        try:
+            if nginx_dir.exists():
+                for item in nginx_dir.iterdir():
+                    try:
+                        if item.is_file():
+                            item.unlink()
+                        elif item.is_dir():
+                            shutil.rmtree(item)
+                    except Exception:
+                        pass
             for item in build_dir.iterdir():
                 dest = nginx_dir / item.name
                 if item.is_dir():
-                    shutil.copytree(item, dest)
+                    shutil.copytree(item, dest, dirs_exist_ok=True)
                 else:
                     shutil.copy2(item, dest)
-            logger.info(f"Deployed frontend build to {nginx_dir}")
+            items = list(nginx_dir.iterdir())
+            print(f"Deployed frontend build to {nginx_dir} ({len(items)} items)")
         except Exception as e:
-            logger.warning(f"Could not copy frontend build to nginx: {e}")
+            print(f"ERROR: Could not copy frontend build to nginx: {e}")
+    else:
+        print(f"ERROR: No frontend build found at {build_dir} — NGINX will show default page")
 
     # Install custom nginx config for SPA routing + API proxy
-    if nginx_conf_src.exists() and nginx_conf_dest.exists():
+    if nginx_conf_src.exists():
         try:
-            shutil.copy2(nginx_conf_src, nginx_conf_dest)
+            if nginx_conf_dest.exists():
+                shutil.copy2(nginx_conf_src, nginx_conf_dest)
             subprocess.run(["nginx", "-s", "reload"], capture_output=True, timeout=5)
-            logger.info("Installed custom nginx.conf and reloaded NGINX")
+            print("Installed custom nginx.conf and reloaded NGINX")
         except Exception as e:
-            logger.warning(f"Could not install nginx config: {e}")
+            print(f"Could not install nginx config: {e}")
 
     # Start background tasks
     asyncio.create_task(signal_generation_task())

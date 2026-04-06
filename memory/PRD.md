@@ -32,10 +32,13 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - Real-time WebSocket alerts
 - Weekly Performance Digest email system (Resend + cron)
 
-### Phase 3: Build Automation (Complete - Apr 5, 2026)
-- Automated `yarn install` + `yarn build` in FastAPI startup hook
+### Phase 3: Build Automation (Complete - Apr 5-6, 2026)
+- Automated frontend build in FastAPI startup hook with yarn → npm fallback chain
 - Build artifacts copied to `/var/www/html/` for NGINX serving
-- Graceful fallback on build failure
+- Creates NGINX directory if missing, uses `print()` for deployment-visible logging
+- Graceful fallback: if no build tool available, uses pre-committed build artifacts
+- Pre-built React bundle committed to git (not gitignored) for production resilience
+- Fixed `os` import issue, removed `npx` direct build (unreliable)
 
 ### Phase 4: Full LIVE/DEMO Mode System (Complete - Apr 6, 2026)
 **Backend:**
