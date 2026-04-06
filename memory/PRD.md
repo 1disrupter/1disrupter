@@ -76,6 +76,14 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - `analytics_events` — conversion/tracking analytics
 - `weekly_digest_logs` — email delivery logs
 
+### Phase 5: Live Signals Page (Complete - Apr 6, 2026)
+- Created `/live-signals` route with `LiveSignalsPage.jsx` — dedicated vertical real-time signal feed
+- Shows stats bar (Total Signals, Long, Short counts), signal table with action/asset/confidence/agent/price/time
+- Mode-aware: LIVE badge with real data, DEMO badge with synthetic data
+- Removed toast notifications from WebSocket handler (`useStrategyAlerts.js`)
+- Navigation: "Live Signals" in primary nav (Activity icon), Alerts moved to overflow menu
+- Auto-refresh: 8s (live), 12s (demo)
+
 ## Backlog
 - P1: Agent Performance Leaderboard (rank by accuracy, win rate, P&L)
 - P1: Milestone Performance Alerts (Resend emails on ATH, +5% daily, stop-loss)

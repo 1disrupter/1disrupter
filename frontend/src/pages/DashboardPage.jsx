@@ -895,7 +895,7 @@ const DashboardPage = () => {
               <div className="grid gap-4">
                 {signals.map((s, i) => (
                   <motion.div
-                    key={s.symbol}
+                    key={`${s.symbol}-${i}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.1 }}
