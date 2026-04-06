@@ -27,29 +27,31 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - Admin auto-elevation, admin badge, admin login
 
 ### Phase 9: Frontend Routing Separation & Route Guards (Complete - Feb 2026)
-- AppLayout.jsx: Authenticated nav shell with route guards
-- MarketingLayout.jsx: Public nav shell (auth-aware)
-- RouteGuards.jsx: ProtectedRoute + PublicOnlyRoute
-- App.js refactored with React Router v6 nested routes + Outlet
+- AppLayout.jsx + MarketingLayout.jsx + RouteGuards.jsx
+- React Router v6 nested routes with Outlet pattern
 
 ### Phase 10: Guided Tour for Demo Mode (Complete - Feb 2026)
-- **GuidedTour.jsx**: 8-step interactive tour overlay (Welcome, Dashboard, Live Signals, Research, Strategy Lab, AI Agents, Demo Mode badge, Upgrade CTA)
-- Auto-starts after 800ms for new demo users (localStorage `alphaTourSeen` key)
-- Spotlight highlighting on nav elements with purple glow effect
-- Step progress dots with gradient active state
-- Back/Next/Skip navigation, Close (X) button
-- CTA final step with golden "Upgrade to Pro" button → navigates to /pricing
-- "Restart Tour" button in More dropdown (desktop) and mobile menu (demo mode only)
-- Does NOT appear in Live Mode or for admin users (useSystemMode check)
-- All 15 frontend tests passed (100%)
+- 8-step interactive tour: Welcome → Dashboard → Live Signals → Research → Strategy Lab → AI Agents → Demo Badge → Upgrade CTA
+- Spotlight highlighting, auto-start for new users, localStorage persistence, Restart Tour button
+
+### Phase 11: Tour Analytics Tracking (Complete - Feb 2026)
+- **Backend**: `POST /api/analytics/tour` logs events (step_view, step_next, step_back, skip, complete, cta_click, restart) with session_id to `tour_events` collection
+- **Backend**: `GET /api/analytics/tour/summary?days=N` returns aggregated funnel, dropoff, daily trends, completion/CTA rates
+- **Frontend**: GuidedTour.jsx fires analytics at every interaction (auto-start, next, back, skip, CTA, restart)
+- **Admin Page**: TourAnalyticsPage.jsx at `/admin/tour-analytics` — KPI cards (Starts, Completions, CTA Clicks, Skip Rate), Step Funnel chart, Drop-off Points chart, Daily Activity area chart, Step Breakdown table with retention bars
+- Tour Analytics link in More dropdown → Admin section
+- 20/20 backend tests + all frontend tests passed
 
 ## Key Endpoints
-- GET /api/system/mode, POST /api/system/mode — system mode control
-- GET /api/alerts/live, /api/events/live, /api/agents/performance, /api/analytics/live, /api/dashboard/live — mode-aware data
+- GET/POST /api/system/mode — system mode control
+- GET /api/alerts/live, /api/events/live, /api/agents/performance, /api/analytics/live, /api/dashboard/live
+- POST /api/analytics/tour — track tour events
+- GET /api/analytics/tour/summary — aggregated tour analytics
 - GET /api/auth/me — user profile
 
 ## Key DB Collections
 - system_config, trading_signals, event_agents, analytics_events, weekly_digest_logs
+- **tour_events** — guided tour interaction tracking (event_type, step_id, step_index, session_id, timestamp, date)
 
 ## Backlog
 - P1: Milestone Performance Alerts (Resend emails on ATH, +5% daily, stop-loss)
