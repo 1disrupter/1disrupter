@@ -3,7 +3,7 @@
  * Login, Register, Forgot Password, Reset Password
  */
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
@@ -42,11 +42,14 @@ export const LoginPage = () => {
   const [requires2FA, setRequires2FA] = useState(false);
   const [error, setError] = useState('');
 
+  const location = useLocation();
+  const redirectTo = location.state?.from || '/dashboard';
+
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate(redirectTo);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, redirectTo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,7 +59,7 @@ export const LoginPage = () => {
     const result = await login(email, password, requires2FA ? totpCode : null);
     
     if (result.success) {
-      navigate('/dashboard');
+      navigate(redirectTo);
     } else if (result.requires2FA) {
       setRequires2FA(true);
     } else {

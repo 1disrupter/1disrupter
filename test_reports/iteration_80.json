@@ -1,0 +1,61 @@
+{
+  "summary": "Admin Link feature testing completed. Found and fixed 1 critical bug: PublicOnlyRoute was ignoring location.state.from, causing redirect to /dashboard instead of /admin after login. All 12 test cases now pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/frontend/src/components/RouteGuards.jsx"
+  ],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (12/12 tests passed)"
+  },
+  "test_credentials": {
+    "admin_user": "mar-brick@hotmail.com / Martin2026!",
+    "standard_user": "demo_test2@my-alpha-ai.com / NewPass1234!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Admin link feature is fully functional. Fixed PublicOnlyRoute to respect location.state.from for redirect-after-login flows. All data-testids work: marketing-admin-link (desktop), marketing-admin-link-mobile (mobile), marketing-go-dashboard-btn (when authenticated).",
+  "features_tested": {
+    "admin_link_visibility": [
+      "Admin link (Shield icon + 'Admin' text) visible on desktop marketing nav on / page - PASS",
+      "Admin link visible on desktop marketing nav on /leaderboard page - PASS",
+      "Admin link visible on desktop marketing nav on /pricing page - PASS",
+      "Admin link visible in mobile hamburger menu below Get Started on / page - PASS"
+    ],
+    "admin_link_authentication_behavior": [
+      "Admin link NOT visible inside authenticated app shell (e.g. /dashboard after login) - PASS",
+      "Admin link disappears from marketing nav when user is authenticated (shows Dashboard button instead) - PASS",
+      "Admin link NOT visible in mobile menu when authenticated - PASS"
+    ],
+    "admin_link_navigation": [
+      "Clicking Admin link navigates to /admin - PASS",
+      "When not logged in, /admin redirects to /login - PASS",
+      "After logging in from that redirect, user is sent to /admin (not /dashboard) - PASS (after fix)"
+    ],
+    "admin_link_styling": [
+      "Admin link has purple hover state on desktop (#7B61FF) - PASS"
+    ],
+    "existing_features": [
+      "No impact on existing Live Mode, Demo Mode, or admin badge logic - PASS"
+    ]
+  },
+  "bug_fixed": {
+    "issue": "After clicking Admin link when logged out, logging in redirected to /dashboard instead of /admin",
+    "root_cause": "PublicOnlyRoute in RouteGuards.jsx was hardcoded to redirect to '/dashboard' when authenticated, ignoring location.state.from",
+    "fix_applied": "Updated PublicOnlyRoute to read location.state?.from and use it as redirect target, falling back to '/dashboard' if not present",
+    "file_modified": "/app/frontend/src/components/RouteGuards.jsx",
+    "verification": "Tested Admin → Login → /admin flow, now correctly redirects to /admin after login"
+  }
+}

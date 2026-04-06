@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Trophy, Crown, LogIn, User, Menu, X, BarChart3 } from "lucide-react";
+import { Home, Trophy, Crown, LogIn, User, Menu, X, BarChart3, Shield } from "lucide-react";
 import { Button } from "./ui/button";
 import { BrandLockup } from "./BrandComponents";
 import { useAuth } from "../contexts/AuthContext";
@@ -56,6 +56,12 @@ const MarketingLayout = () => {
                 </Link>
               ) : (
                 <>
+                  <Link to="/admin" className="hidden md:flex">
+                    <Button variant="ghost" size="sm" className="rounded-full text-zinc-500 hover:text-[#7B61FF] h-8 px-2.5 text-xs transition-colors" data-testid="marketing-admin-link">
+                      <Shield className="w-3.5 h-3.5 mr-1" />
+                      Admin
+                    </Button>
+                  </Link>
                   <Link to="/login">
                     <Button variant="ghost" size="sm" className="rounded-full text-zinc-400 hover:text-white h-8 px-3 text-xs" data-testid="marketing-login-btn">
                       <LogIn className="w-3.5 h-3.5 mr-1.5" />
@@ -98,6 +104,9 @@ const MarketingLayout = () => {
                       </Link>
                       <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm bg-[#7B61FF] text-white">
                         <User className="w-4 h-4" />Get Started
+                      </Link>
+                      <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-500 hover:text-[#7B61FF] transition-colors" data-testid="marketing-admin-link-mobile">
+                        <Shield className="w-4 h-4" />Admin
                       </Link>
                     </>
                   )}

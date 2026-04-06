@@ -21,14 +21,17 @@ export const ProtectedRoute = ({ children }) => {
 
 /**
  * Wraps public-only routes (login/register). Redirects to /dashboard if already authenticated.
+ * Respects location.state.from for redirect-after-login flows (e.g., Admin link → login → /admin).
  */
 export const PublicOnlyRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) return null;
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const redirectTo = location.state?.from || '/dashboard';
+    return <Navigate to={redirectTo} replace />;
   }
 
   return children;
