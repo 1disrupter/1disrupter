@@ -20,72 +20,36 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 
 ## What's Been Implemented
 
-### Phase 1: Core Platform (Complete)
-- User auth (JWT), tiered access, admin panel
-- Dashboard with portfolio stats, signal preview, price charts
-- Strategy marketplace, leaderboard, copy trading
-- Stripe billing integration
-
-### Phase 2: Live Mode & Agent Workers (Complete)
-- 4 AI background agent workers generating real signals from CoinGecko data
-- Demo mode toggle with admin API control
-- Real-time WebSocket alerts
-- Weekly Performance Digest email system (Resend + cron)
-
-### Phase 3: Build Automation (Complete - Apr 5-6, 2026)
-- Automated frontend build in FastAPI startup hook with yarn -> npm fallback chain
-- Build artifacts copied to /var/www/html/ for NGINX serving
-- Graceful fallback: if no build tool available, uses pre-committed build artifacts
-
-### Phase 4: Full LIVE/DEMO Mode System (Complete - Apr 6, 2026)
-- GET/POST /api/system/mode — single source of truth for system mode
-- Mode-aware endpoints for alerts, events, agents, analytics
-- Demo generators: services/demo_generators.py
-- useSystemMode() hook, DemoModeBanner, mode badges on all pages
-
-### Phase 5: Live Signals Page (Complete - Apr 6, 2026)
-- /live-signals route with real-time vertical signal feed
-- Stats bar, signal table, mode-aware LIVE/DEMO badges, auto-refresh
-
-### Phase 6: Live Agent Performance Page (Complete - Apr 6, 2026)
-- LiveAgentPerformance.jsx with 4-metric cards per agent
-- Agents page renders live component in LIVE mode, placeholder in DEMO
-
-### Phase 7: Admin Login & Auto-Elevation (Complete - Apr 6, 2026)
-- Admin users auto-elevated to elite tier with is_pro=true, is_elite=true
-- Admin Badge (purple Shield), Admin Login link in mobile menu
-- useSystemMode() overrides demo mode to live for admin users
-
-### Phase 8: True LIVE Mode for Alerts, Analytics, Dashboard (Complete - Apr 6, 2026)
-- LiveAlerts.jsx, LiveAnalytics.jsx, LiveDashboard.jsx
-- Backend endpoints: /api/analytics/live, /api/dashboard/live
-- All pages: no demo imports in LIVE mode
+### Phase 1-8: Core Platform through True LIVE Mode (Complete)
+- Full auth, tiered access, strategy marketplace, leaderboard, copy trading, Stripe billing
+- 4 AI background agent workers, demo mode toggle, WebSocket alerts, weekly digest
+- Build automation, LIVE/DEMO mode system, Live Signals/Agents/Dashboard/Alerts/Analytics pages
+- Admin auto-elevation, admin badge, admin login
 
 ### Phase 9: Frontend Routing Separation & Route Guards (Complete - Feb 2026)
-- **AppLayout.jsx**: Authenticated navigation shell (Dashboard, Live Signals, Research, Strategy Lab, AI Agents, More dropdown with Alerts/Simulation/Event Agents/Marketplace/Copy Trading/Following/Referrals/Leaderboard/Pricing + Admin section, user dropdown, system mode badge, DemoModeBanner, MobileBottomNav)
-- **MarketingLayout.jsx**: Public navigation shell (Home, Leaderboard, Pricing, Sign In/Get Started; shows "Dashboard" button for already-authenticated users)
-- **RouteGuards.jsx**: ProtectedRoute (redirects to /login unless authenticated or in demo mode), PublicOnlyRoute (redirects to /dashboard if already authenticated)
-- **App.js refactored**: React Router v6 nested routes with <Outlet /> pattern. Public routes wrapped in MarketingLayout, authenticated routes wrapped in ProtectedRoute + AppLayout
-- Old monolithic Navigation.jsx no longer used in routing (retained in codebase for reference)
-- MobileBottomNav only appears on authenticated app routes
-- All 14 frontend tests passed (100%)
+- AppLayout.jsx: Authenticated nav shell with route guards
+- MarketingLayout.jsx: Public nav shell (auth-aware)
+- RouteGuards.jsx: ProtectedRoute + PublicOnlyRoute
+- App.js refactored with React Router v6 nested routes + Outlet
+
+### Phase 10: Guided Tour for Demo Mode (Complete - Feb 2026)
+- **GuidedTour.jsx**: 8-step interactive tour overlay (Welcome, Dashboard, Live Signals, Research, Strategy Lab, AI Agents, Demo Mode badge, Upgrade CTA)
+- Auto-starts after 800ms for new demo users (localStorage `alphaTourSeen` key)
+- Spotlight highlighting on nav elements with purple glow effect
+- Step progress dots with gradient active state
+- Back/Next/Skip navigation, Close (X) button
+- CTA final step with golden "Upgrade to Pro" button → navigates to /pricing
+- "Restart Tour" button in More dropdown (desktop) and mobile menu (demo mode only)
+- Does NOT appear in Live Mode or for admin users (useSystemMode check)
+- All 15 frontend tests passed (100%)
 
 ## Key Endpoints
-- GET /api/system/mode — system mode status
-- POST /api/system/mode?admin_key=... — toggle mode
-- GET /api/alerts/live — mode-aware alerts
-- GET /api/events/live — mode-aware events
-- GET /api/agents/performance — mode-aware agent stats
-- GET /api/analytics/live — mode-aware analytics
-- GET /api/dashboard/live — mode-aware dashboard
+- GET /api/system/mode, POST /api/system/mode — system mode control
+- GET /api/alerts/live, /api/events/live, /api/agents/performance, /api/analytics/live, /api/dashboard/live — mode-aware data
 - GET /api/auth/me — user profile
 
 ## Key DB Collections
-- system_config — demo_mode flag
-- trading_signals — real signals from agent workers
-- event_agents — agent configurations
-- analytics_events — conversion/tracking analytics
-- weekly_digest_logs — email delivery logs
+- system_config, trading_signals, event_agents, analytics_events, weekly_digest_logs
 
 ## Backlog
 - P1: Milestone Performance Alerts (Resend emails on ATH, +5% daily, stop-loss)
@@ -94,5 +58,4 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - P2: CoinGecko rate-limit mitigation
 - P3: Sepolia Smart Contract deployment
 - P3: User retention analytics & task queue migration
-- Refactoring: Extract startup lifecycle from server.py into startup.py
-- Cleanup: Delete unused Navigation.jsx once layout split is fully validated
+- Refactoring: Extract startup lifecycle from server.py; delete unused Navigation.jsx
