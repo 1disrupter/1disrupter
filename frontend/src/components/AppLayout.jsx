@@ -6,7 +6,7 @@ import {
   ChevronDown, Copy, FlaskConical,
   Users, Home, Eye, Trophy,
   LogOut, User, Menu, Radio, Crown, Share2, Heart, Activity,
-  X, Beaker
+  X, Beaker, Brain
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -21,6 +21,8 @@ import { TierBadge } from "../pages/PricingPage";
 import NotificationBell from "./NotificationBell";
 import DemoModeBanner from "./DemoModeBanner";
 import MobileBottomNav from "./MobileBottomNav";
+import GuidedTour, { restartTour } from "./GuidedTour";
+import { useSystemMode } from "../contexts/DemoModeContext";
 
 const primaryItems = [
   { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -60,6 +62,7 @@ const overflowPaths = [...overflowItems, ...adminItems].map(i => i.path);
 const AppLayout = () => {
   const { user, isAuthenticated, logout, isPro, isAdmin } = useAuth();
   const { isDemoMode, toggleDemoMode, shareDemoLink } = useDemoMode();
+  const { isDemo: showTour } = useSystemMode();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -135,6 +138,19 @@ const AppLayout = () => {
                       {item.label}
                     </DropdownMenuItem>
                   ))}
+                  {showTour && !isAdmin && (
+                    <>
+                      <DropdownMenuSeparator className="bg-zinc-800" />
+                      <DropdownMenuItem
+                        onClick={restartTour}
+                        className="cursor-pointer text-[#7B61FF]"
+                        data-testid="restart-tour-desktop"
+                      >
+                        <Brain className="w-4 h-4 mr-2.5" />
+                        Restart Tour
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -267,6 +283,15 @@ const AppLayout = () => {
                       <Share2 className="w-4 h-4" />Share Demo Link
                     </button>
                   )}
+                  {showTour && !isAdmin && (
+                    <button
+                      onClick={() => { restartTour(); setMobileMenuOpen(false); }}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full text-[#7B61FF] hover:bg-[#7B61FF]/10"
+                      data-testid="restart-tour-mobile"
+                    >
+                      <Brain className="w-4 h-4" />Restart Tour
+                    </button>
+                  )}
                   {!isAuthenticated && isDemoMode && (
                     <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm bg-[#7B61FF] text-white mt-2">
                       <User className="w-4 h-4" />Sign Up Free
@@ -291,6 +316,7 @@ const AppLayout = () => {
       {/* Page content */}
       <Outlet />
       <MobileBottomNav />
+      {showTour && !isAdmin && <GuidedTour />}
     </>
   );
 };

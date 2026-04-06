@@ -1,0 +1,76 @@
+{
+  "summary": "Guided Tour feature testing completed. All 15 test cases passed. Tour auto-starts after ~800ms in Demo Mode for new users. Tour does NOT appear for admin users or in Live Mode. All 8 tour steps work correctly with proper navigation (Next/Back). Skip tour and Close (X) button properly close tour and set localStorage. CTA step navigates to /pricing. Restart Tour button visible in More dropdown (desktop) and mobile menu for demo mode users only. Step progress dots update correctly. Click shield blocks interaction with underlying UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_78.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (15/15 tests passed)"
+  },
+  "test_credentials": {
+    "admin_user": "mar-brick@hotmail.com / Martin2026!",
+    "demo_mode_url": "https://routing-split.preview.emergentagent.com/dashboard?demo=true"
+  },
+  "seed_data_creation": "None - used existing data and localStorage manipulation",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Guided Tour feature is fully functional. Tour auto-starts in Demo Mode for new users (localStorage 'alphaTourSeen' not set). Tour has 8 steps: welcome, dashboard, signals, research, lab, agents, mode, cta. Tour uses spotlight highlighting on nav items. Admin users never see tour (useSystemMode overrides demo for admins). Restart Tour button in More dropdown (desktop) and mobile menu dispatches 'alphaai-restart-tour' event. CTA step navigates to /pricing. All data-testids work correctly: guided-tour-overlay, tour-step-{id}, tour-next-btn, tour-back-btn, tour-close-btn, tour-skip-btn, restart-tour-desktop, restart-tour-mobile.",
+  "features_tested": {
+    "tour_auto_start": [
+      "Tour auto-starts after ~800ms in Demo Mode for new users - PASS",
+      "Tour does NOT appear when localStorage 'alphaTourSeen' is set - PASS"
+    ],
+    "tour_visibility_rules": [
+      "Tour does NOT appear for admin users - PASS",
+      "Tour does NOT appear in Live Mode (no demo param) - PASS",
+      "Restart Tour button NOT visible for admin users - PASS"
+    ],
+    "welcome_step": [
+      "Welcome step shows Brain icon - PASS",
+      "Welcome step shows 'Welcome to My-AlphaAI' title - PASS",
+      "Welcome step has 'Start Tour' button - PASS",
+      "Welcome step has 'Skip tour' button - PASS",
+      "Welcome step has Close (X) button - PASS"
+    ],
+    "tour_navigation": [
+      "Clicking 'Start Tour' advances to Dashboard step - PASS",
+      "Clicking 'Next' advances through all 8 steps - PASS",
+      "Clicking 'Back' goes to previous step - PASS",
+      "Step order: welcome → dashboard → signals → research → lab → agents → mode → cta - PASS"
+    ],
+    "tour_close_functionality": [
+      "Clicking 'Skip tour' closes tour - PASS",
+      "Clicking X button closes tour - PASS",
+      "localStorage 'alphaTourSeen' set after skip/close - PASS",
+      "Tour does NOT re-appear after being skipped (persistence) - PASS"
+    ],
+    "cta_step": [
+      "CTA step shows 'Ready to Go Live?' title - PASS",
+      "CTA step has golden 'Upgrade to Pro' button - PASS",
+      "Clicking 'Upgrade to Pro' navigates to /pricing - PASS",
+      "Tour closes after CTA click - PASS"
+    ],
+    "restart_tour": [
+      "Restart Tour button visible in More dropdown (desktop, demo mode) - PASS",
+      "Restart Tour button visible in mobile menu (demo mode) - PASS",
+      "Restart Tour clears localStorage and re-opens tour from step 1 - PASS"
+    ],
+    "ui_elements": [
+      "Tour overlay blocks interaction with underlying UI (click shield) - PASS",
+      "Step progress dots visible and update correctly - PASS",
+      "Spotlight highlighting works on nav items - PASS"
+    ]
+  }
+}
