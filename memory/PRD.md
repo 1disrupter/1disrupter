@@ -90,6 +90,13 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - Removed all demo agent cards, demo stats components, demo imports
 - No toasts on the page, auto-refresh every 15s
 
+### Phase 7: Admin Login & Auto-Elevation (Complete - Apr 6, 2026)
+- Added `role` field to `UserResponse` model; admins auto-elevated to `elite` tier with `is_pro=true`, `is_elite=true`
+- Added `isAdmin` to AuthContext; `isPro`/`isElite` always true for admins
+- Admin Badge: purple outline with Shield icon in header, visible on all pages for admin users only
+- Admin Login: Shield-icon link in mobile hamburger menu, navigates to `/admin`
+- `useSystemMode()` overrides demo mode to live for admin users (reads from localStorage)
+
 ## Backlog
 - P1: Agent Performance Leaderboard (rank by accuracy, win rate, P&L)
 - P1: Milestone Performance Alerts (Resend emails on ATH, +5% daily, stop-loss)
