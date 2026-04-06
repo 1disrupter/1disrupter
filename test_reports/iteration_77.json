@@ -1,0 +1,81 @@
+{
+  "summary": "Frontend Routing Separation & Route Guards testing completed. All 14 test cases passed. MarketingLayout correctly renders on public routes (/, /leaderboard, /pricing, /login). AppLayout correctly renders on authenticated routes (/dashboard, /alerts). ProtectedRoute redirects unauthenticated users to /login. PublicOnlyRoute redirects authenticated users from /login to /dashboard. MobileBottomNav visible only on app routes (mobile viewport).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_77.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (14/14 tests passed)"
+  },
+  "test_credentials": {
+    "admin_user": "mar-brick@hotmail.com / Martin2026!",
+    "normal_user": "demo_test2@my-alpha-ai.com / NewPass1234!"
+  },
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Frontend routing separation is fully functional. MarketingLayout (Home, Leaderboard, Pricing, Sign In, Get Started) serves public routes (/, /leaderboard, /pricing, /login, /register). AppLayout (Dashboard, Live Signals, Research, Strategy Lab, AI Agents, More dropdown, user dropdown, mode badge) serves authenticated routes (/dashboard, /live-signals, /alerts, /admin, etc.). ProtectedRoute allows demo mode users through without auth. PublicOnlyRoute redirects authenticated users from /login and /register to /dashboard. MobileBottomNav (Dashboard, Leaderboard, Alerts, Settings) only visible on app routes in mobile viewport. When authenticated, landing page shows Dashboard button instead of Sign In/Get Started.",
+  "features_tested": {
+    "marketing_layout_routes": [
+      "Landing page (/) shows MarketingLayout nav - PASS",
+      "/leaderboard shows MarketingLayout nav - PASS",
+      "/pricing shows MarketingLayout nav - PASS",
+      "Login page shows MarketingLayout nav - PASS",
+      "MarketingLayout has Home, Leaderboard, Pricing, Sign In, Get Started - PASS"
+    ],
+    "protected_route_redirects": [
+      "Unauthenticated visit to /dashboard redirects to /login - PASS",
+      "Unauthenticated visit to /live-signals redirects to /login - PASS",
+      "Unauthenticated visit to /admin redirects to /login - PASS"
+    ],
+    "app_layout_after_login": [
+      "Login with valid credentials redirects to /dashboard - PASS",
+      "Dashboard shows AppLayout nav - PASS",
+      "AppLayout has Dashboard, Live Signals, Research, Strategy Lab, AI Agents - PASS",
+      "AppLayout has More dropdown with all items - PASS",
+      "AppLayout has user dropdown - PASS",
+      "AppLayout has system mode badge (LIVE MODE) - PASS"
+    ],
+    "more_dropdown_contents": [
+      "Alerts - PASS",
+      "Simulation - PASS",
+      "Event Agents - PASS",
+      "Marketplace - PASS",
+      "Copy Trading - PASS",
+      "Following - PASS",
+      "Referrals - PASS",
+      "Leaderboard - PASS",
+      "Pricing - PASS",
+      "Admin Panel - PASS",
+      "Demo Analytics - PASS",
+      "Traffic - PASS"
+    ],
+    "public_only_route": [
+      "Authenticated user visiting /login redirects to /dashboard - PASS"
+    ],
+    "authenticated_landing_page": [
+      "Landing page shows MarketingLayout when authenticated - PASS",
+      "Dashboard button shown instead of Sign In for authenticated user - PASS",
+      "Sign In button hidden for authenticated user - PASS"
+    ],
+    "mobile_bottom_nav": [
+      "MobileBottomNav NOT visible on landing page (marketing route) - PASS",
+      "MobileBottomNav NOT visible on /leaderboard (marketing route) - PASS",
+      "MobileBottomNav visible on /dashboard (app route) - PASS",
+      "MobileBottomNav visible on /alerts (app route) - PASS",
+      "MobileBottomNav has Dashboard, Leaderboard, Alerts, Settings items - PASS"
+    ]
+  }
+}

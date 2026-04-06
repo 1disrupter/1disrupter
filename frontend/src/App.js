@@ -6,9 +6,10 @@ import "@/App.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
 import { DemoModeProvider } from "./contexts/DemoModeContext";
-import DemoModeBanner from "./components/DemoModeBanner";
+import { ProtectedRoute, PublicOnlyRoute } from "./components/RouteGuards";
+import AppLayout from "./components/AppLayout";
+import MarketingLayout from "./components/MarketingLayout";
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./pages/AuthPages";
-import Navigation from "./components/Navigation";
 import SplashScreen from "./components/SplashScreen";
 import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -47,7 +48,6 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CookieConsent from "./components/CookieConsent";
 import MobileNetworkBanner from "./components/MobileNetworkBanner";
-import MobileBottomNav from "./components/MobileBottomNav";
 import useMobileOptimizations from "./hooks/useMobileOptimizations";
 import useStrategyAlerts from "./hooks/useStrategyAlerts";
 import useTracking from "./hooks/useTracking";
@@ -65,7 +65,6 @@ function TrackingWrapper({ children }) {
     <>
       <MobileNetworkBanner isOnline={isOnline} wsConnected={wsConnected} />
       {children}
-      <MobileBottomNav />
     </>
   );
 }
@@ -92,51 +91,54 @@ function App() {
         <div className="App min-h-screen bg-[#050505]">
           <BrowserRouter>
             <TrackingWrapper>
-            <DemoModeBanner />
-            <Navigation />
             <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/copy-trading" element={<CopyTradingPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/simulation" element={<SimulationPage />} />
-              <Route path="/research" element={<ResearchEnginePage />} />
-              <Route path="/agents" element={<AgentsPage />} />
-              <Route path="/events" element={<EventAgentsPage />} />
-              <Route path="/lab" element={<StrategyLabPage />} />
-              <Route path="/marketplace" element={<MarketplacePage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/conversion-analytics" element={<ConversionAnalyticsPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-              <Route path="/admin/traffic" element={<AdminTrafficPage />} />
-              <Route path="/connect-exchange" element={<ConnectExchangePage />} />
-              <Route path="/demo" element={<DemoPage />} />
-              <Route path="/strategy-marketplace" element={<StrategyMarketplacePage />} />
-              <Route path="/strategies" element={<StrategyLeaderboardPage />} />
-              <Route path="/strategy-marketplace/:id" element={<StrategyDetailPage />} />
-              <Route path="/marketplace/:id" element={<StrategyDetailPage />} />
-              <Route path="/creator/strategies" element={<CreatorDashboardPage />} />
-              <Route path="/me/strategies" element={<MyStrategiesPage />} />
-              <Route path="/me/execution-settings" element={<ExecutionSettingsPage />} />
-              <Route path="/admin/execution-monitor" element={<ExecutionMonitorPage />} />
-              <Route path="/billing" element={<BillingPortalPage />} />
-              {/* Auth Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/verify-email" element={<VerifyEmailPage />} />
-              {/* Referral */}
-              <Route path="/referrals" element={<ReferralPage />} />
-              <Route path="/following" element={<FollowingPage />} />
-              <Route path="/alerts" element={<AlertsPage />} />
-              <Route path="/live-signals" element={<LiveSignalsPage />} />
-              <Route path="/settings" element={<MobileSettingsPage />} />
-              {/* Legal Pages */}
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
+              {/* Public marketing routes */}
+              <Route element={<MarketingLayout />}>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/demo" element={<DemoPage />} />
+                <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+                <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+              </Route>
+
+              {/* Authenticated app routes */}
+              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/live-signals" element={<LiveSignalsPage />} />
+                <Route path="/alerts" element={<AlertsPage />} />
+                <Route path="/agents" element={<AgentsPage />} />
+                <Route path="/events" element={<EventAgentsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/conversion-analytics" element={<ConversionAnalyticsPage />} />
+                <Route path="/research" element={<ResearchEnginePage />} />
+                <Route path="/lab" element={<StrategyLabPage />} />
+                <Route path="/simulation" element={<SimulationPage />} />
+                <Route path="/marketplace" element={<MarketplacePage />} />
+                <Route path="/copy-trading" element={<CopyTradingPage />} />
+                <Route path="/connect-exchange" element={<ConnectExchangePage />} />
+                <Route path="/strategy-marketplace" element={<StrategyMarketplacePage />} />
+                <Route path="/strategies" element={<StrategyLeaderboardPage />} />
+                <Route path="/strategy-marketplace/:id" element={<StrategyDetailPage />} />
+                <Route path="/marketplace/:id" element={<StrategyDetailPage />} />
+                <Route path="/creator/strategies" element={<CreatorDashboardPage />} />
+                <Route path="/me/strategies" element={<MyStrategiesPage />} />
+                <Route path="/me/execution-settings" element={<ExecutionSettingsPage />} />
+                <Route path="/billing" element={<BillingPortalPage />} />
+                <Route path="/referrals" element={<ReferralPage />} />
+                <Route path="/following" element={<FollowingPage />} />
+                <Route path="/settings" element={<MobileSettingsPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+                <Route path="/admin/traffic" element={<AdminTrafficPage />} />
+                <Route path="/admin/execution-monitor" element={<ExecutionMonitorPage />} />
+              </Route>
+
               {/* 404 Catch-All */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
