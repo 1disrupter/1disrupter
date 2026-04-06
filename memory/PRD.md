@@ -97,6 +97,15 @@ Build a production-ready AI-powered crypto trading signal platform with live age
 - Admin Login: Shield-icon link in mobile hamburger menu, navigates to `/admin`
 - `useSystemMode()` overrides demo mode to live for admin users (reads from localStorage)
 
+### Phase 8: True LIVE Mode for Alerts, Analytics, Dashboard (Complete - Apr 6, 2026)
+- Created `LiveAlerts.jsx` — fetches `/api/alerts/live`, 12s auto-refresh, action badges, agent names, prices, timestamps
+- Created `LiveAnalytics.jsx` — fetches `/api/analytics/live`, 20s auto-refresh, 4 charts (Signal Distribution, Win Rate, Agent Accuracy, Daily Volume)
+- Created `LiveDashboard.jsx` — fetches `/api/dashboard/live`, 15s auto-refresh, 4 metric cards + Agent Status + Recent Alerts panels
+- Added backend endpoints: `GET /api/analytics/live` (by_pair, by_agent, daily aggregations), `GET /api/dashboard/live` (24h signals, agent status, recent alerts)
+- Rewrote AlertsPage, AnalyticsPage, DashboardPage as clean wrappers: LIVE renders live component, DEMO shows placeholder
+- DashboardPage reduced from 1892 lines to ~100 lines
+- All pages: no demo imports, no demo components in LIVE mode, no toast notifications on load
+
 ## Backlog
 - P1: Agent Performance Leaderboard (rank by accuracy, win rate, P&L)
 - P1: Milestone Performance Alerts (Resend emails on ATH, +5% daily, stop-loss)
