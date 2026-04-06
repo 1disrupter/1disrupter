@@ -17,13 +17,23 @@ export const useDemoMode = () => {
   return ctx;
 };
 
-/** Alias hook matching the user's spec */
+/** Alias hook matching the user's spec. Admin users always see live. */
 export const useSystemMode = () => {
   const ctx = useDemoMode();
+  // Admin override: admins never see demo mode
+  let authData = null;
+  try {
+    const raw = localStorage.getItem('alphaai_auth');
+    if (raw) authData = JSON.parse(raw);
+  } catch { /* ignore */ }
+  const isAdmin = authData?.user?.role === 'admin';
+  const effectiveDemo = isAdmin ? false : ctx.isDemoMode;
+
   return {
-    mode: ctx.isDemoMode ? 'demo' : 'live',
-    isDemo: ctx.isDemoMode,
-    isLive: !ctx.isDemoMode,
+    mode: effectiveDemo ? 'demo' : 'live',
+    isDemo: effectiveDemo,
+    isLive: !effectiveDemo,
+    isAdmin,
     setMode: ctx.setSystemMode,
     loading: ctx.modeLoading,
   };

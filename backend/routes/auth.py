@@ -79,6 +79,7 @@ class UserResponse(BaseModel):
     is_elite: bool
     has_2fa: bool
     user_tier: str = "free"
+    role: str = "user"
     wallet_address: Optional[str] = None
     created_at: datetime
 
@@ -183,7 +184,10 @@ async def get_current_user(request: Request) -> dict:
     return user
 
 def format_user_response(user: dict) -> UserResponse:
-    """Format user dict into UserResponse"""
+    """Format user dict into UserResponse. Admins auto-elevate to elite."""
+    role = user.get("role", "user")
+    is_admin = role == "admin"
+
     # Derive user_tier from booleans for backward compat
     user_tier = user.get("user_tier", "free")
     if user_tier == "free":
@@ -191,15 +195,21 @@ def format_user_response(user: dict) -> UserResponse:
             user_tier = "elite"
         elif user.get("is_pro"):
             user_tier = "pro"
+
+    # Admin auto-elevation: always elite
+    if is_admin:
+        user_tier = "elite"
+
     return UserResponse(
         id=user["id"],
         email=user["email"],
         name=user["name"],
         is_verified=user.get("is_verified", False),
-        is_pro=user.get("is_pro", False) or user_tier in ("pro", "elite"),
-        is_elite=user.get("is_elite", False) or user_tier == "elite",
+        is_pro=is_admin or user.get("is_pro", False) or user_tier in ("pro", "elite"),
+        is_elite=is_admin or user.get("is_elite", False) or user_tier == "elite",
         has_2fa=user.get("has_2fa", False),
         user_tier=user_tier,
+        role=role,
         wallet_address=user.get("wallet_address"),
         created_at=user.get("created_at", datetime.now(timezone.utc))
     )

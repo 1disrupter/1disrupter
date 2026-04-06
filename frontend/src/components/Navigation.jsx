@@ -24,7 +24,7 @@ import { Beaker } from "lucide-react";
 
 const Navigation = () => {
   const { wallet, connectWallet, disconnectWallet, loading: walletLoading, chainId, ethBalance, switchToSepolia } = useWallet();
-  const { user, isAuthenticated, logout, isPro } = useAuth();
+  const { user, isAuthenticated, logout, isPro, isAdmin } = useAuth();
   const { isDemoMode, toggleDemoMode, shareDemoLink } = useDemoMode();
   const location = useLocation();
   const navigate = useNavigate();
@@ -202,6 +202,17 @@ const Navigation = () => {
                     PRO
                   </Badge>
                 )}
+
+                {/* Admin Badge */}
+                {isAdmin && (
+                  <Badge
+                    className="hidden sm:flex items-center gap-1 bg-transparent border border-[#7B61FF]/50 text-[#7B61FF] text-[10px] font-mono"
+                    data-testid="admin-badge"
+                  >
+                    <Shield className="w-3 h-3" />
+                    Admin
+                  </Badge>
+                )}
                 
                 {/* Wallet controls hidden for SaaS-only launch (Phase 2 Web3) */}
                 
@@ -276,6 +287,21 @@ const Navigation = () => {
                   <item.icon className="w-4 h-4" />{item.label}
                 </Link>
               ))}
+
+              {/* Admin Login — mobile only */}
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm ${
+                  location.pathname === "/admin"
+                    ? "bg-[#7B61FF]/10 text-[#7B61FF]"
+                    : "text-zinc-500"
+                }`}
+                data-testid="admin-login-mobile"
+              >
+                <Shield className="w-4 h-4" />
+                Admin Login
+              </Link>
               {!isAuthenticated && !isDemoMode && (
                 <div className="mt-3 pt-3 border-t border-zinc-800 space-y-2">
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400">
