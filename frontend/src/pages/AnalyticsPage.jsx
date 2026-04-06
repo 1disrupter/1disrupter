@@ -1,49 +1,63 @@
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, TrendingUp, Scale } from "lucide-react";
+import { BarChart3, TrendingUp, Scale, Wifi } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import { PageHeader, StatsRow, LoadingSkeleton, ErrorState } from "../components/PlaceholderUI";
-import { useDemoMode } from "../contexts/DemoModeContext";
+import { useSystemMode } from "../contexts/DemoModeContext";
 import { useAuth } from "../contexts/AuthContext";
-import { useApiData } from "../lib/useApiData";
+import axios from "axios";
 
-const fallbackChartData = [
-  { name: 'BTC', signals: 24, winRate: 72 },
-  { name: 'ETH', signals: 18, winRate: 68 },
-  { name: 'SOL', signals: 14, winRate: 74 },
-  { name: 'AVAX', signals: 11, winRate: 61 },
-  { name: 'DOGE', signals: 8, winRate: 58 },
-  { name: 'MATIC', signals: 6, winRate: 66 },
-];
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const AnalyticsPage = () => {
-  const { isDemoMode } = useDemoMode();
+  const { mode, isDemo, isLive } = useSystemMode();
   const { tokens } = useAuth();
   const token = tokens?.access_token;
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const { data: summary, loading, error, refetch } = useApiData('/analytics/summary', { skip: isDemoMode, token });
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await axios.get(`${API}/api/analytics/summary?days=30`, { headers });
+      setSummary(res.data);
+      setError(null);
+    } catch (e) {
+      setError("Could not load analytics");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
 
-  const chartData = isDemoMode || !summary?.by_pair ? fallbackChartData : summary.by_pair;
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics, mode]);
 
-  const stats = isDemoMode || !summary ? [
-    { label: 'Total Signals', value: '81', change: 'Last 30 days', positive: true },
-    { label: 'Avg Win Rate', value: '68.2%', change: '+1.4%', positive: true },
-    { label: 'Sharpe Ratio', value: '1.74', change: 'Portfolio-wide', positive: true },
-    { label: 'Max Drawdown', value: '-8.3%', change: 'Last 30 days', positive: false },
-  ] : [
-    { label: 'Total Signals', value: String(summary.total_signals ?? 81), change: 'Last 30 days', positive: true },
-    { label: 'Avg Win Rate', value: `${(summary.avg_win_rate ?? 68.2).toFixed(1)}%`, change: summary.win_rate_change || '--', positive: (summary.avg_win_rate ?? 0) > 50 },
-    { label: 'Sharpe Ratio', value: (summary.sharpe_ratio ?? 1.74).toFixed(2), change: 'Portfolio-wide', positive: (summary.sharpe_ratio ?? 0) > 1 },
-    { label: 'Max Drawdown', value: `${(summary.max_drawdown ?? -8.3).toFixed(1)}%`, change: 'Last 30 days', positive: false },
+  const chartData = summary?.by_pair || [
+    { name: 'BTC', signals: 24, winRate: 72 },
+    { name: 'ETH', signals: 18, winRate: 68 },
+    { name: 'SOL', signals: 14, winRate: 74 },
+    { name: 'AVAX', signals: 11, winRate: 61 },
+    { name: 'DOGE', signals: 8, winRate: 58 },
   ];
 
-  const tableRows = isDemoMode || !summary?.by_pair ? [
-    ['BTC/USD', '24', '72%', '+3.2%', '+8.4%', '-2.1%'],
-    ['ETH/USD', '18', '68%', '+2.8%', '+6.7%', '-3.4%'],
-    ['SOL/USD', '14', '74%', '+4.1%', '+12.2%', '-4.8%'],
-    ['AVAX/USD', '11', '61%', '+1.9%', '+5.3%', '-3.9%'],
-    ['DOGE/USD', '8', '58%', '+1.4%', '+4.1%', '-2.8%'],
-  ] : summary.by_pair.map(p => [
+  const stats = summary ? [
+    { label: 'Total Signals', value: String(summary.total_signals ?? summary.total_conversions ?? 81), change: 'Last 30 days', positive: true },
+    { label: 'Avg Win Rate', value: `${(summary.avg_win_rate ?? summary.overall_conversion_rate ?? 68.2).toFixed(1)}%`, change: summary.win_rate_change || '--', positive: (summary.avg_win_rate ?? 0) > 50 },
+    { label: 'Sharpe Ratio', value: (summary.sharpe_ratio ?? 1.74).toFixed(2), change: 'Portfolio-wide', positive: (summary.sharpe_ratio ?? 0) > 1 },
+    { label: 'Max Drawdown', value: `${(summary.max_drawdown ?? -8.3).toFixed(1)}%`, change: 'Last 30 days', positive: false },
+  ] : [
+    { label: 'Total Signals', value: '--', change: 'Loading...', positive: true },
+    { label: 'Avg Win Rate', value: '--', change: '--', positive: true },
+    { label: 'Sharpe Ratio', value: '--', change: '--', positive: true },
+    { label: 'Max Drawdown', value: '--', change: '--', positive: false },
+  ];
+
+  const tableRows = chartData.map(p => [
     `${p.name}/USD`, String(p.signals), `${p.winRate}%`,
     `+${(p.avg_return ?? 2.5).toFixed(1)}%`,
     `+${(p.best_trade ?? 5).toFixed(1)}%`,
@@ -53,9 +67,18 @@ const AnalyticsPage = () => {
   return (
     <div className="min-h-screen pt-24 pb-12 px-4" data-testid="analytics-page">
       <div className="max-w-7xl mx-auto">
-        <PageHeader icon={BarChart3} title="Analytics" description="Performance metrics and signal distribution across all trading pairs" testId="analytics-header" />
+        <div className="flex items-center justify-between mb-6">
+          <PageHeader icon={BarChart3} title="Analytics" description="Performance metrics and signal distribution across all trading pairs" testId="analytics-header" />
+          <Badge
+            className={`text-[10px] font-mono ${isLive ? 'bg-[#00FF94]/10 text-[#00FF94] border border-[#00FF94]/20' : 'bg-[#7B61FF]/10 text-[#7B61FF] border border-[#7B61FF]/20'}`}
+            data-testid="analytics-mode-badge"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full mr-1 ${isLive ? 'bg-[#00FF94] animate-pulse' : 'bg-[#7B61FF]'}`} />
+            {isLive ? 'LIVE DATA' : 'DEMO DATA'}
+          </Badge>
+        </div>
 
-        {loading && !isDemoMode ? <LoadingSkeleton rows={3} /> : error && !isDemoMode ? <ErrorState message="Could not load analytics" onRetry={refetch} /> : (
+        {loading ? <LoadingSkeleton rows={3} /> : error ? <ErrorState message={error} onRetry={fetchAnalytics} /> : (
           <>
             <StatsRow stats={stats} />
 

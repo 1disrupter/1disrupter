@@ -171,22 +171,18 @@ const Navigation = () => {
           <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 shrink-0">
             {isLoggedIn ? (
               <>
-                {/* Demo Mode Toggle */}
-                <button
-                  onClick={toggleDemoMode}
-                  className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                {/* System Mode Badge */}
+                <div
+                  className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-mono font-bold tracking-wider border ${
                     isDemoMode
-                      ? 'bg-[#7B61FF]/15 border-[#7B61FF]/40 text-[#7B61FF]'
-                      : 'bg-transparent border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
+                      ? 'bg-[#7B61FF]/10 border-[#7B61FF]/30 text-[#7B61FF]'
+                      : 'bg-[#00FF94]/10 border-[#00FF94]/30 text-[#00FF94]'
                   }`}
-                  data-testid="demo-mode-toggle"
+                  data-testid="system-mode-badge"
                 >
-                  <Eye className="w-3.5 h-3.5" />
-                  Demo
-                  <div className={`w-7 h-4 rounded-full p-0.5 transition-colors ${isDemoMode ? 'bg-[#7B61FF]' : 'bg-zinc-700'}`}>
-                    <div className={`w-3 h-3 rounded-full bg-white transition-transform ${isDemoMode ? 'translate-x-3' : 'translate-x-0'}`} />
-                  </div>
-                </button>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isDemoMode ? 'bg-[#7B61FF]' : 'bg-[#00FF94] animate-pulse'}`} />
+                  {isDemoMode ? 'DEMO MODE' : 'LIVE MODE'}
+                </div>
 
                 {/* Share Demo Button */}
                 {isDemoMode && (

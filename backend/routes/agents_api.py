@@ -111,7 +111,6 @@ async def get_agent_signals(
     demo = await is_demo_mode()
     if demo:
         import random
-        pairs = ["BTC/USDT", "ETH/USDT", "SOL/USDT"]
         signals = []
         for i in range(min(limit, 8)):
             signals.append({
@@ -172,3 +171,54 @@ async def update_agent_config(agent_id: str, config: AgentConfig):
         raise HTTPException(status_code=404, detail="Agent not found")
 
     return {"message": "Configuration updated", "agent_id": agent_id}
+
+
+
+# ═══════════════════════════════════════════
+#  AGENT PERFORMANCE (demo-aware)
+# ═══════════════════════════════════════════
+
+@router.get("/performance")
+async def get_agents_performance():
+    """Aggregated performance stats for all agents. Demo-aware."""
+    demo = await is_demo_mode()
+
+    if demo:
+        from services.demo_generators import generate_demo_agent_stats
+        stats = generate_demo_agent_stats()
+        return {"agents": stats, "mode": "demo"}
+
+    agents = await AGENTS_COL.find({}, {"_id": 0}).limit(20).to_list(20)
+    now = datetime.now(timezone.utc)
+    day_ago = now - timedelta(hours=24)
+
+    result = []
+    for a in agents:
+        aid = a["id"]
+        today_count = await SIGNALS_COL.count_documents({
+            "agent_id": aid, "generated_at": {"$gte": day_ago},
+        })
+        total_actionable = await SIGNALS_COL.count_documents({
+            "agent_id": aid, "signal_type": {"$in": ["BUY", "SELL"]},
+        })
+        profitable = await SIGNALS_COL.count_documents({
+            "agent_id": aid, "signal_type": {"$in": ["BUY", "SELL"]},
+            "confidence": {"$gte": 70},
+        })
+        accuracy = round(profitable / total_actionable * 100) if total_actionable > 0 else 0
+
+        result.append({
+            "id": aid,
+            "name": a.get("name"),
+            "type": a.get("type"),
+            "accuracy": accuracy,
+            "win_rate": accuracy,
+            "total_pnl": a.get("total_pnl", 0),
+            "signals_today": today_count,
+            "total_signals": a.get("total_signals", 0),
+            "avg_confidence": a.get("avg_confidence", 0),
+            "status": a.get("status", "active"),
+            "is_demo": False,
+        })
+
+    return {"agents": result, "mode": "live"}

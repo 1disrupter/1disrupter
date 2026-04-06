@@ -38,7 +38,7 @@ const WalletConnectButton = () => {
 const DashboardPage = () => {
   const { wallet, investor, refreshInvestor } = useWallet();
   const { user: authUser } = useAuth();
-  const { isDemoMode, toggleDemoMode: setGlobalDemoMode } = useDemoMode();
+  const { isDemoMode } = useDemoMode();
   const demoMode = isDemoMode;
   const [signals, setSignals] = useState([]);
   const [aiSummary, setAiSummary] = useState("");

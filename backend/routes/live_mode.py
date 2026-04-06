@@ -10,16 +10,47 @@ import random
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
+from pydantic import BaseModel
 
 from database import db
-from config.demo import is_demo_mode
+from config.demo import is_demo_mode, set_demo_mode
+from services.demo_generators import generate_demo_alerts, generate_demo_events
 
 logger = logging.getLogger("AlphaAI.LiveMode")
 router = APIRouter(prefix="/api", tags=["Live Mode"])
 
+ADMIN_SECRET = os.environ.get("ADMIN_SECRET")
+
 
 # ═══════════════════════════════════════════
-#  PUBLIC DEMO MODE STATUS
+#  SYSTEM MODE — SINGLE SOURCE OF TRUTH
+# ═══════════════════════════════════════════
+
+@router.get("/system/mode")
+async def get_system_mode():
+    """Public endpoint — single source of truth for system mode."""
+    demo = await is_demo_mode()
+    return {"mode": "demo" if demo else "live"}
+
+
+class SystemModeUpdate(BaseModel):
+    mode: str  # "live" or "demo"
+
+
+@router.post("/system/mode")
+async def set_system_mode(body: SystemModeUpdate, admin_key: str = Query(...)):
+    """Admin-only: switch between live and demo mode."""
+    if admin_key != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Admin access denied")
+    if body.mode not in ("live", "demo"):
+        raise HTTPException(status_code=400, detail="Mode must be 'live' or 'demo'")
+    await set_demo_mode(body.mode == "demo")
+    logger.info(f"System mode set to {body.mode}")
+    return {"mode": body.mode, "message": f"System mode switched to {body.mode.upper()}"}
+
+
+# ═══════════════════════════════════════════
+#  PUBLIC DEMO MODE STATUS (legacy compat)
 # ═══════════════════════════════════════════
 
 @router.get("/demo-mode/status")
@@ -27,6 +58,94 @@ async def get_demo_mode_status():
     """Public endpoint — frontend syncs demo mode from here."""
     demo = await is_demo_mode()
     return {"demo_mode": demo}
+
+
+# ═══════════════════════════════════════════
+#  LIVE ALERTS ENDPOINT
+# ═══════════════════════════════════════════
+
+@router.get("/alerts/live")
+async def get_live_alerts(
+    limit: int = Query(default=20, le=50),
+):
+    """
+    Live alerts feed. Returns real agent signals in LIVE mode,
+    demo alerts in DEMO mode.
+    """
+    demo = await is_demo_mode()
+
+    if demo:
+        alerts = generate_demo_alerts(count=limit)
+        return {"alerts": alerts, "mode": "demo", "count": len(alerts)}
+
+    # Real mode: fetch recent signals from trading_signals as alerts
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    signals = await db.trading_signals.find(
+        {"generated_at": {"$gte": cutoff}},
+        {"_id": 0}
+    ).sort("generated_at", -1).limit(limit).to_list(limit)
+
+    alerts = []
+    for s in signals:
+        direction = s.get("signal_type", "BUY")
+        action = "LONG" if direction == "BUY" else ("SHORT" if direction == "SELL" else "CLOSE")
+        ts = s.get("generated_at")
+        if isinstance(ts, datetime):
+            ts = ts.isoformat()
+        alerts.append({
+            "action": action,
+            "asset": s.get("symbol", "BTC"),
+            "message": s.get("analysis", f"{action} signal on {s.get('symbol', 'BTC')}"),
+            "confidence": s.get("confidence", 70),
+            "price": s.get("price_at_signal", 0),
+            "strategy_name": s.get("agent_id", "AI Signal Engine"),
+            "timestamp": ts,
+            "is_demo": False,
+        })
+
+    return {"alerts": alerts, "mode": "live", "count": len(alerts)}
+
+
+# ═══════════════════════════════════════════
+#  LIVE EVENTS ENDPOINT
+# ═══════════════════════════════════════════
+
+@router.get("/events/live")
+async def get_live_events(
+    limit: int = Query(default=10, le=30),
+):
+    """Live events. Returns real signals/trades in LIVE mode, demo in DEMO mode."""
+    demo = await is_demo_mode()
+
+    if demo:
+        events = generate_demo_events(count=limit)
+        return {"events": events, "mode": "demo", "count": len(events)}
+
+    # Real: recent signals + trades
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+    signals = await db.trading_signals.find(
+        {"generated_at": {"$gte": cutoff}},
+        {"_id": 0, "symbol": 1, "signal_type": 1, "confidence": 1,
+         "price_at_signal": 1, "generated_at": 1, "agent_id": 1}
+    ).sort("generated_at", -1).limit(limit).to_list(limit)
+
+    events = []
+    for s in signals:
+        ts = s.get("generated_at")
+        if isinstance(ts, datetime):
+            ts = ts.isoformat()
+        events.append({
+            "type": "signal",
+            "pair": f"{s.get('symbol', 'BTC')}/USDT",
+            "direction": "LONG" if s.get("signal_type") == "BUY" else "SHORT",
+            "confidence": s.get("confidence", 70),
+            "strategy": s.get("agent_id", "AI Signal Engine"),
+            "entry_price": s.get("price_at_signal", 0),
+            "timestamp": ts,
+            "is_real": True,
+        })
+
+    return {"events": events, "mode": "live", "count": len(events)}
 
 
 # ═══════════════════════════════════════════
@@ -255,7 +374,6 @@ async def get_portfolio_performance(
         return {"equity_curve": points, "demo_mode": True}
 
     # Real: aggregate trades into daily P&L
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     trades = await db.trades.find(
         {"user_id": user_id, "status": "closed"},
         {"_id": 0, "pnl": 1, "timestamp": 1}

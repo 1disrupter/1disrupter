@@ -707,8 +707,8 @@ const AdminPage = () => {
 
   const loadDemoMode = async () => {
     try {
-      const res = await axios.get(`${ADMIN_API}/demo-mode?admin_key=${adminKey}`);
-      setDemoMode(res.data.demo_mode);
+      const res = await axios.get(`${API}/system/mode`);
+      setDemoMode(res.data.mode === 'demo');
     } catch { /* ignore */ }
   };
 
@@ -722,12 +722,13 @@ const AdminPage = () => {
   const toggleDemoMode = async () => {
     setDemoToggling(true);
     try {
-      const res = await axios.post(`${ADMIN_API}/demo-mode?admin_key=${adminKey}`, { enabled: !demoMode });
-      setDemoMode(res.data.demo_mode);
-      toast.success(res.data.message);
+      const newMode = demoMode ? 'live' : 'demo';
+      const res = await axios.post(`${API}/system/mode?admin_key=${adminKey}`, { mode: newMode });
+      setDemoMode(res.data.mode === 'demo');
+      toast.success(`System mode switched to ${res.data.mode.toUpperCase()}`);
       loadAnalytics();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to toggle');
+      toast.error(err.response?.data?.detail || 'Failed to toggle mode');
     }
     setDemoToggling(false);
   };
@@ -891,28 +892,31 @@ const AdminPage = () => {
           </Button>
         </div>
 
-        {/* Demo Mode Toggle Banner */}
+        {/* System Mode Toggle Banner */}
         <div className="flex items-center justify-between p-4 rounded-lg border mb-6 transition-colors"
           style={{ background: demoMode ? 'rgba(123,97,255,0.05)' : 'rgba(0,255,148,0.05)', borderColor: demoMode ? 'rgba(123,97,255,0.2)' : 'rgba(0,255,148,0.2)' }}
-          data-testid="demo-mode-banner"
+          data-testid="system-mode-banner"
         >
           <div className="flex items-center gap-3">
-            <div className={`w-2.5 h-2.5 rounded-full ${demoMode ? 'bg-[#7B61FF] animate-pulse' : 'bg-[#00FF94]'}`} />
+            <div className={`w-2.5 h-2.5 rounded-full ${demoMode ? 'bg-[#7B61FF] animate-pulse' : 'bg-[#00FF94] animate-pulse'}`} />
             <div>
               <p className="text-sm font-medium text-zinc-200">
-                Analytics Mode: <span className={demoMode ? 'text-[#7B61FF]' : 'text-[#00FF94]'}>{demoMode ? 'DEMO (Synthetic Data)' : 'LIVE (Real Traffic)'}</span>
+                System Mode: <span className={demoMode ? 'text-[#7B61FF]' : 'text-[#00FF94]'}>{demoMode ? 'DEMO (Synthetic Data)' : 'LIVE (Real Data)'}</span>
               </p>
-              <p className="text-[10px] text-zinc-600">{demoMode ? 'Showing synthetic demo data for analytics' : 'Recording and displaying real page views, API calls, and events'}</p>
+              <p className="text-[10px] text-zinc-600">{demoMode ? 'All pages show demo/synthetic data — no real data exposed' : 'All pages show real signals, analytics, and agent performance'}</p>
             </div>
           </div>
-          <button
-            onClick={toggleDemoMode}
-            disabled={demoToggling}
-            className={`relative w-14 h-7 rounded-full transition-colors ${demoMode ? 'bg-[#7B61FF]' : 'bg-[#00FF94]'}`}
-            data-testid="demo-mode-toggle"
-          >
-            <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform ${demoMode ? 'translate-x-0.5' : 'translate-x-7'}`} />
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-mono text-zinc-500">{demoMode ? 'DEMO' : 'LIVE'}</span>
+            <button
+              onClick={toggleDemoMode}
+              disabled={demoToggling}
+              className={`relative w-14 h-7 rounded-full transition-colors ${demoMode ? 'bg-[#7B61FF]' : 'bg-[#00FF94]'}`}
+              data-testid="system-mode-toggle"
+            >
+              <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform ${demoMode ? 'translate-x-0.5' : 'translate-x-7'}`} />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}

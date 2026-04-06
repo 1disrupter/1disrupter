@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Activity, TrendingUp, Zap, BarChart3, Shield, ArrowUpRight, ArrowDownRight, MinusCircle, Settings, Eye, X, ChevronRight, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { useDemoMode } from '../contexts/DemoModeContext';
+import { Badge } from '../components/ui/badge';
+import { useSystemMode } from '../contexts/DemoModeContext';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -25,7 +26,7 @@ const signalColors = { BUY: '#00FF94', SELL: '#FF6B6B', HOLD: '#FFB800' };
 const signalIcons = { BUY: ArrowUpRight, SELL: ArrowDownRight, HOLD: MinusCircle };
 
 const AgentsPage = () => {
-  const { isDemoMode } = useDemoMode();
+  const { mode, isDemo, isLive } = useSystemMode();
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState(null);
@@ -88,16 +89,16 @@ const AgentsPage = () => {
         <div className="flex items-center gap-3 mb-2">
           <Bot className="w-6 h-6 text-[#7B61FF]" />
           <h1 className="text-2xl md:text-3xl font-bold">Trading Agents</h1>
-          {isDemoMode ? (
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#7B61FF]/10 text-[#7B61FF] border border-[#7B61FF]/20" data-testid="agents-demo-badge">DEMO</span>
+          {isDemo ? (
+            <Badge className="bg-[#7B61FF]/10 text-[#7B61FF] text-[10px] font-mono border border-[#7B61FF]/20" data-testid="agents-demo-badge">DEMO</Badge>
           ) : (
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#00FF94]/10 text-[#00FF94] border border-[#00FF94]/20 flex items-center gap-1" data-testid="agents-live-badge">
-              <Wifi className="w-2.5 h-2.5" /> LIVE
-            </span>
+            <Badge className="bg-[#00FF94]/10 text-[#00FF94] text-[10px] font-mono border border-[#00FF94]/20 flex items-center gap-1" data-testid="agents-live-badge">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse" /> LIVE
+            </Badge>
           )}
         </div>
         <p className="text-sm text-zinc-500">
-          {isDemoMode
+          {isDemo
             ? 'Viewing demo agent data — enable live mode in admin panel for real signals'
             : '4 AI agents analyzing markets in real time — generating live trading signals'}
         </p>

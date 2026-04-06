@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import analytics from '../lib/analytics';
 import {
   mockSignals, mockPortfolioStats, mockAgents, mockStrategies,
   mockMarketplaceItems, mockEventAgents, mockResearchQueries,
@@ -18,7 +17,18 @@ export const useDemoMode = () => {
   return ctx;
 };
 
-// Randomize a numeric value by +/- pct
+/** Alias hook matching the user's spec */
+export const useSystemMode = () => {
+  const ctx = useDemoMode();
+  return {
+    mode: ctx.isDemoMode ? 'demo' : 'live',
+    isDemo: ctx.isDemoMode,
+    isLive: !ctx.isDemoMode,
+    setMode: ctx.setSystemMode,
+    loading: ctx.modeLoading,
+  };
+};
+
 const jitter = (val, pct = 0.05) => {
   const n = typeof val === 'string' ? parseFloat(val.replace(/[^0-9.-]/g, '')) : val;
   if (isNaN(n)) return val;
@@ -29,43 +39,78 @@ const jitter = (val, pct = 0.05) => {
 const randomPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 export const DemoModeProvider = ({ children }) => {
-  const [isDemoMode, setIsDemoMode] = useState(() => {
-    // Check URL param first, then sessionStorage
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [modeLoading, setModeLoading] = useState(true);
+
+  // Fetch system mode from backend (single source of truth)
+  const fetchMode = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/api/system/mode`);
+      const isDemo = res.data.mode === 'demo';
+      setIsDemoMode(isDemo);
+    } catch {
+      // Fallback: keep current
+    } finally {
+      setModeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Check URL param override
     const params = new URLSearchParams(window.location.search);
     if (params.get('demo') === 'true') {
-      sessionStorage.setItem('alphaai_demo_mode', 'true');
-      return true;
+      setIsDemoMode(true);
+      setModeLoading(false);
+    } else {
+      fetchMode();
     }
-    return sessionStorage.getItem('alphaai_demo_mode') === 'true';
-  });
-
-  // Sync with backend demo mode flag on mount
-  const [backendDemoMode, setBackendDemoMode] = useState(null);
-  useEffect(() => {
-    const syncDemoMode = async () => {
-      try {
-        const res = await axios.get(`${API}/api/demo-mode/status`);
-        const backendFlag = res.data.demo_mode;
-        setBackendDemoMode(backendFlag);
-        // If URL param demo=true, always use demo mode regardless of backend
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('demo') === 'true') return;
-        // Otherwise, sync with backend
-        if (backendFlag !== isDemoMode) {
-          setIsDemoMode(backendFlag);
-          sessionStorage.setItem('alphaai_demo_mode', String(backendFlag));
-        }
-      } catch {
-        // Fallback: keep current state
-      }
-    };
-    syncDemoMode();
     // Re-sync every 30s
-    const interval = setInterval(syncDemoMode, 30000);
+    const interval = setInterval(fetchMode, 30000);
     return () => clearInterval(interval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchMode]);
 
-  // Live-updating demo data
+  // Admin action: switch system mode
+  const setSystemMode = useCallback(async (newMode) => {
+    const adminKey = localStorage.getItem('adminKey') || 'alphaai_admin_2026';
+    try {
+      setModeLoading(true);
+      await axios.post(
+        `${API}/api/system/mode?admin_key=${adminKey}`,
+        { mode: newMode }
+      );
+      setIsDemoMode(newMode === 'demo');
+      toast.success(`Switched to ${newMode.toUpperCase()} mode`);
+    } catch (e) {
+      toast.error('Failed to switch mode — admin access required');
+    } finally {
+      setModeLoading(false);
+    }
+  }, []);
+
+  // Legacy toggle (for DemoModeBanner close button)
+  const toggleDemoMode = useCallback(() => {
+    const newMode = isDemoMode ? 'live' : 'demo';
+    setSystemMode(newMode);
+  }, [isDemoMode, setSystemMode]);
+
+  const shareDemoLink = useCallback(() => {
+    const url = window.location.origin + '/dashboard?demo=true';
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Demo link copied!', {
+        description: 'Share it with anyone to let them explore My-AlphaAI instantly.',
+      });
+    }).catch(() => {
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      toast.success('Demo link copied!');
+    });
+  }, []);
+
+  // Live-updating demo data (only ticks in demo mode)
   const [demoSignals, setDemoSignals] = useState(mockSignals);
   const [demoStats, setDemoStats] = useState(mockPortfolioStats);
   const [demoAgents, setDemoAgents] = useState(mockAgents);
@@ -79,50 +124,6 @@ export const DemoModeProvider = ({ children }) => {
   const [demoLeaderboard, setDemoLeaderboard] = useState(mockLeaderboard);
   const timerRef = useRef(null);
 
-  // Fire demo_link_opened event once per session when ?demo=true is detected
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('demo') !== 'true') return;
-    if (sessionStorage.getItem('alphaai_demo_link_tracked')) return;
-
-    sessionStorage.setItem('alphaai_demo_link_tracked', '1');
-    analytics.track('demo_link_opened', {
-      referrer: document.referrer || '(direct)',
-      userAgent: navigator.userAgent,
-      path: window.location.pathname,
-      isAuthenticated: false,
-    });
-  }, []);
-
-  const toggleDemoMode = useCallback(() => {
-    setIsDemoMode(prev => {
-      const next = !prev;
-      sessionStorage.setItem('alphaai_demo_mode', String(next));
-      return next;
-    });
-  }, []);
-
-  const shareDemoLink = useCallback(() => {
-    const base = window.location.origin + '/dashboard';
-    const url = base + '?demo=true';
-    navigator.clipboard.writeText(url).then(() => {
-      toast.success('Demo link copied!', {
-        description: 'Share it with anyone to let them explore My-AlphaAI instantly.',
-      });
-    }).catch(() => {
-      const input = document.createElement('input');
-      input.value = url;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand('copy');
-      document.body.removeChild(input);
-      toast.success('Demo link copied!', {
-        description: 'Share it with anyone to let them explore My-AlphaAI instantly.',
-      });
-    });
-  }, []);
-
-  // Simulate live updates every 3-5 seconds only when demo mode is on
   useEffect(() => {
     if (!isDemoMode) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -168,16 +169,14 @@ export const DemoModeProvider = ({ children }) => {
     tick();
     const interval = 3000 + Math.random() * 2000;
     timerRef.current = setInterval(tick, interval);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isDemoMode]);
 
   const value = {
     isDemoMode,
-    backendDemoMode,
+    modeLoading,
     toggleDemoMode,
+    setSystemMode,
     shareDemoLink,
     demoSignals,
     demoStats,

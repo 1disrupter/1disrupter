@@ -1,19 +1,21 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { List as VirtualList } from "react-window";
 import {
   Radio, Zap, TrendingUp, TrendingDown, X, Trash2,
-  ArrowUpRight, ArrowDownRight, Target, ShieldAlert, Wifi, WifiOff
+  ArrowUpRight, ArrowDownRight, Target, ShieldAlert, WifiOff
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { useDemoMode } from "../contexts/DemoModeContext";
+import { useSystemMode } from "../contexts/DemoModeContext";
 import { useAuth } from "../contexts/AuthContext";
 import useStrategyAlerts from "../hooks/useStrategyAlerts";
 import UpgradeModal from "../components/UpgradeModal";
 import { AlertListSkeleton } from "../components/SkeletonLoaders";
 import { cacheGet, cacheSet } from "../lib/mobileCache";
+import axios from "axios";
+
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const actionConfig = {
   LONG: { icon: ArrowUpRight, color: "text-[#00FF94]", bg: "bg-[#00FF94]/10", label: "LONG" },
@@ -33,15 +35,14 @@ function getTimeAgo(date) {
   return `${hours}h ago`;
 }
 
-const AlertCard = ({ alert, index, style }) => {
+const AlertCard = ({ alert, index }) => {
   const cfg = actionConfig[alert.action] || actionConfig.LONG;
   const Icon = cfg.icon;
   const ts = alert.timestamp ? new Date(alert.timestamp) : new Date();
   const timeAgo = getTimeAgo(ts);
 
   return (
-    <div style={style} className="pb-3">
-      <Card className="bg-[#0A0A0A] border-zinc-800/50 hover:border-zinc-700/50 transition-all h-full" data-testid={`alert-card-${index}`}>
+    <Card className="bg-[#0A0A0A] border-zinc-800/50 hover:border-zinc-700/50 transition-all" data-testid={`alert-card-${index}`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={`p-2 rounded-lg ${cfg.bg} shrink-0 mt-0.5`}>
@@ -70,21 +71,35 @@ const AlertCard = ({ alert, index, style }) => {
             )}
           </div>
         </CardContent>
-      </Card>
-    </div>
+    </Card>
   );
 };
 
-const VIRTUALIZE_THRESHOLD = 20;
-const ITEM_SIZE = 110;
-
 const AlertsPage = () => {
-  const { isDemoMode } = useDemoMode();
+  const { mode, isDemo, isLive } = useSystemMode();
   const { isAuthenticated, isPro } = useAuth();
-  const { alerts, connected, upgradeRequired, clearAlerts } = useStrategyAlerts();
+  const { alerts: wsAlerts, connected, upgradeRequired, clearAlerts } = useStrategyAlerts();
+  const [apiAlerts, setApiAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const containerRef = useRef(null);
+
+  // Fetch alerts from the mode-aware API
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const res = await axios.get(`${API}/api/alerts/live?limit=30`);
+        setApiAlerts(res.data.alerts || []);
+      } catch {
+        // keep existing
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, isDemo ? 15000 : 30000);
+    return () => clearInterval(interval);
+  }, [isDemo]);
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -94,18 +109,15 @@ const AlertsPage = () => {
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
 
-  // Cache alerts for offline access
+  // Merge WS alerts with API alerts (WS alerts first, deduplicated)
+  const mergedAlerts = [...wsAlerts, ...apiAlerts];
+  // Cache for offline
   useEffect(() => {
-    if (alerts.length > 0) cacheSet("alerts", alerts);
-  }, [alerts]);
+    if (mergedAlerts.length > 0) cacheSet("alerts", mergedAlerts);
+  }, [mergedAlerts]);
 
-  const cachedAlerts = !isOnline && alerts.length === 0 ? (cacheGet("alerts") || []) : alerts;
-  const showUpgradePrompt = !isDemoMode && isAuthenticated && upgradeRequired;
-  const useVirtualList = cachedAlerts.length > VIRTUALIZE_THRESHOLD;
-
-  const VirtualRow = useCallback(({ index, style }) => (
-    <AlertCard alert={cachedAlerts[index]} index={index} style={style} />
-  ), [cachedAlerts]);
+  const cachedAlerts = !isOnline && mergedAlerts.length === 0 ? (cacheGet("alerts") || []) : mergedAlerts;
+  const showUpgradePrompt = isLive && isAuthenticated && upgradeRequired;
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4" data-testid="alerts-page">
@@ -125,27 +137,26 @@ const AlertsPage = () => {
                 <div className="p-2.5 rounded-xl bg-[#7B61FF]/10 border border-[#7B61FF]/20">
                   <Radio className="w-6 h-6 text-[#7B61FF]" />
                 </div>
-                Live Alerts
+                {isLive ? 'Live Alerts' : 'Demo Alerts'}
               </h1>
               <p className="text-sm text-zinc-500 mt-2 ml-14">
-                Real-time strategy signals from strategies you follow
+                {isLive
+                  ? 'Real-time strategy signals from your followed strategies'
+                  : 'Simulated alerts for preview — switch to Live mode for real data'}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2" data-testid="connection-status">
-                {connected ? (
-                  <Badge className="bg-[#00FF94]/10 text-[#00FF94] text-[9px] gap-1.5">
-                    <Wifi className="w-3 h-3" /> Live
+                {isLive ? (
+                  <Badge className="bg-[#00FF94]/10 text-[#00FF94] text-[9px] gap-1.5" data-testid="alerts-live-badge">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse" /> LIVE
                   </Badge>
                 ) : (
-                  <Badge className="bg-zinc-800 text-zinc-500 text-[9px] gap-1.5">
-                    <WifiOff className="w-3 h-3" /> Offline
+                  <Badge className="bg-[#7B61FF]/10 text-[#7B61FF] text-[9px] gap-1.5" data-testid="alerts-demo-badge">
+                    DEMO
                   </Badge>
                 )}
               </div>
-              {isDemoMode && (
-                <Badge className="bg-zinc-700 text-zinc-400 text-[9px]">Demo Mode</Badge>
-              )}
               {cachedAlerts.length > 0 && (
                 <Button variant="outline" size="sm" onClick={clearAlerts} className="rounded-full border-zinc-800 text-[10px] h-7 px-3 text-zinc-400" data-testid="clear-alerts-btn">
                   <Trash2 className="w-3 h-3 mr-1" /> Clear
@@ -155,7 +166,7 @@ const AlertsPage = () => {
           </div>
         </motion.div>
 
-        {/* Upgrade prompt for free users */}
+        {/* Upgrade prompt for free users in LIVE mode */}
         {showUpgradePrompt && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="bg-gradient-to-r from-[#7B61FF]/5 to-[#00FF94]/5 border-[#7B61FF]/20 mb-6" data-testid="upgrade-prompt">
@@ -168,15 +179,15 @@ const AlertsPage = () => {
                   Get instant strategy signals delivered via WebSocket. Never miss a trade.
                 </p>
                 <Button onClick={() => setShowUpgrade(true)} className="rounded-full bg-[#7B61FF] hover:bg-[#7B61FF]/80 text-white text-xs" data-testid="upgrade-alerts-btn">
-                  <Zap className="w-3.5 h-3.5 mr-1.5" /> Upgrade to Pro — $29/mo
+                  <Zap className="w-3.5 h-3.5 mr-1.5" /> Upgrade to Pro
                 </Button>
               </CardContent>
             </Card>
           </motion.div>
         )}
 
-        {/* Waiting for alerts state */}
-        {!showUpgradePrompt && cachedAlerts.length === 0 && (
+        {/* Empty state */}
+        {!showUpgradePrompt && cachedAlerts.length === 0 && !loading && (
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="bg-[#0A0A0A] border-zinc-800/50 border-dashed" data-testid="alerts-empty">
               <CardContent className="py-20 text-center">
@@ -190,23 +201,26 @@ const AlertsPage = () => {
                   {connected ? "Listening for signals..." : "Connecting..."}
                 </h3>
                 <p className="text-xs text-zinc-600 max-w-sm mx-auto">
-                  {isDemoMode
-                    ? "Demo alerts will appear every 10-20 seconds. Watch the magic happen."
-                    : "When strategies you follow generate signals, they'll appear here in real-time."}
+                  {isLive
+                    ? "When strategies you follow generate signals, they'll appear here in real-time."
+                    : "Demo alerts are being generated. They will appear shortly."}
                 </p>
               </CardContent>
             </Card>
           </motion.div>
         )}
 
+        {/* Loading */}
+        {loading && cachedAlerts.length === 0 && <AlertListSkeleton />}
+
         {/* Alert feed */}
         {cachedAlerts.length > 0 && (
-          <div ref={containerRef}>
+          <div>
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] text-zinc-600 uppercase tracking-wider">
                 {cachedAlerts.length} alert{cachedAlerts.length !== 1 ? "s" : ""} received
               </p>
-              {connected && (
+              {isLive && connected && (
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#00FF94] animate-pulse" />
                   <span className="text-[10px] text-[#00FF94]">streaming</span>
@@ -214,33 +228,21 @@ const AlertsPage = () => {
               )}
             </div>
 
-            {useVirtualList ? (
-              <VirtualList
-                height={Math.min(cachedAlerts.length * ITEM_SIZE, 600)}
-                itemCount={cachedAlerts.length}
-                itemSize={ITEM_SIZE}
-                width="100%"
-                data-testid="virtualized-alert-list"
-              >
-                {VirtualRow}
-              </VirtualList>
-            ) : (
-              <div className="space-y-3" data-testid="alert-list">
-                <AnimatePresence initial={false}>
-                  {cachedAlerts.map((alert, i) => (
-                    <motion.div
-                      key={`${alert.timestamp}-${i}`}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: i * 0.03 }}
-                    >
-                      <AlertCard alert={alert} index={i} />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
+            <div className="space-y-3" data-testid="alert-list">
+              <AnimatePresence initial={false}>
+                {cachedAlerts.map((alert, i) => (
+                  <motion.div
+                    key={`${alert.timestamp}-${i}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: i * 0.03 }}
+                  >
+                    <AlertCard alert={alert} index={i} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         )}
       </div>
