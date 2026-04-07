@@ -327,7 +327,6 @@ async def startup_db_client():
     build_dir = frontend_dir / "build"
     nginx_dir = Path("/var/www/html")
     nginx_conf_src = frontend_dir / "nginx.conf"
-    nginx_conf_dest = Path("/etc/nginx/sites-available/default")
 
     # Try to compile latest React source (yarn → npm → npx fallbacks)
     build_commands = [
@@ -397,13 +396,73 @@ async def startup_db_client():
 
     # Install custom nginx config for SPA routing + API proxy
     if nginx_conf_src.exists():
+        config_installed = False
+        sites_avail = Path("/etc/nginx/sites-available/default")
+        sites_enabled = Path("/etc/nginx/sites-enabled/default")
+        conf_d = Path("/etc/nginx/conf.d/default.conf")
+
+        # Prefer sites-available/sites-enabled pattern
+        if sites_avail.parent.exists():
+            try:
+                shutil.copy2(nginx_conf_src, sites_avail)
+                print(f"Installed nginx config at {sites_avail}")
+                config_installed = True
+                # Ensure symlink
+                if not sites_enabled.exists():
+                    try:
+                        sites_enabled.parent.mkdir(parents=True, exist_ok=True)
+                        sites_enabled.symlink_to(sites_avail)
+                        print("Created sites-enabled symlink")
+                    except Exception as e:
+                        print(f"Could not create sites-enabled symlink: {e}")
+            except Exception as e:
+                print(f"Could not write to {sites_avail}: {e}")
+
+        # Fallback to conf.d if sites-available didn't work
+        if not config_installed:
+            try:
+                conf_d.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(nginx_conf_src, conf_d)
+                print(f"Installed nginx config at {conf_d} (fallback)")
+                config_installed = True
+            except Exception as e:
+                print(f"Could not write to {conf_d}: {e}")
+
+        # Reload nginx
+        if config_installed:
+            try:
+                subprocess.run(["nginx", "-t"], capture_output=True, timeout=5, check=True)
+                subprocess.run(["nginx", "-s", "reload"], capture_output=True, timeout=5)
+                print("NGINX config tested and reloaded successfully")
+            except Exception as e:
+                print(f"NGINX reload error: {e}")
+    else:
+        print(f"WARNING: Custom nginx.conf not found at {nginx_conf_src}")
+
+    # Also copy build to /usr/share/nginx/html as fallback
+    if build_dir.exists():
+        fallback_dir = Path("/usr/share/nginx/html")
         try:
-            if nginx_conf_dest.exists():
-                shutil.copy2(nginx_conf_src, nginx_conf_dest)
-            subprocess.run(["nginx", "-s", "reload"], capture_output=True, timeout=5)
-            print("Installed custom nginx.conf and reloaded NGINX")
+            if fallback_dir.exists():
+                for item in fallback_dir.iterdir():
+                    try:
+                        if item.is_file():
+                            item.unlink()
+                        elif item.is_dir():
+                            shutil.rmtree(item)
+                    except Exception:
+                        pass
+            else:
+                fallback_dir.mkdir(parents=True, exist_ok=True)
+            for item in build_dir.iterdir():
+                dest = fallback_dir / item.name
+                if item.is_dir():
+                    shutil.copytree(item, dest, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(item, dest)
+            print(f"Also deployed build to fallback {fallback_dir}")
         except Exception as e:
-            print(f"Could not install nginx config: {e}")
+            print(f"Fallback deploy to {fallback_dir} failed: {e}")
 
     # Start background tasks
     asyncio.create_task(signal_generation_task())
