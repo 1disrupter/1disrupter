@@ -12,7 +12,7 @@ from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field, ConfigDict
 from database import db, EMERGENT_LLM_KEY
 from services.signal_intelligence import signal_intelligence
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+
 
 logger = logging.getLogger("AlphaAI")
 
