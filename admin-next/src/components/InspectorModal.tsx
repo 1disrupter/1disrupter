@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2 } from "lucide-react";
+import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2, Coins } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   AdminVenueRow, updateSignals, triggerSignalRefresh,
   getForecast, getTouristFlags, getLiveMusic, TouristLabel, Trend,
+  listOffers, listRedemptions, getTrajectory,
 } from "@/lib/api";
 import { Button, Chip, Slider } from "./ui";
 
@@ -48,6 +49,18 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
   const forecastQ = useQuery({ queryKey: ["forecast-all"], queryFn: getForecast });
   const flagsQ = useQuery({ queryKey: ["tourist-flags"], queryFn: getTouristFlags });
   const liveQ = useQuery({ queryKey: ["live-music-all"], queryFn: getLiveMusic });
+  const offersQ = useQuery({
+    queryKey: ["offers", row.venue.id],
+    queryFn: () => listOffers(row.venue.id, false),
+  });
+  const redemptionsQ = useQuery({
+    queryKey: ["redemptions", row.venue.id],
+    queryFn: () => listRedemptions({ venue_id: row.venue.id, limit: 10 }),
+  });
+  const trajQ = useQuery({
+    queryKey: ["trajectory", row.venue.id],
+    queryFn: () => getTrajectory(row.venue.id, 6),
+  });
 
   const forecast = forecastQ.data?.items.find((x) => x.venue_id === row.venue.id);
   const flag = flagsQ.data?.items.find((x: any) => x.venue_id === row.venue.id);
@@ -152,6 +165,27 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
                      tone={live?.live_music ? "text-accent-pink" : "text-white/55"}
                      sub={`conf ${Math.round((live?.confidence || 0) * 100)}%`} />
             </div>
+
+            {/* Vibe Credits panel */}
+            <div className="space-y-3 rounded-xl2 border border-white/10 bg-white/[0.02] p-4" data-testid="inspector-credits-panel">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[11px] uppercase tracking-[0.28em] text-primary-glow">Vibe Credits</h4>
+                <Chip tone="amber"><Coins size={10} /> {offersQ.data?.length ?? 0} offers</Chip>
+              </div>
+              <Trajectory data={trajQ.data ?? []} />
+              {(offersQ.data ?? []).slice(0, 3).map((o) => (
+                <div key={o.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-xs">
+                  <span className="truncate text-white/85">{o.name}</span>
+                  <span className={cn("font-mono", o.active ? "text-glow-aqua" : "text-white/35")}>{o.cost_credits}c</span>
+                </div>
+              ))}
+              {(offersQ.data ?? []).length === 0 && (
+                <p className="text-[11px] text-white/45">No offers — add one in the Credits tab.</p>
+              )}
+              <p className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+                {redemptionsQ.data?.length ?? 0} redemptions (last 10)
+              </p>
+            </div>
           </div>
         </div>
 
@@ -179,6 +213,27 @@ function Intel({ label, icon, value, tone, sub }: { label: string; icon?: React.
         {icon} {value}
       </p>
       {sub && <p className="mt-0.5 text-[10px] text-white/45 line-clamp-2">{sub}</p>}
+    </div>
+  );
+}
+
+function Trajectory({ data }: { data: { timestamp: string; vibe_score: number }[] }) {
+  if (!data.length) {
+    return <p className="text-[10px] text-white/45">No trajectory yet — awaiting first snapshot.</p>;
+  }
+  const w = 220, h = 38, pad = 2;
+  const xs = data.map((_, i) => (i / Math.max(1, data.length - 1)) * (w - pad * 2) + pad);
+  const ys = data.map((d) => h - pad - (Math.max(0, Math.min(10, d.vibe_score)) / 10) * (h - pad * 2));
+  const path = xs.map((x, i) => `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${ys[i].toFixed(1)}`).join(" ");
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.22em] text-white/45">
+        <span>6h vibe trajectory</span>
+        <span className="font-mono text-primary-glow">{data[data.length - 1].vibe_score.toFixed(2)}</span>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-10 w-full">
+        <path d={path} fill="none" stroke="#B15CFF" strokeWidth={1.5} />
+      </svg>
     </div>
   );
 }

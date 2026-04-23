@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Database, Sliders, LogOut } from "lucide-react";
+import { LayoutDashboard, Database, Sliders, LogOut, Coins } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Logo, LogoMark } from "./Logo";
 
@@ -13,6 +13,7 @@ const ITEMS = [
   { href: "/admin/overview", label: "Overview", icon: <LayoutDashboard size={16} /> },
   { href: "/admin/venues",   label: "Venues",   icon: <Database size={16} /> },
   { href: "/admin/signals",  label: "Signals",  icon: <Sliders size={16} /> },
+  { href: "/admin/credits",  label: "Credits",  icon: <Coins size={16} /> },
 ];
 
 export function Sidebar({ onLogout }: Props) {

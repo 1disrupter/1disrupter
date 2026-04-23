@@ -5,6 +5,7 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getDirections, postFeedback, getForecastAll, getTouristFlags, getLiveMusic,
+  getTrajectory, listVenueOffers,
   VoteType, Top3Item, ForecastItem, TouristFlagItem, LiveMusicItem,
 } from "@/lib/api";
 import { colors, radius, spacing } from "@/theme";
@@ -12,6 +13,7 @@ import { DEFAULT_LOCATION } from "@/config";
 import { VibeScoreBadge, CrowdDot, Sparkline } from "@/components/VibeScoreBadge";
 import { Chip, LiveMusicBadge, TouristFlagBadge, TrendBadge } from "@/components/Chip";
 import { GlowButton } from "@/components/GlowButton";
+import { awardCredits, useCreditToast, useWallet } from "@/lib/rewards";
 
 type RouteParams = { VenueDetail: { venue: Top3Item } };
 
@@ -23,15 +25,29 @@ export default function VenueDetailScreen() {
   const forecastQ = useQuery({ queryKey: ["forecast"], queryFn: getForecastAll });
   const touristQ = useQuery({ queryKey: ["tourist-flags"], queryFn: getTouristFlags });
   const liveQ = useQuery({ queryKey: ["live-music-all"], queryFn: () => getLiveMusic(true) });
+  const trajQ = useQuery({
+    queryKey: ["trajectory", venue.id],
+    queryFn: () => getTrajectory(venue.id, 6),
+  });
+  const offersQ = useQuery({
+    queryKey: ["venue-offers", venue.id],
+    queryFn: () => listVenueOffers(venue.id),
+  });
+  const walletQ = useWallet();
+  const toast = useCreditToast();
 
   const forecast = forecastQ.data?.items.find((x) => x.venue_id === venue.id) as ForecastItem | undefined;
   const tourist = touristQ.data?.items.find((x) => x.venue_id === venue.id) as TouristFlagItem | undefined;
   const live = liveQ.data?.items.find((x) => x.venue_id === venue.id) as LiveMusicItem | undefined;
 
   const voteM = useMutation({
-    mutationFn: (vote: VoteType) => postFeedback(venue.id, vote),
-    onSuccess: (res) => {
-      Alert.alert("Thanks!", `New vibe score: ${res.new_vibe_score.toFixed(2)}`);
+    mutationFn: async (vote: VoteType) => {
+      const res = await postFeedback(venue.id, vote);
+      const credits = await awardCredits("feedback");
+      return { res, credits };
+    },
+    onSuccess: ({ res, credits }) => {
+      toast.show(credits != null ? `+1 Vibe Credit · ${credits} total` : `Thanks!`);
       qc.invalidateQueries();
     },
     onError: (e: any) => Alert.alert("Vote failed", e?.message || "Try again"),
@@ -41,6 +57,8 @@ export default function VenueDetailScreen() {
     try {
       const d = await getDirections(venue.id, DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng);
       await Linking.openURL(d.deeplink);
+      const credits = await awardCredits("navigate");
+      if (credits != null) toast.show(`+1 Vibe Credit · ${credits} total`);
     } catch (e: any) {
       Alert.alert("No directions", e?.message || "Try again.");
     }
@@ -67,9 +85,38 @@ export default function VenueDetailScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>Trajectory (placeholder)</Text>
-          <Sparkline width={280} height={38} />
+          <Text style={styles.sectionLabel}>Trajectory</Text>
+          <TrajectorySvg data={trajQ.data ?? []} />
         </View>
+
+        {(offersQ.data ?? []).length > 0 && (
+          <View style={styles.card}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <Text style={styles.sectionLabel}>Earn Vibe Credits</Text>
+              <Chip tone="aqua" label={`${walletQ.data?.credits ?? 0} credits`} small />
+            </View>
+            {(offersQ.data ?? []).slice(0, 3).map((o) => (
+              <View key={o.id} style={styles.offerRow} testID={`venue-offer-${o.id}`}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontWeight: "700" }}>{o.name}</Text>
+                  {!!o.description && (
+                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>{o.description}</Text>
+                  )}
+                </View>
+                <Text style={{ color: colors.aqua, fontWeight: "900" }}>{o.cost_credits}c</Text>
+              </View>
+            ))}
+            <Text style={{ color: colors.textFaint, fontSize: 11, marginTop: 6 }}>
+              Redeem from the Wallet tab after you earn enough credits.
+            </Text>
+          </View>
+        )}
+
+        {toast.msg && (
+          <View style={styles.toast} testID="credit-toast">
+            <Text style={styles.toastText}>{toast.msg}</Text>
+          </View>
+        )}
 
         <GlowButton
           label="Go here now"
@@ -129,6 +176,12 @@ export default function VenueDetailScreen() {
   );
 }
 
+function TrajectorySvg({ data }: { data: { timestamp: string; vibe_score: number }[] }) {
+  const values = data.length ? data.map((d) => d.vibe_score) : undefined;
+  return <Sparkline values={values} width={280} height={38} />;
+}
+
+
 const styles = StyleSheet.create({
   kicker: {
     color: colors.primaryGlow, fontSize: 10, letterSpacing: 3,
@@ -154,4 +207,15 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: colors.primaryGlow, fontSize: 10, letterSpacing: 2.5, textTransform: "uppercase",
   },
+  offerRow: {
+    flexDirection: "row", alignItems: "center", gap: spacing.md,
+    paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.border, marginTop: 6,
+  },
+  toast: {
+    marginTop: spacing.md, alignSelf: "center",
+    paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: "rgba(0,245,255,0.12)",
+    borderColor: colors.aqua, borderWidth: 1, borderRadius: radius.pill,
+  },
+  toastText: { color: colors.aqua, fontSize: 12, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
 });

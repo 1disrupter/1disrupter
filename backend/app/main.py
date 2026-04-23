@@ -13,6 +13,7 @@ from app.core.database import Base, engine
 from app.core.docs import render_branded_docs
 from app.routers import admin, feedback, vibes
 from app.routers import vibes_extras
+from app.routers import intel, rewards
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -69,6 +70,8 @@ def create_app() -> FastAPI:
     app.include_router(vibes_extras.router, prefix="/api")
     app.include_router(feedback.router, prefix="/api")
     app.include_router(admin.router, prefix="/api")
+    app.include_router(intel.router, prefix="/api")
+    app.include_router(rewards.router, prefix="/api")
 
     # Health
     @app.get("/api/health", tags=["meta"], summary="Service heartbeat")

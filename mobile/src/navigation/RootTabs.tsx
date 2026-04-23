@@ -9,6 +9,7 @@ import TonightScreen from "@/screens/TonightScreen";
 import MapScreen from "@/screens/MapScreen";
 import VenueDetailScreen from "@/screens/VenueDetailScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
+import WalletScreen from "@/screens/WalletScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -35,6 +36,8 @@ function Tabs() {
               ? focused ? "flame" : "flame-outline"
               : route.name === "Map"
               ? focused ? "map" : "map-outline"
+              : route.name === "Wallet"
+              ? focused ? "wallet" : "wallet-outline"
               : focused ? "settings" : "settings-outline";
           return <Ionicons name={icon as any} size={20} color={color} />;
         },
@@ -42,6 +45,7 @@ function Tabs() {
     >
       <Tab.Screen name="Tonight" component={TonightScreen} />
       <Tab.Screen name="Map" component={MapScreen} />
+      <Tab.Screen name="Wallet" component={WalletScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

@@ -89,3 +89,60 @@ export const getLiveMusic = () =>
 
 export const getHeatmap = () =>
   request<{ count: number; points: { id: string; name: string; category: Category; lat: number; lng: number; heat: number }[] }>(`/vibes/heatmap`);
+
+// ---------------------------------------------------------------------------
+// Rewards — Vibe Credits economy
+// ---------------------------------------------------------------------------
+export interface RewardOffer {
+  id: string;
+  venue_id: string;
+  name: string;
+  description: string;
+  cost_credits: number;
+  active: boolean;
+  created_at: string;
+}
+export interface Redemption {
+  id: string;
+  user_id: string;
+  venue_id: string;
+  offer_id: string;
+  cost_credits: number;
+  timestamp: string;
+}
+
+export const getRewardRules = () => request<Record<string, number>>(`/rewards/rules`);
+
+export const listOffers = (venue_id?: string, active_only = false) =>
+  request<RewardOffer[]>(
+    `/rewards/offers${venue_id ? `?venue_id=${venue_id}&active_only=${active_only}` : `?active_only=${active_only}`}`
+  );
+
+export const createRewardOffer = (body: {
+  venue_id: string; name: string; cost_credits: number; description?: string; active?: boolean;
+}) => request<RewardOffer>(`/rewards/offers`, { method: "POST", body: JSON.stringify(body) });
+
+export const deactivateRewardOffer = (id: string) =>
+  request<RewardOffer>(`/rewards/offers/${id}`, { method: "DELETE" });
+
+export const listRedemptions = (params?: { venue_id?: string; user_id?: string; limit?: number }) => {
+  const qs = new URLSearchParams();
+  if (params?.venue_id) qs.set("venue_id", params.venue_id);
+  if (params?.user_id) qs.set("user_id", params.user_id);
+  if (params?.limit) qs.set("limit", String(params.limit));
+  const s = qs.toString();
+  return request<Redemption[]>(`/rewards/redemptions${s ? `?${s}` : ""}`);
+};
+
+// ---------------------------------------------------------------------------
+// Intel — trajectory / flow
+// ---------------------------------------------------------------------------
+export interface TrajectoryPoint { timestamp: string; vibe_score: number }
+export interface FlowRow {
+  venue_id: string; name: string; flow: Trend; pings_now: number; pings_past: number;
+}
+
+export const getTrajectory = (venue_id: string, hours = 6) =>
+  request<TrajectoryPoint[]>(`/intel/trajectory/${venue_id}?hours=${hours}`);
+
+export const getFlow = () => request<FlowRow[]>(`/intel/flow`);

@@ -126,3 +126,56 @@ export const postFeedback = (venue_id: string, vote: VoteType) =>
     `/feedback`,
     { method: "POST", body: JSON.stringify({ venue_id, vote }) }
   );
+
+// ---------------------------------------------------------------------------
+// Rewards
+// ---------------------------------------------------------------------------
+export interface Wallet { user_id: string; credits: number; updated_at: string }
+export interface RewardOffer {
+  id: string; venue_id: string; name: string; description: string;
+  cost_credits: number; active: boolean; created_at: string;
+}
+export interface RewardEarn {
+  user_id: string; action: string; awarded: number; credits: number;
+}
+export interface Redemption {
+  id: string; user_id: string; venue_id: string; offer_id: string;
+  cost_credits: number; timestamp: string;
+}
+
+export const getWallet = (user_id: string) =>
+  request<Wallet>(`/rewards/wallet/${encodeURIComponent(user_id)}`);
+
+export const earnCredits = (user_id: string, action: string, amount?: number) =>
+  request<RewardEarn>(`/rewards/earn`, {
+    method: "POST",
+    body: JSON.stringify({ user_id, action, amount }),
+  });
+
+export const listVenueOffers = (venue_id: string) =>
+  request<RewardOffer[]>(`/rewards/offers?venue_id=${encodeURIComponent(venue_id)}&active_only=true`);
+
+export const listActiveOffers = () =>
+  request<RewardOffer[]>(`/rewards/offers?active_only=true`);
+
+export const redeemOffer = (user_id: string, offer_id: string) =>
+  request<Redemption>(`/rewards/redeem`, {
+    method: "POST",
+    body: JSON.stringify({ user_id, offer_id }),
+  });
+
+export const listMyRedemptions = (user_id: string, limit = 50) =>
+  request<Redemption[]>(`/rewards/redemptions?user_id=${encodeURIComponent(user_id)}&limit=${limit}`);
+
+// ---------------------------------------------------------------------------
+// Intel (anonymous ping + trajectory)
+// ---------------------------------------------------------------------------
+export const postPing = (lat: number, lng: number, device_id?: string) =>
+  request<{ id: string; timestamp: string }>(`/intel/ping`, {
+    method: "POST",
+    body: JSON.stringify({ lat, lng, device_id }),
+  });
+
+export interface TrajectoryPoint { timestamp: string; vibe_score: number }
+export const getTrajectory = (venue_id: string, hours = 6) =>
+  request<TrajectoryPoint[]>(`/intel/trajectory/${venue_id}?hours=${hours}`);

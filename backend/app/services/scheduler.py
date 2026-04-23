@@ -22,6 +22,7 @@ from app.core.database import SessionLocal
 from app.models import Venue, Vibe, VenueSignals
 from app.services.scoring import calculate_vibe_score_from_signals, crowd_level_from_score
 from app.services.signals import compute_signals_for_venue
+from app.services.user_intel import append_current_scores, detect_visits
 
 logger = logging.getLogger("vibe2nite.scheduler")
 
@@ -101,8 +102,26 @@ async def refresh_all_signals() -> dict:
                 errs += 1
             else:
                 ok += 1
-        logger.info("refresh_all_signals: %d ok, %d errors (of %d)", ok, errs, len(ids))
-        return {"status": "ok", "refreshed": ok, "errors": errs, "total": len(ids)}
+
+        # Trajectory snapshot + visit detection (additive, non-fatal on error).
+        snap, visits = 0, 0
+        db = SessionLocal()
+        try:
+            snap = append_current_scores(db)
+            visits = detect_visits(db)
+        except Exception as exc:  # pragma: no cover
+            logger.exception("trajectory/visit side-jobs failed: %s", exc)
+        finally:
+            db.close()
+
+        logger.info(
+            "refresh_all_signals: %d ok, %d errors (of %d) | history=%d visits=%d",
+            ok, errs, len(ids), snap, visits,
+        )
+        return {
+            "status": "ok", "refreshed": ok, "errors": errs, "total": len(ids),
+            "trajectory_points": snap, "visits_detected": visits,
+        }
 
 
 def start_scheduler() -> None:
