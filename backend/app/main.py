@@ -1,0 +1,97 @@
+# -*- coding: utf-8 -*-
+"""Vibe2Nite — FastAPI application factory."""
+import os
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+
+from app import __version__
+from app.core.config import get_settings
+from app.core.database import Base, engine
+from app.core.docs import render_branded_docs
+from app.routers import admin, feedback, vibes
+
+settings = get_settings()
+
+# ---------------------------------------------------------------------------
+# OpenAPI description (Markdown, shown inside the branded Swagger header)
+# ---------------------------------------------------------------------------
+DESCRIPTION = """
+**Real-time nightlife recommendations powered by the Vibe Score.**
+
+Vibe2Nite ranks venues using a weighted mix of signals — *manual score*,
+*social activity*, *user votes*, *time prediction* and *venue boost* — and
+returns the three spots worth your night: **best overall**, **live music**,
+and a **hidden gem**.
+
+---
+### Vibe Score
+```
+score = manual_score*0.25 + social_activity*0.25 + user_votes*0.25 + time_prediction*0.15 + venue_boost*0.10
+```
+Capped at **10**. Crowd levels: `≥ 8 busy` · `≥ 5 medium` · `< 5 dead`.
+""".strip()
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=f"{settings.APP_NAME} API",
+        version=__version__,
+        description=DESCRIPTION,
+        docs_url=None,        # replaced by custom branded docs
+        redoc_url=None,
+        openapi_url="/api/openapi.json",
+    )
+
+    # CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Static brand assets
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    app.mount("/api/static", StaticFiles(directory=static_dir), name="static")
+
+    # Ensure tables exist (migrations are the source of truth, but this keeps
+    # dev-boot resilient even before alembic runs).
+    Base.metadata.create_all(bind=engine)
+
+    # Routers — every business path under /api for ingress routing
+    app.include_router(vibes.router, prefix="/api")
+    app.include_router(feedback.router, prefix="/api")
+    app.include_router(admin.router, prefix="/api")
+
+    # Health
+    @app.get("/api/health", tags=["meta"], summary="Service heartbeat")
+    def health():
+        from datetime import datetime, timezone
+        return {
+            "status": "ok",
+            "service": "vibe2nite",
+            "version": __version__,
+            "time": datetime.now(timezone.utc).isoformat(),
+        }
+
+    # Branded docs
+    @app.get("/api/docs", include_in_schema=False)
+    def branded_docs():
+        return render_branded_docs(
+            app,
+            openapi_url="/api/openapi.json",
+            brand_css_url="/api/static/vibe2nite.css",
+        )
+
+    @app.get("/api", include_in_schema=False)
+    def api_root():
+        return RedirectResponse(url="/api/docs")
+
+    return app
+
+
+app = create_app()
