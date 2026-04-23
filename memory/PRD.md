@@ -146,3 +146,46 @@ Radii: rounded-xl (12) / xl2 (18) / xl3 (22).
 - [ ] Replace sparkline placeholder in RN with real `/vibes/history` data once the backend stores trajectory
 - [ ] Expo Location permission copy per store-review requirements
 - [ ] Swap `react-native-maps` for `expo-maps` once GA for modern SDK
+
+---
+
+## Iteration 7 — User Intelligence Layer + Vibe Credits Reward Economy (2026-04-23)
+
+### Implemented (purely additive — zero changes to existing endpoints, Signal Engine, or Vibe Score formula)
+
+**Backend — DB (Alembic migration `e151932735a3`)**
+- [x] 3 intel tables: `user_location_pings`, `venue_visits`, `venue_vibe_history`
+- [x] 3 rewards tables: `user_wallets`, `venue_reward_offers`, `venue_redemptions`
+
+**Backend — services**
+- [x] `app/services/user_intel/` — `location_pings`, `venue_visits` (40m / 5-min dwell rule), `user_flow` (rising/peaking/falling/steady), `trajectory_history`
+- [x] `app/services/rewards/` — `credit_wallet`, `reward_rules` (feedback=1, visit=3, navigate=1, daily_login=1, first_visit_bonus=5), `venue_offers`, `redemption`
+- [x] APScheduler now also runs `append_current_scores()` + `detect_visits()` every 5 min (additive side-jobs, non-fatal on error)
+
+**Backend — routes (all under `/api`)**
+- [x] `POST /intel/ping`, `POST /intel/visits/detect`, `GET /intel/visits/{venue_id}`, `GET /intel/flow`, `GET /intel/trajectory/{venue_id}`, `POST /intel/trajectory/snapshot`
+- [x] `GET /rewards/rules`, `GET /rewards/wallet/{user_id}`, `POST /rewards/earn`, `GET /rewards/offers`, `GET /rewards/offers/{id}`, `POST /rewards/offers`, `DELETE /rewards/offers/{id}`, `POST /rewards/redeem`, `GET /rewards/redemptions`
+
+**Next.js admin (`/app/admin-next`)**
+- [x] New sidebar tab `/admin/credits` — 4 stat tiles (active offers, redemptions, credits redeemed, earn rules), earn-rules chip board, offer CRUD table with retire, recent redemptions table, "New offer" modal
+- [x] InspectorModal now shows a **Vibe Credits** panel with an SVG 6-hour trajectory sparkline plus top 3 active offers for the venue
+- [x] `lib/api.ts` gained rewards + intel typings/helpers
+- [x] `yarn typecheck` + `yarn build` green (9 routes)
+
+**Expo mobile (`/app/mobile`)**
+- [x] New **Wallet** tab (`WalletScreen`) — balance card, earn-rules chips, active-offer list with per-card Redeem button, recent redemptions history, pull-to-refresh
+- [x] VenueDetail: now pulls real `/intel/trajectory/{id}` for the sparkline, shows per-venue reward offers, fires `+1 Vibe Credit` / `+1 Vibe Credit` toasts on feedback vote / Go-here-now tap
+- [x] New `lib/identity.ts` (AsyncStorage-backed opaque device UUID = wallet user_id) + `lib/rewards.ts` (useWallet / awardCredits / useCreditToast)
+- [x] `yarn typecheck` green
+
+### Tests
+- [x] `/app/backend/tests/test_intel_and_rewards.py` — 11 new tests (intel ping/flow/visits/trajectory + rewards wallet/earn/offer-CRUD/redeem/404s)
+- [x] Full backend pytest suite: **67/67 green** (56 prior + 11 new) — see `/app/test_reports/iteration_6.json`
+- [x] Zero regression on existing endpoints (verified end-to-end by the testing agent)
+
+### Remaining backlog additions (P2)
+- [ ] CRA web preview (`/app/frontend`) — mirror the admin Credits tab for parity (currently only Next.js admin has it)
+- [ ] Admin auth for `POST /rewards/earn { amount }` override (currently open — flagged for auth gating before prod)
+- [ ] Persist first-visit bonus server-side (currently a client rule only)
+- [ ] Make `/api/seed` idempotent so test iterations don't multiply venues
+
