@@ -189,3 +189,21 @@ Radii: rounded-xl (12) / xl2 (18) / xl3 (22).
 - [ ] Persist first-visit bonus server-side (currently a client rule only)
 - [ ] Make `/api/seed` idempotent so test iterations don't multiply venues
 
+---
+
+## Iteration 8 — Wallet durability (2026-04-23)
+
+### Root cause of "credits dropped when I logged off"
+PostgreSQL's data directory was on **ephemeral container storage** (`/var/lib/postgresql/15/main`). Every pod/container restart wiped the entire DB — wallets, offers, venues, the lot. It was never a logout bug.
+
+### Fix
+- [x] Migrated PostgreSQL `data_directory` to `/app/data/pgdata` (the only persistent path in this pod) via `postgresql.conf`. Backend + full PG restart now preserve all wallet balances — verified end-to-end (10 credits for `durable-alice` survived two restart scenarios).
+- [x] Added strict wallet lookup: `GET /api/rewards/wallet/{user_id}?create=false` → 404 if not found (prevents silent "empty wallet" on typo during restore).
+- [x] **Mobile wallet code UX**: Wallet screen now shows the user's opaque wallet code in a copyable (select-to-copy) field plus a "Have a code? Restore a wallet" modal that validates against the backend before swapping the local AsyncStorage `device_id`.
+- [x] **Admin support tool**: `/admin/credits` now has a "Wallet lookup & manual grant" panel — admins can paste any wallet code, see the balance, and grant N credits (uses `/rewards/earn` with action=`admin_grant` + explicit amount).
+- [x] Identity helper: added `setDeviceId(code)` to `/app/mobile/src/lib/identity.ts`.
+
+### Tests
+- [x] Full backend pytest suite: **67/67 still green**
+- [x] Manual curl verification: backend restart and full PG restart both preserve wallet balances.
+

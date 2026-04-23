@@ -31,6 +31,14 @@ export async function getDeviceId(): Promise<string> {
   return fresh;
 }
 
+/** Overwrite the stored device id — used by "Restore wallet from code". */
+export async function setDeviceId(id: string): Promise<void> {
+  const trimmed = id.trim();
+  if (!trimmed) throw new Error("empty wallet code");
+  await AsyncStorage.setItem(KEY, trimmed);
+  cached = trimmed;
+}
+
 /** Same opaque id is reused as the wallet user_id — backend treats it as opaque. */
 export async function getUserId(): Promise<string> {
   return getDeviceId();

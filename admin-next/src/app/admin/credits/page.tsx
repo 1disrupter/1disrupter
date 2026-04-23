@@ -1,16 +1,18 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, Plus, Trash2, History } from "lucide-react";
+import { Coins, Plus, Trash2, History, Search, Wallet as WalletIcon } from "lucide-react";
 import { Topbar } from "@/components/Sidebar";
 import { Button, Chip, Input, Select } from "@/components/ui";
 import {
   createRewardOffer,
   deactivateRewardOffer,
   getRewardRules,
+  grantCredits,
   listAdminVenues,
   listOffers,
   listRedemptions,
+  lookupWallet,
   RewardOffer,
 } from "@/lib/api";
 
@@ -88,6 +90,9 @@ export default function CreditsPage() {
             ))}
           </div>
         </Panel>
+
+        {/* Wallet debug & grant */}
+        <WalletLookupPanel />
 
         {/* Offers */}
         <Panel title="Reward offers">
@@ -194,6 +199,95 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
       <h3 className="text-[11px] uppercase tracking-[0.28em] text-white/55">{title}</h3>
       {children}
     </section>
+  );
+}
+
+function WalletLookupPanel() {
+  const qc = useQueryClient();
+  const [code, setCode] = useState("");
+  const [current, setCurrent] = useState<{ user_id: string; credits: number } | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [grant, setGrant] = useState<number>(5);
+
+  const lookup = useMutation({
+    mutationFn: () => lookupWallet(code.trim()),
+    onSuccess: (w) => { setCurrent({ user_id: w.user_id, credits: w.credits }); setErr(null); setMsg(null); },
+    onError: (e: any) => {
+      setCurrent(null);
+      setErr(e?.message?.includes("404") ? "No wallet found with that code." : (e?.message || "Lookup failed."));
+    },
+  });
+
+  const grantM = useMutation({
+    mutationFn: () => grantCredits(code.trim(), grant),
+    onSuccess: (r) => {
+      setCurrent({ user_id: r.user_id, credits: r.credits });
+      setMsg(`+${r.awarded} credits granted. New balance: ${r.credits}.`);
+      qc.invalidateQueries({ queryKey: ["redemptions"] });
+    },
+    onError: (e: any) => setErr(e?.message || "Grant failed."),
+  });
+
+  return (
+    <Panel title="Wallet lookup & manual grant">
+      <p className="text-xs text-white/55">
+        Paste a user's wallet code (shown on their mobile Wallet tab) to inspect their balance or grant support credits.
+      </p>
+      <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto_auto]">
+        <Input
+          label="Wallet code"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+          data-testid="wallet-lookup-code-input"
+        />
+        <div className="flex items-end">
+          <Button
+            variant="secondary"
+            size="md"
+            leftIcon={<Search size={14} />}
+            loading={lookup.isPending}
+            disabled={!code.trim()}
+            onClick={() => lookup.mutate()}
+            data-testid="wallet-lookup-btn"
+          >
+            Lookup
+          </Button>
+        </div>
+        <div className="flex items-end gap-2">
+          <Input
+            label="Grant"
+            type="number" min={1} max={1000}
+            value={grant}
+            onChange={(e) => setGrant(Number(e.target.value))}
+            data-testid="wallet-grant-amount"
+            className="w-24"
+          />
+          <Button
+            variant="pink"
+            size="md"
+            leftIcon={<WalletIcon size={14} />}
+            loading={grantM.isPending}
+            disabled={!code.trim() || grant < 1}
+            onClick={() => grantM.mutate()}
+            data-testid="wallet-grant-btn"
+          >
+            Grant
+          </Button>
+        </div>
+      </div>
+      {err && <p className="mt-2 text-xs text-accent-pink">{err}</p>}
+      {msg && <p className="mt-2 text-xs text-glow-aqua">{msg}</p>}
+      {current && (
+        <div className="mt-3 flex items-center justify-between rounded-xl border border-glow-aqua/40 bg-glow-aqua/10 px-4 py-3" data-testid="wallet-lookup-result">
+          <span className="font-mono text-xs text-white/75">{current.user_id}</span>
+          <span className="font-display text-2xl tracking-widest text-white">
+            {current.credits}<span className="ml-1 text-xs text-white/55 tracking-[0.25em]">CREDITS</span>
+          </span>
+        </div>
+      )}
+    </Panel>
   );
 }
 

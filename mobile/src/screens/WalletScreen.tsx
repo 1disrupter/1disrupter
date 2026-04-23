@@ -1,10 +1,11 @@
-import React from "react";
-import { FlatList, StyleSheet, Text, View, Alert, RefreshControl } from "react-native";
+import React, { useState } from "react";
+import { FlatList, Modal, StyleSheet, Text, TextInput, View, Alert, RefreshControl, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  listActiveOffers, listMyRedemptions, redeemOffer, RewardOffer,
+  listActiveOffers, listMyRedemptions, lookupWallet, redeemOffer, RewardOffer,
 } from "@/lib/api";
+import { setDeviceId } from "@/lib/identity";
 import { useUserId, useWallet } from "@/lib/rewards";
 import { colors, radius, spacing } from "@/theme";
 import { Chip } from "@/components/Chip";
@@ -14,6 +15,7 @@ export default function WalletScreen() {
   const uid = useUserId();
   const qc = useQueryClient();
   const walletQ = useWallet();
+  const [showRestore, setShowRestore] = useState(false);
 
   // Simpler: list active offers by re-using /rewards/offers (no venue filter).
   const allOffersQ = useQuery<RewardOffer[]>({
@@ -70,6 +72,29 @@ export default function WalletScreen() {
               <Chip tone="aqua" label="+3 per visit" />
               <Chip tone="pink" label="+1 per Go" />
             </View>
+
+            {/* Wallet code — save / restore */}
+            <View style={styles.codeCard} testID="wallet-code-card">
+              <Text style={styles.sectionLabel}>Your wallet code</Text>
+              <Text style={{ color: colors.textFaint, fontSize: 11, marginTop: 4 }}>
+                Save this somewhere safe. Paste it on another device (or after reinstall) to recover these credits.
+              </Text>
+              <TextInput
+                value={uid || "loading…"}
+                editable={false}
+                selectTextOnFocus
+                style={styles.codeInput}
+                testID="wallet-code-input"
+              />
+              <Pressable
+                onPress={() => setShowRestore(true)}
+                style={styles.linkBtn}
+                testID="wallet-restore-btn"
+              >
+                <Text style={styles.linkBtnText}>Have a code? Restore a wallet →</Text>
+              </Pressable>
+            </View>
+
             <Text style={[styles.sectionLabel, { marginTop: spacing.lg }]}>Spend your credits</Text>
           </View>
         }
@@ -115,7 +140,79 @@ export default function WalletScreen() {
           </View>
         }
       />
+
+      <RestoreWalletModal
+        visible={showRestore}
+        onClose={() => setShowRestore(false)}
+        onRestored={() => {
+          setShowRestore(false);
+          qc.invalidateQueries();
+        }}
+      />
     </SafeAreaView>
+  );
+}
+
+function RestoreWalletModal({
+  visible, onClose, onRestored,
+}: { visible: boolean; onClose: () => void; onRestored: () => void }) {
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setErr("Paste a wallet code first.");
+      return;
+    }
+    setBusy(true); setErr(null);
+    try {
+      const w = await lookupWallet(trimmed); // 404 if code is wrong — no silent empty wallet
+      await setDeviceId(trimmed);
+      Alert.alert("Wallet restored", `${w.credits} credits loaded.`);
+      onRestored();
+    } catch (e: any) {
+      setErr(e?.message?.includes("404") ? "No wallet found with that code." : (e?.message || "Could not restore."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+        <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+          <Text style={styles.modalTitle}>RESTORE WALLET</Text>
+          <Text style={{ color: colors.textFaint, fontSize: 12, marginTop: 4 }}>
+            Paste the wallet code from your other device. We'll verify it on the server before switching.
+          </Text>
+          <TextInput
+            value={code}
+            onChangeText={(t) => { setCode(t); setErr(null); }}
+            placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.modalInput}
+            testID="restore-code-input"
+          />
+          {err && <Text style={{ color: colors.pink, fontSize: 12, marginTop: 6 }}>{err}</Text>}
+          <View style={{ flexDirection: "row", gap: 10, marginTop: spacing.md }}>
+            <GlowButton label="Cancel" variant="secondary" size="md" onPress={onClose} style={{ flex: 1 }} />
+            <GlowButton
+              label={busy ? "Checking…" : "Restore"}
+              variant="pink"
+              size="md"
+              disabled={busy}
+              onPress={submit}
+              style={{ flex: 1 }}
+              testID="restore-submit-btn"
+            />
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -145,5 +242,32 @@ const styles = StyleSheet.create({
   redeemRow: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  codeCard: {
+    marginTop: spacing.md, padding: spacing.md,
+    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
+    backgroundColor: "rgba(0,245,255,0.04)",
+  },
+  codeInput: {
+    marginTop: 8, padding: 10, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bg,
+    color: colors.aqua, fontFamily: "Courier", fontSize: 12, letterSpacing: 0.5,
+  },
+  linkBtn: { marginTop: 8, paddingVertical: 6 },
+  linkBtnText: { color: colors.primaryGlow, fontSize: 12, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
+  modalBackdrop: {
+    flex: 1, alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(5,5,10,0.82)", padding: spacing.md,
+  },
+  modalCard: {
+    width: "100%", maxWidth: 420, padding: spacing.lg,
+    backgroundColor: colors.bg, borderRadius: radius.xl,
+    borderWidth: 1, borderColor: colors.primaryGlow,
+  },
+  modalTitle: { color: colors.text, fontSize: 20, fontWeight: "900", letterSpacing: 2 },
+  modalInput: {
+    marginTop: spacing.md, padding: 12, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: "rgba(255,255,255,0.03)",
+    color: colors.text, fontFamily: "Courier", fontSize: 13,
   },
 });

@@ -146,6 +146,10 @@ export interface Redemption {
 export const getWallet = (user_id: string) =>
   request<Wallet>(`/rewards/wallet/${encodeURIComponent(user_id)}`);
 
+/** Strict wallet lookup — 404 if missing (used by "Restore wallet from code"). */
+export const lookupWallet = (user_id: string) =>
+  request<Wallet>(`/rewards/wallet/${encodeURIComponent(user_id)}?create=false`);
+
 export const earnCredits = (user_id: string, action: string, amount?: number) =>
   request<RewardEarn>(`/rewards/earn`, {
     method: "POST",

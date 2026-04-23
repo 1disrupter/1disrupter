@@ -125,6 +125,17 @@ export const createRewardOffer = (body: {
 export const deactivateRewardOffer = (id: string) =>
   request<RewardOffer>(`/rewards/offers/${id}`, { method: "DELETE" });
 
+export const lookupWallet = (user_id: string) =>
+  request<{ user_id: string; credits: number; updated_at: string }>(
+    `/rewards/wallet/${encodeURIComponent(user_id)}?create=false`
+  );
+
+export const grantCredits = (user_id: string, amount: number) =>
+  request<{ user_id: string; action: string; awarded: number; credits: number }>(
+    `/rewards/earn`,
+    { method: "POST", body: JSON.stringify({ user_id, action: "admin_grant", amount }) }
+  );
+
 export const listRedemptions = (params?: { venue_id?: string; user_id?: string; limit?: number }) => {
   const qs = new URLSearchParams();
   if (params?.venue_id) qs.set("venue_id", params.venue_id);

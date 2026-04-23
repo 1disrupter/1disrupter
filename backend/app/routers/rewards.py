@@ -97,7 +97,20 @@ def rules():
 
 
 @router.get("/wallet/{user_id}", response_model=WalletOut, summary="Get a user wallet balance")
-def wallet(user_id: str, db: Session = Depends(get_db)) -> WalletOut:
+def wallet(
+    user_id: str,
+    create: bool = Query(True, description="Auto-create an empty wallet if missing"),
+    db: Session = Depends(get_db),
+) -> WalletOut:
+    """Return wallet for `user_id`. If `create=false`, return 404 when absent
+    (use this for "restore wallet" flows — prevents typos from silently
+    spawning empty wallets)."""
+    if not create:
+        from app.models import UserWallet
+        w = db.get(UserWallet, user_id)
+        if w is None:
+            raise HTTPException(status_code=404, detail="wallet not found")
+        return WalletOut(user_id=w.user_id, credits=w.credits, updated_at=w.updated_at)
     w = get_wallet(db, user_id)
     return WalletOut(user_id=w.user_id, credits=w.credits, updated_at=w.updated_at)
 
