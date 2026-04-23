@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration_4 retest: the fix in feedback_service.apply_feedback (invokes scheduler.refresh_venue_signals after commit) is verified. POST /api/feedback response.new_vibe_score now matches GET /api/admin/venues within 0.02 for busy/good/dead. user_feedback_signal correctly reads FeedbackLog in last 120 minutes — 5 dead votes drop score to 0.0, 5 busy votes raise it to 10.0 from neutral 5.0. All signal-engine regressions pass. Legacy backend_test formula assertions updated to use the new signals-driven formula (manual*.25 + ext.social*.25 + ext.user_votes*.25 + ext.time*.15 + venue_boost*.10). 32/32 pytest pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/feedback", "issue": "apply_feedback uses asyncio.run() to call refresh_venue_signals. The feedback route is a sync endpoint so FastAPI runs it in a threadpool and this works. However, if the route is ever made async this will raise RuntimeError and the response falls back to the legacy compute_vibe_score value (silently) — the except RuntimeError swallow is fine today but brittle. Prefer making the call via a proper async helper (e.g. route -> await refresh) or run_in_executor guard."},
+      {"endpoint": "scheduler.refresh_venue_signals", "issue": "vibe.signals.user_votes is still NOT mirrored from venue_signals.user_votes_score, so the legacy `vibe.signals.user_votes` field reported in /admin/venues remains a stale mirror of POST /feedback delta-updates and diverges from the score formula. Consider either removing this field from the admin response or syncing it (cosmetic only now that published score is correct)."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_signal_engine.py",
+    "/app/backend/tests/test_feedback_propagation.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Consider marking vibe.signals.user_votes as deprecated in the /admin/venues response (or mirror it from venue_signals.user_votes_score for display consistency).",
+    "Optional: migrate apply_feedback's asyncio.run trick to an explicit async path so it remains correct if the /feedback route is ever rewritten as async."
+  ],
+  "critical_code_review_comments": [
+    "feedback_service.apply_feedback: asyncio.run() inside a sync FastAPI endpoint works because FastAPI executes sync endpoints in a threadpool with no active event loop. But bare except Exception: pass swallows real errors — at least log them (logger.warning) so propagation issues don't go silent in production.",
+    "scheduler.refresh_venue_signals opens a new SessionLocal() while apply_feedback has just committed its own session. Correct but slightly wasteful — refreshing is a DB round trip per vote. Consider debouncing or batching if /feedback traffic scales.",
+    "user_feedback_signal.WINDOW_MIN (120) is hardcoded. Should be config-driven (env var) for easy tuning."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (updated 2 legacy tests to new signals formula)",
+    "/app/backend/tests/test_feedback_propagation.py (new — 6 tests covering the fix)"
+  ],
+  "success_rate": {"backend": "100% (32/32)", "frontend": "not tested (backend-only per request)"},
+  "test_credentials": "admin: vibe2nite / nightowl (from /app/memory/test_credentials.md; not needed for backend APIs)",
+  "seed_data_creation": "Creates TEST_Propagation_Venue per test via /api/admin/venues; wipes feedback_log between tests via SessionLocal() direct DELETE to honour the 2h user_feedback_signal window.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The feedback->score propagation bug from iteration_3 is FIXED and covered by tests/test_feedback_propagation.py. Formula validation now asserts against external_signals (signal-engine formula), not vibe.signals.user_votes. When asserting scores, keep abs_tol=0.02 because the scheduler's 5-min live_jitter sine can nudge scores between refreshes. When writing vote-propagation tests, call SessionLocal().query(FeedbackLog).delete() + commit to reset the 120-min user_feedback_signal window — there is no admin endpoint to clear feedback_log.",
+  "rca of the issue": "Previous iteration_3 RCA was inaccurate (user_feedback_signal is NOT stubbed — it reads FeedbackLog in a 120-min window). Real cause: POST /feedback used legacy compute_vibe_score while scheduler republished calculate_vibe_score_from_signals, so the vote-response score disagreed with the next GET once the scheduler or on-demand refresh ran. FIX applied in feedback_service.apply_feedback: after committing the FeedbackLog row, synchronously invoke scheduler.refresh_venue_signals(venue_id) and return its vibe_score. Verified: parametric test test_feedback_response_matches_published_score[busy|good|dead] all pass with abs_tol=0.02."
+}
