@@ -3,11 +3,11 @@ import { Search } from "lucide-react";
 import { cx } from "@/lib/cx";
 
 export const Input = React.forwardRef(function Input(
-  { label, hint, error, leftIcon, rightIcon, className, ...rest },
+  { label, hint, error, leftIcon, rightIcon, className, "data-testid": testId, ...rest },
   ref
 ) {
   return (
-    <label className="block">
+    <label className="block" data-testid={testId ? `${testId}-wrap` : undefined}>
       {label && (
         <span className="mb-1.5 block text-[11px] uppercase tracking-[0.22em] text-white/55">
           {label}
@@ -25,6 +25,7 @@ export const Input = React.forwardRef(function Input(
         {leftIcon && <span className="text-white/50">{leftIcon}</span>}
         <input
           ref={ref}
+          data-testid={testId}
           className={cx(
             "w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35",
             className
