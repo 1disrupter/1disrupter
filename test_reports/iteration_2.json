@@ -1,0 +1,36 @@
+{
+  "summary": "Frontend E2E Playwright testing of Vibe2Nite on 3 routes (/, /brand, /admin) plus Swagger. All 14 features from the review request pass end-to-end against the external REACT_APP_BACKEND_URL. Home renders all 3 VenueHeroCards with correct banners/distance/score/status/category chips and colour-matched Go buttons. hero-use-location, hero-refresh, quick-vote (busy/good/dead -> POST /api/feedback) all work and toasts appear. Brand page swatches, modal (open + ESC close), and success/error/info toasts all fire with correct data-testids. Admin: wrong password shows 'Invalid credentials' inline, correct creds (vibe2nite/nightowl) login, localStorage v2n_admin_session is set and persists across reload. Overview renders 4 stat tiles + 4 Recharts panels. Venues table shows 12 rows (matching 12 NYC seed venues + 1 prior TEST_ remnant from iter1, still >=12). Signal Inspector opens, PATCH /api/admin/venues/{id}/signals fires, modal closes with success toast. Add Venue POST /api/admin/venues fires, TEST_AUTO venue appears. Logout clears localStorage and returns to login form. Mobile bottom tabs appear at width 390. Branded Swagger at /api/docs loads (title 'Vibe2Nite API — API').",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global", "issues": ["Cosmetic: two React Router v6 future-flag console warnings (v7_startTransition, v7_relativeSplatPath). Non-blocking; can add future flags in router config to silence."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Optional: opt-in to React Router v7 future flags to silence console warnings.",
+    "Optional (inherited from iter1): add DELETE /api/admin/venues/{id} so TEST_AUTO venues can be cleaned up; we have now left 'TEST_AUTO' plus iter1's 'TEST_The Vibe Lab' in the DB.",
+    "Minor testability nit: Input component puts data-testid on the outer <label> rather than the <input> itself. Testers must target inner input via placeholder / [type=password]. Consider forwarding data-testid to the inner <input> as well (or adding a second testid) so E2E selectors are one-hop."
+  ],
+  "critical_code_review_comments": [
+    "Home.jsx fetchVibes uses useCallback(loc,radius) but the initial useEffect disables the exhaustive-deps rule and calls fetchVibes once on mount — acceptable but could be simpler with a stable fetcher. onMouseUp/onTouchEnd on the radius slider will not fire on keyboard users (arrow keys) — consider onChange+debounce.",
+    "Admin.jsx stores login state only in localStorage with no expiry check — the stored `t: Date.now()` is never read. Add a TTL or at least validate the stored shape on mount so a tampered value doesn't bypass Login.",
+    "Admin credentials are hard-coded client-side (ADMIN_CREDS object). Noted as MVP-only in /app/memory/test_credentials.md. Must be replaced with a real backend login before any public deploy.",
+    "SignalInspector.save computes localScore client-side using the same weights as the backend — ensure the two formulas stay in sync (extract to a shared constants file or have the backend return the formula). Currently duplicated in JS and Python.",
+    "AddVenueModal does not validate lat/lng ranges (-90..90, -180..180). Backend probably rejects but an early client-side check + error would be friendlier.",
+    "The venues table renders all rows at once with no pagination — fine for 12 rows but will be a perf issue at 500+."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not_tested (skip per request)", "frontend": "100% (14/14 flows)"},
+  "test_credentials": "vibe2nite / nightowl (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "One venue 'TEST_AUTO' created via the Add-venue UI during testing. Cannot auto-delete (no DELETE endpoint). It is now visible in the DB alongside iter1's 'TEST_The Vibe Lab'.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Use REACT_APP_BACKEND_URL from /app/frontend/.env for external testing. Admin login Input component places data-testid on outer <label>; target inner <input> via input[placeholder=\"vibe2nite\"] and input[type=\"password\"]. Recharts containers use .recharts-responsive-container (4 expected on overview). Mobile bottom tabs render at viewport width < 768. Modal overlay testid is modal-overlay; toasts are toast-success/toast-error/toast-info. Venue row testids follow venue-row-{id}, inspect buttons inspect-{id}. PATCH /api/admin/venues/{id}/signals and POST /api/admin/venues both confirmed firing from the UI.",
+  "rca of the issue": "N/A — all features pass. Initial first-pass failures on Admin tests were a test-script issue (selector targeted [data-testid='login-username'] input but the data-testid lives on the <label>, not the wrapper). Re-ran with placeholder-based selectors and everything passed."
+}

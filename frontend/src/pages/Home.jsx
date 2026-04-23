@@ -1,0 +1,257 @@
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Navbar, Footer, BottomTabs, Logo, LogoMark,
+  VenueHeroCard, LoadingScreen, ErrorState, EmptyState,
+  Button, IconButton, Chip, SectionDivider, useToast,
+} from "@/components/v2n";
+import { getTopVibes, submitFeedback } from "@/lib/api";
+
+const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
+
+export default function Home() {
+  const [loc, setLoc] = useState(DEFAULT_LOCATION);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [radius, setRadius] = useState(50);
+  const [tab, setTab] = useState("home");
+  const toast = useToast();
+
+  const fetchVibes = useCallback(
+    async (l = loc, r = radius) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getTopVibes(l.lat, l.lng, r);
+        setData(res);
+      } catch (e) {
+        setError(e.response?.data?.detail || e.message || "Network error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loc, radius]
+  );
+
+  useEffect(() => {
+    fetchVibes(loc, radius);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast.warn("Geolocation not available. Using Manhattan.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const next = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          label: "My location",
+        };
+        setLoc(next);
+        toast.success("Location locked in.");
+        fetchVibes(next, radius);
+      },
+      () => toast.error("Could not read your location."),
+      { timeout: 6000 }
+    );
+  };
+
+  const slots = useMemo(
+    () => [
+      { key: "best_overall", data: data?.best_overall },
+      { key: "live_music", data: data?.live_music },
+      { key: "hidden_gem", data: data?.hidden_gem },
+    ],
+    [data]
+  );
+
+  const handleVote = async (venue_id, vote) => {
+    try {
+      const res = await submitFeedback(venue_id, vote);
+      toast.success(`Vote logged. Score: ${res.new_vibe_score.toFixed(2)}`);
+      fetchVibes();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Vote failed");
+    }
+  };
+
+  return (
+    <div className="min-h-screen pb-24 md:pb-0">
+      <Navbar
+        rightSlot={
+          <IconButton onClick={useMyLocation} aria-label="Use my location" data-testid="use-location">
+            <Locate size={18} />
+          </IconButton>
+        }
+      />
+
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="v2n-grid absolute inset-0 opacity-30" />
+        <div className="mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-start gap-5"
+          >
+            <div className="flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-primary-glow">
+              <Flame size={12} /> Right now near you
+            </div>
+            <h1 className="font-display text-5xl leading-[0.9] tracking-wider md:text-7xl">
+              <span className="v2n-sheen">DON'T GUESS.</span>
+              <br />
+              <span className="text-white">
+                KNOW <span className="text-accent-pink">WHERE</span> TO GO.
+              </span>
+            </h1>
+            <p className="max-w-xl text-sm text-white/60 md:text-base">
+              Three perfectly-picked spots, tuned in real time. Powered by crowd signals,
+              live feedback and an honest vibe score. <Logo size="xs" /> — find the vibe, go tonight.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                leftIcon={<MapPin size={16} />}
+                size="md"
+                variant="primary"
+                onClick={useMyLocation}
+                data-testid="hero-use-location"
+              >
+                Use my location
+              </Button>
+              <Button
+                leftIcon={<RefreshCw size={14} />}
+                size="md"
+                variant="secondary"
+                onClick={() => fetchVibes()}
+                data-testid="hero-refresh"
+              >
+                Refresh vibes
+              </Button>
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60">
+                <span className="text-primary-glow">radius</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={100}
+                  value={radius}
+                  onChange={(e) => setRadius(Number(e.target.value))}
+                  onMouseUp={() => fetchVibes(loc, radius)}
+                  onTouchEnd={() => fetchVibes(loc, radius)}
+                  className="w-32 accent-[#B15CFF]"
+                />
+                <span className="font-mono text-white">{radius} km</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-1 text-[11px]">
+              <Chip tone="purple">Real-time vibe scores</Chip>
+              <Chip tone="pink">Top 3. Every time.</Chip>
+              <Chip tone="aqua">Bars · Clubs · Live Music</Chip>
+              <Chip tone="amber">Crowd signals</Chip>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <SectionDivider label={`Top 3 near ${loc.label}`} />
+
+      {/* Cards */}
+      <section className="mx-auto max-w-6xl px-4">
+        {loading ? (
+          <LoadingScreen />
+        ) : error ? (
+          <ErrorState
+            title="Couldn't reach the vibe engine"
+            message={String(error)}
+            onRetry={() => fetchVibes()}
+          />
+        ) : !data || (!data.best_overall && !data.live_music && !data.hidden_gem) ? (
+          <EmptyState
+            title="No venues in range"
+            hint="Try expanding your radius."
+            actionLabel="Expand to 100 km"
+            onAction={() => { setRadius(100); fetchVibes(loc, 100); }}
+          />
+        ) : (
+          <div className="grid gap-5 md:grid-cols-3">
+            {slots.map((s, i) =>
+              s.data ? (
+                <VenueHeroCard
+                  key={s.key}
+                  slot={s.key}
+                  data={s.data}
+                  index={i}
+                  onGo={() => window.scrollTo({ top: 0 })}
+                />
+              ) : null
+            )}
+          </div>
+        )}
+
+        {/* Quick vote bar */}
+        {data?.best_overall && (
+          <div
+            data-testid="quick-vote"
+            className="mt-8 flex flex-col items-start gap-3 rounded-xl2 border border-white/10 bg-white/[0.02] p-5 md:flex-row md:items-center md:justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent-pink text-white">
+                <LogoMark size={22} />
+              </div>
+              <div>
+                <p className="font-display text-lg tracking-wider text-white">
+                  TELL US THE VIBE AT {data.best_overall.venue.name.toUpperCase()}
+                </p>
+                <p className="text-xs text-white/50">Real votes shift the score in real time.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                leftIcon={<Flame size={14} />}
+                onClick={() => handleVote(data.best_overall.venue.id, "busy")}
+                data-testid="vote-busy"
+              >
+                Busy
+              </Button>
+              <Button
+                variant="pink"
+                leftIcon={<ThumbsUp size={14} />}
+                onClick={() => handleVote(data.best_overall.venue.id, "good")}
+                data-testid="vote-good"
+              >
+                Good
+              </Button>
+              <Button
+                variant="secondary"
+                leftIcon={<Ghost size={14} />}
+                onClick={() => handleVote(data.best_overall.venue.id, "dead")}
+                data-testid="vote-dead"
+              >
+                Dead
+              </Button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <Footer />
+
+      <BottomTabs
+        activeKey={tab}
+        onChange={setTab}
+        items={[
+          { key: "home", label: "Home", icon: <Flame size={18} /> },
+          { key: "map", label: "Map", icon: <MapPin size={18} /> },
+          { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
+        ]}
+      />
+    </div>
+  );
+}
