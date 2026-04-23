@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Vibe2Nite",
+    "slug": "vibe2nite",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "scheme": "vibe2nite",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#05050A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "night.vibe.vibe2nite",
+      "config": { "usesNonExemptEncryption": false }
+    },
+    "android": {
+      "package": "night.vibe.vibe2nite",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/icon.png",
+        "backgroundColor": "#05050A"
+      }
+    },
+    "web": { "bundler": "metro" },
+    "plugins": [
+      [
+        "expo-location",
+        { "locationAlwaysAndWhenInUsePermission": "Show nightlife spots near you." }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "https://c5cd54e4-13bd-4b2d-a2a1-c2aabd271be3.preview.emergentagent.com"
+    }
+  }
+}

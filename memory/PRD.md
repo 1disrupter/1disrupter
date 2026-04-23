@@ -111,3 +111,38 @@ Radii: rounded-xl (12) / xl2 (18) / xl3 (22).
 - [ ] Persist vibe-score history for true trajectory-based forecasts (instead of time-curve heuristic)
 - [ ] Heatmap pagination for large cities
 - [ ] Surface heatmap and live-music on the consumer `/` page (currently admin-only visibility)
+
+---
+
+## Iteration 6 — Mobile + Desktop Admin (2026-04-23)
+
+### Implemented (two new source-only projects — existing preview untouched)
+
+**`/app/mobile/` — Expo React Native (TypeScript)**
+- [x] Screens: Tonight (Top-3 feed, category tabs, 1-tap directions), Map (heat pins, bottom sheet), Venue Detail (1-tap busy/good/dead feedback), Settings/About
+- [x] Components: Logo, GlowButton, Chip (+ TrendBadge, TouristFlagBadge, LiveMusicBadge), CategoryTabs, VibeScoreBadge/CrowdDot/Sparkline, VenueCard
+- [x] Typed fetch client hitting `/api/*` with config driven by `EXPO_PUBLIC_API_URL` / `app.json.extra.apiUrl`
+- [x] React Query + bottom-tabs + native-stack navigation
+- [x] `react-native-maps` with dark neon style; marker sizing tied to heat
+- [x] Shared brand tokens in `src/theme.ts` mirroring web tailwind
+- [x] `yarn typecheck` clean
+
+**`/app/admin-next/` — Next.js 14 App Router (TypeScript + Tailwind)**
+- [x] `/login` (client-side auth — demo creds `vibe2nite/nightowl`)
+- [x] `/admin/overview` — 4 stat tiles + 4 Recharts panels
+- [x] `/admin/venues` — searchable table, Add-venue modal, Inspect modal (edit | signal engine | live preview + intelligence)
+- [x] `/admin/signals` — per-venue signal bars sorted by last-updated
+- [x] Branded Sidebar + Topbar, Tailwind config mirroring web tokens
+- [x] React Query + typed API client + auth hook
+- [x] `yarn typecheck` + `yarn build` both green (8 static routes)
+
+### Runnability notes
+- The existing **web preview** (React CRA on :3000) continues to serve `/`, `/brand`, `/admin`.
+- **Next.js admin** runs on port `3100` locally (`yarn dev` or `yarn build && yarn start`); not wired into supervisor to avoid colliding with the CRA app.
+- **Expo mobile** can't run in this container. Run locally via `yarn start` + Expo Go / simulator.
+
+### Backlog deltas
+- [ ] Move `vibe2nite/nightowl` auth to a real backend login (both admins share a hook)
+- [ ] Replace sparkline placeholder in RN with real `/vibes/history` data once the backend stores trajectory
+- [ ] Expo Location permission copy per store-review requirements
+- [ ] Swap `react-native-maps` for `expo-maps` once GA for modern SDK
