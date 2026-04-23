@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.database import Base, engine
 from app.core.docs import render_branded_docs
 from app.routers import admin, feedback, vibes
+from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
 
@@ -90,6 +91,15 @@ def create_app() -> FastAPI:
     @app.get("/api", include_in_schema=False)
     def api_root():
         return RedirectResponse(url="/api/docs")
+
+    # Background signal-refresh scheduler
+    @app.on_event("startup")
+    async def _v2n_startup() -> None:
+        start_scheduler()
+
+    @app.on_event("shutdown")
+    async def _v2n_shutdown() -> None:
+        stop_scheduler()
 
     return app
 

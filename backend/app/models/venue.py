@@ -28,6 +28,9 @@ class Venue(Base):
 
     vibe = relationship("Vibe", back_populates="venue", uselist=False, cascade="all, delete-orphan")
     feedback = relationship("FeedbackLog", back_populates="venue", cascade="all, delete-orphan")
+    external_signals = relationship(
+        "VenueSignals", back_populates="venue", uselist=False, cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Venue {self.name} ({self.category.value})>"

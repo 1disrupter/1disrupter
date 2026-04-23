@@ -1,0 +1,42 @@
+{
+  "summary": "Tested Vibe2Nite Signal Engine iteration (backend + frontend). 24/26 pytest cases pass. Signal engine refresh endpoint, external_signals on /admin/venues, score formula, scheduler auto-population, and jitter all verified. Frontend admin: refresh button triggers POST /admin/signals/refresh, Inspector modal shows external-signals-panel with all 5 rows and numeric 0-10 values. 2 legacy tests now fail due to expected behavioral divergence between old compute_vibe_score (vibe.signals) and new calculate_vibe_score_from_signals (external_signals); one of those failures exposes a real product concern (see action_items).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/feedback", "issue": "User votes via /feedback no longer persist their effect on vibe_score. The feedback endpoint updates vibes.user_votes and recomputes via legacy compute_vibe_score, but the scheduler (runs every 5 min + on-demand) overwrites vibes.vibe_score using calculate_vibe_score_from_signals which reads venue_signals.user_votes_score (a stubbed module value that is NOT kept in sync with vibes.user_votes). Net effect: a user voting 'dead' 10 times will see their vote accepted (vibe.user_votes decreases) but the published vibe_score can still stay the same or even go up after the next scheduler tick."},
+      {"endpoint": "GET /api/admin/venues vibe.signals", "issue": "vibe.signals.user_votes field is no longer the source used by the computed vibe_score. The displayed field is a legacy mirror only. Either remove it from the response, or have the scheduler sync vibes.user_votes <-> venue_signals.user_votes_score so the two stay consistent. Today they diverge silently."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_signal_engine.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Decide product behavior: should /feedback votes feed venue_signals.user_votes_score (so votes actually move the published score)? Currently user_feedback_signal.py appears to return a stubbed value that shadows real votes. Recommend: have user_feedback_signal read from vibes.user_votes (or from a feedback aggregate) instead of being stubbed.",
+    "Update legacy backend_test::TestScoringMath::test_seeded_scores_match_weighted_formula — it uses vibe.signals.user_votes in the formula, but the scheduler now drives score from external_signals.user_votes_score. Replace with test_signal_engine::TestScoreFromSignals::test_reported_vibe_score_matches_formula (already added).",
+    "Update legacy backend_test::TestFeedback::test_dead_lowers_and_good_raises — after the signal engine this can pass or fail depending on scheduler timing. Should be rewritten after the user_votes sync issue above is resolved."
+  ],
+  "critical_code_review_comments": [
+    "scheduler.py refresh_venue_signals mirrors social_score and time_score into vibe.signals but NOT user_votes_score -> vibe.user_votes. This asymmetry is the root cause of the /feedback regression.",
+    "user_feedback_signal.py: stubbed module value for user_votes_score ignores real votes stored in vibes.user_votes. Real votes have no effect on vibe_score after scheduler runs.",
+    "main.py still uses deprecated @app.on_event('startup'/'shutdown') instead of lifespan context — works but will break in future FastAPI versions.",
+    "calculate_vibe_score_from_signals weights sum = 1.0 (0.25+0.25+0.25+0.15+0.10) — correct. Good clamp + rounding.",
+    "VenueSignals model: unique constraint on venue_id + cascade delete present — good."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_signal_engine.py (new)"
+  ],
+  "success_rate": {"backend": "92% (24/26)", "frontend": "100%"},
+  "test_credentials": "admin: vibe2nite / nightowl (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "TEST_The Vibe Lab venue created by existing backend_test.py::TestAdmin (pre-existing behavior, not this iteration). No new seed.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Signal engine is populated on startup and every 5 minutes. Use POST /api/admin/signals/refresh to force-populate if venues lack external_signals. When testing score math against /admin/venues, use the NEW formula: vibe.signals.manual_score*.25 + external_signals.social_score*.25 + external_signals.user_votes_score*.25 + external_signals.time_score*.15 + vibe.signals.venue_boost*.10. The old legacy test in backend_test.py that multiplies vibe.signals keys will fail whenever vibes.user_votes has been nudged by /feedback — this is expected behavioral divergence, not a test bug per se, but highlights the sync issue called out in action_items. Jitter between refreshes is small (sine over 5-min window) — sleep >=5s between calls to observe changes.",
+  "rca of the issue": "ROOT CAUSE: user_feedback_signal.py returns a stubbed score unrelated to /feedback submissions. scheduler.py writes this stub into venue_signals.user_votes_score and then calculate_vibe_score_from_signals uses it (weight 0.25). Meanwhile /feedback updates vibes.user_votes only (legacy). Therefore within 5 minutes of any vote, the scheduler will overwrite the user-visible vibe_score with a score that ignores the vote. REPRODUCTION: POST /feedback {venue_id, vote:'dead'} 10 times; wait <= 5 min or call /admin/signals/refresh; GET /admin/venues -> vibe_score unchanged or increased. MITIGATION: user_feedback_signal should read the current vibes.user_votes (or an aggregate of recent /feedback rows) and return that as its 0-10 score instead of a deterministic stub."
+}

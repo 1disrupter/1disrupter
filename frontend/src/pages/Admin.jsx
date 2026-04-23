@@ -5,7 +5,8 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  LogOut, Plus, TrendingUp, Database, Sliders, LogIn, Lock,
+  LogOut, Plus, TrendingUp, Database, Sliders, LogIn, Lock, RefreshCw,
+  Activity, Radar, CalendarClock, Clock, ThumbsUp,
 } from "lucide-react";
 import {
   Navbar, Footer, Logo, LogoMark,
@@ -16,7 +17,7 @@ import {
   VibeScoreBadge, StatusIndicator,
 } from "@/components/v2n";
 import { cx } from "@/lib/cx";
-import { listAdminVenues, createVenue, updateSignals } from "@/lib/api";
+import { listAdminVenues, createVenue, updateSignals, triggerSignalRefresh } from "@/lib/api";
 
 const ADMIN_CREDS = { user: "vibe2nite", pass: "nightowl" };
 const STORAGE_KEY = "v2n_admin_session";
@@ -343,6 +344,63 @@ function VenuesPanel({ venues, onAdd, onInspect, query, setQuery }) {
 }
 
 // ---------------------------------------------------------------------------
+// External signals panel (read-only — fed by the background scheduler)
+// ---------------------------------------------------------------------------
+const SIGNAL_META = {
+  google_score:     { label: "Google busyness",  icon: <Radar size={14} />,         tone: "text-primary-glow", bar: "bg-primary-glow" },
+  social_score:     { label: "Social activity",  icon: <Activity size={14} />,      tone: "text-accent-pink",  bar: "bg-accent-pink" },
+  event_score:      { label: "Live events",      icon: <CalendarClock size={14} />, tone: "text-status-busy",  bar: "bg-status-busy" },
+  time_score:       { label: "Time pattern",     icon: <Clock size={14} />,         tone: "text-glow-aqua",    bar: "bg-glow-aqua" },
+  user_votes_score: { label: "Recent votes",     icon: <ThumbsUp size={14} />,      tone: "text-status-medium",bar: "bg-status-medium" },
+};
+
+function ExternalSignalsPanel({ ext }) {
+  if (!ext) {
+    return (
+      <div className="rounded-xl2 border border-white/10 bg-white/[0.02] p-4 text-center text-xs text-white/55">
+        Signal engine hasn't run for this venue yet. Wait a few seconds or trigger a refresh.
+      </div>
+    );
+  }
+  const when = ext.updated_at ? new Date(ext.updated_at).toLocaleTimeString() : "—";
+  return (
+    <div
+      data-testid="external-signals-panel"
+      className="rounded-xl2 border border-white/10 bg-white/[0.02] p-4"
+    >
+      <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.28em]">
+        <span className="flex items-center gap-1.5 text-primary-glow">
+          <Activity size={12} /> Signal engine
+        </span>
+        <span className="text-white/45">updated {when}</span>
+      </div>
+      <ul className="space-y-2">
+        {Object.entries(SIGNAL_META).map(([k, meta]) => {
+          const v = Number(ext[k] ?? 0);
+          const pct = Math.max(0, Math.min(100, (v / 10) * 100));
+          return (
+            <li key={k} data-testid={`ext-signal-${k}`} className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className={cx("flex items-center gap-1.5", meta.tone)}>
+                  {meta.icon} {meta.label}
+                </span>
+                <span className="font-mono text-white">{v.toFixed(2)}</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
+                <div
+                  className={cx("h-full rounded-full transition-all", meta.bar)}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Signal inspector
 // ---------------------------------------------------------------------------
 function SignalInspector({ item, onClose, onSaved }) {
@@ -415,15 +473,18 @@ function SignalInspector({ item, onClose, onSaved }) {
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-between gap-4 rounded-xl2 border border-primary-glow/30 bg-primary/5 p-6">
-          <BannerChip label="LIVE PREVIEW" tone="purple" />
-          <VibeScoreBadge score={localScore} size="lg" />
-          <StatusIndicator
-            status={localScore >= 8 ? "busy" : localScore >= 5 ? "medium" : "dead"}
-          />
-          <p className="text-center text-[11px] uppercase tracking-[0.22em] text-white/55">
-            Score is computed client-side the same way as the backend
-          </p>
+        <div className="space-y-4">
+          <div className="flex flex-col items-center gap-4 rounded-xl2 border border-primary-glow/30 bg-primary/5 p-6">
+            <BannerChip label="LIVE PREVIEW" tone="purple" />
+            <VibeScoreBadge score={localScore} size="lg" />
+            <StatusIndicator
+              status={localScore >= 8 ? "busy" : localScore >= 5 ? "medium" : "dead"}
+            />
+            <p className="text-center text-[11px] uppercase tracking-[0.22em] text-white/55">
+              Score is computed client-side the same way as the backend
+            </p>
+          </div>
+          <ExternalSignalsPanel ext={item.external_signals} />
         </div>
       </div>
     </Modal>
@@ -561,7 +622,22 @@ export default function Admin() {
   const [search, setSearch] = useState("");
   const [inspect, setInspect] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const toastRef = useToast();
   const navigate = useNavigate();
+
+  const runRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await triggerSignalRefresh();
+      toastRef.success(`Signal engine: ${res.refreshed ?? 0}/${res.total ?? 0} venues refreshed`);
+      await load();
+    } catch (e) {
+      toastRef.error(e.response?.data?.detail || "Refresh failed");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -610,6 +686,16 @@ export default function Admin() {
             <div className="hidden items-center gap-2 md:flex">
               <Chip tone="purple">Live</Chip>
               <Chip tone="neutral">{venues.length} rows</Chip>
+              <Button
+                size="sm"
+                variant="secondary"
+                leftIcon={<RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />}
+                onClick={runRefresh}
+                disabled={refreshing}
+                data-testid="admin-refresh-signals"
+              >
+                {refreshing ? "Refreshing…" : "Refresh signals"}
+              </Button>
             </div>
           </header>
 

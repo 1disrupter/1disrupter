@@ -33,3 +33,29 @@ def recompute_from_vibe(vibe: Vibe) -> tuple[float, CrowdLevel]:
     """Convenience: recompute score & crowd directly from an ORM Vibe instance."""
     score = compute_vibe_score(vibe.signals_dict())
     return score, crowd_level_from_score(score)
+
+
+# ---------------------------------------------------------------------------
+# Signal-Engine aware variant (added; does NOT replace compute_vibe_score)
+# ---------------------------------------------------------------------------
+def calculate_vibe_score_from_signals(signals, manual_score: float, venue_boost: float) -> float:
+    """Weighted blend using the cached VenueSignals row + manual inputs.
+
+    Formula (requested):
+        score = manual_score*0.25 + signals.social_score*0.25
+              + signals.user_votes_score*0.25 + signals.time_score*0.15
+              + venue_boost*0.10
+    Clamped to [0, 10]. Accepts either a VenueSignals ORM row or a dict
+    with the same keys — makes testing painless.
+    """
+    def _g(k: str) -> float:
+        return float(getattr(signals, k, None) if not isinstance(signals, dict) else signals.get(k, 0.0) or 0.0)
+
+    raw = (
+        float(manual_score or 0.0) * 0.25
+        + _g("social_score") * 0.25
+        + _g("user_votes_score") * 0.25
+        + _g("time_score") * 0.15
+        + float(venue_boost or 0.0) * 0.10
+    )
+    return round(min(max(raw, 0.0), 10.0), 2)

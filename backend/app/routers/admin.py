@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import Venue, Vibe
+from app.models import Venue, Vibe, VenueSignals
 from app.models.venue import VenueCategory
 from app.schemas.vibe import VenueOut, VibeOut, SignalsOut
 from app.services.scoring import compute_vibe_score, crowd_level_from_score
@@ -32,8 +32,13 @@ class SignalsUpdate(BaseModel):
 @router.get("/venues", summary="List all venues with current vibe")
 def list_venues(db: Session = Depends(get_db)):
     rows = db.query(Venue, Vibe).join(Vibe, Venue.id == Vibe.venue_id).all()
+    # Pre-load signals for the shown venues in one query
+    signals_map = {
+        s.venue_id: s for s in db.query(VenueSignals).all()
+    }
     items = []
     for venue, vibe in rows:
+        ext = signals_map.get(venue.id)
         items.append({
             "venue": VenueOut.model_validate(venue).model_dump(),
             "vibe": VibeOut(
@@ -43,8 +48,16 @@ def list_venues(db: Session = Depends(get_db)):
                 last_updated=vibe.last_updated,
                 signals=SignalsOut(**vibe.signals_dict()),
             ).model_dump(),
+            "external_signals": ext.as_dict() if ext else None,
         })
     return {"count": len(items), "items": items}
+
+
+@router.post("/signals/refresh", summary="Trigger a one-off signal refresh")
+async def trigger_refresh():
+    """Kick the scheduler's refresh job on-demand (in addition to the 5-min cron)."""
+    from app.services.scheduler import refresh_all_signals
+    return await refresh_all_signals()
 
 
 @router.post("/venues", response_model=VenueOut, status_code=201, summary="Create a venue")

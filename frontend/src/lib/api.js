@@ -21,3 +21,6 @@ export const createVenue = (payload) =>
 
 export const updateSignals = (venue_id, signals) =>
   api.patch(`/admin/venues/${venue_id}/signals`, signals).then((r) => r.data);
+
+export const triggerSignalRefresh = () =>
+  api.post("/admin/signals/refresh").then((r) => r.data);
