@@ -8,3 +8,4 @@ from app.models.user_intel import (  # noqa: F401
     UserLocationPing, VenueVisit, VenueVibeHistory,
     UserWallet, VenueRewardOffer, VenueRedemption,
 )
+from app.models.push_token import UserPushToken  # noqa: F401

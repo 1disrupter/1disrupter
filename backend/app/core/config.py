@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     BRAND_CARD: str = "#11071F"          # Card background
     BRAND_BORDER: str = "#2A1846"        # Subtle border
 
+    # Optional 3rd-party keys (additive — stub fallback when unset)
+    GOOGLE_MAPS_API_KEY: str = ""
+    EXPO_PUSH_ACCESS_TOKEN: str = ""     # optional Expo push auth (rarely needed)
+
 
 @lru_cache
 def get_settings() -> Settings:

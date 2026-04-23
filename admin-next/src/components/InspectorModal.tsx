@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2, Coins } from "lucide-react";
+import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2, Coins, Radio, Navigation } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   AdminVenueRow, updateSignals, triggerSignalRefresh,
   getForecast, getTouristFlags, getLiveMusic, TouristLabel, Trend,
-  listOffers, listRedemptions, getTrajectory,
+  listOffers, listRedemptions, getTrajectory, getIntelScore,
 } from "@/lib/api";
 import { Button, Chip, Slider } from "./ui";
+import { useVibePulse } from "@/hooks/useVibePulse";
 
 const SIGNAL_META = {
   google_score:     { label: "Google busyness", icon: <Radar size={14} />, tone: "text-primary-glow", bar: "bg-primary-glow" },
@@ -61,6 +62,11 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
     queryKey: ["trajectory", row.venue.id],
     queryFn: () => getTrajectory(row.venue.id, 6),
   });
+  const travelQ = useQuery({
+    queryKey: ["travel", row.venue.id],
+    queryFn: () => getIntelScore(row.venue.id, 40.73, -73.99),
+  });
+  const pulse = useVibePulse(row.venue.id);
 
   const forecast = forecastQ.data?.items.find((x) => x.venue_id === row.venue.id);
   const flag = flagsQ.data?.items.find((x: any) => x.venue_id === row.venue.id);
@@ -90,9 +96,18 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
       <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl3 border border-primary-glow/30 bg-background-dark shadow-softPurple">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <h3 className="font-display text-2xl tracking-wider text-white">{row.venue.name.toUpperCase()}</h3>
-          <button onClick={onClose} aria-label="Close" className="rounded-full p-2 text-white/60 hover:text-white hover:bg-white/10">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-3">
+            {pulse.live ? (
+              <Chip tone="aqua" className="animate-pulse" data-testid="inspector-live-chip">
+                <Radio size={10} /> LIVE
+              </Chip>
+            ) : (
+              <Chip tone="neutral">OFFLINE</Chip>
+            )}
+            <button onClick={onClose} aria-label="Close" className="rounded-full p-2 text-white/60 hover:text-white hover:bg-white/10">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-6 p-5 md:grid-cols-3">
@@ -147,10 +162,36 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
                 className="font-display text-6xl leading-none text-white"
                 style={{ textShadow: "0 0 18px rgba(177,92,255,0.8)" }}
               >
-                {localScore.toFixed(1)}
+                {(pulse.last?.vibe_score ?? localScore).toFixed(1)}
               </span>
-              <span className="text-[11px] uppercase tracking-[0.26em] text-white/55">Vibe score · {crowd}</span>
+              <span className="text-[11px] uppercase tracking-[0.26em] text-white/55">
+                Vibe score · {(pulse.last?.crowd_level ?? crowd).toString()}
+              </span>
+              {pulse.last?.last_updated && (
+                <span className="text-[10px] text-white/40">
+                  updated {new Date(pulse.last.last_updated).toLocaleTimeString()}
+                </span>
+              )}
             </div>
+
+            {travelQ.data && (
+              <div className="rounded-xl2 border border-white/10 bg-white/[0.02] p-4" data-testid="inspector-travel-panel">
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="text-[11px] uppercase tracking-[0.28em] text-primary-glow"><Navigation size={12} className="inline mr-1" /> Travel time</h4>
+                  <Chip tone="neutral">{(travelQ.data.travel_provider || "stub").toUpperCase()}</Chip>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-white/45">Walking</p>
+                    <p className="mt-1 font-display text-2xl text-glow-aqua">{Math.round(travelQ.data.walking_time_minutes ?? 0)}<span className="ml-1 text-xs text-white/55">min</span></p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-white/45">Driving</p>
+                    <p className="mt-1 font-display text-2xl text-accent-pink">{Math.round(travelQ.data.driving_time_minutes ?? 0)}<span className="ml-1 text-xs text-white/55">min</span></p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3 rounded-xl2 border border-white/10 bg-white/[0.02] p-4">
               <h4 className="text-[11px] uppercase tracking-[0.28em] text-primary-glow">Intelligence</h4>

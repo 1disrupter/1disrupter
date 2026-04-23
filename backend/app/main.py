@@ -14,6 +14,7 @@ from app.core.docs import render_branded_docs
 from app.routers import admin, feedback, vibes
 from app.routers import vibes_extras
 from app.routers import intel, rewards
+from app.routers import notifications, ws, venues_ext
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -72,6 +73,10 @@ def create_app() -> FastAPI:
     app.include_router(admin.router, prefix="/api")
     app.include_router(intel.router, prefix="/api")
     app.include_router(rewards.router, prefix="/api")
+    app.include_router(notifications.router, prefix="/api")
+    app.include_router(venues_ext.router, prefix="/api")
+    # WebSocket router — no prefix (clients connect to /ws/vibe/{id})
+    app.include_router(ws.router)
 
     # Health
     @app.get("/api/health", tags=["meta"], summary="Service heartbeat")
@@ -100,6 +105,9 @@ def create_app() -> FastAPI:
     # Background signal-refresh scheduler
     @app.on_event("startup")
     async def _v2n_startup() -> None:
+        import asyncio
+        from app.services.ws_manager import manager as _wsm
+        _wsm.bind_loop(asyncio.get_event_loop())
         start_scheduler()
 
     @app.on_event("shutdown")

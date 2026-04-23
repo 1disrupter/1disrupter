@@ -23,6 +23,7 @@ from app.models import Venue, Vibe, VenueSignals
 from app.services.scoring import calculate_vibe_score_from_signals, crowd_level_from_score
 from app.services.signals import compute_signals_for_venue
 from app.services.user_intel import append_current_scores, detect_visits
+from app.services.ws_manager import manager as ws_manager
 
 logger = logging.getLogger("vibe2nite.scheduler")
 
@@ -75,6 +76,27 @@ async def refresh_venue_signals(venue_id: str) -> dict:
         vibe.last_updated = datetime.now(timezone.utc)
 
         db.commit()
+        # Broadcast live update to any WebSocket subscribers for this venue.
+        try:
+            event = {
+                "type": "vibe_update",
+                "venue_id": venue.id,
+                "vibe_score": new_score,
+                "crowd_level": vibe.crowd_level.value if hasattr(vibe.crowd_level, "value") else vibe.crowd_level,
+                "external_signals": {
+                    "google_score": row.google_score,
+                    "social_score": row.social_score,
+                    "event_score": row.event_score,
+                    "time_score": row.time_score,
+                    "user_votes_score": row.user_votes_score,
+                },
+                "last_updated": row.updated_at.isoformat(),
+            }
+            # Use the loop-aware dispatcher so POST /feedback (which uses its
+            # own asyncio.run) still reaches sockets bound to the main loop.
+            ws_manager.broadcast_sync(venue.id, event)
+        except Exception:  # pragma: no cover
+            pass
         return {"venue_id": venue.id, **result, "vibe_score": new_score}
     except Exception as exc:  # pragma: no cover - best-effort logging
         db.rollback()

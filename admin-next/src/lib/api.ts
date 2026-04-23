@@ -157,3 +157,26 @@ export const getTrajectory = (venue_id: string, hours = 6) =>
   request<TrajectoryPoint[]>(`/intel/trajectory/${venue_id}?hours=${hours}`);
 
 export const getFlow = () => request<FlowRow[]>(`/intel/flow`);
+
+// P2 — travel time enrichment
+export interface IntelScore {
+  id: string;
+  name: string;
+  category: Category;
+  lat: number;
+  lng: number;
+  vibe_score: number;
+  crowd_level: Crowd | null;
+  external_signals: ExternalSignals | null;
+  distance_km?: number;
+  walking_time_minutes?: number;
+  driving_time_minutes?: number;
+  travel_provider?: "stub" | "google";
+}
+export const getIntelScore = (venue_id: string, user_lat?: number, user_lng?: number) => {
+  const qs = new URLSearchParams();
+  if (user_lat !== undefined) qs.set("user_lat", String(user_lat));
+  if (user_lng !== undefined) qs.set("user_lng", String(user_lng));
+  const s = qs.toString();
+  return request<IntelScore>(`/intel/score/${venue_id}${s ? `?${s}` : ""}`);
+};

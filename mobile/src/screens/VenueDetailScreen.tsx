@@ -5,7 +5,7 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getDirections, postFeedback, getForecastAll, getTouristFlags, getLiveMusic,
-  getTrajectory, listVenueOffers,
+  getTrajectory, listVenueOffers, getIntelScore,
   VoteType, Top3Item, ForecastItem, TouristFlagItem, LiveMusicItem,
 } from "@/lib/api";
 import { colors, radius, spacing } from "@/theme";
@@ -14,6 +14,7 @@ import { VibeScoreBadge, CrowdDot, Sparkline } from "@/components/VibeScoreBadge
 import { Chip, LiveMusicBadge, TouristFlagBadge, TrendBadge } from "@/components/Chip";
 import { GlowButton } from "@/components/GlowButton";
 import { awardCredits, useCreditToast, useWallet } from "@/lib/rewards";
+import { useVibePulse } from "@/lib/useVibePulse";
 
 type RouteParams = { VenueDetail: { venue: Top3Item } };
 
@@ -33,12 +34,20 @@ export default function VenueDetailScreen() {
     queryKey: ["venue-offers", venue.id],
     queryFn: () => listVenueOffers(venue.id),
   });
+  const travelQ = useQuery({
+    queryKey: ["travel", venue.id, DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng],
+    queryFn: () => getIntelScore(venue.id, DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng),
+  });
   const walletQ = useWallet();
   const toast = useCreditToast();
+  const pulse = useVibePulse(venue.id);
 
   const forecast = forecastQ.data?.items.find((x) => x.venue_id === venue.id) as ForecastItem | undefined;
   const tourist = touristQ.data?.items.find((x) => x.venue_id === venue.id) as TouristFlagItem | undefined;
   const live = liveQ.data?.items.find((x) => x.venue_id === venue.id) as LiveMusicItem | undefined;
+
+  // Prefer live score over the initial prop when the socket is up.
+  const liveScore = pulse.last?.vibe_score ?? forecast?.current_vibe_score ?? venue.vibe_score;
 
   const voteM = useMutation({
     mutationFn: async (vote: VoteType) => {
@@ -75,9 +84,10 @@ export default function VenueDetailScreen() {
         </Text>
 
         <View style={styles.hero}>
-          <VibeScoreBadge score={forecast?.current_vibe_score ?? venue.vibe_score} size="lg" />
+          <VibeScoreBadge score={liveScore} size="lg" />
           <View style={{ flex: 1, marginLeft: spacing.md, gap: 8 }}>
-            <CrowdDot score={venue.vibe_score} />
+            <CrowdDot score={liveScore} />
+            {pulse.live && <Chip tone="aqua" label="● LIVE" small />}
             {forecast && <TrendBadge trend={forecast.trend} />}
             {live?.live_music && <LiveMusicBadge />}
             {tourist && <TouristFlagBadge label={tourist.label} />}
@@ -88,6 +98,27 @@ export default function VenueDetailScreen() {
           <Text style={styles.sectionLabel}>Trajectory</Text>
           <TrajectorySvg data={trajQ.data ?? []} />
         </View>
+
+        {travelQ.data && (
+          <View style={styles.card} testID="travel-time-card">
+            <Text style={styles.sectionLabel}>Travel time</Text>
+            <View style={{ flexDirection: "row", gap: spacing.md, marginTop: 6, flexWrap: "wrap" }}>
+              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+                <Text style={{ color: colors.aqua, fontSize: 22, fontWeight: "900" }}>
+                  {Math.round(travelQ.data.walking_time_minutes ?? 0)}
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" }}>min walk</Text>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+                <Text style={{ color: colors.pink, fontSize: 22, fontWeight: "900" }}>
+                  {Math.round(travelQ.data.driving_time_minutes ?? 0)}
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" }}>min drive</Text>
+              </View>
+              <Chip tone="neutral" small label={(travelQ.data.travel_provider || "stub").toUpperCase()} />
+            </View>
+          </View>
+        )}
 
         {(offersQ.data ?? []).length > 0 && (
           <View style={styles.card}>

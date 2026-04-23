@@ -24,6 +24,7 @@ from app.services.rewards import (
     redeem,
 )
 from app.services.rewards.redemption import RedemptionError
+from app.services.notifications import milestone_for, send_milestone_push
 
 router = APIRouter(prefix="/rewards", tags=["rewards"])
 
@@ -120,7 +121,21 @@ def earn(payload: EarnIn, db: Session = Depends(get_db)) -> EarnOut:
     award = int(payload.amount) if payload.amount is not None else credits_for(payload.action)
     if award <= 0:
         raise HTTPException(status_code=400, detail="unknown action / no credits configured")
+
+    # Capture the previous balance so we can detect milestone crossings.
+    prev_wallet = get_wallet(db, payload.user_id)
+    previous = int(prev_wallet.credits or 0)
+
     w = add_credits(db, payload.user_id, award)
+
+    # Fire-and-forget milestone push. Never raise into the route.
+    crossed = milestone_for(previous, int(w.credits or 0))
+    if crossed is not None:
+        try:
+            send_milestone_push(db, wallet_id=payload.user_id, milestone=crossed, total=int(w.credits or 0))
+        except Exception:  # pragma: no cover
+            pass
+
     return EarnOut(
         user_id=w.user_id, action=payload.action, awarded=award, credits=w.credits,
     )

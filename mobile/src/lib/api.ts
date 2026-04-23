@@ -183,3 +183,22 @@ export const postPing = (lat: number, lng: number, device_id?: string) =>
 export interface TrajectoryPoint { timestamp: string; vibe_score: number }
 export const getTrajectory = (venue_id: string, hours = 6) =>
   request<TrajectoryPoint[]>(`/intel/trajectory/${venue_id}?hours=${hours}`);
+
+export interface IntelScore {
+  id: string;
+  name: string;
+  category: Category;
+  lat: number;
+  lng: number;
+  vibe_score: number;
+  crowd_level: string | null;
+  external_signals: Record<string, number> | null;
+  distance_km?: number;
+  walking_time_minutes?: number;
+  driving_time_minutes?: number;
+  travel_provider?: "stub" | "google";
+}
+export const getIntelScore = (venue_id: string, user_lat?: number, user_lng?: number) =>
+  request<IntelScore>(
+    `/intel/score/${venue_id}${qs({ user_lat, user_lng })}`
+  );

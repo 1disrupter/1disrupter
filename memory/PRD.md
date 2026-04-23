@@ -207,3 +207,52 @@ PostgreSQL's data directory was on **ephemeral container storage** (`/var/lib/po
 - [x] Full backend pytest suite: **67/67 still green**
 - [x] Manual curl verification: backend restart and full PG restart both preserve wallet balances.
 
+---
+
+## Iteration 9 — P2 wave: Push Notifications, Vibe Pulse (WebSocket), Google Distance Matrix (2026-04-23)
+
+### Implemented (additive — zero existing endpoints, models, Signal Engine or Vibe Score logic touched)
+
+**Backend — DB**
+- [x] New table `user_push_tokens` (wallet_id PK, expo_push_token) via Alembic `7beff8b51618`.
+
+**Backend — Push**
+- [x] `services/notifications/*` — Expo Push HTTP client, milestone helper (10/25/50/100), `send_push()`, `send_milestone_push()`.
+- [x] `POST /api/notifications/register` (upsert), `POST /api/notifications/test` (debug).
+- [x] `POST /api/rewards/earn` now detects milestone crossings and fires `send_milestone_push()` fire-and-forget. Existing earn contract unchanged.
+
+**Backend — Vibe Pulse (WebSocket)**
+- [x] `services/ws_manager.py` — `VibeConnectionManager` with room-per-venue, safe cross-loop dispatch (`bind_loop()` + `broadcast_sync()` via `asyncio.run_coroutine_threadsafe`), graceful disconnect, 30 s heartbeat.
+- [x] `GET /ws/vibe/{venue_id}` — accepts socket, sends immediate snapshot, keeps keep-alive loop.
+- [x] Scheduler's `refresh_venue_signals()` now broadcasts `vibe_update` frames (score, crowd_level, external_signals, updated_at) after each refresh — works even when called via `asyncio.run` from `POST /feedback`.
+
+**Backend — Distance Matrix**
+- [x] `services/maps/` — `get_travel_time()` with 5-minute in-memory cache (100 m rounded keys); uses `GOOGLE_MAPS_API_KEY` when set, falls back to haversine stub (`walking=4.8 km/h`, `driving=28 km/h`).
+- [x] New enriched routes: `GET /api/venues/list?user_lat&user_lng` (all venues + travel fields), `GET /api/intel/score/{venue_id}?user_lat&user_lng` (single).
+
+**Mobile (`/app/mobile`)**
+- [x] `expo-notifications` + `expo-device` added; `lib/push.ts` requests permissions, gets Expo push token, POSTs to `/notifications/register` on app start.
+- [x] `lib/useVibePulse.ts` — typed WebSocket hook with auto-reconnect (2.5 s linear) + heartbeat filtering.
+- [x] VenueDetail now shows a **LIVE** chip when the socket is up, overlays the streamed Vibe Score over the initial prop, and renders a **Travel time** card (walking / driving mins + provider badge) from `/intel/score`.
+
+**Admin (`/app/admin-next`)**
+- [x] `hooks/useVibePulse.ts` mirrors the mobile hook (web WebSocket).
+- [x] InspectorModal header now carries a pulsing **LIVE / OFFLINE** chip, the "Live preview" score auto-updates from the socket (crowd level + updated-at included), and a new **Travel time** panel shows walking + driving minutes with the provider.
+- [x] `lib/api.ts` gained `getIntelScore`, `grantCredits`, `lookupWallet`.
+
+**Tests (`/app/backend/tests/test_p2_features.py`)**
+- [x] 10 new tests covering: push register upsert, milestone helper (all four thresholds), milestone trigger on earn, `/venues/list` & `/intel/score` enrichment, travel-time cache warmth, stub fallback when no key, WS snapshot on connect, WS broadcast on feedback.
+- [x] **Total: 77/77 pytest green** (67 prior + 10 new).
+- [x] Mobile `yarn typecheck` green; Next.js `yarn build` green (9 routes).
+
+### Notes
+- WS tests use `ws://localhost:8001` because some preview ingresses don't proxy `wss://` — this matches the test agent's prior guidance.
+- Expo push sends happen against Expo's public URL with the stored token; the send path never raises into the earn route (fully best-effort).
+- Scheduler WS broadcasts use `broadcast_sync` which auto-routes to the main uvicorn loop via the loop reference captured in `@app.on_event("startup")`.
+
+### Remaining backlog additions (P3)
+- [ ] Rate-limit `/notifications/register` (prevent abuse of the upsert).
+- [ ] Persist WS broadcast for offer creation / redemption events (currently only `vibe_update`).
+- [ ] Push icons & channel config tuned for iOS critical alerts.
+- [ ] Hook `/rewards/redeem` to a WS `offer_redeemed` event and a confirmation push.
+
