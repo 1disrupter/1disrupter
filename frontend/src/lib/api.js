@@ -24,3 +24,15 @@ export const updateSignals = (venue_id, signals) =>
 
 export const triggerSignalRefresh = () =>
   api.post("/admin/signals/refresh").then((r) => r.data);
+
+export const getForecast = (venue_id) =>
+  api.get("/vibes/forecast", { params: venue_id ? { venue_id } : {} }).then((r) => r.data);
+
+export const getTouristFlags = () =>
+  api.get("/vibes/tourist-flags").then((r) => r.data);
+
+export const getLiveMusic = () =>
+  api.get("/vibes/live-music").then((r) => r.data);
+
+export const getHeatmap = () =>
+  api.get("/vibes/heatmap").then((r) => r.data);

@@ -7,6 +7,7 @@ import {
 import {
   LogOut, Plus, TrendingUp, Database, Sliders, LogIn, Lock, RefreshCw,
   Activity, Radar, CalendarClock, Clock, ThumbsUp,
+  TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2,
 } from "lucide-react";
 import {
   Navbar, Footer, Logo, LogoMark,
@@ -17,7 +18,10 @@ import {
   VibeScoreBadge, StatusIndicator,
 } from "@/components/v2n";
 import { cx } from "@/lib/cx";
-import { listAdminVenues, createVenue, updateSignals, triggerSignalRefresh } from "@/lib/api";
+import {
+  listAdminVenues, createVenue, updateSignals, triggerSignalRefresh,
+  getForecast, getTouristFlags, getLiveMusic,
+} from "@/lib/api";
 
 const ADMIN_CREDS = { user: "vibe2nite", pass: "nightowl" };
 const STORAGE_KEY = "v2n_admin_session";
@@ -344,6 +348,103 @@ function VenuesPanel({ venues, onAdd, onInspect, query, setQuery }) {
 }
 
 // ---------------------------------------------------------------------------
+// Venue intelligence (forecast + tourist flag + live-music)
+// ---------------------------------------------------------------------------
+const TREND_META = {
+  rising:  { icon: <TrendingUp size={14} />,   tone: "text-glow-aqua",   label: "Rising" },
+  peaking: { icon: <Zap size={14} />,          tone: "text-accent-pink", label: "Peaking" },
+  falling: { icon: <TrendingDown size={14} />, tone: "text-status-dead", label: "Falling" },
+  steady:  { icon: <Minus size={14} />,        tone: "text-white/70",    label: "Steady" },
+};
+const LABEL_META = {
+  tourist_trap: { icon: <AlertTriangle size={14} />, tone: "text-status-busy",    label: "Tourist trap" },
+  local_gem:    { icon: <Gem size={14} />,           tone: "text-glow-aqua",      label: "Local gem" },
+  neutral:      { icon: <Minus size={14} />,         tone: "text-white/65",       label: "Neutral" },
+};
+
+function VenueIntelligencePanel({ venueId }) {
+  const [data, setData] = React.useState({ loading: true });
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [forecast, flags, live] = await Promise.all([
+          getForecast(venueId),
+          getTouristFlags(),
+          getLiveMusic(true),  // include all so we can look up our venue
+        ]);
+        if (!alive) return;
+        const myFlag = flags.items.find((x) => x.venue_id === venueId);
+        const myLive = live.items.find((x) => x.venue_id === venueId);
+        setData({ loading: false, forecast, flag: myFlag, live: myLive });
+      } catch (e) {
+        if (alive) setData({ loading: false, error: e.message });
+      }
+    })();
+    return () => { alive = false; };
+  }, [venueId]);
+
+  if (data.loading) {
+    return (
+      <div className="rounded-xl2 border border-white/10 bg-white/[0.02] p-4 text-xs text-white/55">
+        Loading intelligence…
+      </div>
+    );
+  }
+
+  const trend = TREND_META[data.forecast?.trend] || TREND_META.steady;
+  const lbl = LABEL_META[data.flag?.label] || LABEL_META.neutral;
+  const live = data.live;
+
+  return (
+    <div
+      data-testid="venue-intelligence-panel"
+      className="space-y-3 rounded-xl2 border border-white/10 bg-white/[0.02] p-4"
+    >
+      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.28em] text-primary-glow">
+        <Activity size={12} /> Venue intelligence
+      </div>
+      <div className="grid grid-cols-3 gap-3 text-xs">
+        <div>
+          <p className="mb-1 text-[10px] uppercase tracking-[0.22em] text-white/45">Forecast</p>
+          <p className={cx("flex items-center gap-1.5 font-semibold", trend.tone)} data-testid="intel-forecast">
+            {trend.icon} {trend.label}
+          </p>
+          <p className="mt-0.5 font-mono text-[10px] text-white/45">
+            Δ next hr {data.forecast?.delta_next_hour?.toFixed(2) ?? "0.00"}
+          </p>
+        </div>
+        <div>
+          <p className="mb-1 text-[10px] uppercase tracking-[0.22em] text-white/45">Crowd type</p>
+          <p className={cx("flex items-center gap-1.5 font-semibold", lbl.tone)} data-testid="intel-flag">
+            {lbl.icon} {lbl.label}
+          </p>
+          {data.flag?.reason && (
+            <p className="mt-0.5 text-[10px] text-white/45 line-clamp-2">{data.flag.reason}</p>
+          )}
+        </div>
+        <div>
+          <p className="mb-1 text-[10px] uppercase tracking-[0.22em] text-white/45">Live music</p>
+          <p
+            className={cx(
+              "flex items-center gap-1.5 font-semibold",
+              live?.live_music ? "text-accent-pink" : "text-white/55"
+            )}
+            data-testid="intel-live-music"
+          >
+            <Music2 size={14} />
+            {live?.live_music ? "Likely tonight" : "Not tonight"}
+          </p>
+          <p className="mt-0.5 font-mono text-[10px] text-white/45">
+            conf {Math.round((live?.confidence || 0) * 100)}%
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // External signals panel (read-only — fed by the background scheduler)
 // ---------------------------------------------------------------------------
 const SIGNAL_META = {
@@ -485,6 +586,7 @@ function SignalInspector({ item, onClose, onSaved }) {
             </p>
           </div>
           <ExternalSignalsPanel ext={item.external_signals} />
+          <VenueIntelligencePanel venueId={item.venue.id} />
         </div>
       </div>
     </Modal>

@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.database import Base, engine
 from app.core.docs import render_branded_docs
 from app.routers import admin, feedback, vibes
+from app.routers import vibes_extras
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
 
     # Routers — every business path under /api for ingress routing
     app.include_router(vibes.router, prefix="/api")
+    app.include_router(vibes_extras.router, prefix="/api")
     app.include_router(feedback.router, prefix="/api")
     app.include_router(admin.router, prefix="/api")
 

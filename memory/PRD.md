@@ -89,3 +89,25 @@ Radii: rounded-xl (12) / xl2 (18) / xl3 (22).
 - [ ] Replace `asyncio.run` hack in `apply_feedback` with proper async route
 - [ ] Config-drive `user_feedback_signal.WINDOW_MIN`
 - [ ] Real external-API integration per signal module (Google Popular Times, IG/TikTok velocity, event providers)
+
+---
+
+## Iteration 5 — Vibes Extras (2026-04-23)
+
+### Implemented (purely additive — no existing code modified)
+- [x] `GET /api/vibes/directions?venue_id&user_lat&user_lng` — walking ETA, distance, URL-encoded Google Maps deeplink (`provider=stub` until `GOOGLE_MAPS_API_KEY` set)
+- [x] `GET /api/vibes/heatmap` (optional `?categories=`) — 0–10 heat score = 0.4·google + 0.3·social + 0.2·votes + 0.1·events
+- [x] `GET /api/vibes/live-music` (optional `?include_all=true`) — flagged when `category=live_music` + `event_score≥3` OR `event_score≥6.5`; confidence ∈ [0,1]
+- [x] `GET /api/vibes/tourist-flags` — `tourist_trap` / `local_gem` / `neutral` with buckets + per-venue reason
+- [x] `GET /api/vibes/forecast` (optional `?venue_id`) — smooth cosine hour-curve + day boost → `rising/peaking/falling/steady`
+- [x] `GET /api/vibes/top3` — filter by `vibe`, optional distance penalty (0.05/km), `avoid_tourist_traps` (exclusion) or soft −2 penalty
+- [x] Admin Inspector modal shows new **Venue Intelligence** panel with Forecast / Crowd type / Live music cards
+- [x] `api.js` adds `getForecast`, `getTouristFlags`, `getLiveMusic`, `getHeatmap`
+- [x] Tests: **56/56 backend pytest pass**, frontend cross-check pass (iteration_5.json)
+
+### Remaining backlog additions (P2)
+- [ ] Plug in real Google Places Distance Matrix when `GOOGLE_MAPS_API_KEY` provided
+- [ ] Replace stubbed social/event signals with real providers (IG velocity, Bandsintown, Songkick)
+- [ ] Persist vibe-score history for true trajectory-based forecasts (instead of time-curve heuristic)
+- [ ] Heatmap pagination for large cities
+- [ ] Surface heatmap and live-music on the consumer `/` page (currently admin-only visibility)
