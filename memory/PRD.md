@@ -67,3 +67,25 @@ Radii: rounded-xl (12) / xl2 (18) / xl3 (22).
 1. Wire real auth + rate-limit
 2. Ship RN/Expo scaffold (locally runnable)
 3. Social-signal ingestion pipeline
+
+---
+
+## Iteration 3 — Signal Engine (2026-04-23)
+
+### Implemented
+- [x] New ORM model `VenueSignals` (1:1 with Venue) + Alembic migration
+- [x] `app/services/signals/` package with 6 modules: `google_busyness`, `social_activity`, `event_signals`, `time_patterns`, `user_feedback_signal` (real — reads `FeedbackLog` in 120-min window), `signal_engine` (composer), `_common` (helpers)
+- [x] `app/services/scheduler.py` — APScheduler `AsyncIOScheduler` running `refresh_all_signals` every 5 minutes (+ immediate run on startup); per-venue helper `refresh_venue_signals`
+- [x] Extended `scoring.py` with `calculate_vibe_score_from_signals(signals, manual_score, venue_boost)` — original `compute_vibe_score` UNTOUCHED
+- [x] Scheduler wired into FastAPI `@app.on_event("startup"/"shutdown")`
+- [x] `GET /api/admin/venues` now returns `external_signals` per item (all 5 scores + updated_at)
+- [x] New endpoint `POST /api/admin/signals/refresh` for on-demand refresh
+- [x] `POST /api/feedback` invokes `refresh_venue_signals` post-commit so response.new_vibe_score matches the published value (fixes iteration-3 desync)
+- [x] Admin UI: `ExternalSignalsPanel` in Inspector modal (5 coloured progress bars), "Refresh signals" header button
+- [x] Tests: 32/32 backend pass (iteration_4.json)
+
+### Remaining backlog additions (P2)
+- [ ] Mirror or deprecate `vibe.signals.user_votes` in `/admin/venues` (stale legacy mirror)
+- [ ] Replace `asyncio.run` hack in `apply_feedback` with proper async route
+- [ ] Config-drive `user_feedback_signal.WINDOW_MIN`
+- [ ] Real external-API integration per signal module (Google Popular Times, IG/TikTok velocity, event providers)

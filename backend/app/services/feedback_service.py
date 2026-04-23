@@ -6,6 +6,7 @@ this venue so the response's `new_vibe_score` matches what the scheduler
 would publish — no "disappearing vote" UX.
 """
 import asyncio
+import logging
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
@@ -15,6 +16,8 @@ from app.models import Venue, Vibe, FeedbackLog
 from app.models.feedback import VoteType
 from app.schemas.feedback import FeedbackIn, FeedbackOut
 from app.services.scoring import VOTE_DELTAS, compute_vibe_score, crowd_level_from_score
+
+logger = logging.getLogger("vibe2nite.feedback")
 
 
 def apply_feedback(db: Session, payload: FeedbackIn) -> FeedbackOut:
@@ -52,9 +55,9 @@ def apply_feedback(db: Session, payload: FeedbackIn) -> FeedbackOut:
     except RuntimeError:
         # Called from within a running event loop (e.g. async tests). The
         # scheduler will catch up on its next tick — legacy score returned.
-        pass
-    except Exception:
-        pass
+        logger.debug("apply_feedback: inside running loop, returning legacy score")
+    except Exception as exc:
+        logger.warning("apply_feedback: signal refresh failed: %s", exc)
 
     return FeedbackOut(
         venue_id=payload.venue_id,
