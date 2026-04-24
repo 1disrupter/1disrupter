@@ -29,7 +29,8 @@ def mint_api_key(db: Session, claim: VenueClaim) -> str:
     meta = dict(claim.meta or {})
     key = meta.get("api_key")
     if not key:
-        key = "vk_" + secrets.token_urlsafe(28)
+        # Spec: vk_<random 32 chars>. token_urlsafe(24) → ~32 chars.
+        key = "vk_" + secrets.token_urlsafe(24)
         meta["api_key"] = key
         claim.meta = meta
         db.commit()
