@@ -8,6 +8,7 @@ import {
   LogOut, Plus, TrendingUp, Database, Sliders, LogIn, Lock, RefreshCw,
   Activity, Radar, CalendarClock, Clock, ThumbsUp,
   TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2,
+  Palette, Settings as SettingsIcon,
 } from "lucide-react";
 import {
   Navbar, Footer, Logo, LogoMark,
@@ -102,6 +103,7 @@ function Sidebar({ active, onChange, onLogout }) {
     { key: "overview", label: "Overview", icon: <TrendingUp size={16} /> },
     { key: "venues", label: "Venues", icon: <Database size={16} /> },
     { key: "signals", label: "Signals", icon: <Sliders size={16} /> },
+    { key: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
   ];
   return (
     <aside className="hidden w-60 shrink-0 border-r border-white/5 bg-background-deep/60 p-4 md:block">
@@ -713,6 +715,56 @@ function SignalsPanel({ venues, onInspect }) {
 }
 
 // ---------------------------------------------------------------------------
+// Settings (internal — Brand Kit lives here now)
+// ---------------------------------------------------------------------------
+const BrandKit = React.lazy(() => import("@/pages/Brand"));
+
+function SettingsPanel() {
+  const [sub, setSub] = useState("brand");
+  const subs = [
+    { key: "brand", label: "Brand Kit", icon: <Palette size={14} /> },
+  ];
+  return (
+    <div className="space-y-5" data-testid="admin-settings-panel">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-2xl tracking-wider text-white">SETTINGS</h2>
+        <Chip tone="purple">admin-only</Chip>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {subs.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setSub(s.key)}
+            data-testid={`settings-sub-${s.key}`}
+            className={cx(
+              "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em] transition",
+              sub === s.key
+                ? "border-primary-glow/60 bg-primary/15 text-white"
+                : "border-white/10 text-white/55 hover:text-white hover:bg-white/5"
+            )}
+          >
+            {s.icon}
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {sub === "brand" && (
+        <div
+          className="rounded-2xl border border-white/10 bg-background-deep/50 overflow-hidden"
+          data-testid="admin-brandkit"
+        >
+          <React.Suspense fallback={<LoadingScreen label="Loading brand kit…" />}>
+            <BrandKit embedded />
+          </React.Suspense>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Admin root
 // ---------------------------------------------------------------------------
 export default function Admin() {
@@ -815,6 +867,8 @@ export default function Admin() {
               onAdd={() => setAddOpen(true)}
               onInspect={setInspect}
             />
+          ) : view === "settings" ? (
+            <SettingsPanel />
           ) : (
             <SignalsPanel venues={venues} onInspect={setInspect} />
           )}

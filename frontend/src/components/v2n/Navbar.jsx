@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, UserRound, Sparkles, LayoutDashboard, Palette } from "lucide-react";
+import { Menu, UserRound, Sparkles, LayoutDashboard } from "lucide-react";
 import { cx } from "@/lib/cx";
 import { Logo, LogoMark } from "./Logo";
 import { IconButton } from "./Button";
@@ -26,7 +26,6 @@ export function Navbar({ onMenu, rightSlot, className }) {
 
         <nav className="hidden items-center gap-1 md:flex">
           <NavItem to="/" end icon={<Sparkles size={14} />}>Tonight</NavItem>
-          <NavItem to="/brand" icon={<Palette size={14} />}>Brand Kit</NavItem>
           <NavItem to="/admin" icon={<LayoutDashboard size={14} />}>Admin</NavItem>
         </nav>
 

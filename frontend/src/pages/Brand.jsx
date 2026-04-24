@@ -110,14 +110,14 @@ module.exports = {
   },
 };`;
 
-export default function Brand() {
+export default function Brand({ embedded = false }) {
   const toast = useToast();
   const [modal, setModal] = useState(false);
   const [search, setSearch] = useState("");
 
   return (
     <div>
-      <Navbar />
+      {!embedded && <Navbar />}
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-4 pt-10 md:pt-16">
@@ -384,7 +384,12 @@ export default function Brand() {
         </p>
       </Modal>
 
-      <Footer />
+      <Footer_ embedded={embedded} />
     </div>
   );
+}
+
+function Footer_({ embedded }) {
+  if (embedded) return null;
+  return <Footer />;
 }
