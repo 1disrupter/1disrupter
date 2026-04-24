@@ -15,6 +15,7 @@ class VenueOut(BaseModel):
     category: VenueCategory
     latitude: float
     longitude: float
+    is_verified: bool = False
 
     model_config = {"from_attributes": True}
 

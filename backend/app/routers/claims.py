@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.services import claims as claim_svc
 from app.services import webhooks
+from app.services import owner as _owner_svc
 from app.services.signals import providers as signal_providers
 
 router = APIRouter(tags=["claims"])
@@ -60,6 +61,49 @@ def verify_claim(token: str, db: Session = Depends(get_db)):
     return result
 
 
+class ReverifyIn(BaseModel):
+    venue_id: str
+    email: EmailStr
+    owner_name: str = Field(default="", max_length=120)
+    proof: str = Field(default="", max_length=500)
+
+
+@router.post("/claims/reverify", summary="Start a re-verification flow after ownership expiry/transfer")
+async def reverify(payload: ReverifyIn, request: Request, db: Session = Depends(get_db)):
+    """Same shape as /claims/submit; the handler flags the fresh claim with
+    `meta.reverify=True` so the UI can distinguish a re-verification from a
+    brand-new claim. Works whether or not a prior needs_reverify claim exists."""
+    try:
+        base = str(request.base_url).rstrip("/")
+        result = await claim_svc.submit_claim(
+            db,
+            venue_id=payload.venue_id,
+            owner_name=(payload.owner_name or str(payload.email).split("@")[0]).strip(),
+            email=str(payload.email).strip().lower(),
+            proof=payload.proof.strip() or "reverification",
+            base_url_fallback=base,
+        )
+        # Annotate the created claim as a reverify for analytics/UX.
+        try:
+            from app.core.database import SessionLocal
+            from app.models import VenueClaim as _VC
+            s = SessionLocal()
+            try:
+                c = s.get(_VC, result["claim_id"])
+                if c:
+                    meta = dict(c.meta or {})
+                    meta["reverify"] = True
+                    c.meta = meta
+                    s.commit()
+            finally:
+                s.close()
+        except Exception:
+            pass
+        return {**result, "reverify": True}
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 # ---------------------------------------------------------------------------
 # Admin endpoints (protected only by existing admin UI + browser — we trust
 # the same shape as other admin endpoints in this repo).
@@ -90,6 +134,18 @@ def admin_review_claim(claim_id: str, payload: ClaimReview, db: Session = Depend
         raise HTTPException(status_code=404, detail=str(exc))
 
 
+@router.post("/admin/venue/{venue_id}/ownership/expire", summary="Expire ownership for a venue (admin)")
+def admin_expire_ownership(
+    venue_id: str,
+    reviewer: str = Query("admin", max_length=120),
+    db: Session = Depends(get_db),
+):
+    result = _owner_svc.admin_expire_ownership(db, venue_id, reviewer=reviewer)
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("reason", "failed"))
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Provider status + recent webhook events (admin visibility)
 # ---------------------------------------------------------------------------
@@ -102,6 +158,15 @@ def admin_provider_status():
 def admin_recent_webhooks(limit: int = Query(20, ge=1, le=50)):
     cfg = {evt: webhooks.is_configured(evt) for evt in webhooks.ENV_MAP.keys()}
     return {"configured": cfg, "recent": webhooks.recent_events(limit=limit)}
+
+
+@router.get("/admin/rewards/first-visits", summary="First-verified-visit reward history (admin)")
+def admin_first_visit_history(
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    from app.services.rewards.first_visit import list_first_visit_rewards
+    return {"items": list_first_visit_rewards(db, limit=limit)}
 
 
 # Lightweight public "is this venue claimed?" for the CRA venue detail.

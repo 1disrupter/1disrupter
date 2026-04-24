@@ -78,6 +78,16 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
         <div className="absolute left-4 top-4">
           <BannerChip label={cfg.label} tone={cfg.tone} />
         </div>
+        {venue.is_verified && (
+          <div
+            data-testid={`verified-badge-${slot}`}
+            title="Verified venue"
+            className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-glow-aqua/60 bg-glow-aqua/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.24em] text-glow-aqua shadow-neonAqua backdrop-blur"
+          >
+            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path fillRule="evenodd" d="M10 1.944A11.953 11.953 0 012.166 5 12 12 0 0010 19 12 12 0 0017.834 5 11.953 11.953 0 0110 1.944zm4.207 6.263a.75.75 0 00-1.06-1.06l-4.147 4.146-1.646-1.646a.75.75 0 10-1.06 1.06l2.176 2.177a.75.75 0 001.06 0l4.677-4.677z" clipRule="evenodd"/></svg>
+            Verified
+          </div>
+        )}
       </div>
 
       {/* Body */}

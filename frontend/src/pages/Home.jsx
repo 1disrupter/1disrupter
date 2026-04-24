@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost, ShieldCheck } from "lucide-react";
+import { MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   Navbar, Footer, BottomTabs, Logo, LogoMark,
@@ -7,7 +7,7 @@ import {
   Button, IconButton, Chip, SectionDivider, useToast,
   Modal, Input,
 } from "@/components/v2n";
-import { getTopVibes, submitFeedback, submitClaim } from "@/lib/api";
+import { getTopVibes, submitFeedback, submitClaim, checkInVenue } from "@/lib/api";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
@@ -19,7 +19,37 @@ export default function Home() {
   const [radius, setRadius] = useState(50);
   const [tab, setTab] = useState("home");
   const [claimVenue, setClaimVenue] = useState(null);
+  const [fvvBadge, setFvvBadge] = useState(null);
   const toast = useToast();
+
+  const getDeviceId = () => {
+    let d = localStorage.getItem("v2n_device_id");
+    if (!d) {
+      d = "dev_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      localStorage.setItem("v2n_device_id", d);
+    }
+    return d;
+  };
+
+  const onCheckIn = async (venue) => {
+    try {
+      const r = await checkInVenue(venue.id, getDeviceId());
+      if (r.awarded) {
+        toast.success(`+${r.bonus_credits} Vibe Credits — First verified visit today!`);
+        setFvvBadge({ venue_id: venue.id, bonus: r.bonus_credits });
+      } else if (r.reason === "venue_not_verified") {
+        toast.error("Only verified venues award the first-visit bonus.");
+      } else if (r.reason === "not_first_visitor") {
+        toast.success("Checked in. Someone beat you to the first-visit bonus tonight ✌️");
+      } else if (r.reason === "already_rewarded_today") {
+        toast.success("You already claimed today's first-visit bonus here.");
+      } else {
+        toast.success("Checked in.");
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Check-in failed");
+    }
+  };
 
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
@@ -251,15 +281,37 @@ export default function Home() {
             <p className="text-xs uppercase tracking-[0.22em] text-white/70">
               Are you the owner of <span className="text-white">{data.best_overall.venue.name}</span>? Claim this venue to unlock lightweight admin tools.
             </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              leftIcon={<ShieldCheck size={14} />}
-              onClick={() => setClaimVenue(data.best_overall.venue)}
-              data-testid="open-claim-modal"
-            >
-              Claim this venue
-            </Button>
+            <div className="flex gap-2">
+              {data.best_overall.venue.is_verified && (
+                <Button
+                  variant="aqua"
+                  size="sm"
+                  leftIcon={<CheckCircle2 size={14} />}
+                  onClick={() => onCheckIn(data.best_overall.venue)}
+                  data-testid="checkin-btn"
+                >
+                  Check in · earn +15
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<ShieldCheck size={14} />}
+                onClick={() => setClaimVenue(data.best_overall.venue)}
+                data-testid="open-claim-modal"
+              >
+                Claim this venue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {fvvBadge && data?.best_overall?.venue?.id === fvvBadge.venue_id && (
+          <div
+            data-testid="fvv-badge"
+            className="mt-2 inline-flex items-center gap-2 rounded-full border border-glow-aqua/50 bg-glow-aqua/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-glow-aqua"
+          >
+            <CheckCircle2 size={12} /> First Verified Visit Bonus · +{fvvBadge.bonus}
           </div>
         )}
       </section>

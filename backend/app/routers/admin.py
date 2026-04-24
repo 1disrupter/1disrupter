@@ -11,6 +11,7 @@ from app.models import Venue, Vibe, VenueSignals
 from app.models.venue import VenueCategory
 from app.schemas.vibe import VenueOut, VibeOut, SignalsOut
 from app.services.scoring import compute_vibe_score, crowd_level_from_score
+from app.services.venues.ownership import verified_venue_ids
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -30,17 +31,25 @@ class SignalsUpdate(BaseModel):
 
 
 @router.get("/venues", summary="List all venues with current vibe")
-def list_venues(db: Session = Depends(get_db)):
+def list_venues(
+    verified_only: bool = False,
+    db: Session = Depends(get_db),
+):
     rows = db.query(Venue, Vibe).join(Vibe, Venue.id == Vibe.venue_id).all()
     # Pre-load signals for the shown venues in one query
     signals_map = {
         s.venue_id: s for s in db.query(VenueSignals).all()
     }
+    verified = verified_venue_ids(db)
     items = []
     for venue, vibe in rows:
+        if verified_only and venue.id not in verified:
+            continue
         ext = signals_map.get(venue.id)
+        v_out = VenueOut.model_validate(venue).model_dump()
+        v_out["is_verified"] = venue.id in verified
         items.append({
-            "venue": VenueOut.model_validate(venue).model_dump(),
+            "venue": v_out,
             "vibe": VibeOut(
                 venue_id=vibe.venue_id,
                 vibe_score=vibe.vibe_score,

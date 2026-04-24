@@ -7,11 +7,15 @@ from sqlalchemy.orm import Session
 from app.models import Venue, Vibe, VenueCategory
 from app.schemas.vibe import VenueOut, VibeOut, SignalsOut, VibeResult, TopVibesResponse
 from app.services.geo import haversine_km
+from app.services.venues.ownership import verified_venue_ids
 
 
-def _to_result(venue: Venue, vibe: Vibe, user_lat: float, user_lng: float) -> VibeResult:
+def _to_result(venue: Venue, vibe: Vibe, user_lat: float, user_lng: float,
+               verified: set[str]) -> VibeResult:
+    vo = VenueOut.model_validate(venue)
+    vo.is_verified = venue.id in verified
     return VibeResult(
-        venue=VenueOut.model_validate(venue),
+        venue=vo,
         vibe=VibeOut(
             venue_id=vibe.venue_id,
             vibe_score=vibe.vibe_score,
@@ -43,6 +47,8 @@ def get_top_vibes(
     if not in_range:
         return TopVibesResponse(best_overall=None, live_music=None, hidden_gem=None)
 
+    verified = verified_venue_ids(db)
+
     best = max(in_range, key=lambda t: t[1].vibe_score)
     gem = min(in_range, key=lambda t: t[1].vibe_score)
     lm_candidates = [t for t in in_range if t[0].category == VenueCategory.live_music]
@@ -50,7 +56,7 @@ def get_top_vibes(
 
     def _build(triplet) -> Optional[VibeResult]:
         v, vb, _ = triplet
-        return _to_result(v, vb, lat, lng)
+        return _to_result(v, vb, lat, lng, verified)
 
     return TopVibesResponse(
         best_overall=_build(best),

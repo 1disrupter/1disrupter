@@ -24,6 +24,7 @@ import {
   listAdminVenues, createVenue, updateSignals, triggerSignalRefresh,
   getForecast, getTouristFlags, getLiveMusic,
   listClaims, reviewClaim, getProviderStatus, getRecentWebhooks,
+  adminExpireOwnership,
 } from "@/lib/api";
 
 const ADMIN_CREDS = { user: "vibe2nite", pass: "nightowl" };
@@ -284,17 +285,34 @@ function OverviewPanel({ venues }) {
 // Venues table
 // ---------------------------------------------------------------------------
 function VenuesPanel({ venues, onAdd, onInspect, query, setQuery }) {
+  const toast = useToast();
+  const [verifiedOnly, setVerifiedOnly] = React.useState(false);
   const filtered = venues.filter((v) =>
-    v.venue.name.toLowerCase().includes(query.toLowerCase())
+    v.venue.name.toLowerCase().includes(query.toLowerCase()) &&
+    (!verifiedOnly || v.venue.is_verified)
   );
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <SearchBar value={query} onChange={setQuery} placeholder="Search venues…" className="md:max-w-sm" />
-        <Button variant="pink" leftIcon={<Plus size={14} />} onClick={onAdd} data-testid="admin-add-venue">
-          Add venue
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setVerifiedOnly((v) => !v)}
+            data-testid="admin-verified-filter"
+            className={cx(
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs uppercase tracking-[0.22em] transition",
+              verifiedOnly
+                ? "border-glow-aqua/60 bg-glow-aqua/10 text-glow-aqua shadow-neonAqua"
+                : "border-white/10 text-white/55 hover:text-white hover:bg-white/5"
+            )}
+          >
+            Verified only
+          </button>
+          <Button variant="pink" leftIcon={<Plus size={14} />} onClick={onAdd} data-testid="admin-add-venue">
+            Add venue
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl2 border border-white/10">
@@ -316,7 +334,20 @@ function VenuesPanel({ venues, onAdd, onInspect, query, setQuery }) {
                 data-testid={`venue-row-${x.venue.id}`}
                 className={cx("border-t border-white/5", i % 2 ? "bg-white/[0.01]" : "")}
               >
-                <td className="p-3 font-semibold text-white">{x.venue.name}</td>
+                <td className="p-3 font-semibold text-white">
+                  <span className="inline-flex items-center gap-2">
+                    {x.venue.name}
+                    {x.venue.is_verified && (
+                      <span
+                        data-testid={`admin-verified-${x.venue.id}`}
+                        title="Verified venue"
+                        className="inline-flex items-center gap-1 rounded-full border border-glow-aqua/50 bg-glow-aqua/10 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.2em] text-glow-aqua"
+                      >
+                        ✓ verified
+                      </span>
+                    )}
+                  </span>
+                </td>
                 <td className="p-3">
                   <Chip tone={x.venue.category === "live_music" ? "pink" : x.venue.category === "club" ? "purple" : "aqua"}>
                     {x.venue.category.replace("_", " ")}
@@ -332,9 +363,29 @@ function VenuesPanel({ venues, onAdd, onInspect, query, setQuery }) {
                   {x.venue.latitude.toFixed(3)}, {x.venue.longitude.toFixed(3)}
                 </td>
                 <td className="p-3 text-right">
-                  <Button size="sm" variant="secondary" onClick={() => onInspect(x)} data-testid={`inspect-${x.venue.id}`}>
-                    Inspect
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    {x.venue.is_verified && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={async () => {
+                          if (!window.confirm(`Expire ownership for "${x.venue.name}"?`)) return;
+                          try {
+                            const r = await adminExpireOwnership(x.venue.id, "admin");
+                            toast.success(`Ownership expired (${r.affected} claim${r.affected === 1 ? "" : "s"}).`);
+                          } catch (e) {
+                            toast.error(e.response?.data?.detail || "Couldn't expire");
+                          }
+                        }}
+                        data-testid={`expire-${x.venue.id}`}
+                      >
+                        Expire
+                      </Button>
+                    )}
+                    <Button size="sm" variant="secondary" onClick={() => onInspect(x)} data-testid={`inspect-${x.venue.id}`}>
+                      Inspect
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}

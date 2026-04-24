@@ -67,3 +67,32 @@ export const getOwnerInbox = (key, limit = 20) =>
 
 export const setOwnerHandles = (key, payload) =>
   api.put("/owner/venue/handles", payload, ownerHeaders(key)).then((r) => r.data);
+
+// --- Iteration 15: multi-venue + owner webhooks ----------------------------
+export const getOwnerVenues = (key) =>
+  api.get("/owner/venues", ownerHeaders(key)).then((r) => r.data);
+
+export const setOwnerHandlesForVenue = (key, venue_id, payload) =>
+  api.put(`/owner/venue/${venue_id}/handles`, payload, ownerHeaders(key)).then((r) => r.data);
+
+export const setOwnerWebhooks = (key, venue_id, payload) =>
+  api.put(`/owner/venue/${venue_id}/webhooks`, payload, ownerHeaders(key)).then((r) => r.data);
+
+export const testOwnerWebhook = (key, venue_id) =>
+  api.post(`/owner/venue/${venue_id}/webhooks/test`, {}, ownerHeaders(key)).then((r) => r.data);
+
+// --- Iteration 16: ownership transfer / expire / reverify / first-visit ----
+export const requestOwnerTransfer = (key, venue_id, email) =>
+  api.post(`/owner/venue/${venue_id}/transfer/request`, { email }, ownerHeaders(key)).then((r) => r.data);
+
+export const acceptOwnerTransfer = (token) =>
+  api.get(`/owner/transfer/accept/${token}`).then((r) => r.data);
+
+export const adminExpireOwnership = (venue_id, reviewer = "admin") =>
+  api.post(`/admin/venue/${venue_id}/ownership/expire`, null, { params: { reviewer } }).then((r) => r.data);
+
+export const submitReverify = (payload) =>
+  api.post("/claims/reverify", payload).then((r) => r.data);
+
+export const checkInVenue = (venue_id, device_id) =>
+  api.post("/intel/visits/check-in", { venue_id, device_id }).then((r) => r.data);

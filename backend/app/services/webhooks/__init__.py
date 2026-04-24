@@ -170,7 +170,12 @@ def _dispatch_sync(event_type: str, title: str, body: str, meta: dict) -> None:
 
 
 def dispatch(event_type: str, *, title: str, body: str, meta: Optional[dict] = None) -> None:
-    """Fire-and-forget. Never blocks the caller, never raises."""
+    """Fire-and-forget. Never blocks the caller, never raises.
+
+    Also fans out to any owner-configured webhook URLs for the venue referenced
+    in `meta["venue_id"]` (Slack + Discord) — independent of the global webhook
+    URLs. Owner webhooks fire even when global URLs are unset.
+    """
     if event_type not in ENV_MAP:
         logger.debug("unknown webhook event_type=%s", event_type)
         return
@@ -183,3 +188,65 @@ def dispatch(event_type: str, *, title: str, body: str, meta: Optional[dict] = N
         name=f"webhook-{event_type}",
     )
     t.start()
+
+    # Owner fan-out (independent of global URL config).
+    venue_id = meta.get("venue_id")
+    if venue_id:
+        _fanout_owner(event_type, venue_id, title, body, meta)
+
+
+def dispatch_owner(event_type: str, *, venue_id: str, title: str, body: str, meta: Optional[dict] = None) -> None:
+    """Dispatch only to owner-configured URLs (used for OWNER_TEST etc.)."""
+    meta = dict(meta or {})
+    meta.setdefault("venue_id", venue_id)
+    _fanout_owner(event_type, venue_id, title, body, meta)
+
+
+def _fanout_owner(event_type: str, venue_id: str, title: str, body: str, meta: dict) -> None:
+    """Look up per-venue owner URLs and POST the same Slack/Discord payload."""
+    try:
+        from app.core.database import SessionLocal
+        from app.services import owner as owner_svc
+        s = SessionLocal()
+        try:
+            hooks = owner_svc.get_venue_webhook_urls(s, venue_id)
+        finally:
+            s.close()
+    except Exception as exc:  # pragma: no cover
+        logger.debug("owner webhook lookup failed: %s", exc)
+        return
+    if not hooks:
+        return
+    payload = _build_slack_payload(event_type, title, body, meta)
+    for kind, url in hooks:
+        t = threading.Thread(
+            target=_owner_post_sync,
+            args=(event_type, url, kind, payload, title, body, meta),
+            daemon=True,
+            name=f"owner-webhook-{kind}-{event_type}",
+        )
+        t.start()
+
+
+def _owner_post_sync(event_type: str, url: str, kind: str, payload: dict,
+                     title: str, body: str, meta: dict) -> None:
+    ok, err = _post(url, payload)
+    attempts = 1
+    if not ok:
+        time.sleep(2)
+        ok, err = _post(url, payload, attempt=2)
+        attempts = 2
+    entry = {
+        "event_type": f"OWNER:{event_type}",
+        "title": f"[{kind}] {title}",
+        "body": body,
+        "ok": ok,
+        "error": err,
+        "ts": time.time(),
+        "meta": {**meta, "owner_channel": kind},
+    }
+    _record(entry, attempts=attempts)
+    if ok:
+        logger.info("owner webhook dispatched kind=%s event=%s", kind, event_type)
+    else:
+        logger.warning("owner webhook failed kind=%s err=%s", kind, err)

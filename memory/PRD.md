@@ -555,3 +555,105 @@ sudo supervisorctl restart backend frontend postgresql
 - Welcome inbox entry auto-seeded exactly once per claim ✅
 - No changes to existing public APIs or mobile flows ✅
 
+
+---
+
+## Iteration 15 — Verified badge + multi-venue + owner webhooks (Feb 2026)
+
+### 1. Verified ✓ badge
+- `VenueOut` schema gains `is_verified: bool = False` (additive).
+- New helper `app/services/venues/ownership.py::verified_venue_ids(db)` — single query returning the set of venue ids with a verified claim.
+- Populated in **all three** serializers: `/api/vibes/top` (recommendations), `/api/admin/venues`, `/api/venues/list`, and `/api/intel/score/{id}`.
+- Admin + `/venues/list` both accept `?verified_only=true` filter.
+- **CRA Home** — `VenueHeroCard` renders an aqua neon `✓ VERIFIED` badge in the top-right.
+- **CRA Admin → Venues** — name column shows inline `✓ verified` pill; filter chip "Verified only" sits next to "Add venue".
+
+### 2. Multi-venue ownership
+- New `GET /api/owner/venues` — compact list for the venue switcher (id, name, is_verified, vibe_score, crowd, signals).
+- `GET /api/owner/me` now returns **all** verified claims for this owner (joined by email) + `owner.venue_count`.
+- New route `PUT /api/owner/venue/{venue_id}/handles` with cross-venue auth gate (403 if unowned).
+- **CRA Owner page** — pill-style venue switcher with live vibe score in each pill; `localStorage`-persisted `v2n_owner_last_venue`; all editors rebind to the active venue.
+- **Mobile OwnerScreen** — horizontal-scroll pill switcher; `AsyncStorage` preference; same editor rebinding.
+
+### 3. Owner-triggered webhook subscriptions
+- URLs stored on `VenueClaim.meta.webhooks.{slack_webhook_url, discord_webhook_url}`.
+- Validator enforces `https://hooks.slack.com/` and `https://discord.com/api/webhooks/` prefixes; empty clears.
+- New routes:
+  - `PUT /api/owner/venue/{id}/webhooks` — save (cross-venue 403, prefix validation 400).
+  - `POST /api/owner/venue/{id}/webhooks/test` — fires `OWNER_TEST` event to configured URLs.
+- Dispatcher upgrade (`app/services/webhooks/__init__.py`):
+  - `dispatch(VIBE_SPIKE|VENUE_CLAIMED|VENUE_CLOSED)` now fans out to owner-configured URLs when `meta.venue_id` is present — fires **even when global URL is unset**.
+  - New `dispatch_owner(event_type, venue_id=…)` for test-webhook flows.
+  - Same retry-once semantics as global dispatch; owner events recorded as `OWNER:<EVENT>` in the DB-backed log.
+- **CRA & Mobile Owner** — new "Integrations" section with Slack + Discord URL inputs, Save + Test buttons (live prefix validation).
+
+### 4. Testing
+- 3 new test files, **18 tests total**:
+  - `test_iter15_verified_badge.py` (5) — is_verified exposure + filter in top/admin/list/intel endpoints.
+  - `test_iter15_multi_venue.py` (5) — single/multi-venue listing, `/owner/me` counts, cross-venue handle writes & 403.
+  - `test_iter15_owner_webhooks.py` (8) — URL validation, persistence, empty clears, test-webhook auth, **live fan-out of `VIBE_SPIKE` to owner webhooks via httpbin**, cross-venue 403 on test endpoint.
+- Mobile `tsc --noEmit`: clean.
+- Backend suite: **145 passed** (127 Iter14 + 18 Iter15); 1 pre-existing external-API flake (OSM Overpass), not Iter15.
+
+### Acceptance
+- Verified ✓ badge on public `Home` cards + admin venue rows + owner dashboard ✅
+- Multi-venue switch persists across refresh on web + mobile ✅
+- Owner webhook URL save + validation + test-fire verified end-to-end (httpbin) ✅
+- `VIBE_SPIKE` events fan out to owner webhooks when only owner URLs are configured ✅
+- Iter13/Iter14 regressions: none ✅
+
+
+---
+
+## Iteration 16 — Ownership transfer + expiry + reverify + first-visit reward (Feb 2026)
+
+### 1. Ownership transfer
+- Transfer intent stored on `VenueClaim.meta`: `transfer_requested`, `transfer_email`, `transfer_token`, `transfer_expires_at` (60 min TTL).
+- `POST /api/owner/venue/{id}/transfer/request` — cross-venue auth; sends magic link to new owner (Resend or console fallback).
+- `GET|POST /api/owner/transfer/accept/{token}` — magic-link accept; old claim → `status=rejected, api_key=None`; new claim row created for the new email, fresh `vk_*` key minted, welcome inbox + push fired, `VENUE_CLAIMED` webhook with `transfer: True` meta.
+- Token is single-use + time-limited; stale tokens return 400/410.
+
+### 2. Admin expire
+- `POST /api/admin/venue/{id}/ownership/expire?reviewer=…` — sets `meta.ownership_expires_at = now`, clears `api_key`, moves claim to `status=needs_reverify`, fires `VENUE_CLOSED` webhook with `kind=ownership_expired`.
+- `verified_venue_ids()` now filters out claims whose `ownership_expires_at` is in the past → verified badge disappears from `/api/vibes/top`, `/api/venues/list`, `/api/intel/score`, admin list.
+- `resolve_claim_by_key` rejects keys belonging to inactive claims (owner console locks out automatically).
+
+### 3. Re-verification
+- Claim status machine adds `needs_reverify`.
+- `POST /api/claims/reverify { venue_id, email, owner_name?, proof? }` — same shape as submit; new `VenueClaim` row flagged `meta.reverify=True`; verifying the magic link restores `is_verified` and the owner key is re-minted.
+
+### 4. First-verified-visit reward loop
+- New module `app/services/rewards/first_visit.py`:
+  - `get_first_visit_for_venue_today(venue_id)` — returns `device_id` of earliest `VenueVisit` in the UTC day, or None.
+  - `award_first_verified_visit(venue_id, user_id)` — 15 credits if (venue verified) AND (user == first visitor today) AND (not already rewarded). Idempotent via a `reward:fvv:{venue_id}:{YYYY-MM-DD}` marker row in `user_wallets`.
+  - `check_in_and_reward` — records a fresh `VenueVisit` then evaluates the rule.
+- Fires `dispatch_owner("FIRST_VERIFIED_VISIT", venue_id=...)` on success — recorded as `OWNER:FIRST_VERIFIED_VISIT` in the DB-backed webhook log.
+- New endpoints:
+  - `POST /api/intel/visits/check-in` — `{venue_id, device_id}`
+  - `POST /api/intel/visits/{venue_id}/award-first?device_id=…`
+  - `GET /api/admin/rewards/first-visits` — per-venue-per-day marker history for the admin wallet filter.
+
+### 5. Frontend
+- **CRA Owner (`/owner`)** — gains: pink "Transfer in progress" banner (when `transfer_requested`), amber "Ownership expired — re-verify to regain access" banner with Re-verify button, editor lockout (`disabled` on handle/webhook/Save buttons when ownership inactive), new "Ownership" section with Transfer-email input + button.
+- **CRA Home** — `Check in · earn +15` aqua button on the claim bar when `best_overall.is_verified`; on success shows a "FIRST VERIFIED VISIT BONUS · +15" aqua chip under the card; reward toast copy handles all four reward outcomes.
+- **CRA Admin → Venues** — inline `Expire` ghost button next to `Inspect` (confirmation prompt) for any verified venue.
+- Mobile **OwnerScreen** — already shares the banner fields via `/owner/me`; TSC clean.
+
+### 6. Testing
+- 4 new test files, **16 tests total**:
+  - `test_iter16_ownership_transfer.py` (4) — request marks meta, accept rotates keys, single-use, 403 for unowned venue.
+  - `test_iter16_ownership_expiry.py` (4) — admin expire rotates claim, removes verified badge, 400 on unclaimed, status becomes `needs_reverify`.
+  - `test_iter16_reverify.py` (2) — reverify restores badge + 404 on unknown venue.
+  - `test_iter16_first_verified_visit.py` (6) — first visitor rewarded +15, second user not_first_visitor, idempotent retry, unverified venue doesn't reward, admin history, **owner webhook `OWNER:FIRST_VERIFIED_VISIT` fires end-to-end** (live httpbin).
+- Backend suite: **160 passed / 1 pre-existing flake** (order-sensitive scoring math test, passes standalone).
+- Mobile `tsc --noEmit` clean.
+
+### Acceptance
+- Transfer request → accept → old key 401 → new key active ✅
+- Admin expire → both keys 401, verified badge disappears from public API ✅
+- Re-verify restores badge + mints new key ✅
+- First-verified-visit awards +15, idempotent per (venue, UTC day) ✅
+- `OWNER:FIRST_VERIFIED_VISIT` webhook fan-out verified ✅
+- Owner console lockout on expired ownership ✅
+- No regressions: 145 Iter15 tests still green ✅
+

@@ -19,6 +19,7 @@ from app.services.user_intel import (
     list_visits,
     record_ping,
 )
+from app.services.rewards.first_visit import check_in_and_reward, award_first_verified_visit
 
 router = APIRouter(prefix="/intel", tags=["intel"])
 
@@ -114,3 +115,26 @@ def trajectory(
 @router.post("/trajectory/snapshot", summary="Force-append a trajectory snapshot (admin/debug)")
 def snapshot(db: Session = Depends(get_db)):
     return {"written": append_current_scores(db)}
+
+
+# ---------------------------------------------------------------------------
+# Iter 16 — visit check-in with first-verified-visit reward loop
+# ---------------------------------------------------------------------------
+class CheckInIn(BaseModel):
+    venue_id: str
+    device_id: str = Field(..., min_length=4, max_length=64)
+
+
+@router.post("/visits/check-in", summary="Record a visit and evaluate the first-verified-visit reward")
+def visits_check_in(payload: CheckInIn, db: Session = Depends(get_db)):
+    if not db.get(Venue, payload.venue_id):
+        raise HTTPException(status_code=404, detail="venue not found")
+    return check_in_and_reward(db, venue_id=payload.venue_id, user_id=payload.device_id)
+
+
+@router.post("/visits/{venue_id}/award-first", summary="Evaluate the first-visit reward without recording a new visit")
+def visits_award_first(venue_id: str, device_id: str = Query(..., min_length=4, max_length=64), db: Session = Depends(get_db)):
+    if not db.get(Venue, venue_id):
+        raise HTTPException(status_code=404, detail="venue not found")
+    return award_first_verified_visit(db, venue_id=venue_id, user_id=device_id)
+
