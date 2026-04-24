@@ -9,3 +9,6 @@ from app.models.user_intel import (  # noqa: F401
     UserWallet, VenueRewardOffer, VenueRedemption,
 )
 from app.models.push_token import UserPushToken  # noqa: F401
+from app.models.launch import (  # noqa: F401
+    VenueIntel, NotificationLog, VenueProfile, VenueAdmin,
+)

@@ -158,6 +158,70 @@ export const getTrajectory = (venue_id: string, hours = 6) =>
 
 export const getFlow = () => request<FlowRow[]>(`/intel/flow`);
 
+// P3 — forecast, intel-v2, local gems, launch, push inbox, push triggers
+export type ForecastTrend = "rising" | "falling" | "steady" | "peaking";
+export interface VenueForecast {
+  venue_id: string;
+  current_score: number;
+  forecast_score: number;
+  trend: ForecastTrend;
+  confidence: number;
+  momentum: number;
+  baseline: number;
+  cycle_boost: number;
+  horizon_hours: number;
+  as_of: string;
+  cached: boolean;
+}
+export const getVenueForecast = (venue_id: string) =>
+  request<VenueForecast>(`/forecast/${venue_id}`);
+
+export type TouristLabelV2 = "tourist_trap" | "local_gem" | "neutral";
+export interface IntelFlag { venue_id: string; label: TouristLabelV2; score: number; reason: string; updated_at: string }
+export const getIntelTouristFlags = () => request<{ items: IntelFlag[] }>(`/intel/tourist-flags`);
+export const refreshIntelTouristFlags = () =>
+  request<{ items: IntelFlag[] }>(`/intel/tourist-flags/refresh`, { method: "POST" });
+
+export interface LocalGem {
+  venue_id: string; name: string; category: Category; lat: number; lng: number;
+  vibe_score: number; gem_score: number; label: TouristLabelV2; rank: number;
+}
+export const getLocalGems = (limit = 10) =>
+  request<{ items: LocalGem[] }>(`/intel/local-gems?limit=${limit}`);
+
+export interface PushTriggerIn {
+  kind: "daily_login" | "first_visit_bonus" | "vibe_spike" | "offer_drop" | "tonight_hotspots";
+  wallet_id?: string;
+  venue_id?: string;
+  offer_name?: string;
+  cost?: number;
+  offer_id?: string;
+  score?: number;
+  top_names?: string[];
+}
+export const triggerPush = (body: PushTriggerIn) =>
+  request<{ kind: string; sent_to?: number; dispatched?: number }>(
+    `/notifications/trigger/test`,
+    { method: "POST", body: JSON.stringify(body) }
+  );
+
+export interface CitySeedVenue {
+  name: string; category: "bar" | "club" | "live_music"; latitude: number; longitude: number;
+  opening_hours?: Record<string, string>; music_type?: string; price_level?: number;
+  age_group?: string; dress_code?: string; photos?: string[];
+}
+export const seedCity = (city: string, venues: CitySeedVenue[]) =>
+  request<{ city: string; created: number; updated: number; total: number }>(
+    `/city/seed`, { method: "POST", body: JSON.stringify({ city, venues }) }
+  );
+
+export const onboardVenue = (body: {
+  venue_id: string; username: string; password: string; public_base_url?: string;
+}) => request<{
+  venue_id: string; username: string; api_key: string;
+  qr_codes: { check_in: string; feedback: string; follow_venue: string };
+}>(`/venues/onboard`, { method: "POST", body: JSON.stringify(body) });
+
 // P2 — travel time enrichment
 export interface IntelScore {
   id: string;

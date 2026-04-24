@@ -15,6 +15,8 @@ from app.routers import admin, feedback, vibes
 from app.routers import vibes_extras
 from app.routers import intel, rewards
 from app.routers import notifications, ws, venues_ext
+from app.routers import forecast as forecast_router
+from app.routers import intel_flags, launch as launch_router
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -75,6 +77,12 @@ def create_app() -> FastAPI:
     app.include_router(rewards.router, prefix="/api")
     app.include_router(notifications.router, prefix="/api")
     app.include_router(venues_ext.router, prefix="/api")
+    app.include_router(forecast_router.router, prefix="/api")
+    app.include_router(intel_flags.router, prefix="/api")
+    app.include_router(launch_router.city_router, prefix="/api")
+    app.include_router(launch_router.venues_router, prefix="/api")
+    app.include_router(launch_router.triggers_router, prefix="/api")
+    app.include_router(launch_router.inbox_router, prefix="/api")
     # WebSocket router — no prefix (clients connect to /ws/vibe/{id})
     app.include_router(ws.router)
 

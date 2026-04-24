@@ -256,3 +256,66 @@ PostgreSQL's data directory was on **ephemeral container storage** (`/var/lib/po
 - [ ] Push icons & channel config tuned for iOS critical alerts.
 - [ ] Hook `/rewards/redeem` to a WS `offer_redeemed` event and a confirmation push.
 
+---
+
+## Iteration 10 — Push engine finish + AI Forecast + Tourist Classifier + Launch Mode (2026-04-24)
+
+### Implemented (additive — existing endpoints, Signal Engine, Vibe Score untouched)
+
+**Backend — DB (Alembic `33407f75b980`)**
+- [x] 4 new tables: `venue_intel`, `notification_log`, `venue_profiles`, `venue_admins`.
+
+**Backend — Push engine (`services/notifications/push_engine.py`)**
+- [x] Templates: `daily_login`, `first_visit_bonus`, `vibe_spike`, `offer_drop`, `tonight_hotspots` + existing `milestone`.
+- [x] `NotificationLog` persistence for every dispatch → mobile inbox.
+- [x] `detect_vibe_spikes(db)` (≥12% jump over 10 min) + `dispatch_spike_alerts(db)`.
+- [x] Thread-pool fan-out (`broadcast_to_all`) — each worker gets its own SQLAlchemy session; 3 s Expo timeout.
+- [x] Hooked into `/rewards/offers POST` (fires offer_drop to all wallets), `/rewards/earn` (daily_login + first_visit_bonus triggers).
+- [x] APScheduler: new jobs — **every 10 min** spike-scan, **21:00 daily** tonight-hotspots.
+
+**Backend — new routes**
+- [x] `GET /api/forecast/{venue_id}` (5-min cached, `refresh=true` bypass) — baseline + momentum + hour-of-day cycle; returns `{current_score, forecast_score, trend, confidence, baseline, momentum, cycle_boost, horizon_hours, as_of, cached}`.
+- [x] `GET /api/intel/tourist-flags` + `POST /api/intel/tourist-flags/refresh` — persisted classifier (`tourist_trap` / `local_gem` / `neutral`) using tourist/local ratio, volatility, price level, repeat-visit loyalty.
+- [x] `GET /api/intel/local-gems?limit=N` — ranked by `vibe × (1+gem_score) × (1+loyalty)`.
+- [x] `POST /api/city/seed` — bulk upsert of venues + `VenueProfile` (hours, music, price, age, dress, photos).
+- [x] `POST /api/venues/onboard` — creates `VenueAdmin` (PBKDF2 hash, stdlib) + returns API key + inline PNG QR codes (check_in / feedback / follow_venue).
+- [x] `POST /api/venues/login` — password verify → api_key.
+- [x] `POST /api/notifications/trigger/test` — manual dispatch for every template (targeted wallet or broadcast).
+- [x] `POST /api/notifications/scan/spikes` — async `BackgroundTasks` dispatch so ingress can't time out.
+- [x] `GET /api/notifications/inbox/{wallet_id}` — last 20 items.
+
+**Mobile (`/app/mobile`)**
+- [x] New **Inbox** tab (`InboxScreen`) with kind-specific icons, 30 s polling, empty states.
+- [x] VenueDetail — AI Forecast card (`🔺/🔻/➖/⭐` + confidence + momentum) and Local-Gem / Tourist-Trap chip from `/intel/tourist-flags`.
+- [x] Tonight screen — new **💎 Local Gems** section under the Top-3 list (renders via `/intel/local-gems`; taps deep-link to VenueDetail).
+- [x] `lib/api.ts` gained `getVenueForecast`, `getTouristFlagsV2`, `getLocalGems`, `getInbox`, plus shared types.
+
+**Admin (`/app/admin-next`)**
+- [x] New **Launch** sidebar tab → `/admin/launch`:
+   - City seed panel — add/remove venue drafts, seeds via `/api/city/seed`.
+   - Venue onboarding — username/password → API key + 3 inline PNG QR codes (check_in, feedback, follow).
+   - Local Gems preview.
+- [x] InspectorModal gained:
+   - "Send push" button → SendPushModal (5 templates, targeted or broadcast).
+   - AI Forecast panel (trend, confidence, momentum, cycle boost).
+   - Classifier panel (💎 local_gem / ⚠️ tourist_trap with reason).
+
+**Tests (`/app/backend/tests/test_p3_features.py`)**
+- [x] 13 new tests: trigger-test daily_login inbox, vibe_spike validation + happy path, spike scan endpoint, offer-drop push fires, forecast shape + cache, forecast 404, tourist-flags + refresh, local-gems endpoint, city seed create+update, venue onboarding + login + dup rejection, onboard-unknown-venue 400.
+- [x] **Total: 90/90 pytest green** (77 prior + 13 new).
+- [x] Mobile `yarn typecheck` green; Admin `yarn build` green (10 routes).
+
+### Notes
+- QR codes are generated inline with `qrcode[pil]` and returned as PNG data URLs — no filesystem writes, no extra CDN.
+- Forecast cache key = `venue_id`; 5-min TTL; `?refresh=true` bypasses for admin use.
+- Background-tasks fan-out on scan endpoints keeps ingress timeouts at bay even with thousands of fake/expired Expo tokens.
+- Tourist classifier persists per-venue rows so `/intel/tourist-flags` is O(n) reads.
+
+### Remaining backlog (P4)
+- [ ] Hook a real IP-geolocation / tourist-vs-local Wi-Fi heuristic into the classifier for production accuracy.
+- [ ] WS broadcast of `offer_created` / `offer_redeemed` for real-time admin dashboards.
+- [ ] Venue-admin login flow in the mobile app (today only the API key + QR pack are generated).
+- [ ] iOS push entitlements (critical alerts, rich media).
+- [ ] Rate-limit `/notifications/register` and `/notifications/trigger/test`.
+- [ ] Mirror the Launch-Mode page to the CRA preview for parity.
+

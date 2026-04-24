@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2, Coins, Radio, Navigation } from "lucide-react";
+import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2, Coins, Radio, Navigation, Send, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   AdminVenueRow, updateSignals, triggerSignalRefresh,
   getForecast, getTouristFlags, getLiveMusic, TouristLabel, Trend,
   listOffers, listRedemptions, getTrajectory, getIntelScore,
+  getVenueForecast, getIntelTouristFlags, triggerPush, PushTriggerIn,
 } from "@/lib/api";
-import { Button, Chip, Slider } from "./ui";
+import { Button, Chip, Slider, Input } from "./ui";
 import { useVibePulse } from "@/hooks/useVibePulse";
 
 const SIGNAL_META = {
@@ -66,7 +67,17 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
     queryKey: ["travel", row.venue.id],
     queryFn: () => getIntelScore(row.venue.id, 40.73, -73.99),
   });
+  const aiForecastQ = useQuery({
+    queryKey: ["ai-forecast", row.venue.id],
+    queryFn: () => getVenueForecast(row.venue.id),
+  });
+  const touristV2Q = useQuery({
+    queryKey: ["intel-tourist-flags"],
+    queryFn: getIntelTouristFlags,
+  });
+  const intelLabel = touristV2Q.data?.items.find((x) => x.venue_id === row.venue.id);
   const pulse = useVibePulse(row.venue.id);
+  const [showPush, setShowPush] = useState(false);
 
   const forecast = forecastQ.data?.items.find((x) => x.venue_id === row.venue.id);
   const flag = flagsQ.data?.items.find((x: any) => x.venue_id === row.venue.id);
@@ -104,6 +115,14 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
             ) : (
               <Chip tone="neutral">OFFLINE</Chip>
             )}
+            <Button
+              variant="pink" size="sm"
+              leftIcon={<Send size={14} />}
+              onClick={() => setShowPush(true)}
+              data-testid="inspector-send-push-btn"
+            >
+              Send push
+            </Button>
             <button onClick={onClose} aria-label="Close" className="rounded-full p-2 text-white/60 hover:text-white hover:bg-white/10">
               <X size={18} />
             </button>
@@ -193,6 +212,50 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
               </div>
             )}
 
+            {aiForecastQ.data && (
+              <div className="rounded-xl2 border border-primary-glow/30 bg-primary/5 p-4" data-testid="inspector-forecast-panel">
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="text-[11px] uppercase tracking-[0.28em] text-primary-glow"><Sparkles size={12} className="inline mr-1" /> AI forecast · 3h</h4>
+                  <Chip tone={aiForecastQ.data.trend === "rising" ? "aqua" : aiForecastQ.data.trend === "falling" ? "pink" : "purple"}>
+                    {aiForecastQ.data.trend === "rising" && "🔺"}
+                    {aiForecastQ.data.trend === "falling" && "🔻"}
+                    {aiForecastQ.data.trend === "steady" && "➖"}
+                    {aiForecastQ.data.trend === "peaking" && "⭐"}
+                    {" "}{aiForecastQ.data.trend}
+                  </Chip>
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span className="font-display text-3xl text-white">{aiForecastQ.data.forecast_score.toFixed(1)}</span>
+                  <span className="text-[11px] uppercase tracking-[0.22em] text-white/55">
+                    conf {Math.round(aiForecastQ.data.confidence * 100)}% · momentum {aiForecastQ.data.momentum.toFixed(2)}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-white/45">
+                  current {aiForecastQ.data.current_score.toFixed(1)} → baseline {aiForecastQ.data.baseline.toFixed(1)}, cycle boost {aiForecastQ.data.cycle_boost.toFixed(1)}
+                </p>
+              </div>
+            )}
+
+            {intelLabel && intelLabel.label !== "neutral" && (
+              <div
+                className={cn(
+                  "rounded-xl2 border p-4",
+                  intelLabel.label === "local_gem"
+                    ? "border-glow-aqua/40 bg-glow-aqua/5"
+                    : "border-accent-pink/40 bg-accent-pink/5"
+                )}
+                data-testid="inspector-intel-label"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[11px] uppercase tracking-[0.28em] text-white/55">Classifier</h4>
+                  <Chip tone={intelLabel.label === "local_gem" ? "aqua" : "pink"}>
+                    {intelLabel.label === "local_gem" ? "💎 LOCAL GEM" : "⚠️ TOURIST TRAP"}
+                  </Chip>
+                </div>
+                <p className="mt-2 text-xs text-white/75">score {intelLabel.score.toFixed(2)} · {intelLabel.reason}</p>
+              </div>
+            )}
+
             <div className="space-y-3 rounded-xl2 border border-white/10 bg-white/[0.02] p-4">
               <h4 className="text-[11px] uppercase tracking-[0.28em] text-primary-glow">Intelligence</h4>
               <Intel label="Forecast" icon={forecast ? TREND[forecast.trend].icon : undefined}
@@ -240,6 +303,95 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
               Save
             </Button>
           </div>
+        </div>
+      </div>
+
+      {showPush && (
+        <SendPushModal
+          venueId={row.venue.id}
+          venueName={row.venue.name}
+          onClose={() => setShowPush(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SendPushModal({
+  venueId, venueName, onClose,
+}: { venueId: string; venueName: string; onClose: () => void }) {
+  const [kind, setKind] = useState<PushTriggerIn["kind"]>("vibe_spike");
+  const [walletId, setWalletId] = useState("");
+  const [score, setScore] = useState(9.0);
+  const [offerName, setOfferName] = useState("Free shot");
+  const [cost, setCost] = useState(3);
+  const [result, setResult] = useState<string | null>(null);
+
+  const send = useMutation({
+    mutationFn: () => {
+      const body: PushTriggerIn = { kind };
+      if (walletId.trim()) body.wallet_id = walletId.trim();
+      if (kind !== "tonight_hotspots" && kind !== "daily_login") body.venue_id = venueId;
+      if (kind === "vibe_spike") body.score = score;
+      if (kind === "offer_drop") { body.offer_name = offerName; body.cost = cost; }
+      return triggerPush(body);
+    },
+    onSuccess: (r) => {
+      setResult(`Delivered to ${r.sent_to ?? r.dispatched ?? 0} wallet(s).`);
+    },
+    onError: (e: any) => setResult(`Failed: ${e?.message || "unknown"}`),
+  });
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[#05050A]/80 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-xl3 border border-accent-pink/40 bg-background-dark p-6" data-testid="send-push-modal">
+        <h3 className="font-display text-2xl tracking-wider text-white">SEND PUSH</h3>
+        <p className="mt-1 text-xs text-white/55">Target: <span className="text-white/85">{venueName}</span></p>
+
+        <div className="mt-4 space-y-3">
+          <label className="block text-[11px] uppercase tracking-[0.22em] text-white/55">Template</label>
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as PushTriggerIn["kind"])}
+            data-testid="push-template-select"
+            className="w-full rounded-xl border border-white/15 bg-white/[0.03] px-3 py-2 text-white"
+          >
+            <option value="vibe_spike">Vibe spike</option>
+            <option value="offer_drop">Offer drop</option>
+            <option value="first_visit_bonus">First-visit bonus</option>
+            <option value="daily_login">Daily login</option>
+            <option value="tonight_hotspots">Tonight's hotspots</option>
+          </select>
+
+          <Input
+            label="Target wallet (leave empty to broadcast to all)"
+            value={walletId}
+            onChange={(e) => setWalletId(e.target.value)}
+            placeholder="xxxxxxxx-xxxx-4xxx-…"
+            data-testid="push-wallet-input"
+          />
+
+          {kind === "vibe_spike" && (
+            <Input label="Score" type="number" value={score}
+                   min={0} max={10} step={0.1}
+                   onChange={(e) => setScore(Number(e.target.value))} />
+          )}
+          {kind === "offer_drop" && (
+            <>
+              <Input label="Offer name" value={offerName} onChange={(e) => setOfferName(e.target.value)} />
+              <Input label="Cost (credits)" type="number" min={1} value={cost}
+                     onChange={(e) => setCost(Number(e.target.value))} />
+            </>
+          )}
+          {result && <p className="text-xs text-glow-aqua">{result}</p>}
+        </div>
+
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant="pink" loading={send.isPending} onClick={() => send.mutate()} data-testid="push-submit-btn">
+            Send
+          </Button>
         </div>
       </div>
     </div>

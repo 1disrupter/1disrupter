@@ -16,6 +16,7 @@ import logging
 from datetime import datetime, timezone
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from app.core.database import SessionLocal
@@ -158,6 +159,48 @@ def start_scheduler() -> None:
         max_instances=1,
         next_run_time=datetime.now(timezone.utc),  # run once at startup
     )
+
+    # P3 — push-engine jobs (additive).
+    async def _spike_scan() -> None:
+        from app.services.notifications.push_engine import dispatch_spike_alerts
+        db = SessionLocal()
+        try:
+            sent = dispatch_spike_alerts(db)
+            if sent:
+                logger.info("vibe-spike scan dispatched %d pushes", sent)
+        except Exception as exc:  # pragma: no cover
+            logger.exception("vibe-spike scan failed: %s", exc)
+        finally:
+            db.close()
+
+    async def _tonight_hotspots() -> None:
+        from app.services.notifications.push_engine import dispatch_tonight_hotspots
+        db = SessionLocal()
+        try:
+            sent = dispatch_tonight_hotspots(db)
+            logger.info("tonight-hotspots dispatched %d pushes", sent)
+        except Exception as exc:  # pragma: no cover
+            logger.exception("tonight-hotspots failed: %s", exc)
+        finally:
+            db.close()
+
+    scheduler.add_job(
+        _spike_scan,
+        trigger=IntervalTrigger(minutes=10),
+        id="vibe_spike_scan",
+        replace_existing=True,
+        coalesce=True,
+        max_instances=1,
+    )
+    scheduler.add_job(
+        _tonight_hotspots,
+        trigger=CronTrigger(hour=21, minute=0),
+        id="tonight_hotspots",
+        replace_existing=True,
+        coalesce=True,
+        max_instances=1,
+    )
+
     scheduler.start()
     logger.info("Vibe2Nite scheduler started (interval=%s min)", REFRESH_MINUTES)
 

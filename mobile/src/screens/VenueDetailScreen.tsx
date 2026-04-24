@@ -5,8 +5,8 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getDirections, postFeedback, getForecastAll, getTouristFlags, getLiveMusic,
-  getTrajectory, listVenueOffers, getIntelScore,
-  VoteType, Top3Item, ForecastItem, TouristFlagItem, LiveMusicItem,
+  getTrajectory, listVenueOffers, getIntelScore, getVenueForecast, getTouristFlagsV2,
+  VoteType, Top3Item, ForecastItem, TouristFlagItem, LiveMusicItem, ForecastTrend,
 } from "@/lib/api";
 import { colors, radius, spacing } from "@/theme";
 import { DEFAULT_LOCATION } from "@/config";
@@ -15,6 +15,19 @@ import { Chip, LiveMusicBadge, TouristFlagBadge, TrendBadge } from "@/components
 import { GlowButton } from "@/components/GlowButton";
 import { awardCredits, useCreditToast, useWallet } from "@/lib/rewards";
 import { useVibePulse } from "@/lib/useVibePulse";
+
+const TREND_ICON: Record<ForecastTrend, string> = {
+  rising: "🔺",
+  falling: "🔻",
+  steady: "➖",
+  peaking: "⭐",
+};
+const TREND_COLOR: Record<ForecastTrend, string> = {
+  rising: colors.aqua,
+  falling: colors.pink,
+  steady: colors.textMuted,
+  peaking: "#FFC857",
+};
 
 type RouteParams = { VenueDetail: { venue: Top3Item } };
 
@@ -38,6 +51,15 @@ export default function VenueDetailScreen() {
     queryKey: ["travel", venue.id, DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng],
     queryFn: () => getIntelScore(venue.id, DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng),
   });
+  const aiForecastQ = useQuery({
+    queryKey: ["ai-forecast", venue.id],
+    queryFn: () => getVenueForecast(venue.id),
+  });
+  const touristV2Q = useQuery({
+    queryKey: ["tourist-flags-v2"],
+    queryFn: getTouristFlagsV2,
+  });
+  const intelLabel = touristV2Q.data?.items.find((x) => x.venue_id === venue.id);
   const walletQ = useWallet();
   const toast = useCreditToast();
   const pulse = useVibePulse(venue.id);
@@ -91,8 +113,32 @@ export default function VenueDetailScreen() {
             {forecast && <TrendBadge trend={forecast.trend} />}
             {live?.live_music && <LiveMusicBadge />}
             {tourist && <TouristFlagBadge label={tourist.label} />}
+            {intelLabel && intelLabel.label !== "neutral" && (
+              <Chip
+                tone={intelLabel.label === "local_gem" ? "aqua" : "pink"}
+                small
+                label={intelLabel.label === "local_gem" ? "💎 LOCAL GEM" : "⚠️ TOURIST TRAP"}
+              />
+            )}
           </View>
         </View>
+
+        {aiForecastQ.data && (
+          <View style={styles.card} testID="ai-forecast-card">
+            <Text style={styles.sectionLabel}>AI Forecast · next 3h</Text>
+            <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+              <Text style={{ color: TREND_COLOR[aiForecastQ.data.trend], fontSize: 26, fontWeight: "900" }}>
+                {TREND_ICON[aiForecastQ.data.trend]} {aiForecastQ.data.forecast_score.toFixed(1)}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase" }}>
+                {aiForecastQ.data.trend} · {Math.round(aiForecastQ.data.confidence * 100)}% confidence
+              </Text>
+            </View>
+            <Text style={{ color: colors.textFaint, fontSize: 11, marginTop: 4 }}>
+              Current {aiForecastQ.data.current_score.toFixed(1)} · momentum {aiForecastQ.data.momentum.toFixed(2)}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>Trajectory</Text>

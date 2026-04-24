@@ -4,6 +4,7 @@
   "/page": "app/page.js",
   "/admin/credits/page": "app/admin/credits/page.js",
   "/admin/overview/page": "app/admin/overview/page.js",
-  "/admin/venues/page": "app/admin/venues/page.js",
-  "/admin/signals/page": "app/admin/signals/page.js"
+  "/admin/signals/page": "app/admin/signals/page.js",
+  "/admin/launch/page": "app/admin/launch/page.js",
+  "/admin/venues/page": "app/admin/venues/page.js"
 }

@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import {
   getTop3, getForecastAll, getTouristFlags, getLiveMusic, getDirections,
+  getLocalGems,
   Top3Item, ForecastItem, TouristFlagItem, LiveMusicItem, VibeFilter, Category,
 } from "@/lib/api";
 import { colors, spacing } from "@/theme";
@@ -42,6 +43,7 @@ export default function TonightScreen() {
   const forecastQ = useQuery({ queryKey: ["forecast"], queryFn: getForecastAll });
   const touristQ = useQuery({ queryKey: ["tourist-flags"], queryFn: getTouristFlags });
   const liveQ = useQuery({ queryKey: ["live-music"], queryFn: () => getLiveMusic(true) });
+  const gemsQ = useQuery({ queryKey: ["local-gems"], queryFn: () => getLocalGems(6) });
 
   const forecastByVenue = useMemo(() => {
     const m = new Map<string, ForecastItem>();
@@ -114,6 +116,36 @@ export default function TonightScreen() {
           data={top3Q.data.items}
           keyExtractor={(x) => x.id}
           renderItem={renderItem}
+          ListFooterComponent={
+            (gemsQ.data?.items?.length ?? 0) > 0 ? (
+              <View style={{ marginTop: spacing.lg }} testID="local-gems-section">
+                <Text style={styles.sectionLabel}>💎 Local Gems</Text>
+                <Text style={styles.sectionSub}>Where the locals actually go.</Text>
+                {(gemsQ.data!.items).map((g) => (
+                  <View
+                    key={g.venue_id}
+                    style={styles.gemRow}
+                    onTouchEnd={() => {
+                      const item: Top3Item = {
+                        id: g.venue_id, name: g.name, category: g.category,
+                        vibe_score: g.vibe_score, crowd_level: "busy",
+                        lat: g.lat, lng: g.lng, distance_km: 0,
+                      } as any;
+                      nav.navigate("VenueDetail", { venue: item });
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.gemName}>{g.name}</Text>
+                      <Text style={styles.gemMeta}>
+                        {String(g.category).replace("_", " ")} · gem {g.gem_score.toFixed(2)}
+                      </Text>
+                    </View>
+                    <Text style={styles.gemScore}>{g.vibe_score.toFixed(1)}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null
+          }
           refreshControl={
             <RefreshControl
               tintColor={colors.primaryGlow}
@@ -177,4 +209,21 @@ const styles = StyleSheet.create({
   },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
   msg: { color: colors.textMuted, textAlign: "center", letterSpacing: 1 },
+  sectionLabel: {
+    color: colors.primaryGlow, fontSize: 11, letterSpacing: 2.5,
+    textTransform: "uppercase", marginBottom: 2,
+  },
+  sectionSub: {
+    color: colors.textFaint, fontSize: 11, marginBottom: spacing.sm,
+  },
+  gemRow: {
+    flexDirection: "row", alignItems: "center", gap: spacing.md,
+    paddingVertical: 12, paddingHorizontal: spacing.md,
+    borderRadius: 14, borderWidth: 1, borderColor: "rgba(0,245,255,0.25)",
+    backgroundColor: "rgba(0,245,255,0.04)",
+    marginBottom: 8,
+  },
+  gemName: { color: colors.text, fontWeight: "800", fontSize: 14 },
+  gemMeta: { color: colors.textMuted, fontSize: 11, marginTop: 2, textTransform: "capitalize" },
+  gemScore: { color: colors.aqua, fontSize: 20, fontWeight: "900" },
 });

@@ -136,6 +136,17 @@ def earn(payload: EarnIn, db: Session = Depends(get_db)) -> EarnOut:
         except Exception:  # pragma: no cover
             pass
 
+    # Action-specific pushes (daily_login, first_visit_bonus) — additive.
+    try:
+        if payload.action == "daily_login":
+            from app.services.notifications.push_engine import send_daily_login
+            send_daily_login(db, payload.user_id)
+        elif payload.action == "first_visit_bonus":
+            from app.services.notifications.push_engine import send_first_visit
+            send_first_visit(db, payload.user_id, "")
+    except Exception:  # pragma: no cover
+        pass
+
     return EarnOut(
         user_id=w.user_id, action=payload.action, awarded=award, credits=w.credits,
     )
@@ -163,12 +174,22 @@ def get_one_offer(offer_id: str, db: Session = Depends(get_db)):
 
 @router.post("/offers", response_model=OfferOut, status_code=201, summary="Create a reward offer (admin)")
 def create_new_offer(payload: OfferIn, db: Session = Depends(get_db)):
-    if not db.get(Venue, payload.venue_id):
+    venue = db.get(Venue, payload.venue_id)
+    if not venue:
         raise HTTPException(status_code=404, detail="venue not found")
     row = create_offer(
         db, venue_id=payload.venue_id, name=payload.name, cost_credits=payload.cost_credits,
         description=payload.description or "", active=payload.active,
     )
+    # Fire offer_drop push to every registered wallet. Best-effort.
+    try:
+        from app.services.notifications.push_engine import broadcast_to_all, send_offer_drop
+        broadcast_to_all(
+            db, send_fn=send_offer_drop, venue=venue,
+            offer_name=row.name, cost=int(row.cost_credits), offer_id=row.id,
+        )
+    except Exception:  # pragma: no cover
+        pass
     return OfferOut.model_validate(row)
 
 

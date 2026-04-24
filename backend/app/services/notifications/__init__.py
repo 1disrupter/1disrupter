@@ -70,7 +70,7 @@ def send_push(
             EXPO_URL,
             json=payload,
             headers={"Content-Type": "application/json", "Accept": "application/json"},
-            timeout=6,
+            timeout=3,
         )
         if not r.ok:
             logger.warning("expo push %s → %s", wallet_id, r.status_code)

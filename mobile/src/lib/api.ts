@@ -202,3 +202,57 @@ export const getIntelScore = (venue_id: string, user_lat?: number, user_lng?: nu
   request<IntelScore>(
     `/intel/score/${venue_id}${qs({ user_lat, user_lng })}`
   );
+
+// P3 — forecast + tourist flags + local gems + inbox
+export type ForecastTrend = "rising" | "falling" | "steady" | "peaking";
+export interface VenueForecast {
+  venue_id: string;
+  current_score: number;
+  forecast_score: number;
+  trend: ForecastTrend;
+  confidence: number;
+  momentum: number;
+  baseline: number;
+  cycle_boost: number;
+  horizon_hours: number;
+  as_of: string;
+  cached: boolean;
+}
+export const getVenueForecast = (venue_id: string) =>
+  request<VenueForecast>(`/forecast/${venue_id}`);
+
+export type TouristLabelV2 = "tourist_trap" | "local_gem" | "neutral";
+export interface IntelFlag {
+  venue_id: string;
+  label: TouristLabelV2;
+  score: number;
+  reason: string;
+  updated_at: string;
+}
+export const getTouristFlagsV2 = () =>
+  request<{ items: IntelFlag[] }>(`/intel/tourist-flags`);
+
+export interface LocalGem {
+  venue_id: string;
+  name: string;
+  category: Category;
+  lat: number;
+  lng: number;
+  vibe_score: number;
+  gem_score: number;
+  label: TouristLabel;
+  rank: number;
+}
+export const getLocalGems = (limit = 10) =>
+  request<{ items: LocalGem[] }>(`/intel/local-gems?limit=${limit}`);
+
+export interface InboxItem {
+  id: string;
+  kind: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  created_at: string;
+}
+export const getInbox = (wallet_id: string) =>
+  request<{ items: InboxItem[] }>(`/notifications/inbox/${encodeURIComponent(wallet_id)}`);
