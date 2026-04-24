@@ -201,6 +201,24 @@ def start_scheduler() -> None:
         max_instances=1,
     )
 
+    # P4 — venue-enrichment fan-out every 30 minutes.
+    async def _enrich_all_wrapper() -> None:
+        from app.services.enrichment import enrich_all
+        try:
+            r = enrich_all()
+            logger.info("enrichment fan-out: %s", r)
+        except Exception as exc:  # pragma: no cover
+            logger.exception("enrichment fan-out failed: %s", exc)
+
+    scheduler.add_job(
+        _enrich_all_wrapper,
+        trigger=IntervalTrigger(minutes=30),
+        id="enrichment_fanout",
+        replace_existing=True,
+        coalesce=True,
+        max_instances=1,
+    )
+
     scheduler.start()
     logger.info("Vibe2Nite scheduler started (interval=%s min)", REFRESH_MINUTES)
 

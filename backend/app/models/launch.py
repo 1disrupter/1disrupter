@@ -7,8 +7,9 @@
 - `VenueAdmin`  — per-venue login credentials (hash, not plain text)
 """
 from datetime import datetime, timezone
+from typing import Optional
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -20,6 +21,9 @@ class VenueIntel(Base):
     label: Mapped[str] = mapped_column(String(20), nullable=False, default="neutral")
     score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     reason: Mapped[str] = mapped_column(String(500), default="")
+    # P4 enrichment (nullable/default so existing rows don't break)
+    signals: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    last_enriched_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
@@ -47,6 +51,12 @@ class VenueProfile(Base):
     age_group: Mapped[str] = mapped_column(String(40), default="")                   # e.g. "21+"
     dress_code: Mapped[str] = mapped_column(String(80), default="")
     photos: Mapped[list] = mapped_column(JSON, nullable=False, default=list)         # list of URLs
+    # P4 — OpenStreetMap / lifecycle
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")  # active|inactive|pending
+    osm_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    osm_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    tags: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    city: Mapped[Optional[str]] = mapped_column(String(120), nullable=True, index=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

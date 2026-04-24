@@ -1,10 +1,14 @@
 "use client";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Rocket, QrCode, Plus, Trash2, Copy } from "lucide-react";
+import { Rocket, QrCode, Plus, Trash2, Copy, Globe, Sparkles, Check, XIcon } from "lucide-react";
 import { Topbar } from "@/components/Sidebar";
 import { Button, Chip, Input, Select } from "@/components/ui";
-import { getLocalGems, listAdminVenues, onboardVenue, seedCity, CitySeedVenue } from "@/lib/api";
+import {
+  getLocalGems, listAdminVenues, onboardVenue, seedCity, CitySeedVenue,
+  osmPreview, osmImport, OsmCandidate,
+  getNewVenues, getClosedVenues, getTrendingVenues, approveCandidate, rejectCandidate,
+} from "@/lib/api";
 
 type SeedDraft = CitySeedVenue & { id: string };
 
@@ -118,6 +122,12 @@ export default function LaunchModePage() {
           </div>
         </section>
 
+        {/* OSM importer */}
+        <OsmImportPanel />
+
+        {/* Discovery */}
+        <DiscoveryPanel />
+
         {/* Venue onboarding */}
         <OnboardPanel venues={(venuesQ.data?.items ?? []).map((v) => v.venue)} />
 
@@ -143,6 +153,202 @@ export default function LaunchModePage() {
 
 function patch<T>(setter: React.Dispatch<React.SetStateAction<T[]>>, idx: number, delta: Partial<T>) {
   setter((rows) => rows.map((r, i) => (i === idx ? { ...r, ...delta } : r)));
+}
+
+function OsmImportPanel() {
+  const [city, setCity] = useState("Benalmádena");
+  const [preview, setPreview] = useState<OsmCandidate[] | null>(null);
+  const [overwrite, setOverwrite] = useState(false);
+
+  const previewM = useMutation({
+    mutationFn: () => osmPreview({ city, limit: 50 }),
+    onSuccess: (r) => setPreview(r.candidates),
+  });
+  const importM = useMutation({
+    mutationFn: () => osmImport({ city, overwrite, limit: 500 }),
+    onSuccess: (r) => {
+      alert(`Imported ${r.imported_count} new, ${r.updated_count} updated, ${r.skipped_count} skipped.`);
+      setPreview(null);
+    },
+  });
+
+  return (
+    <section className="space-y-3 rounded-xl2 border border-glow-aqua/30 bg-glow-aqua/5 p-5" data-testid="osm-import-panel">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[11px] uppercase tracking-[0.28em] text-white/55">
+          <Globe size={12} className="inline mr-1" /> OpenStreetMap importer
+        </h3>
+        <Chip tone="aqua">Legal · Free · Global</Chip>
+      </div>
+      <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+        <Input label="City" value={city} onChange={(e) => setCity(e.target.value)} data-testid="osm-city-input" />
+        <div className="flex items-end">
+          <label className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/60">
+            <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+            Overwrite
+          </label>
+        </div>
+        <div className="flex items-end">
+          <Button
+            variant="secondary" size="md" leftIcon={<Sparkles size={14} />}
+            loading={previewM.isPending} onClick={() => previewM.mutate()}
+            disabled={!city.trim()}
+            data-testid="osm-preview-btn"
+          >
+            Preview
+          </Button>
+        </div>
+        <div className="flex items-end">
+          <Button
+            variant="pink" size="md" leftIcon={<Rocket size={14} />}
+            loading={importM.isPending} onClick={() => importM.mutate()}
+            disabled={!preview || preview.length === 0}
+            data-testid="osm-import-btn"
+          >
+            Import {preview?.length ?? 0}
+          </Button>
+        </div>
+      </div>
+
+      {preview && preview.length > 0 && (
+        <div className="mt-2 max-h-64 overflow-auto rounded-xl border border-white/10">
+          <table className="w-full text-xs" data-testid="osm-preview-table">
+            <thead className="bg-white/[0.04] text-[10px] uppercase tracking-[0.22em] text-white/55">
+              <tr>
+                <th className="px-3 py-2 text-left">Name</th>
+                <th className="px-3 py-2 text-left">Category</th>
+                <th className="px-3 py-2 text-left">Coords</th>
+                <th className="px-3 py-2 text-left">Hours</th>
+              </tr>
+            </thead>
+            <tbody>
+              {preview.map((c) => (
+                <tr key={c.osm_id} className="border-t border-white/5 text-white/85">
+                  <td className="px-3 py-2">{c.name}</td>
+                  <td className="px-3 py-2">
+                    <Chip tone="purple">{c.category}</Chip>
+                  </td>
+                  <td className="px-3 py-2 font-mono text-white/60">{c.lat.toFixed(3)}, {c.lng.toFixed(3)}</td>
+                  <td className="px-3 py-2 text-white/55">{c.opening_hours_raw || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {preview && preview.length === 0 && (
+        <p className="text-xs text-white/55">No OSM matches — try a larger city or a different spelling.</p>
+      )}
+    </section>
+  );
+}
+
+function DiscoveryPanel() {
+  const qc = useQueryClient();
+  const [city, setCity] = useState("Benalmádena");
+
+  const newQ = useQuery({ queryKey: ["discovery-new", city], queryFn: () => getNewVenues(city), enabled: !!city });
+  const closedQ = useQuery({ queryKey: ["discovery-closed", city], queryFn: () => getClosedVenues(city), enabled: !!city });
+  const trendingQ = useQuery({ queryKey: ["discovery-trending", city], queryFn: () => getTrendingVenues(city, 10) });
+
+  const act = useMutation({
+    mutationFn: async (a: { id: string; kind: "approve" | "reject" }) =>
+      a.kind === "approve" ? approveCandidate(a.id) : rejectCandidate(a.id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["discovery-new", city] });
+      qc.invalidateQueries({ queryKey: ["discovery-closed", city] });
+      qc.invalidateQueries({ queryKey: ["admin-venues"] });
+    },
+  });
+
+  return (
+    <section className="space-y-3 rounded-xl2 border border-primary-glow/30 bg-primary/5 p-5" data-testid="discovery-panel">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[11px] uppercase tracking-[0.28em] text-white/55">
+          <Sparkles size={12} className="inline mr-1" /> AI discovery
+        </h3>
+        <Input label="City" value={city} onChange={(e) => setCity(e.target.value)} className="max-w-[220px]" />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <DiscoveryColumn
+          title={`New (${newQ.data?.items.length ?? 0})`}
+          tone="aqua"
+          items={newQ.data?.items ?? []}
+          onApprove={(id) => act.mutate({ id, kind: "approve" })}
+          onReject={(id) => act.mutate({ id, kind: "reject" })}
+          testPrefix="discovery-new"
+        />
+        <DiscoveryColumn
+          title={`Closed (${closedQ.data?.items.length ?? 0})`}
+          tone="pink"
+          items={closedQ.data?.items ?? []}
+          onApprove={(id) => act.mutate({ id, kind: "approve" })}
+          onReject={(id) => act.mutate({ id, kind: "reject" })}
+          testPrefix="discovery-closed"
+        />
+        <DiscoveryColumn
+          title={`Trending (${trendingQ.data?.items.length ?? 0})`}
+          tone="purple"
+          items={trendingQ.data?.items ?? []}
+          onApprove={() => null}
+          onReject={() => null}
+          showActions={false}
+          testPrefix="discovery-trending"
+        />
+      </div>
+    </section>
+  );
+}
+
+function DiscoveryColumn({
+  title, tone, items, onApprove, onReject, showActions = true, testPrefix,
+}: {
+  title: string;
+  tone: "aqua" | "pink" | "purple";
+  items: { id: string; name: string; reason: string; confidence?: number; score?: number }[];
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  showActions?: boolean;
+  testPrefix: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 p-3" data-testid={testPrefix}>
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="text-[11px] uppercase tracking-[0.22em] text-white/55">{title}</h4>
+      </div>
+      <div className="space-y-2 max-h-64 overflow-auto">
+        {items.length === 0 && <p className="text-[11px] text-white/45">Nothing pending.</p>}
+        {items.map((i) => (
+          <div key={i.id} className="rounded-xl border border-white/10 p-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-white/85 truncate pr-2">{i.name}</span>
+              <Chip tone={tone}>{((i.confidence ?? i.score ?? 0) as number).toFixed(2)}</Chip>
+            </div>
+            <p className="mt-1 text-[11px] text-white/55">{i.reason}</p>
+            {showActions && (
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => onApprove(i.id)}
+                  className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.22em] border border-glow-aqua/40 text-glow-aqua hover:bg-glow-aqua/10"
+                  data-testid={`${testPrefix}-approve-${i.id}`}
+                >
+                  <Check size={10} /> Approve
+                </button>
+                <button
+                  onClick={() => onReject(i.id)}
+                  className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.22em] border border-white/15 text-white/60 hover:bg-white/5"
+                  data-testid={`${testPrefix}-reject-${i.id}`}
+                >
+                  <XIcon size={10} /> Reject
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function OnboardPanel({ venues }: { venues: { id: string; name: string }[] }) {

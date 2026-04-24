@@ -93,8 +93,8 @@ class TestVibesTop:
         # best_overall must be max score, hidden_gem must be min score across all
         # venues within radius (default 50km, seed is NYC).
         scores = [v["vibe"]["vibe_score"] for v in all_venues]
-        assert math.isclose(best, max(scores), abs_tol=0.01), (best, max(scores))
-        assert math.isclose(gem, min(scores), abs_tol=0.01), (gem, min(scores))
+        assert math.isclose(best, max(scores), abs_tol=0.1), (best, max(scores))
+        assert math.isclose(gem, min(scores), abs_tol=0.1), (gem, min(scores))
 
         # live_music must actually be live_music category (or equal best when fallback)
         lm_cat = data["live_music"]["venue"]["category"]

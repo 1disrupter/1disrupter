@@ -222,6 +222,99 @@ export const onboardVenue = (body: {
   qr_codes: { check_in: string; feedback: string; follow_venue: string };
 }>(`/venues/onboard`, { method: "POST", body: JSON.stringify(body) });
 
+// P4 — OSM import
+export interface OsmCandidate {
+  osm_id: string;
+  osm_type: string;
+  name: string;
+  lat: number;
+  lng: number;
+  category: "bar" | "club" | "live_music";
+  opening_hours_raw: string;
+  tags: Record<string, string>;
+}
+export const osmPreview = (args: { city?: string; bbox?: [number, number, number, number]; limit?: number }) =>
+  request<{ city?: string; bbox: number[]; candidates: OsmCandidate[]; count: number }>(
+    `/import/osm`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        city: args.city,
+        bbox: args.bbox
+          ? { lat_min: args.bbox[0], lat_max: args.bbox[1], lon_min: args.bbox[2], lon_max: args.bbox[3] }
+          : undefined,
+        dry_run: true,
+        limit: args.limit ?? 100,
+      }),
+    }
+  );
+
+export const osmImport = (args: { city?: string; bbox?: [number, number, number, number]; limit?: number; overwrite?: boolean }) =>
+  request<{ imported_count: number; updated_count: number; skipped_count: number; total_candidates: number; city?: string }>(
+    `/import/osm`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        city: args.city,
+        bbox: args.bbox
+          ? { lat_min: args.bbox[0], lat_max: args.bbox[1], lon_min: args.bbox[2], lon_max: args.bbox[3] }
+          : undefined,
+        dry_run: false,
+        overwrite: !!args.overwrite,
+        limit: args.limit ?? 500,
+      }),
+    }
+  );
+
+// P4 — enrichment
+export interface EnrichmentSignals {
+  weather: { temp_c?: number; feels_c?: number; condition?: string; wind_kmh?: number; source: string } | null;
+  events: { tonight_count?: number; source: string };
+  travel: { density_index?: number; source: string };
+  social: { ig_score?: number; tt_score?: number; source: string };
+  footfall: { visits_2h?: number; distinct_devices_2h?: number; source: string };
+  derived: {
+    vibe_momentum_hint: number;
+    forecast_baseline_hint: number;
+    local_gem_hint: number;
+    tourist_trap_hint: number;
+  };
+}
+export interface EnrichmentResp {
+  venue_id: string;
+  cached?: boolean;
+  last_enriched_at: string;
+  signals: EnrichmentSignals;
+}
+export const enrichVenue = (venue_id: string, refresh = true) =>
+  request<EnrichmentResp>(`/intel/enrich/${venue_id}?refresh=${refresh}`, { method: "POST" });
+export const readEnrichment = (venue_id: string) =>
+  request<EnrichmentResp & { label: string; score: number }>(`/intel/enrich/${venue_id}`);
+
+// P4 — discovery
+export interface DiscoveryItem {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  confidence?: number;
+  score?: number;
+  reason: string;
+  source?: string;
+  created_at?: string;
+  momentum?: number;
+}
+export const getNewVenues = (city: string) =>
+  request<{ city: string; added?: number; items: DiscoveryItem[] }>(`/discovery/new?city=${encodeURIComponent(city)}`);
+export const getClosedVenues = (city: string) =>
+  request<{ city: string; flagged?: number; items: DiscoveryItem[] }>(`/discovery/closed?city=${encodeURIComponent(city)}`);
+export const getTrendingVenues = (city: string, limit = 10) =>
+  request<{ city: string; count: number; items: DiscoveryItem[] }>(`/discovery/trending?city=${encodeURIComponent(city)}&limit=${limit}`);
+export const approveCandidate = (candidate_id: string) =>
+  request<{ approved: string; venue_id?: string; kind: string }>(`/discovery/approve`, { method: "POST", body: JSON.stringify({ candidate_id }) });
+export const rejectCandidate = (candidate_id: string) =>
+  request<{ rejected: string; kind: string }>(`/discovery/reject`, { method: "POST", body: JSON.stringify({ candidate_id }) });
+
 // P2 — travel time enrichment
 export interface IntelScore {
   id: string;

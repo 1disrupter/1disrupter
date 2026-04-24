@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2, Coins, Radio, Navigation, Send, Sparkles } from "lucide-react";
+import { X, Activity, Radar, CalendarClock, Clock, ThumbsUp, TrendingUp, TrendingDown, Minus, Zap, AlertTriangle, Gem, Music2, Coins, Radio, Navigation, Send, Sparkles, Cloud, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   AdminVenueRow, updateSignals, triggerSignalRefresh,
   getForecast, getTouristFlags, getLiveMusic, TouristLabel, Trend,
   listOffers, listRedemptions, getTrajectory, getIntelScore,
   getVenueForecast, getIntelTouristFlags, triggerPush, PushTriggerIn,
+  enrichVenue, readEnrichment,
 } from "@/lib/api";
 import { Button, Chip, Slider, Input } from "./ui";
 import { useVibePulse } from "@/hooks/useVibePulse";
@@ -76,6 +77,15 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
     queryFn: getIntelTouristFlags,
   });
   const intelLabel = touristV2Q.data?.items.find((x) => x.venue_id === row.venue.id);
+  const enrichQ = useQuery({
+    queryKey: ["enrichment", row.venue.id],
+    queryFn: () => readEnrichment(row.venue.id),
+    retry: false,
+  });
+  const enrichM = useMutation({
+    mutationFn: () => enrichVenue(row.venue.id, true),
+    onSuccess: () => enrichQ.refetch(),
+  });
   const pulse = useVibePulse(row.venue.id);
   const [showPush, setShowPush] = useState(false);
 
@@ -256,6 +266,49 @@ export function InspectorModal({ row, onClose, onSaved }: { row: AdminVenueRow; 
               </div>
             )}
 
+            {/* Enrichment panel (P4) */}
+            <div className="rounded-xl2 border border-white/10 bg-white/[0.02] p-4" data-testid="inspector-enrichment-panel">
+              <div className="mb-2 flex items-center justify-between">
+                <h4 className="text-[11px] uppercase tracking-[0.28em] text-primary-glow">
+                  <Cloud size={12} className="inline mr-1" /> Enrichment
+                </h4>
+                <Button
+                  variant="secondary" size="sm"
+                  loading={enrichM.isPending}
+                  onClick={() => enrichM.mutate()}
+                  data-testid="enrich-refresh-btn"
+                >
+                  {enrichQ.data ? "Refresh" : "Enrich now"}
+                </Button>
+              </div>
+              {enrichQ.data ? (
+                <div className="space-y-2 text-xs">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+                    last enriched {new Date(enrichQ.data.last_enriched_at).toLocaleString()}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {enrichQ.data.signals.weather && (
+                      <EnrichCell label="Weather" value={`${Math.round(enrichQ.data.signals.weather.temp_c ?? 0)}°C · ${enrichQ.data.signals.weather.condition ?? "?"}`} />
+                    )}
+                    <EnrichCell label="Events tonight" value={`${enrichQ.data.signals.events.tonight_count ?? 0}`} />
+                    <EnrichCell label="Travel density" value={`${((enrichQ.data.signals.travel.density_index ?? 0) * 100).toFixed(0)}%`} />
+                    <EnrichCell label="IG buzz" value={`${enrichQ.data.signals.social.ig_score ?? 0}`} />
+                    <EnrichCell label="Visitors 2h" value={`${enrichQ.data.signals.footfall.distinct_devices_2h ?? 0}`} />
+                    <EnrichCell label="Momentum hint" value={enrichQ.data.signals.derived.vibe_momentum_hint.toFixed(2)} />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    <Chip tone="aqua">gem hint {enrichQ.data.signals.derived.local_gem_hint.toFixed(2)}</Chip>
+                    <Chip tone="pink">trap hint {enrichQ.data.signals.derived.tourist_trap_hint.toFixed(2)}</Chip>
+                    <Chip tone="purple">baseline {enrichQ.data.signals.derived.forecast_baseline_hint.toFixed(2)}</Chip>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-white/55">
+                  No enrichment yet. Click "Enrich now" to pull weather · events · travel density · social · footfall.
+                </p>
+              )}
+            </div>
+
             <div className="space-y-3 rounded-xl2 border border-white/10 bg-white/[0.02] p-4">
               <h4 className="text-[11px] uppercase tracking-[0.28em] text-primary-glow">Intelligence</h4>
               <Intel label="Forecast" icon={forecast ? TREND[forecast.trend].icon : undefined}
@@ -406,6 +459,15 @@ function Intel({ label, icon, value, tone, sub }: { label: string; icon?: React.
         {icon} {value}
       </p>
       {sub && <p className="mt-0.5 text-[10px] text-white/45 line-clamp-2">{sub}</p>}
+    </div>
+  );
+}
+
+function EnrichCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.02] p-2">
+      <p className="text-[10px] uppercase tracking-[0.22em] text-white/45">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-white">{value}</p>
     </div>
   );
 }
