@@ -834,7 +834,7 @@ export default function Admin() {
             <div>
               <p className="text-[11px] uppercase tracking-[0.3em] text-primary-glow">Admin</p>
               <h1 className="font-display text-4xl tracking-wider text-white">
-                {view === "overview" ? "OVERVIEW" : view === "venues" ? "VENUES" : "SIGNALS"}
+                {view === "overview" ? "OVERVIEW" : view === "venues" ? "VENUES" : view === "settings" ? "SETTINGS" : "SIGNALS"}
               </h1>
             </div>
             <div className="hidden items-center gap-2 md:flex">

@@ -394,3 +394,22 @@ sudo supervisorctl restart backend frontend postgresql
 - [ ] Offline caching of the last 50 enrichment snapshots for analytics.
 - [ ] Migrate enrichment cache from process-memory to Redis once we cross 1 pod.
 
+
+
+---
+
+## Iteration 12 — Brand Kit relocation to Admin (Feb 2026)
+- [x] Removed `/brand` entry from public navbar (`components/v2n/Navbar.jsx`)
+- [x] `/brand` route now guarded by admin session (`App.jsx → AdminGuardedBrand`) — redirects unauthenticated visitors to `/admin`
+- [x] `pages/Brand.jsx` supports `embedded` prop; hides its own `Navbar`/`Footer` when embedded inside Admin
+- [x] `pages/Admin.jsx` sidebar gains new **Settings** tab with an internal `SettingsPanel`
+- [x] `SettingsPanel` renders a chip-based sub-nav (first sub-tab: **Brand Kit**) and lazy-loads the embedded `<Brand embedded />` component
+- [x] Page header now correctly reads "SETTINGS" when that tab is active
+- [x] Theme tokens, Tailwind config and all design-system files left untouched
+- [x] Smoke-tested via screenshot tool: public nav no longer exposes Brand Kit; Admin → Settings → Brand Kit loads every swatch, section chip, and sample component correctly (see `/tmp/admin_settings_brand.png`)
+
+### Acceptance
+- Public/main navigation: contains only **Tonight** + **Admin** ✅
+- `/brand` when logged out: redirects to `/admin` ✅
+- Admin → Settings → Brand Kit: renders full embedded brand kit ✅
+- No user-facing page modified, no theme token deleted ✅
