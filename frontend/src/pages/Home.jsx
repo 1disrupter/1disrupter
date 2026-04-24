@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost } from "lucide-react";
+import { MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   Navbar, Footer, BottomTabs, Logo, LogoMark,
   VenueHeroCard, LoadingScreen, ErrorState, EmptyState,
   Button, IconButton, Chip, SectionDivider, useToast,
+  Modal, Input,
 } from "@/components/v2n";
-import { getTopVibes, submitFeedback } from "@/lib/api";
+import { getTopVibes, submitFeedback, submitClaim } from "@/lib/api";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
@@ -17,6 +18,7 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [radius, setRadius] = useState(50);
   const [tab, setTab] = useState("home");
+  const [claimVenue, setClaimVenue] = useState(null);
   const toast = useToast();
 
   const fetchVibes = useCallback(
@@ -239,6 +241,27 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {/* Claim your venue — public entry point */}
+        {data?.best_overall && (
+          <div
+            data-testid="claim-bar"
+            className="mt-4 flex flex-col items-start gap-2 rounded-xl2 border border-primary-glow/30 bg-primary/5 p-4 md:flex-row md:items-center md:justify-between"
+          >
+            <p className="text-xs uppercase tracking-[0.22em] text-white/70">
+              Are you the owner of <span className="text-white">{data.best_overall.venue.name}</span>? Claim this venue to unlock lightweight admin tools.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<ShieldCheck size={14} />}
+              onClick={() => setClaimVenue(data.best_overall.venue)}
+              data-testid="open-claim-modal"
+            >
+              Claim this venue
+            </Button>
+          </div>
+        )}
       </section>
 
       <Footer />
@@ -252,6 +275,112 @@ export default function Home() {
           { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
         ]}
       />
+
+      {claimVenue && (
+        <ClaimModal
+          venue={claimVenue}
+          onClose={() => setClaimVenue(null)}
+          onSuccess={(res) => {
+            if (res.email_delivery?.sent) {
+              toast.success("Check your inbox — verification link sent.");
+            } else if (res.magic_link) {
+              toast.success("Magic link ready (copy it to verify).");
+            }
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function ClaimModal({ venue, onClose, onSuccess }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ owner_name: "", email: "", proof: "" });
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const submit = async () => {
+    if (!form.owner_name.trim() || !form.email.trim()) {
+      toast.error("Name and email are required");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await submitClaim({
+        venue_id: venue.id,
+        owner_name: form.owner_name.trim(),
+        email: form.email.trim().toLowerCase(),
+        proof: form.proof.trim(),
+      });
+      setResult(res);
+      onSuccess?.(res);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Submission failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`CLAIM · ${venue.name.toUpperCase()}`}
+      footer={
+        result ? (
+          <Button variant="primary" onClick={onClose} data-testid="claim-done">Done</Button>
+        ) : (
+          <>
+            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button variant="pink" loading={busy} onClick={submit} data-testid="claim-submit">
+              Send magic link
+            </Button>
+          </>
+        )
+      }
+    >
+      {result ? (
+        <div className="space-y-3 text-sm" data-testid="claim-result">
+          <p className="text-white/85">
+            {result.email_delivery?.sent
+              ? `We just sent a verification link to ${result.email_delivery.to}. Click it within 30 minutes — single-use.`
+              : "Email is in console-only mode on this environment. Use the link below to verify right now:"}
+          </p>
+          {result.magic_link && (
+            <code className="block break-all rounded-xl border border-primary-glow/40 bg-primary/10 p-3 text-[11px] text-glow-aqua" data-testid="claim-magic-link">
+              {result.magic_link}
+            </code>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <Input
+            label="Your name"
+            value={form.owner_name}
+            onChange={(e) => setForm({ ...form, owner_name: e.target.value })}
+            placeholder="Jane Owner"
+            data-testid="claim-name"
+          />
+          <Input
+            label="Email for verification"
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            placeholder="jane@laterraza.com"
+            data-testid="claim-email"
+          />
+          <Input
+            label="Proof link (website, Instagram, Google listing)"
+            value={form.proof}
+            onChange={(e) => setForm({ ...form, proof: e.target.value })}
+            placeholder="https://instagram.com/laterraza"
+            data-testid="claim-proof"
+          />
+          <p className="text-[11px] text-white/45">
+            You'll receive a single-use verification link valid for 30 minutes.
+          </p>
+        </div>
+      )}
+    </Modal>
   );
 }

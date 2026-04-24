@@ -13,3 +13,4 @@ from app.models.launch import (  # noqa: F401
     VenueIntel, NotificationLog, VenueProfile, VenueAdmin,
 )
 from app.models.discovery import VenueDiscoveryCandidate  # noqa: F401
+from app.models.claim import VenueClaim  # noqa: F401

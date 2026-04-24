@@ -36,3 +36,22 @@ export const getLiveMusic = () =>
 
 export const getHeatmap = () =>
   api.get("/vibes/heatmap").then((r) => r.data);
+
+// --- Iteration 13: claims, providers, webhooks -----------------------------
+export const submitClaim = (payload) =>
+  api.post("/claims/submit", payload).then((r) => r.data);
+
+export const listClaims = (status) =>
+  api.get("/admin/claims", { params: status ? { status } : {} }).then((r) => r.data);
+
+export const reviewClaim = (claim_id, action, reviewer = "admin", note = "") =>
+  api.post(`/admin/claims/${claim_id}/review`, { action, reviewer, note }).then((r) => r.data);
+
+export const getVenueOwner = (venue_id) =>
+  api.get(`/venues/${venue_id}/owner`).then((r) => r.data);
+
+export const getProviderStatus = () =>
+  api.get("/admin/providers/status").then((r) => r.data);
+
+export const getRecentWebhooks = (limit = 20) =>
+  api.get("/admin/webhooks/recent", { params: { limit } }).then((r) => r.data);

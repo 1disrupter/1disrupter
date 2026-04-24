@@ -337,3 +337,61 @@ export const getIntelScore = (venue_id: string, user_lat?: number, user_lng?: nu
   const s = qs.toString();
   return request<IntelScore>(`/intel/score/${venue_id}${s ? `?${s}` : ""}`);
 };
+
+// ---------------------------------------------------------------------------
+// Iteration 13 — Claims, providers, webhooks
+// ---------------------------------------------------------------------------
+export type ClaimStatus = "pending" | "email_sent" | "verified" | "rejected";
+
+export interface VenueClaim {
+  id: string;
+  venue_id: string;
+  owner_name: string;
+  email: string;
+  proof: string;
+  status: ClaimStatus;
+  created_at: string;
+  verified_at: string | null;
+  reviewed_at: string | null;
+  reviewer: string | null;
+  meta: Record<string, unknown>;
+}
+
+export const listClaims = (status?: ClaimStatus) => {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  return request<{ items: VenueClaim[] }>(`/admin/claims${qs}`);
+};
+
+export const reviewClaim = (
+  claim_id: string,
+  action: "approve" | "reject",
+  reviewer: string = "admin",
+  note: string = ""
+) =>
+  request<VenueClaim>(`/admin/claims/${claim_id}/review`, {
+    method: "POST",
+    body: JSON.stringify({ action, reviewer, note }),
+  });
+
+export interface ProviderRow {
+  category: "social" | "events" | "busyness";
+  provider: string;
+  configured: boolean;
+  env_var: string;
+  mode: "live" | "stub";
+}
+export const getProviderStatus = () =>
+  request<{ providers: ProviderRow[] }>(`/admin/providers/status`);
+
+export interface WebhookEvent {
+  event_type: string;
+  title: string;
+  ok: boolean;
+  error: string | null;
+  ts: number;
+  meta: Record<string, unknown>;
+}
+export const getRecentWebhooks = (limit = 20) =>
+  request<{ configured: Record<string, boolean>; recent: WebhookEvent[] }>(
+    `/admin/webhooks/recent?limit=${limit}`
+  );

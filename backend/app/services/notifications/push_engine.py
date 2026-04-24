@@ -18,6 +18,7 @@ from app.models import Venue, Vibe, VenueVibeHistory
 from app.models.launch import NotificationLog
 from app.models.push_token import UserPushToken
 from app.services.notifications import send_push
+from app.services import webhooks as outbound_webhooks
 
 logger = logging.getLogger("vibe2nite.push_engine")
 
@@ -198,6 +199,22 @@ def dispatch_spike_alerts(db: Session) -> int:
         if not venue:
             continue
         sent += broadcast_to_all(db, send_fn=send_vibe_spike, venue=venue, new_score=spike["current"])
+        # Outbound webhook fan-out (Slack/Discord) alongside push. Fire-and-forget.
+        outbound_webhooks.dispatch(
+            "VIBE_SPIKE",
+            title=f"{venue.name} is peaking",
+            body=(
+                f"Vibe score jumped to {spike['current']:.2f} "
+                f"(from {spike['previous']:.2f}, +{spike['delta_pct']*100:.1f}%)."
+            ),
+            meta={
+                "venue_id": venue.id,
+                "venue_name": venue.name,
+                "previous": round(spike["previous"], 2),
+                "current": round(spike["current"], 2),
+                "delta_pct": round(spike["delta_pct"], 4),
+            },
+        )
     return sent
 
 

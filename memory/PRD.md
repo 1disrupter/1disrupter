@@ -446,3 +446,59 @@ sudo supervisorctl restart backend frontend postgresql
 - Expo public Settings untouched; admin entry unlocks Brand Kit modal ✅
 - No backend or data-model changes ✅
 - CRA home + admin still 200 OK ✅
+
+---
+
+## Iteration 13 — Post-launch intelligence layer (Feb 2026)
+
+### 1. Real social + event providers (pluggable, graceful-fallback)
+- New package `/app/backend/app/services/signals/providers/` with one adapter per provider:
+  - `google_places.py` (busyness proxy), `instagram.py`, `tiktok.py`, `eventbrite.py`, `ticketmaster.py`
+- Each adapter exports `is_configured() / fetch(venue)`; returns `None` when key missing or on error so existing stubs keep working.
+- Existing `social_activity.py`, `event_signals.py`, `google_busyness.py` now call `providers.first_available(...)` before falling back to their deterministic stub.
+- Providers are called from the Signal Engine inside the background APScheduler job — **never** on the user-facing hot path.
+- Provider status endpoint: `GET /api/admin/providers/status` — used by the admin UIs to show live vs stub.
+
+### 2. Webhook dispatcher
+- New module `/app/backend/app/services/webhooks/` (fire-and-forget, daemon thread, retry-once with 2s backoff).
+- Events: `VIBE_SPIKE`, `VENUE_CLAIMED`, `VENUE_CLOSED`.
+- Configured purely via env vars (`WEBHOOK_VIBE_SPIKE_URL`, `WEBHOOK_VENUE_CLAIMED_URL`, `WEBHOOK_VENUE_CLOSED_URL`). Empty → dispatcher is a no-op.
+- Slack + Discord compatible payload (text + attachments + embeds).
+- In-memory ring-buffer (last 50 events) exposed via `GET /api/admin/webhooks/recent` for the admin UI.
+- Wired into `dispatch_spike_alerts` (alongside existing push) and into `claim verify` / `admin approve` actions.
+
+### 3. Claim-your-venue flow
+- **Model**: `VenueClaim` (`/app/backend/app/models/claim.py`) — venue_id, owner_name, email, proof, status (`pending|email_sent|verified|rejected`), single-use time-limited `token` + `token_expires_at`, `reviewer`, `meta`.
+- **Alembic migration**: `a1b7c9d0e2f3_add_venue_claims` (merges pre-existing double heads).
+- **Email**: `app/services/email/__init__.py` using Resend SDK via `asyncio.to_thread`. When `RESEND_API_KEY` is empty, logs the email and returns console-only mode so the magic link is still usable in dev.
+- **Routes** (`app/routers/claims.py`):
+  - `POST /api/claims/submit` — public
+  - `GET /api/claims/verify/{token}` — single-use, time-limited (default 30 min)
+  - `GET /api/admin/claims` (filterable), `POST /api/admin/claims/{id}/review`
+  - `GET /api/admin/providers/status`, `GET /api/admin/webhooks/recent`
+  - `GET /api/venues/{id}/owner` (public, read-only)
+- **Security**: tokens generated via `secrets.token_urlsafe(24)`; cleared after single use; expired tokens return 410.
+
+### 4. Frontends
+- **CRA** (`/app/frontend`):
+  - `lib/api.js` gained `submitClaim`, `listClaims`, `reviewClaim`, `getProviderStatus`, `getRecentWebhooks`, `getVenueOwner`.
+  - `Home.jsx` — new "Claim this venue" bar under the quick-vote row + `ClaimModal` (name/email/proof, shows magic link in console-only mode).
+  - `Admin.jsx` — new `Claims` sidebar tab hosting a full `ClaimsPanel` (status filters, provider status grid, webhook log, claims table with inline Approve/Reject).
+- **Next.js admin** (`/app/admin-next`):
+  - `lib/api.ts` — same surface typed.
+  - `components/Sidebar.tsx` — new Claims link.
+  - `app/admin/claims/page.tsx` — full parity panel with React Query (providers + webhooks refresh every 30s; claims invalidate on review).
+  - `yarn build` passes; `/admin/claims` route: 2.77 kB / 119 kB first-load.
+
+### 5. Env + tests
+- `/app/backend/.env.example` documents every new env variable + where to obtain each key.
+- New test file `/app/backend/tests/test_iter13_claims_webhooks.py` — 11 tests covering provider status, webhook no-op vs live-fire (httpbin), claim submit/verify/expire/reuse, admin approve/reject, owner lookup.
+- Full backend suite: **117 passed** (106 pre-existing + 11 new), zero regressions.
+
+### Acceptance
+- Submit → magic link → verify → webhook fires ✅
+- Admin Approve/Reject round-trip ✅
+- Provider status correctly shows stub vs live mode ✅
+- CRA + Next.js Claims panels both render identical data ✅
+- Nothing in existing APIs or mobile flows changed ✅
+

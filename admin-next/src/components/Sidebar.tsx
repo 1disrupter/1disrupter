@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Database, Sliders, LogOut, Coins, Rocket, Settings as SettingsIcon } from "lucide-react";
+import { LayoutDashboard, Database, Sliders, LogOut, Coins, Rocket, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Logo, LogoMark } from "./Logo";
 
@@ -15,6 +15,7 @@ const ITEMS = [
   { href: "/admin/signals",  label: "Signals",  icon: <Sliders size={16} /> },
   { href: "/admin/credits",  label: "Credits",  icon: <Coins size={16} /> },
   { href: "/admin/launch",   label: "Launch",   icon: <Rocket size={16} /> },
+  { href: "/admin/claims",   label: "Claims",   icon: <ShieldCheck size={16} /> },
   { href: "/admin/settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
 

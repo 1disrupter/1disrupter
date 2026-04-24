@@ -18,6 +18,7 @@ from app.routers import notifications, ws, venues_ext
 from app.routers import forecast as forecast_router
 from app.routers import intel_flags, launch as launch_router
 from app.routers import global_scale
+from app.routers import claims as claims_router
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -87,6 +88,7 @@ def create_app() -> FastAPI:
     app.include_router(global_scale.osm_router, prefix="/api")
     app.include_router(global_scale.enrich_router, prefix="/api")
     app.include_router(global_scale.discovery_router, prefix="/api")
+    app.include_router(claims_router.router, prefix="/api")
     # WebSocket router — no prefix (clients connect to /ws/vibe/{id})
     app.include_router(ws.router)
 
