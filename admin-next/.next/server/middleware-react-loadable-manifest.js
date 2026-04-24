@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}";
+self.__REACT_LOADABLE_MANIFEST='{"app/admin/settings/page.tsx -> @/components/BrandKitEmbed":{"id":2981,"files":["static/chunks/981.7793b408c3209c5e.js"]}}';

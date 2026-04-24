@@ -413,3 +413,36 @@ sudo supervisorctl restart backend frontend postgresql
 - `/brand` when logged out: redirects to `/admin` ✅
 - Admin → Settings → Brand Kit: renders full embedded brand kit ✅
 - No user-facing page modified, no theme token deleted ✅
+
+
+---
+
+## Iteration 13 — Admin Settings parity (Next.js + Expo Mobile) — Feb 2026
+
+### Next.js Admin (`/app/admin-next`)
+- [x] Added **Settings** item to `components/Sidebar.tsx` (Palette-style `SettingsIcon`) after `Launch`
+- [x] New route `src/app/admin/settings/page.tsx` — Topbar ("SETTINGS"), `ADMIN-ONLY` chip, chip sub-nav (first sub: **Brand Kit**)
+- [x] `src/components/BrandKitEmbed.tsx` — read-only Brand Kit viewer (hero, 11 colour swatches, typography, 7 shadow effects, spacing scale, component atoms) using identical hex tokens as CRA
+- [x] Lazy-loaded via `React.lazy` + `<Suspense>` inside the Settings route
+- [x] Admin guard already redirects unauthenticated users to `/login` (confirmed via screenshot)
+- [x] `tailwind.config.ts` additively extended with `neonAmber`, `neonTeal`, `hardEdge` shadows — no rename/removal
+- [x] `yarn build` clean — new route: 3.21 kB / 106 kB first-load
+
+### Expo Mobile (`/app/mobile`)
+- [x] New `src/screens/BrandKitScreen.tsx` — read-only Brand Kit (colours, typography, effects, spacing, radii)
+- [x] New `src/lib/adminSession.ts` — AsyncStorage-backed hook using same creds as web (`vibe2nite` / `nightowl`)
+- [x] `SettingsScreen.tsx` additively extended with an **Admin tools** card:
+  - Non-admins see "Enter admin mode" only (public UI untouched)
+  - Admin login unlocks a fullscreen "Open Brand Kit" modal rendering `BrandKitScreen`
+  - "Sign out of admin" clears AsyncStorage
+- [x] Bottom tabs unchanged; admin toggle lives entirely inside the existing Settings tab
+- [x] `tsc --noEmit` passes on both `admin-next` and `mobile`
+
+### Shared design system
+- CRA / Next.js / Expo tokens verified: same hex palette + spacing scale (4/8/12/16/24/32/48). Additive only — no renames or removals.
+
+### Acceptance
+- Next.js `/admin/settings` renders embedded Brand Kit (11 swatches, 5 section chips, ADMIN-ONLY badge); unauth → `/login` redirect ✅
+- Expo public Settings untouched; admin entry unlocks Brand Kit modal ✅
+- No backend or data-model changes ✅
+- CRA home + admin still 200 OK ✅

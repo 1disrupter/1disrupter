@@ -1,12 +1,19 @@
-import React from "react";
-import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, spacing } from "@/theme";
 import { API_BASE } from "@/config";
 import { Logo, LogoPin } from "@/components/Logo";
 import { GlowButton } from "@/components/GlowButton";
+import { useAdminSession } from "@/lib/adminSession";
+import BrandKitScreen from "@/screens/BrandKitScreen";
 
 export default function SettingsScreen() {
+  const admin = useAdminSession();
+  const [showLogin, setShowLogin] = useState(false);
+  const [showBrand, setShowBrand] = useState(false);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: spacing.md }}>
@@ -49,11 +56,148 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
+        {/* ------------------------------------------------------------ */}
+        {/* Admin section — collapsed for regular users, expanded only   */}
+        {/* once an admin session is active. Non-admin UI is untouched.   */}
+        {/* ------------------------------------------------------------ */}
+        {admin.ready && (
+          <View style={[styles.card, styles.adminCard]} testID="mobile-admin-settings-card">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Ionicons name="shield-checkmark" size={14} color={colors.primaryGlow} />
+              <Text style={styles.sectionLabel}>Admin tools</Text>
+            </View>
+            {admin.active ? (
+              <>
+                <Text style={[styles.body, { color: colors.textMuted, fontSize: 12 }]}>
+                  Signed in as admin. Internal design & settings surfaces are unlocked.
+                </Text>
+                <GlowButton
+                  label="Open Brand Kit"
+                  variant="primary"
+                  size="md"
+                  style={{ marginTop: spacing.sm }}
+                  onPress={() => setShowBrand(true)}
+                  testID="mobile-open-brandkit-btn"
+                />
+                <GlowButton
+                  label="Sign out of admin"
+                  variant="ghost"
+                  size="sm"
+                  style={{ marginTop: spacing.xs }}
+                  onPress={() => admin.logout()}
+                  testID="mobile-admin-logout-btn"
+                />
+              </>
+            ) : (
+              <>
+                <Text style={[styles.body, { color: colors.textFaint, fontSize: 12 }]}>
+                  Curators & designers: unlock internal tools (Brand Kit, settings).
+                </Text>
+                <GlowButton
+                  label="Enter admin mode"
+                  variant="secondary"
+                  size="md"
+                  style={{ marginTop: spacing.sm }}
+                  onPress={() => setShowLogin(true)}
+                  testID="mobile-admin-login-btn"
+                />
+              </>
+            )}
+          </View>
+        )}
+
         <Text style={{ textAlign: "center", color: colors.textFaint, marginTop: spacing.xl }}>
           v1.0.0 · © Vibe2Nite
         </Text>
       </ScrollView>
+
+      {/* Admin login modal */}
+      <AdminLoginModal
+        visible={showLogin}
+        onClose={() => setShowLogin(false)}
+        onSubmit={async (u, p) => {
+          const ok = await admin.login(u, p);
+          if (ok) setShowLogin(false);
+          return ok;
+        }}
+      />
+
+      {/* Brand Kit fullscreen modal (admin only) */}
+      <Modal visible={showBrand && admin.active} animationType="slide" onRequestClose={() => setShowBrand(false)}>
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>BRAND KIT</Text>
+            <Pressable onPress={() => setShowBrand(false)} testID="mobile-brandkit-close">
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+          <BrandKitScreen />
+        </View>
+      </Modal>
     </SafeAreaView>
+  );
+}
+
+function AdminLoginModal({
+  visible, onClose, onSubmit,
+}: { visible: boolean; onClose: () => void; onSubmit: (u: string, p: string) => Promise<boolean> }) {
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setBusy(true); setErr(null);
+    const ok = await onSubmit(user, pass);
+    setBusy(false);
+    if (!ok) setErr("Invalid credentials.");
+    else { setUser(""); setPass(""); }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+        <Pressable style={styles.loginCard} onPress={(e) => e.stopPropagation()}>
+          <Text style={styles.modalTitle}>ADMIN CONSOLE</Text>
+          <Text style={{ color: colors.textFaint, fontSize: 12, marginTop: 6 }}>
+            Same credentials as the web console.
+          </Text>
+          <TextInput
+            value={user}
+            onChangeText={(t) => { setUser(t); setErr(null); }}
+            placeholder="username"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.loginInput}
+            testID="mobile-admin-user"
+          />
+          <TextInput
+            value={pass}
+            onChangeText={(t) => { setPass(t); setErr(null); }}
+            placeholder="password"
+            placeholderTextColor={colors.textFaint}
+            secureTextEntry
+            autoCapitalize="none"
+            style={[styles.loginInput, { marginTop: 10 }]}
+            testID="mobile-admin-pass"
+          />
+          {err && <Text style={{ color: colors.pink, fontSize: 12, marginTop: 6 }}>{err}</Text>}
+          <View style={{ flexDirection: "row", gap: 10, marginTop: spacing.md }}>
+            <GlowButton label="Cancel" variant="secondary" size="md" onPress={onClose} style={{ flex: 1 }} />
+            <GlowButton
+              label={busy ? "…" : "Enter"}
+              variant="primary"
+              size="md"
+              disabled={busy}
+              onPress={submit}
+              style={{ flex: 1 }}
+              testID="mobile-admin-submit"
+            />
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -66,6 +210,32 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1, borderColor: colors.border,
   },
+  adminCard: {
+    borderColor: colors.primaryGlow,
+    backgroundColor: "rgba(138,43,226,0.10)",
+  },
   sectionLabel: { color: colors.primaryGlow, fontSize: 10, letterSpacing: 2.5, textTransform: "uppercase" },
   body: { color: colors.text, marginTop: 6, lineHeight: 20 },
+
+  modalHeader: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingHorizontal: spacing.md, paddingTop: spacing.xl, paddingBottom: spacing.sm,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  modalTitle: { color: colors.text, fontSize: 22, fontWeight: "900", letterSpacing: 3 },
+
+  modalBackdrop: {
+    flex: 1, alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(5,5,10,0.82)", padding: spacing.md,
+  },
+  loginCard: {
+    width: "100%", maxWidth: 420, padding: spacing.lg,
+    backgroundColor: colors.bg, borderRadius: radius.xl,
+    borderWidth: 1, borderColor: colors.primaryGlow,
+  },
+  loginInput: {
+    marginTop: spacing.md, padding: 12, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: "rgba(255,255,255,0.03)",
+    color: colors.text, fontSize: 14,
+  },
 });
