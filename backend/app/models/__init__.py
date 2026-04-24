@@ -14,3 +14,4 @@ from app.models.launch import (  # noqa: F401
 )
 from app.models.discovery import VenueDiscoveryCandidate  # noqa: F401
 from app.models.claim import VenueClaim  # noqa: F401
+from app.models.webhook_log import WebhookEventLog  # noqa: F401

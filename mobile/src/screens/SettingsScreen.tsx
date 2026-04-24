@@ -8,11 +8,13 @@ import { Logo, LogoPin } from "@/components/Logo";
 import { GlowButton } from "@/components/GlowButton";
 import { useAdminSession } from "@/lib/adminSession";
 import BrandKitScreen from "@/screens/BrandKitScreen";
+import OwnerScreen from "@/screens/OwnerScreen";
 
 export default function SettingsScreen() {
   const admin = useAdminSession();
   const [showLogin, setShowLogin] = useState(false);
   const [showBrand, setShowBrand] = useState(false);
+  const [showOwner, setShowOwner] = useState(false);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -54,6 +56,27 @@ export default function SettingsScreen() {
           <Text style={[styles.body, { color: colors.textFaint, marginTop: spacing.xs }]}>
             (placeholder — add real links when live)
           </Text>
+        </View>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* Owner console — public entry point (opt-in, auth via owner key)  */}
+        {/* ---------------------------------------------------------------- */}
+        <View style={[styles.card, styles.ownerCard]} testID="mobile-owner-card">
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="shield-checkmark-outline" size={14} color={colors.pink} />
+            <Text style={[styles.sectionLabel, { color: colors.pink }]}>Venue owners</Text>
+          </View>
+          <Text style={[styles.body, { color: colors.textFaint, fontSize: 12 }]}>
+            Verified your claim? Open the owner console to see your venue's live signals, handles and inbox.
+          </Text>
+          <GlowButton
+            label="Open owner console"
+            variant="pink"
+            size="md"
+            style={{ marginTop: spacing.sm }}
+            onPress={() => setShowOwner(true)}
+            testID="mobile-open-owner-btn"
+          />
         </View>
 
         {/* ------------------------------------------------------------ */}
@@ -132,6 +155,19 @@ export default function SettingsScreen() {
             </Pressable>
           </View>
           <BrandKitScreen />
+        </View>
+      </Modal>
+
+      {/* Owner console fullscreen modal (public opt-in) */}
+      <Modal visible={showOwner} animationType="slide" onRequestClose={() => setShowOwner(false)}>
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>OWNER CONSOLE</Text>
+            <Pressable onPress={() => setShowOwner(false)} testID="mobile-owner-close">
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+          <OwnerScreen />
         </View>
       </Modal>
     </SafeAreaView>
@@ -213,6 +249,10 @@ const styles = StyleSheet.create({
   adminCard: {
     borderColor: colors.primaryGlow,
     backgroundColor: "rgba(138,43,226,0.10)",
+  },
+  ownerCard: {
+    borderColor: colors.pink,
+    backgroundColor: "rgba(255,46,196,0.08)",
   },
   sectionLabel: { color: colors.primaryGlow, fontSize: 10, letterSpacing: 2.5, textTransform: "uppercase" },
   body: { color: colors.text, marginTop: 6, lineHeight: 20 },

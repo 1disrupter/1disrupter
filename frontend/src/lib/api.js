@@ -55,3 +55,15 @@ export const getProviderStatus = () =>
 
 export const getRecentWebhooks = (limit = 20) =>
   api.get("/admin/webhooks/recent", { params: { limit } }).then((r) => r.data);
+
+// --- Iteration 14: owner-scoped dashboard ----------------------------------
+const ownerHeaders = (key) => ({ headers: { "X-Owner-Key": key } });
+
+export const getOwnerMe = (key) =>
+  api.get("/owner/me", ownerHeaders(key)).then((r) => r.data);
+
+export const getOwnerInbox = (key, limit = 20) =>
+  api.get("/owner/inbox", { ...ownerHeaders(key), params: { limit } }).then((r) => r.data);
+
+export const setOwnerHandles = (key, payload) =>
+  api.put("/owner/venue/handles", payload, ownerHeaders(key)).then((r) => r.data);

@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Instagram Graph API adapter (optional).
+"""Instagram Graph API adapter — real fetch chain when configured.
 
-Relies on a long-lived page access token via IG Graph (Business API). When the
-token isn't set the adapter reports 'not configured' and the signal engine
-falls back to its deterministic stub.
+Required env:
+  INSTAGRAM_ACCESS_TOKEN   - long-lived IG Graph token (page/business)
+  INSTAGRAM_IG_USER_ID     - the IG business user id that can call hashtag search
+
+Required per-venue data:
+  VenueProfile.tags.social_handles.instagram (set via owner dashboard)
+
+Chain:
+  GET /ig_hashtag_search?user_id=...&q=<handle>        → hashtag id
+  GET /{hashtag_id}/recent_media?user_id=...&limit=50  → count recent posts
+Score = clamp((recent_post_count / 5) , 0, 10).
+
+Returns None (falls back to stub) when any prerequisite is missing or fails.
 """
 from __future__ import annotations
 
@@ -13,8 +23,11 @@ from typing import Optional
 
 import requests
 
+from app.services.signals.providers._handles import instagram_handle
+
 NAME = "instagram"
 ENV_VAR = "INSTAGRAM_ACCESS_TOKEN"
+IG_GRAPH = "https://graph.facebook.com/v20.0"
 
 logger = logging.getLogger("vibe2nite.providers.instagram")
 
@@ -24,26 +37,43 @@ def is_configured() -> bool:
 
 
 async def fetch(venue) -> Optional[float]:
-    """Return a 0..10 social-activity score.
-
-    Without a venue-level IG handle we can only do a hashtag search; this is a
-    safe placeholder that keeps the plumbing live. Owners who wire a real
-    handle to each venue later can upgrade this adapter in place.
-    """
     token = os.environ.get(ENV_VAR, "").strip()
-    if not token:
+    ig_user = os.environ.get("INSTAGRAM_IG_USER_ID", "").strip()
+    handle = instagram_handle(venue)
+    if not (token and ig_user and handle):
         return None
-    # Unknown handle → conservative "not enough data" response so we still
-    # fall back to the stub cleanly rather than emitting noise.
-    tag = "".join(c for c in (venue.name or "").lower() if c.isalnum())[:32]
-    if not tag:
-        return None
+
     try:
-        # Step 1 – resolve hashtag id. (Requires ig_hashtag_search which needs an IG user id.)
-        # Without an IG user id we can't complete the full chain; treat as "unconfigured for this deployment".
-        # We keep the call out for observability — logged only.
-        logger.debug("instagram.fetch requested for tag=%s (no user-id chain wired)", tag)
-        return None
+        # 1) Resolve hashtag id (IG's hashtag search works on handles/names too).
+        q = requests.get(
+            f"{IG_GRAPH}/ig_hashtag_search",
+            params={"user_id": ig_user, "q": handle, "access_token": token},
+            timeout=4,
+        )
+        if not q.ok:
+            return None
+        data = q.json().get("data") or []
+        if not data:
+            return None
+        hashtag_id = data[0].get("id")
+        if not hashtag_id:
+            return None
+
+        # 2) Recent media velocity for that tag.
+        r = requests.get(
+            f"{IG_GRAPH}/{hashtag_id}/recent_media",
+            params={
+                "user_id": ig_user, "fields": "id,timestamp",
+                "access_token": token, "limit": 50,
+            },
+            timeout=4,
+        )
+        if not r.ok:
+            return None
+        count = len((r.json().get("data") or []))
+        # Saturate at 50 posts → 10.0
+        score = min(10.0, count / 5.0)
+        return float(score)
     except Exception as exc:  # pragma: no cover
         logger.debug("instagram fetch failed: %s", exc)
         return None

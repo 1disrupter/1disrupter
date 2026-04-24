@@ -502,3 +502,56 @@ sudo supervisorctl restart backend frontend postgresql
 - CRA + Next.js Claims panels both render identical data ✅
 - Nothing in existing APIs or mobile flows changed ✅
 
+
+---
+
+## Iteration 14 — Owner console + real IG/TikTok chains + DB-backed webhooks + welcome onboarding (Feb 2026)
+
+### 1. Real IG/TikTok fetch chains with per-venue handle resolution
+- Handles stored on `VenueProfile.tags.social_handles` (existing JSON column — no migration).
+- New helper `app/services/signals/providers/_handles.py` with `instagram_handle(venue)` / `tiktok_handle(venue)`.
+- `providers/instagram.py` now fetches real IG Graph hashtag-id → recent-media chain when `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_IG_USER_ID` + per-venue handle are all set. Score = posts/5, capped at 10.
+- `providers/tiktok.py` now calls TikTok Research API `/video/query/` when `TIKTOK_ACCESS_TOKEN` + per-venue handle are set. Score = videos/2 over last 7d, capped at 10.
+- Graceful fallback identical to Iter13: `None` → deterministic stub.
+- `.env.example` updated with `INSTAGRAM_IG_USER_ID`.
+
+### 2. DB-backed webhook log (replaces ephemeral ring buffer)
+- New model `WebhookEventLog` + migration `b2c8d3e4f5a6_add_webhook_event_log`.
+- Dispatcher persists every delivery attempt (ok / error / attempts) into `webhook_event_log`.
+- In-memory ring retained as a fast hot-cache fallback.
+- `GET /api/admin/webhooks/recent` now reads DB first (ordered by `created_at desc`) so history survives restarts.
+
+### 3. Owner-scoped dashboard
+- `X-Owner-Key` header auth: opaque `vk_*` key minted on claim verification and on admin approve, persisted in `VenueClaim.meta.api_key`.
+- New routes (`/app/backend/app/routers/owner.py`):
+  - `GET /api/owner/me` — owner summary + owned venue(s) + vibe score + external signals + current handles.
+  - `GET /api/owner/inbox?limit=20` — owner's scoped inbox items.
+  - `PUT /api/owner/venue/handles` — write IG/TikTok handles (used by real providers).
+- **CRA** (`/app/frontend`):
+  - New route `/owner` (lazy-loaded) with auth gate, dashboard (vibe card + external-signal bars + social-handle editor + inbox), and `localStorage` key persistence.
+  - `lib/api.js` gained `getOwnerMe`, `getOwnerInbox`, `setOwnerHandles`.
+- **Mobile** (`/app/mobile`):
+  - New `OwnerScreen.tsx` mirroring the CRA page (vibe card, signals, handle editor, inbox).
+  - New `lib/ownerKey.ts` (AsyncStorage-backed `useOwnerKey` hook).
+  - `SettingsScreen.tsx` gains a public "Open owner console" card (no admin gate — anyone verified can use it).
+- TypeScript clean on both `admin-next` (already Iter13) and `mobile`.
+
+### 4. Welcome-owner onboarding
+- On claim verification (either magic-link or admin-approve), three idempotent side-effects fire:
+  1. `mint_api_key` — generates `vk_*` key in `claim.meta.api_key`.
+  2. `seed_welcome_inbox` — writes a `welcome_owner` `NotificationLog` with deep link `/owner?claim=<claim_id>`.
+  3. `maybe_send_welcome_push` — if a `UserPushToken` exists for the owner email, fires an Expo push with kind=`welcome_owner`.
+- All side-effects are defensive: failures are logged but don't fail the verify flow.
+
+### 5. Testing
+- New test file `tests/test_iter14_owner_flow.py` — 10 tests:
+  - verify returns `owner_api_key`, auth gating (401/200), welcome inbox seeded + idempotent, handle PUT persists + empty-string clears, DB-backed webhook log, IG adapter gating.
+- Full backend suite: **127 passed** (was 117). Zero regressions.
+
+### Acceptance
+- Owner dashboard reachable at `/owner?key=vk_…` (CRA) and Mobile → Settings → "Open owner console" ✅
+- DB-backed webhook log visible in admin Claims → Webhook events (entries survive restarts) ✅
+- IG/TikTok adapters use per-venue handles when keys + handles set; stub otherwise ✅
+- Welcome inbox entry auto-seeded exactly once per claim ✅
+- No changes to existing public APIs or mobile flows ✅
+

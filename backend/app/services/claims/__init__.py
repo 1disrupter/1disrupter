@@ -151,6 +151,16 @@ def verify_claim(db: Session, token: str) -> dict:
     claim.token = None  # single-use
     db.commit()
 
+    # Mint owner API key + seed welcome inbox + best-effort welcome push.
+    try:
+        from app.services import owner as owner_svc
+        api_key = owner_svc.mint_api_key(db, claim)
+        owner_svc.seed_welcome_inbox(db, claim)
+        owner_svc.maybe_send_welcome_push(db, claim)
+    except Exception as exc:  # pragma: no cover
+        logger.exception("owner onboarding side-effects failed: %s", exc)
+        api_key = None
+
     # Fire webhook — non-blocking.
     venue = db.get(Venue, claim.venue_id)
     webhooks.dispatch(
@@ -164,7 +174,12 @@ def verify_claim(db: Session, token: str) -> dict:
             "claim_id": claim.id,
         },
     )
-    return {"ok": True, "claim": claim.as_dict(), "venue_name": venue.name if venue else None}
+    return {
+        "ok": True,
+        "claim": claim.as_dict(),
+        "venue_name": venue.name if venue else None,
+        "owner_api_key": api_key,
+    }
 
 
 def list_claims(db: Session, status: Optional[str] = None, limit: int = 100) -> list[dict]:
@@ -194,6 +209,15 @@ def admin_review(db: Session, claim_id: str, *, action: str, reviewer: str, note
         claim.verified_at = claim.verified_at or claim.reviewed_at
         claim.token = None
         db.commit()
+
+        # Same owner-onboarding side-effects as the magic-link path.
+        try:
+            from app.services import owner as owner_svc
+            owner_svc.mint_api_key(db, claim)
+            owner_svc.seed_welcome_inbox(db, claim)
+            owner_svc.maybe_send_welcome_push(db, claim)
+        except Exception as exc:  # pragma: no cover
+            logger.exception("owner onboarding (admin-approve) failed: %s", exc)
 
         venue = db.get(Venue, claim.venue_id)
         webhooks.dispatch(
