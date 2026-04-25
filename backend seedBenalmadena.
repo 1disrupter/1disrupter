@@ -1,0 +1,24 @@
+const fs = require("fs");
+const path = require("path");
+const mongoose = require("mongoose");
+const Venue = require("../models/Venue"); // adjust path if needed
+
+require("dotenv").config();
+
+(async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("Connected to MongoDB");
+
+    const dataPath = path.join(__dirname, "benalmadena.seed.json");
+    const venues = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+
+    await Venue.insertMany(venues);
+    console.log("Benalmádena venues inserted successfully");
+
+    process.exit(0);
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+})();
