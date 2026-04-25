@@ -151,7 +151,16 @@ export function VenueListItem({ data, onClick, className }) {
   const { venue, vibe, distance_km } = data;
   const status = statusForScore(vibe.vibe_score);
   return (
-    <button
+       </Button>
+155     <a
+156       href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
+157       target="_blank"
+158       rel="noopener noreferrer"
+159       className="text-blue-400 text-xs underline mt-2"
+160     >
+161       Get Directions →
+162     </a>
+
       onClick={() => onClick?.(data)}
       className={cx(
         "group flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02]",
@@ -173,6 +182,6 @@ export function VenueListItem({ data, onClick, className }) {
         </div>
       </div>
       <VibeScoreBadge score={vibe.vibe_score} size="sm" />
-    </button>
+    
   );
 }
