@@ -120,11 +120,18 @@ def create_app() -> FastAPI:
 
     # Background signal-refresh scheduler
     @app.on_event("startup")
-    async def _v2n_startup() -> None:
-        import asyncio
-        from app.services.ws_manager import manager as _wsm
-        _wsm.bind_loop(asyncio.get_event_loop())
-        start_scheduler()
+async def _v2n_startup() -> None:
+    import asyncio
+    from app.services.ws_manager import manager as _wsm
+    from app.services.vibe_updater import run_vibe_updater
+
+    _wsm.bind_loop(asyncio.get_event_loop())
+    start_scheduler()
+
+    # Start vibe updater
+    asyncio.create_task(run_vibe_updater())
+
+    
 
     @app.on_event("shutdown")
     async def _v2n_shutdown() -> None:
