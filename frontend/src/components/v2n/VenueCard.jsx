@@ -139,8 +139,8 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
 
       
 
-        </Button>
-      </div>
+        
+      
     </motion.article>
   );
 }
