@@ -1,7 +1,9 @@
 import axios from "axios";
 
 export const BACKEND_URL =
-  import.meta.env.VITE_API_BASE_URL || window.location.origin;
+  process.env.REACT_APP_API_BASE_URL || window.location.origin;
+
+  
 
   
 
