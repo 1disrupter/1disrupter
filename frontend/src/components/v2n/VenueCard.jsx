@@ -122,7 +122,15 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
           data-testid={`go-here-${slot}`}
           onClick={() => onGo?.(data)}
         >
-          Go here
+          Go here<a
+  href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-blue-400 text-xs underline ml-5 mb-3"
+>
+  Get Directions →
+</a>
+
         </Button>
       </div>
     </motion.article>
