@@ -71,35 +71,27 @@ export default function Home() {
     fetchVibes(loc, radius);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-const useMyLocation = () => {
-  if (!navigator.geolocation) {
-    toast.warn("Geolocation not available on this device.");
-    return;
-  }
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      setLat(pos.coords.latitude);
-      setLng(pos.coords.longitude);
-      toast.success("Location updated.");
-    },
-    (err) => {
-      console.warn("Location blocked or failed:", err);
-      toast.warn("Please enable location to see venues near you.");
-      // IMPORTANT: do NOT set fallback coords here
-      // Let the UI stay in 'no location' mode instead of guessing Manhattan
-    },
-    { enableHighAccuracy: true, timeout: 8000 }
-  );
-};
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast.warn("Geolocation not available on this device.");
+      return;
+    }
 
-  
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const next = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: "My location" };
         setLoc(next);
         toast.success("Location locked in.");
         fetchVibes(next, radius);
       },
-      () => toast.error("Could not read your location."),
-      { timeout: 6000 }
+      (err) => {
+        console.warn("Location blocked or failed:", err);
+        toast.warn("Please enable location to see venues near you.");
+        // IMPORTANT: do NOT set fallback coords here
+        // Let the UI stay in 'no location' mode instead of guessing Manhattan
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
     );
   };
 
