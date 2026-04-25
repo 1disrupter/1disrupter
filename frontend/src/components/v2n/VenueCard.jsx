@@ -109,27 +109,35 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
 
         <VibeScoreBadge score={vibe.vibe_score} size="md" />
       </div>
+{/* Footer CTA */}
+<div className="flex items-center justify-between border-t border-white/5 px-5 py-3">
+  <div className="flex items-center gap-2 text-[11px] text-white/40 uppercase tracking-[0.22em]">
+    <Sparkles size={12} className="text-primary-glow" />
+    <span>Updated moments ago</span>
+  </div>
 
-      {/* Footer CTA */}
-      <div className="flex items-center justify-between border-t border-white/5 px-5 py-3">
-        <div className="flex items-center gap-2 text-[11px] text-white/40 uppercase tracking-[0.22em]">
-          <Sparkles size={12} className="text-primary-glow" />
-          <span>Updated moments ago</span>
-        </div>
-        <Button
-          size="sm"
-          variant={cfg.tone === "aqua" ? "aqua" : cfg.tone === "pink" ? "pink" : "primary"}
-          data-testid={`go-here-${slot}`}
-          onClick={() => onGo?.(data)}
-        >
-          Go here<a
-  href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="text-blue-400 text-xs underline ml-5 mb-3"
->
-  Get Directions →
-</a>
+  <div className="flex flex-col items-end">
+    <Button
+      size="sm"
+      variant={cfg.tone === "aqua" ? "aqua" : cfg.tone === "pink" ? "pink" : "primary"}
+      data-testid={`go-here-${slot}`}
+      onClick={() => onGo?.(data)}
+    >
+      Go here
+    </Button>
+
+    <a
+      href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-400 text-xs underline mt-2"
+    >
+      Get Directions →
+    </a>
+  </div>
+</div>
+
+      
 
         </Button>
       </div>
