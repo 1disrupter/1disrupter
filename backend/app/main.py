@@ -134,3 +134,14 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+from fastapi import WebSocket
+from app.websocket.manager import manager
+
+@app.websocket("/ws/vibe")
+async def vibe_socket(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except:
+        manager.disconnect(websocket)
