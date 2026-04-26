@@ -97,10 +97,7 @@ const useMyLocation = () => {
         setLoc(next);
         toast.success("Location locked in.");
 
-            <Locate size={18} />
-          </IconButton>
-        }
-      />
+            
 
       {/* Hero */}
       <section className="relative overflow-hidden">
