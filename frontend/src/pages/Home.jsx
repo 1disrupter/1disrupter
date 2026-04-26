@@ -96,12 +96,7 @@ const useMyLocation = () => {
   
         setLoc(next);
         toast.success("Location locked in.");
-        
 
-
-      <Navbar
-        rightSlot={
-          <IconButton onClick={useMyLocation} aria-label="Use my location" data-testid="use-location">
             <Locate size={18} />
           </IconButton>
         }
