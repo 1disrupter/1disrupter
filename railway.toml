@@ -1,8 +1,19 @@
-[build]
-builder = "NIXPACKS"
-buildCommand = "pip install -r requirements.txt"
-
-[deploy]
-startCommand = "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"
+# ============================
+# BACKEND SERVICE (FastAPI)
+# ============================
+[services.backend]
 rootDirectory = "backend"
+builder = "python"
+buildCommand = "pip install -r requirements.txt"
+startCommand = "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"
+
+# ============================
+# FRONTEND SERVICE (React)
+# ============================
+[services.frontend]
+rootDirectory = "frontend"
+builder = "node"
+buildCommand = "npm install && npm run build"
+startCommand = "npx serve -s build"
+
 
