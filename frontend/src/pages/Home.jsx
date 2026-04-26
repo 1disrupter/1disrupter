@@ -79,8 +79,32 @@ const useMyLocation = () => {
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      setLat(pos.coords.latitude);
-      setLng(pos.coords.longitude);
+     const useMyLocation = () => {
+  if (!navigator.geolocation) {
+    toast.warn("Geolocation not available on this device.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const next = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        label: "Your Location",
+      };
+
+      setLoc(next);
+      toast.success("Location updated.");
+      fetchVibes(next, radius);
+    },
+    (err) => {
+      console.warn("Location blocked or failed:", err);
+      toast.warn("Please enable location to see venues near you.");
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+};
+ 
       toast.success("Location updated.");
     },
     (err) => {
@@ -94,8 +118,7 @@ const useMyLocation = () => {
 };
 
   
-        setLoc(next);
-        toast.success("Location locked in.");
+      
 
             
 
