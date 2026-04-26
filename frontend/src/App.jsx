@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastProvider, LoadingScreen } from "@/components/v2n";
 import MainLayout from "@/layouts/MainLayout";
+// force rebuild
 
 const Home = lazy(() => import("@/pages/Home"));
 const Brand = lazy(() => import("@/pages/Brand"));
