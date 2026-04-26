@@ -15,27 +15,22 @@ const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 export default function Home() {
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [radius] = useState(50);
   const toast = useToast();
 
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
-      setLoading(true);
-      setError(null);
       try {
         const res = await getTopVibes(l.lat, l.lng, r);
         setData(res);
       } catch (e) {
-        setError(e.response?.data?.detail || e.message || "Network error");
-      } finally {
-        setLoading(false);
+        toast.warn(e.response?.data?.detail || e.message || "Network error");
       }
     },
-    [loc, radius]
+    [loc, radius, toast]
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchVibes(loc, radius);
   }, []);
@@ -125,3 +120,4 @@ export default function Home() {
     </div>
   );
 }
+
