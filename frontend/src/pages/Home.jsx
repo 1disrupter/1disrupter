@@ -96,21 +96,7 @@ const useMyLocation = () => {
   
         setLoc(next);
         toast.success("Location locked in.");
-        fetchVibes(next, radius);
-      },
-      () => toast.error("Could not read your location."),
-      { timeout: 6000 }
-    );
-  };
-
-  const slots = useMemo(
-    () => [
-      { key: "best_overall", data: data?.best_overall },
-      { key: "live_music", data: data?.live_music },
-      { key: "hidden_gem", data: data?.hidden_gem },
-    ],
-    [data]
-  );
+        
 
   const handleVote = async (venue_id, vote) => {
     try {
