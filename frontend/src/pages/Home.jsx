@@ -98,18 +98,7 @@ const useMyLocation = () => {
         toast.success("Location locked in.");
         
 
-  const handleVote = async (venue_id, vote) => {
-    try {
-      const res = await submitFeedback(venue_id, vote);
-      toast.success(`Vote logged. Score: ${res.new_vibe_score.toFixed(2)}`);
-      fetchVibes();
-    } catch (e) {
-      toast.error(e.response?.data?.detail || "Vote failed");
-    }
-  };
 
-  return (
-    <div className="min-h-screen pb-24 md:pb-0">
       <Navbar
         rightSlot={
           <IconButton onClick={useMyLocation} aria-label="Use my location" data-testid="use-location">
