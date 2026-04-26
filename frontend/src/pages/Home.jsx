@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { MapPin, Locate, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -59,15 +59,6 @@ export default function Home() {
       { enableHighAccuracy: true, timeout: 8000 }
     );
   };
-
-  const slots = useMemo(
-    () => [
-      { key: "best_overall", data: data?.best_overall },
-      { key: "live_music", data: data?.live_music },
-      { key: "hidden_gem", data: data?.hidden_gem },
-    ],
-    [data]
-  );
 
   return (
     <div className="min-h-screen pb-24 md:pb-0">
