@@ -86,6 +86,13 @@ const useMyLocation = () => {
   }
 
   navigator.geolocation.getCurrentPosition(
+ const useMyLocation = () => {
+  if (!navigator.geolocation) {
+    toast.warn("Geolocation not available on this device.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
     (pos) => {
       const next = {
         lat: pos.coords.latitude,
@@ -105,18 +112,6 @@ const useMyLocation = () => {
   );
 };
  
-      toast.success("Location updated.");
-    },
-    (err) => {
-      console.warn("Location blocked or failed:", err);
-      toast.warn("Please enable location to see venues near you.");
-      // IMPORTANT: do NOT set fallback coords here
-      // Let the UI stay in 'no location' mode instead of guessing Manhattan
-    },
-    { enableHighAccuracy: true, timeout: 8000 }
-  );
-};
-
   
       
 
