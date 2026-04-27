@@ -5,9 +5,6 @@ import {
   Logo,
   Button,
   IconButton,
-  Card,
-  CardBody,
-  CardHeader,
   useToast,
 } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
@@ -133,13 +130,12 @@ export default function Home({ registerLocationFn }) {
 
         <div className="grid gap-4 md:grid-cols-3">
           {vibes.map((v, i) => (
-            <Card key={i} className="bg-white/5 border-white/10">
-              <CardHeader>
+            <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="mb-3">
                 <h3 className="font-semibold text-lg">{v.name}</h3>
                 <p className="text-white/50 text-sm">{v.address}</p>
-              </CardHeader>
-
-              <CardBody>
+              </div>
+              <div>
                 <div className="flex items-center justify-between">
                   <span className="text-accent-pink font-bold text-xl">
                     {v.score}
@@ -148,8 +144,8 @@ export default function Home({ registerLocationFn }) {
                     vibe score
                   </span>
                 </div>
-              </CardBody>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       </section>
