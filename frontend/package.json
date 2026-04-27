@@ -1,3 +1,4 @@
+
 {
   "name": "vibe2nite-web",
   "version": "1.0.0",
@@ -13,8 +14,8 @@
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "recharts": "^2.13.3",
-    "tailwind-merge": "^2.5.4",
-    "serve": "^14.2.1"
+    "serve": "^14.2.6",
+    "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
@@ -24,12 +25,25 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
+    "serve": "serve -s build -l tcp://0.0.0.0:${PORT:-3000}",
     "test": "craco test"
   },
-  "eslintConfig": { "extends": ["react-app"] },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
 
