@@ -33,7 +33,7 @@ export default function Home({ registerLocationFn }) {
     fetchVibes(loc, radius);
   }, [fetchVibes, loc, radius]);
 
-  const useMyLocation = () => {
+  const useMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
       toast.warn("Geolocation not available on this device.");
       return;
@@ -56,7 +56,7 @@ export default function Home({ registerLocationFn }) {
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
-  };
+  }, [toast, radius, fetchVibes]);
 
   // ⭐ Register the function so the navbar button can call it
   useEffect(() => {
