@@ -1,10 +1,8 @@
-import { useContext, useEffect } from "react";
-import { LocationContext } from "@/context/LocationContext";
-import React, { useEffect, useState, useCallback } from "react";
-import { MapPin, Locate, Flame, Navigation, SlidersHorizontal } from "lucide-react";
+
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { MapPin, Flame, Navigation, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import {
-  Navbar,
   Logo,
   Button,
   IconButton,
@@ -14,15 +12,11 @@ import {
   useToast,
 } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
-const { setUseMyLocationFn } = useContext(LocationContext);
-
-useEffect(() => {
-  setUseMyLocationFn(() => useMyLocation);
-}, [setUseMyLocationFn, useMyLocation]);
+import { LocationContext } from "@/context/LocationContext";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
-export default function Home() {
+export default function Home({ registerLocationFn }) {
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
   const [radius, setRadius] = useState(50);
   const [vibes, setVibes] = useState([]);
@@ -69,10 +63,15 @@ export default function Home() {
     );
   };
 
+  // ⭐ Register the function so the navbar button can call it
+  useEffect(() => {
+    if (registerLocationFn) {
+      registerLocationFn(() => useMyLocation);
+    }
+  }, [registerLocationFn, useMyLocation]);
+
   return (
     <div className="min-h-screen pb-24 md:pb-0">
-   
-
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="v2n-grid absolute inset-0 opacity-30" />
@@ -177,4 +176,3 @@ export default function Home() {
     </div>
   );
 }
-
