@@ -1,6 +1,10 @@
+[build]
+builder = "nixpacks"
+
 [phases.build]
 cmds = [
   "rm -rf node_modules/.cache",
   "npm ci",
   "npm run build"
 ]
+
