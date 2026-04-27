@@ -119,6 +119,14 @@ def create_app() -> FastAPI:
             brand_css_url="/api/static/vibe2nite.css",
         )
 
+    @app.get("/docs", include_in_schema=False)
+    def docs_redirect():
+        return RedirectResponse(url="/api/docs")
+
+    @app.get("/admin/listAdminVenues", include_in_schema=False)
+    def list_admin_venues_redirect():
+        return RedirectResponse(url="/api/admin/venues")
+
     @app.get("/api", include_in_schema=False)
     def api_root():
         return RedirectResponse(url="/api/docs")
