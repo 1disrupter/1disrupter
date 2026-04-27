@@ -1,16 +1,46 @@
 import axios from "axios";
 
-export const BACKEND_URL =
-  process.env.REACT_APP_API_BASE_URL || window.location.origin;
+// ---------------------------------------------------------------------------
+// Backend URL resolution
+// ---------------------------------------------------------------------------
+// REACT_APP_BACKEND_URL must be injected at BUILD time (Create React App bakes
+// it into the bundle). On Railway / Vercel / Netlify, set it as a service env
+// variable BEFORE the build step runs. If it's missing we still fall back to
+// window.location.origin so the app doesn't crash, but we emit a loud console
+// warning so the misconfiguration is impossible to miss.
+// ---------------------------------------------------------------------------
+const RAW_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const RUNTIME_ORIGIN =
+  typeof window !== "undefined" && window.location ? window.location.origin : "";
 
-  
+export const BACKEND_URL = (RAW_BACKEND_URL || RUNTIME_ORIGIN || "").replace(/\/+$/, "");
 
-  
+if (typeof window !== "undefined") {
+  if (!RAW_BACKEND_URL) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[v2n] REACT_APP_BACKEND_URL was not set at build time. " +
+        "Falling back to window.location.origin (" +
+        RUNTIME_ORIGIN +
+        "). API calls will hit the frontend host and likely 404. " +
+        "Fix: set REACT_APP_BACKEND_URL in your hosting provider's env vars and re-run the build."
+    );
+  } else if (BACKEND_URL === RUNTIME_ORIGIN) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[v2n] Resolved BACKEND_URL equals window.location.origin (" +
+        RUNTIME_ORIGIN +
+        "). If your backend is hosted on a different domain, REACT_APP_BACKEND_URL " +
+        "is probably misconfigured for this build."
+    );
+  }
+}
 
 export const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   timeout: 15000,
 });
+
 
 export const getTopVibes = (lat, lng, radius_km = 50) =>
   api.get("/vibes/top", { params: { lat, lng, radius_km } }).then((r) => r.data);
