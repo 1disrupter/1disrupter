@@ -1,5 +1,4 @@
-
-
+import React, { useEffect, useState, useCallback } from "react";
 import { MapPin, Flame, Navigation, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -12,7 +11,6 @@ import {
   useToast,
 } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
-
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
@@ -176,3 +174,4 @@ export default function Home({ registerLocationFn }) {
     </div>
   );
 }
+
