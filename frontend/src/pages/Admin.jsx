@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -146,42 +148,44 @@ function Sidebar({ active, onChange, onLogout }) {
 // Overview (charts)
 // ---------------------------------------------------------------------------
 function OverviewPanel({ venues }) {
+  const safeVenues = Array.isArray(venues) ? venues : [];
+
   const byCategory = useMemo(() => {
     const m = {};
-    venues.forEach((x) => {
+    safeVenues.forEach((x) => {
       m[x.venue.category] = (m[x.venue.category] || 0) + 1;
     });
     return Object.entries(m).map(([name, value]) => ({ name, value }));
-  }, [venues]);
+  }, [safeVenues]);
 
   const byCrowd = useMemo(() => {
     const m = { busy: 0, medium: 0, dead: 0 };
-    venues.forEach((x) => { m[x.vibe.crowd_level] = (m[x.vibe.crowd_level] || 0) + 1; });
+    safeVenues.forEach((x) => { m[x.vibe.crowd_level] = (m[x.vibe.crowd_level] || 0) + 1; });
     return Object.entries(m).map(([name, value]) => ({ name, value }));
-  }, [venues]);
+  }, [safeVenues]);
 
   const topScores = useMemo(
-    () => [...venues].sort((a, b) => b.vibe.vibe_score - a.vibe.vibe_score).slice(0, 8)
+    () => [...safeVenues].sort((a, b) => b.vibe.vibe_score - a.vibe.vibe_score).slice(0, 8)
       .map((x) => ({ name: x.venue.name, score: x.vibe.vibe_score })),
-    [venues]
+    [safeVenues]
   );
 
   const PIE_COLORS = ["#8A2BE2", "#FF2EC4", "#00F5FF", "#FF9A1F", "#C7A7FF"];
 
   const avgSignals = useMemo(() => {
-    if (!venues.length) return [];
+    if (!safeVenues.length) return [];
     const keys = ["manual_score", "social_activity", "user_votes", "time_prediction", "venue_boost"];
     return keys.map((k) => ({
       name: k.replace("_", " "),
-      value: Number((venues.reduce((s, v) => s + (v.vibe.signals[k] || 0), 0) / venues.length).toFixed(2)),
+      value: Number((safeVenues.reduce((s, v) => s + (v.vibe.signals[k] || 0), 0) / safeVenues.length).toFixed(2)),
     }));
-  }, [venues]);
+  }, [safeVenues]);
 
   const stats = [
-    { label: "Venues tracked", value: venues.length, tone: "purple" },
-    { label: "Average score", value: venues.length ? (venues.reduce((s, v) => s + v.vibe.vibe_score, 0) / venues.length).toFixed(2) : "0.0", tone: "pink" },
-    { label: "Currently busy", value: venues.filter((v) => v.vibe.crowd_level === "busy").length, tone: "aqua" },
-    { label: "Hidden gems", value: venues.filter((v) => v.vibe.vibe_score < 5).length, tone: "amber" },
+    { label: "Venues tracked", value: safeVenues.length, tone: "purple" },
+    { label: "Average score", value: safeVenues.length ? (safeVenues.reduce((s, v) => s + v.vibe.vibe_score, 0) / safeVenues.length).toFixed(2) : "0.0", tone: "pink" },
+    { label: "Currently busy", value: safeVenues.filter((v) => v.vibe.crowd_level === "busy").length, tone: "aqua" },
+    { label: "Hidden gems", value: safeVenues.filter((v) => v.vibe.vibe_score < 5).length, tone: "amber" },
   ];
 
   return (
@@ -287,7 +291,8 @@ function OverviewPanel({ venues }) {
 function VenuesPanel({ venues, onAdd, onInspect, query, setQuery }) {
   const toast = useToast();
   const [verifiedOnly, setVerifiedOnly] = React.useState(false);
-  const filtered = venues.filter((v) =>
+  const safeVenues = Array.isArray(venues) ? venues : [];
+  const filtered = safeVenues.filter((v) =>
     v.venue.name.toLowerCase().includes(query.toLowerCase()) &&
     (!verifiedOnly || v.venue.is_verified)
   );
@@ -430,8 +435,10 @@ function VenueIntelligencePanel({ venueId }) {
           getLiveMusic(true),  // include all so we can look up our venue
         ]);
         if (!alive) return;
-        const myFlag = flags.items.find((x) => x.venue_id === venueId);
-        const myLive = live.items.find((x) => x.venue_id === venueId);
+        const flagItems = Array.isArray(flags?.items) ? flags.items : [];
+        const liveItems = Array.isArray(live?.items) ? live.items : [];
+        const myFlag = flagItems.find((x) => x.venue_id === venueId);
+        const myLive = liveItems.find((x) => x.venue_id === venueId);
         setData({ loading: false, forecast, flag: myFlag, live: myLive });
       } catch (e) {
         if (alive) setData({ loading: false, error: e.message });
@@ -737,7 +744,8 @@ function AddVenueModal({ open, onClose, onCreated }) {
 // Signals panel (global logs)
 // ---------------------------------------------------------------------------
 function SignalsPanel({ venues, onInspect }) {
-  const rows = [...venues].sort((a, b) => new Date(b.vibe.last_updated) - new Date(a.vibe.last_updated));
+  const safeVenues = Array.isArray(venues) ? venues : [];
+  const rows = [...safeVenues].sort((a, b) => new Date(b.vibe.last_updated) - new Date(a.vibe.last_updated));
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-white/55">
@@ -788,9 +796,12 @@ function ClaimsPanel() {
         getProviderStatus(),
         getRecentWebhooks(20),
       ]);
-      setClaims(c.items || []);
-      setProviders(p.providers || []);
-      setWebhooks(w);
+      setClaims(Array.isArray(c?.items) ? c.items : []);
+      setProviders(Array.isArray(p?.providers) ? p.providers : []);
+      setWebhooks({
+        configured: (w && typeof w.configured === "object" && w.configured) ? w.configured : {},
+        recent: Array.isArray(w?.recent) ? w.recent : [],
+      });
     } catch (e) {
       toast.error(e.response?.data?.detail || e.message);
     } finally {
@@ -819,6 +830,11 @@ function ClaimsPanel() {
     verified: "aqua",
     rejected: "pink",
   }[s] || "neutral");
+
+  const safeClaims = Array.isArray(claims) ? claims : [];
+  const safeProviders = Array.isArray(providers) ? providers : [];
+  const safeConfigured = (webhooks && webhooks.configured) || {};
+  const safeRecent = Array.isArray(webhooks?.recent) ? webhooks.recent : [];
 
   return (
     <div className="space-y-6" data-testid="admin-claims-panel">
@@ -851,7 +867,7 @@ function ClaimsPanel() {
           <Radar size={12} /> Provider status
         </div>
         <ul className="grid gap-2 md:grid-cols-2">
-          {providers.map((p) => (
+          {safeProviders.map((p) => (
             <li
               key={p.provider}
               data-testid={`provider-${p.provider}`}
@@ -873,16 +889,16 @@ function ClaimsPanel() {
         <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-primary-glow">
           <Activity size={12} /> Webhook events
           <span className="ml-auto text-white/45">
-            {Object.entries(webhooks.configured).map(([k, v]) => (
+            {Object.entries(safeConfigured).map(([k, v]) => (
               <span key={k} className={cx("ml-2", v ? "text-glow-aqua" : "text-white/35")}>{k}:{v ? "on" : "off"}</span>
             ))}
           </span>
         </div>
-        {webhooks.recent.length === 0 ? (
-          <p className="text-xs text-white/45">No recent events. Dispatcher is {Object.values(webhooks.configured).some(Boolean) ? "armed" : "idle (no URL configured)"}.</p>
+        {safeRecent.length === 0 ? (
+          <p className="text-xs text-white/45">No recent events. Dispatcher is {Object.values(safeConfigured).some(Boolean) ? "armed" : "idle (no URL configured)"}.</p>
         ) : (
           <ul className="space-y-1.5 text-xs">
-            {webhooks.recent.map((e, i) => (
+            {safeRecent.map((e, i) => (
               <li key={i} className="flex items-center gap-2">
                 <Chip tone={e.ok ? "aqua" : "pink"}>{e.event_type}</Chip>
                 <span className="text-white/80">{e.title}</span>
@@ -909,9 +925,9 @@ function ClaimsPanel() {
           <tbody>
             {loading ? (
               <tr><td colSpan={6} className="p-6 text-center text-xs text-white/45">Loading…</td></tr>
-            ) : claims.length === 0 ? (
+            ) : safeClaims.length === 0 ? (
               <tr><td colSpan={6} className="p-10"><EmptyState title="No claims yet" hint="Owners can submit via /claims/submit." /></td></tr>
-            ) : claims.map((c, i) => (
+            ) : safeClaims.map((c, i) => (
               <tr key={c.id} className={cx("border-t border-white/5", i % 2 ? "bg-white/[0.01]" : "")} data-testid={`claim-row-${c.id}`}>
                 <td className="p-3 font-mono text-[11px] text-white/70">{c.venue_id.slice(0, 8)}…</td>
                 <td className="p-3">
@@ -1006,7 +1022,7 @@ function SettingsPanel() {
 export default function Admin() {
   const [auth, setAuth] = useState(() => !!localStorage.getItem(STORAGE_KEY));
   const [view, setView] = useState("overview");
-  const [venues, setVenues] = useState([]); // SAFE
+  const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -1034,9 +1050,10 @@ export default function Admin() {
     setError(null);
     try {
       const res = await listAdminVenues();
-      setVenues(res.items || []); // ⭐ FIXED
+      setVenues(Array.isArray(res?.items) ? res.items : []);
     } catch (e) {
       setError(e.response?.data?.detail || e.message);
+      setVenues([]);
     } finally {
       setLoading(false);
     }
@@ -1053,6 +1070,8 @@ export default function Admin() {
     setAuth(false);
     navigate("/admin");
   };
+
+  const safeVenues = Array.isArray(venues) ? venues : [];
 
   return (
     <div>
@@ -1075,7 +1094,9 @@ export default function Admin() {
             </div>
             <div className="hidden items-center gap-2 md:flex">
               <Chip tone="purple">Live</Chip>
-              <Chip tone="neutral">{Array.isArray(venues) ? venues.length : 0} rows</Chip>
+              <Chip tone="neutral">
+                {Array.isArray(venues) ? venues.length : 0} rows
+              </Chip>
               <Button
                 size="sm"
                 variant="secondary"
@@ -1094,10 +1115,10 @@ export default function Admin() {
           ) : error ? (
             <ErrorState message={String(error)} onRetry={load} />
           ) : view === "overview" ? (
-            <OverviewPanel venues={venues || []} />   {/* ⭐ FIXED */}
+            <OverviewPanel venues={safeVenues} />
           ) : view === "venues" ? (
             <VenuesPanel
-              venues={venues || []}                 {/* ⭐ FIXED */}
+              venues={safeVenues}
               query={search}
               setQuery={setSearch}
               onAdd={() => setAddOpen(true)}
@@ -1108,7 +1129,7 @@ export default function Admin() {
           ) : view === "claims" ? (
             <ClaimsPanel />
           ) : (
-            <SignalsPanel venues={venues || []} onInspect={setInspect} /> {/* ⭐ FIXED */}
+            <SignalsPanel venues={safeVenues} onInspect={setInspect} />
           )}
         </main>
       </div>
