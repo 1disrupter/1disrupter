@@ -2,7 +2,7 @@
 """Vibe2Nite — FastAPI application factory."""
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,21 +11,26 @@ from app import __version__
 from app.core.config import get_settings
 from app.core.database import Base, engine
 from app.core.docs import render_branded_docs
-from app.routers import admin, feedback, vibes
-from app.routers import vibes_extras
-from app.routers import intel, rewards
-from app.routers import notifications, ws, venues_ext
-from app.routers import forecast as forecast_router
-from app.routers import intel_flags, launch as launch_router
-from app.routers import global_scale
-from app.routers import claims as claims_router
-from app.routers import owner as owner_router
+
+# Routers
+from app.routers import (
+    admin, feedback, vibes, vibes_extras, intel, rewards,
+    notifications, ws, venues_ext, forecast as forecast_router,
+    intel_flags, launch as launch_router, global_scale,
+    claims as claims_router, owner as owner_router
+)
+
+# Scheduler
 from app.services.scheduler import start_scheduler, stop_scheduler
+
+# WebSocket manager (new)
+from app.websocket.manager import manager as ws_manager
 
 settings = get_settings()
 
+
 # ---------------------------------------------------------------------------
-# OpenAPI description (Markdown, shown inside the branded Swagger header)
+# OpenAPI description (Markdown)
 # ---------------------------------------------------------------------------
 DESCRIPTION = """
 **Real-time nightlife recommendations powered by the Vibe Score.**
@@ -37,19 +42,19 @@ and a **hidden gem**.
 
 ---
 ### Vibe Score
-```
-score = manual_score*0.25 + social_activity*0.25 + user_votes*0.25 + time_prediction*0.15 + venue_boost*0.10
-```
 Capped at **10**. Crowd levels: `≥ 8 busy` · `≥ 5 medium` · `< 5 dead`.
 """.strip()
 
 
+# ---------------------------------------------------------------------------
+# Application Factory
+# ---------------------------------------------------------------------------
 def create_app() -> FastAPI:
     app = FastAPI(
         title=f"{settings.APP_NAME} API",
         version=__version__,
         description=DESCRIPTION,
-        docs_url=None,        # replaced by custom branded docs
+        docs_url=None,
         redoc_url=None,
         openapi_url="/api/openapi.json",
     )
@@ -67,11 +72,10 @@ def create_app() -> FastAPI:
     static_dir = os.path.join(os.path.dirname(__file__), "static")
     app.mount("/api/static", StaticFiles(directory=static_dir), name="static")
 
-    # Ensure tables exist (migrations are the source of truth, but this keeps
-    # dev-boot resilient even before alembic runs).
+    # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    # Routers — every business path under /api for ingress routing
+    # Routers
     app.include_router(vibes.router, prefix="/api")
     app.include_router(vibes_extras.router, prefix="/api")
     app.include_router(feedback.router, prefix="/api")
@@ -91,7 +95,8 @@ def create_app() -> FastAPI:
     app.include_router(global_scale.discovery_router, prefix="/api")
     app.include_router(claims_router.router, prefix="/api")
     app.include_router(owner_router.router, prefix="/api")
-    # WebSocket router — no prefix (clients connect to /ws/vibe/{id})
+
+    # WebSocket router (existing)
     app.include_router(ws.router)
 
     # Health
@@ -118,13 +123,20 @@ def create_app() -> FastAPI:
     def api_root():
         return RedirectResponse(url="/api/docs")
 
-    # Background signal-refresh scheduler
+    # -----------------------------------------------------------------------
+    # Background Schedulers (startup + shutdown)
+    # -----------------------------------------------------------------------
     @app.on_event("startup")
     async def _v2n_startup() -> None:
         import asyncio
         from app.services.ws_manager import manager as _wsm
+        from app.services.vibe_updater import run_vibe_updater
+
         _wsm.bind_loop(asyncio.get_event_loop())
         start_scheduler()
+
+        # Start vibe updater (every 5 minutes)
+        asyncio.create_task(run_vibe_updater())
 
     @app.on_event("shutdown")
     async def _v2n_shutdown() -> None:
@@ -133,4 +145,21 @@ def create_app() -> FastAPI:
     return app
 
 
+# ---------------------------------------------------------------------------
+# Create app instance
+# ---------------------------------------------------------------------------
 app = create_app()
+
+
+# ---------------------------------------------------------------------------
+# WebSocket endpoint (new real-time vibe channel)
+# ---------------------------------------------------------------------------
+@app.websocket("/ws/vibe")
+async def vibe_socket(websocket: WebSocket):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except:
+        ws_manager.disconnect(websocket)
+
