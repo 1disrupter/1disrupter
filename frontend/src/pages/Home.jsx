@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { MapPin, Locate, Flame } from "lucide-react";
+import { MapPin, Locate, Flame, Navigation, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   Navbar,
   Logo,
   Button,
   IconButton,
+  Card,
+  CardBody,
+  CardHeader,
   useToast,
 } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
@@ -14,13 +17,15 @@ const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
 export default function Home() {
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
-  const [radius] = useState(50);
+  const [radius, setRadius] = useState(50);
+  const [vibes, setVibes] = useState([]);
   const toast = useToast();
 
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
       try {
-        await getTopVibes(l.lat, l.lng, r);
+        const data = await getTopVibes(l.lat, l.lng, r);
+        setVibes(data || []);
       } catch (e) {
         toast.warn(e.response?.data?.detail || e.message || "Network error");
       }
@@ -113,8 +118,67 @@ export default function Home() {
         </div>
       </section>
 
-      {/* MORE SECTIONS CAN GO HERE */}
-      {/* Tonight feed, venue cards, map button, radius slider, etc. */}
+      {/* TONIGHT FEED */}
+      <section className="mx-auto max-w-6xl px-4 mt-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-2xl tracking-wide">Tonight</h2>
+
+          <div className="flex items-center gap-3">
+            <IconButton>
+              <Navigation size={18} />
+            </IconButton>
+
+            <IconButton>
+              <SlidersHorizontal size={18} />
+            </IconButton>
+          </div>
+        </div>
+
+        {vibes.length === 0 && (
+          <p className="text-white/50 text-sm">No vibes found in this area.</p>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {vibes.map((v, i) => (
+            <Card key={i} className="bg-white/5 border-white/10">
+              <CardHeader>
+                <h3 className="font-semibold text-lg">{v.name}</h3>
+                <p className="text-white/50 text-sm">{v.address}</p>
+              </CardHeader>
+
+              <CardBody>
+                <div className="flex items-center justify-between">
+                  <span className="text-accent-pink font-bold text-xl">
+                    {v.score}
+                  </span>
+                  <span className="text-white/40 text-xs uppercase tracking-wide">
+                    vibe score
+                  </span>
+                </div>
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* RADIUS SLIDER */}
+      <section className="mx-auto max-w-6xl px-4 mt-12">
+        <label className="text-white/60 text-sm">Search Radius: {radius} km</label>
+        <input
+          type="range"
+          min="5"
+          max="100"
+          value={radius}
+          onChange={(e) => setRadius(Number(e.target.value))}
+          className="w-full mt-2"
+        />
+      </section>
+
+      {/* FOOTER */}
+      <footer className="mx-auto max-w-6xl px-4 mt-16 pb-10 text-white/40 text-xs">
+        <Logo size="xs" /> Vibe2Nite — Find the vibe, go tonight.
+      </footer>
     </div>
   );
 }
+
