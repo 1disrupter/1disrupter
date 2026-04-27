@@ -12,21 +12,19 @@ export default function Home({ registerLocationFn }) {
   const [vibes, setVibes] = useState([]);
   const toast = useToast();
 
-  // ⭐ Fetch vibes safely
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
       try {
         const data = await getTopVibes(l.lat, l.lng, r);
 
-        // ⭐ Normalize API response so it NEVER crashes
-        const list =
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.vibes)
-            ? data.vibes
-            : Array.isArray(data?.data)
-            ? data.data
-            : [];
+        // 🔧 Normalize backend response
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.vibes)
+          ? data.vibes
+          : Array.isArray(data?.data)
+          ? data.data
+          : Object.values(data || {}).filter(Boolean);
 
         setVibes(list);
       } catch (e) {
@@ -40,7 +38,6 @@ export default function Home({ registerLocationFn }) {
     fetchVibes(loc, radius);
   }, [fetchVibes, loc, radius]);
 
-  // ⭐ Safe geolocation
   const useMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
       toast.warn("Geolocation not available on this device.");
@@ -54,23 +51,17 @@ export default function Home({ registerLocationFn }) {
           lng: pos.coords.longitude,
           label: "Your Location",
         };
-
         setLoc(next);
         toast.success("Location updated.");
         fetchVibes(next, radius);
       },
-      () => {
-        toast.warn("Please enable location to see venues near you.");
-      },
+      () => toast.warn("Please enable location to see venues near you."),
       { enableHighAccuracy: true, timeout: 8000 }
     );
   }, [toast, radius, fetchVibes]);
 
-  // ⭐ Register the function correctly
   useEffect(() => {
-    if (registerLocationFn) {
-      registerLocationFn(() => useMyLocation());
-    }
+    if (registerLocationFn) registerLocationFn(() => useMyLocation());
   }, [registerLocationFn, useMyLocation]);
 
   return (
@@ -78,7 +69,6 @@ export default function Home({ registerLocationFn }) {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="v2n-grid absolute inset-0 opacity-30" />
-
         <div className="mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -120,15 +110,9 @@ export default function Home({ registerLocationFn }) {
       <section className="mx-auto max-w-6xl px-4 mt-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-2xl tracking-wide">Tonight</h2>
-
           <div className="flex items-center gap-3">
-            <IconButton>
-              <Navigation size={18} />
-            </IconButton>
-
-            <IconButton>
-              <SlidersHorizontal size={18} />
-            </IconButton>
+            <IconButton><Navigation size={18} /></IconButton>
+            <IconButton><SlidersHorizontal size={18} /></IconButton>
           </div>
         </div>
 
@@ -139,23 +123,14 @@ export default function Home({ registerLocationFn }) {
         <div className="grid gap-4 md:grid-cols-3">
           {Array.isArray(vibes) &&
             vibes.map((v, i) => (
-              <div
-                key={i}
-                className="rounded-xl border border-white/10 bg-white/5 p-4"
-              >
+              <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="mb-3">
                   <h3 className="font-semibold text-lg">{v.name}</h3>
                   <p className="text-white/50 text-sm">{v.address}</p>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-accent-pink font-bold text-xl">
-                      {v.score}
-                    </span>
-                    <span className="text-white/40 text-xs uppercase tracking-wide">
-                      vibe score
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-accent-pink font-bold text-xl">{v.score}</span>
+                  <span className="text-white/40 text-xs uppercase tracking-wide">vibe score</span>
                 </div>
               </div>
             ))}
@@ -164,9 +139,7 @@ export default function Home({ registerLocationFn }) {
 
       {/* RADIUS SLIDER */}
       <section className="mx-auto max-w-6xl px-4 mt-12">
-        <label className="text-white/60 text-sm">
-          Search Radius: {radius} km
-        </label>
+        <label className="text-white/60 text-sm">Search Radius: {radius} km</label>
         <input
           type="range"
           min="5"
@@ -184,6 +157,3 @@ export default function Home({ registerLocationFn }) {
     </div>
   );
 }
-
-
-
