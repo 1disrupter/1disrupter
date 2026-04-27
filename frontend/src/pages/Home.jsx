@@ -1,3 +1,5 @@
+import { useContext, useEffect } from "react";
+import { LocationContext } from "@/context/LocationContext";
 import React, { useEffect, useState, useCallback } from "react";
 import { MapPin, Locate, Flame, Navigation, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
@@ -12,6 +14,11 @@ import {
   useToast,
 } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
+const { setUseMyLocationFn } = useContext(LocationContext);
+
+useEffect(() => {
+  setUseMyLocationFn(() => useMyLocation);
+}, [setUseMyLocationFn, useMyLocation]);
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
