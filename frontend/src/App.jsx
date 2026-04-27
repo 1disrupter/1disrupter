@@ -1,9 +1,9 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ToastProvider, LoadingScreen } from "@/components/v2n";
+import { ToastProvider, LoadingScreen, IconButton } from "@/components/v2n";
 import MainLayout from "@/layouts/MainLayout";
-// force rebuild
-// trigger frontend rebuild
+import { Locate } from "lucide-react";
+import { LocationContext } from "@/context/LocationContext";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Brand = lazy(() => import("@/pages/Brand"));
@@ -22,19 +22,35 @@ function AdminGuardedBrand() {
 }
 
 export default function App() {
+  const [useMyLocationFn, setUseMyLocationFn] = useState(() => () => {});
+
   return (
     <ToastProvider>
-      <Suspense fallback={<LoadingScreen />}>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/brand" element={<AdminGuardedBrand />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/owner" element={<Owner />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </MainLayout>
-      </Suspense>
+      <LocationContext.Provider value={{ setUseMyLocationFn }}>
+        <Suspense fallback={<LoadingScreen />}>
+          <MainLayout
+            rightSlot={
+              <IconButton
+                onClick={() => useMyLocationFn()}
+                aria-label="Use my location"
+              >
+                <Locate size={18} />
+              </IconButton>
+            }
+          >
+            <Routes>
+              <Route
+                path="/"
+                element={<Home registerLocationFn={setUseMyLocationFn} />}
+              />
+              <Route path="/brand" element={<AdminGuardedBrand />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/owner" element={<Owner />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </MainLayout>
+        </Suspense>
+      </LocationContext.Provider>
     </ToastProvider>
   );
 }
