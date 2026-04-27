@@ -64,18 +64,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-24 md:pb-0">
-      {/* NAVBAR */}
-      <Navbar
-        rightSlot={
-          <IconButton
-            onClick={useMyLocation}
-            aria-label="Use my location"
-            data-testid="use-location"
-          >
-            <Locate size={18} />
-          </IconButton>
-        }
-      />
+   
 
       {/* HERO */}
       <section className="relative overflow-hidden">
