@@ -1006,7 +1006,7 @@ function SettingsPanel() {
 export default function Admin() {
   const [auth, setAuth] = useState(() => !!localStorage.getItem(STORAGE_KEY));
   const [view, setView] = useState("overview");
-  const [venues, setVenues] = useState([]);
+  const [venues, setVenues] = useState([]); // SAFE
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -1034,7 +1034,7 @@ export default function Admin() {
     setError(null);
     try {
       const res = await listAdminVenues();
-      setVenues(res.items);
+      setVenues(res.items || []); // ⭐ FIXED
     } catch (e) {
       setError(e.response?.data?.detail || e.message);
     } finally {
@@ -1075,7 +1075,7 @@ export default function Admin() {
             </div>
             <div className="hidden items-center gap-2 md:flex">
               <Chip tone="purple">Live</Chip>
-              <Chip tone="neutral">{venues.length} rows</Chip>
+              <Chip tone="neutral">{Array.isArray(venues) ? venues.length : 0} rows</Chip>
               <Button
                 size="sm"
                 variant="secondary"
@@ -1094,10 +1094,10 @@ export default function Admin() {
           ) : error ? (
             <ErrorState message={String(error)} onRetry={load} />
           ) : view === "overview" ? (
-            <OverviewPanel venues={venues} />
+            <OverviewPanel venues={venues || []} />   {/* ⭐ FIXED */}
           ) : view === "venues" ? (
             <VenuesPanel
-              venues={venues}
+              venues={venues || []}                 {/* ⭐ FIXED */}
               query={search}
               setQuery={setSearch}
               onAdd={() => setAddOpen(true)}
@@ -1108,7 +1108,7 @@ export default function Admin() {
           ) : view === "claims" ? (
             <ClaimsPanel />
           ) : (
-            <SignalsPanel venues={venues} onInspect={setInspect} />
+            <SignalsPanel venues={venues || []} onInspect={setInspect} /> {/* ⭐ FIXED */}
           )}
         </main>
       </div>
