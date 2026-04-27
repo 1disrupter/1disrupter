@@ -23,7 +23,6 @@ const HERO_IMAGE = {
 
 function minutesAway(km) {
   if (km == null) return null;
-  // ~5 km/h walking speed
   const mins = Math.max(1, Math.round((km / 5) * 60));
   return `${mins} min away`;
 }
@@ -35,13 +34,6 @@ function statusForScore(score) {
   return "dead";
 }
 
-/**
- * Hero venue card matching the VIBE2NITE promo:
- *  [BANNER]
- *  [hero image]
- *  Venue title · walking time        [VIBE SCORE]
- *  [status] [category chip]           [GO HERE]
- */
 export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
   if (!data) return null;
   const { venue, vibe, distance_km } = data;
@@ -84,7 +76,9 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
             title="Verified venue"
             className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-glow-aqua/60 bg-glow-aqua/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.24em] text-glow-aqua shadow-neonAqua backdrop-blur"
           >
-            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path fillRule="evenodd" d="M10 1.944A11.953 11.953 0 012.166 5 12 12 0 0010 19 12 12 0 0017.834 5 11.953 11.953 0 0110 1.944zm4.207 6.263a.75.75 0 00-1.06-1.06l-4.147 4.146-1.646-1.646a.75.75 0 10-1.06 1.06l2.176 2.177a.75.75 0 001.06 0l4.677-4.677z" clipRule="evenodd"/></svg>
+            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+              <path fillRule="evenodd" d="M10 1.944A11.953 11.953 0 012.166 5 12 12 0 0010 19 12 12 0 0017.834 5 11.953 11.953 0 0110 1.944zm4.207 6.263a.75.75 0 00-1.06-1.06l-4.147 4.146-1.646-1.646a.75.75 0 10-1.06 1.06l2.176 2.177a.75.75 0 001.06 0l4.677-4.677z" clipRule="evenodd" />
+            </svg>
             Verified
           </div>
         )}
@@ -116,14 +110,26 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
           <Sparkles size={12} className="text-primary-glow" />
           <span>Updated moments ago</span>
         </div>
-        <Button
-          size="sm"
-          variant={cfg.tone === "aqua" ? "aqua" : cfg.tone === "pink" ? "pink" : "primary"}
-          data-testid={`go-here-${slot}`}
-          onClick={() => onGo?.(data)}
-        >
-          Go here
-        </Button>
+
+        <div className="flex flex-col items-end">
+          <Button
+            size="sm"
+            variant={cfg.tone === "aqua" ? "aqua" : cfg.tone === "pink" ? "pink" : "primary"}
+            data-testid={`go-here-${slot}`}
+            onClick={() => onGo?.(data)}
+          >
+            Go here
+          </Button>
+
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 text-xs underline mt-2"
+          >
+            Get Directions →
+          </a>
+        </div>
       </div>
     </motion.article>
   );
@@ -134,8 +140,9 @@ export function VenueListItem({ data, onClick, className }) {
   if (!data) return null;
   const { venue, vibe, distance_km } = data;
   const status = statusForScore(vibe.vibe_score);
+
   return (
-    <button
+    <div
       onClick={() => onClick?.(data)}
       className={cx(
         "group flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02]",
@@ -146,17 +153,31 @@ export function VenueListItem({ data, onClick, className }) {
       <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent-pink text-white font-display text-2xl">
         {venue.name.slice(0, 1)}
       </div>
+
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate font-semibold text-white">{venue.name}</p>
           <Chip size="sm" tone="neutral">{venue.category.replace("_", " ")}</Chip>
         </div>
+
         <div className="mt-1 flex items-center gap-3 text-[11px] text-white/55">
           <StatusIndicator status={status} size="sm" />
           {distance_km != null && <span>· {distance_km.toFixed(1)} km</span>}
         </div>
+
+        {/* Directions link */}
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 text-xs underline mt-2 block"
+        >
+          Get Directions →
+        </a>
       </div>
+
       <VibeScoreBadge score={vibe.vibe_score} size="sm" />
-    </button>
+    </div>
   );
 }
+

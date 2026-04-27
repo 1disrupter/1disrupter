@@ -41,6 +41,7 @@ export const api = axios.create({
   timeout: 15000,
 });
 
+
 export const getTopVibes = (lat, lng, radius_km = 50) =>
   api.get("/vibes/top", { params: { lat, lng, radius_km } }).then((r) => r.data);
 
