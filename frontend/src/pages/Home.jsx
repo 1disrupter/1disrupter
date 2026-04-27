@@ -59,6 +59,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-24 md:pb-0">
+      {/* NAVBAR */}
       <Navbar
         rightSlot={
           <IconButton
@@ -71,9 +72,10 @@ export default function Home() {
         }
       />
 
-      {/* Hero */}
+      {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="v2n-grid absolute inset-0 opacity-30" />
+
         <div className="mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -98,15 +100,21 @@ export default function Home() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button leftIcon={<MapPin size={16} />} size="md" variant="primary">
+              <Button
+                leftIcon={<MapPin size={16} />}
+                size="md"
+                variant="primary"
+                onClick={useMyLocation}
+              >
                 Use My Location
               </Button>
             </div>
           </motion.div>
         </div>
       </section>
+
+      {/* MORE SECTIONS CAN GO HERE */}
+      {/* Tonight feed, venue cards, map button, radius slider, etc. */}
     </div>
   );
 }
-
-
