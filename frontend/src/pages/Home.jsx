@@ -1,12 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { MapPin, Flame, Navigation, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
-import {
-  Logo,
-  Button,
-  IconButton,
-  useToast,
-} from "@/components/v2n";
+import { Logo, Button, IconButton, useToast } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
@@ -17,11 +12,23 @@ export default function Home({ registerLocationFn }) {
   const [vibes, setVibes] = useState([]);
   const toast = useToast();
 
+  // ⭐ Fetch vibes safely
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
       try {
         const data = await getTopVibes(l.lat, l.lng, r);
-        setVibes(data || []);
+
+        // ⭐ Normalize API response so it NEVER crashes
+        const list =
+          Array.isArray(data)
+            ? data
+            : Array.isArray(data?.vibes)
+            ? data.vibes
+            : Array.isArray(data?.data)
+            ? data.data
+            : [];
+
+        setVibes(list);
       } catch (e) {
         toast.warn(e.response?.data?.detail || e.message || "Network error");
       }
@@ -33,6 +40,7 @@ export default function Home({ registerLocationFn }) {
     fetchVibes(loc, radius);
   }, [fetchVibes, loc, radius]);
 
+  // ⭐ Safe geolocation
   const useMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
       toast.warn("Geolocation not available on this device.");
@@ -58,10 +66,10 @@ export default function Home({ registerLocationFn }) {
     );
   }, [toast, radius, fetchVibes]);
 
-  // ⭐ Register the function so the navbar button can call it
+  // ⭐ Register the function correctly
   useEffect(() => {
     if (registerLocationFn) {
-      registerLocationFn(() => useMyLocation);
+      registerLocationFn(() => useMyLocation());
     }
   }, [registerLocationFn, useMyLocation]);
 
@@ -129,30 +137,36 @@ export default function Home({ registerLocationFn }) {
         )}
 
         <div className="grid gap-4 md:grid-cols-3">
-          {vibes.map((v, i) => (
-            <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="mb-3">
-                <h3 className="font-semibold text-lg">{v.name}</h3>
-                <p className="text-white/50 text-sm">{v.address}</p>
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-accent-pink font-bold text-xl">
-                    {v.score}
-                  </span>
-                  <span className="text-white/40 text-xs uppercase tracking-wide">
-                    vibe score
-                  </span>
+          {Array.isArray(vibes) &&
+            vibes.map((v, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-white/10 bg-white/5 p-4"
+              >
+                <div className="mb-3">
+                  <h3 className="font-semibold text-lg">{v.name}</h3>
+                  <p className="text-white/50 text-sm">{v.address}</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-accent-pink font-bold text-xl">
+                      {v.score}
+                    </span>
+                    <span className="text-white/40 text-xs uppercase tracking-wide">
+                      vibe score
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </section>
 
       {/* RADIUS SLIDER */}
       <section className="mx-auto max-w-6xl px-4 mt-12">
-        <label className="text-white/60 text-sm">Search Radius: {radius} km</label>
+        <label className="text-white/60 text-sm">
+          Search Radius: {radius} km
+        </label>
         <input
           type="range"
           min="5"
@@ -170,5 +184,6 @@ export default function Home({ registerLocationFn }) {
     </div>
   );
 }
+
 
 
