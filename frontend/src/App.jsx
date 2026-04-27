@@ -22,16 +22,16 @@ function AdminGuardedBrand() {
 }
 
 export default function App() {
-  const [useMyLocationFn, setUseMyLocationFn] = useState(() => () => {});
+  const [myLocationFn, setMyLocationFn] = useState(() => () => {});
 
   return (
     <ToastProvider>
-      <LocationContext.Provider value={{ setUseMyLocationFn }}>
+      <LocationContext.Provider value={{ setMyLocationFn }}>
         <Suspense fallback={<LoadingScreen />}>
           <MainLayout
             rightSlot={
               <IconButton
-                onClick={() => useMyLocationFn()}
+                onClick={() => myLocationFn()}
                 aria-label="Use my location"
               >
                 <Locate size={18} />
@@ -41,7 +41,7 @@ export default function App() {
             <Routes>
               <Route
                 path="/"
-                element={<Home registerLocationFn={setUseMyLocationFn} />}
+                element={<Home registerLocationFn={setMyLocationFn} />}
               />
               <Route path="/brand" element={<AdminGuardedBrand />} />
               <Route path="/admin" element={<Admin />} />
