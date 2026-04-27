@@ -12,21 +12,26 @@ export default function Home({ registerLocationFn }) {
   const [vibes, setVibes] = useState([]);
   const toast = useToast();
 
+  // ⭐ Normalize backend response safely
+  const normalizeVibes = (data) => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.vibes)) return data.vibes;
+    if (Array.isArray(data?.data)) return data.data;
+
+    // If backend returns an object like {best_overall, live_music, hidden_gem}
+    if (data && typeof data === "object") {
+      return Object.values(data).filter(Boolean);
+    }
+
+    return [];
+  };
+
+  // ⭐ Fetch vibes
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
       try {
         const data = await getTopVibes(l.lat, l.lng, r);
-
-        // 🔧 Normalize backend response
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.vibes)
-          ? data.vibes
-          : Array.isArray(data?.data)
-          ? data.data
-          : Object.values(data || {}).filter(Boolean);
-
-        setVibes(list);
+        setVibes(normalizeVibes(data));
       } catch (e) {
         toast.warn(e.response?.data?.detail || e.message || "Network error");
       }
@@ -38,6 +43,7 @@ export default function Home({ registerLocationFn }) {
     fetchVibes(loc, radius);
   }, [fetchVibes, loc, radius]);
 
+  // ⭐ Use My Location
   const useMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
       toast.warn("Geolocation not available on this device.");
@@ -60,8 +66,11 @@ export default function Home({ registerLocationFn }) {
     );
   }, [toast, radius, fetchVibes]);
 
+  // ⭐ Correct hook registration (NO callback wrapper)
   useEffect(() => {
-    if (registerLocationFn) registerLocationFn(() => useMyLocation());
+    if (registerLocationFn) {
+      registerLocationFn(useMyLocation);
+    }
   }, [registerLocationFn, useMyLocation]);
 
   return (
@@ -69,6 +78,7 @@ export default function Home({ registerLocationFn }) {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="v2n-grid absolute inset-0 opacity-30" />
+
         <div className="mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -110,6 +120,7 @@ export default function Home({ registerLocationFn }) {
       <section className="mx-auto max-w-6xl px-4 mt-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-2xl tracking-wide">Tonight</h2>
+
           <div className="flex items-center gap-3">
             <IconButton><Navigation size={18} /></IconButton>
             <IconButton><SlidersHorizontal size={18} /></IconButton>
@@ -121,19 +132,21 @@ export default function Home({ registerLocationFn }) {
         )}
 
         <div className="grid gap-4 md:grid-cols-3">
-          {Array.isArray(vibes) &&
-            vibes.map((v, i) => (
-              <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="mb-3">
-                  <h3 className="font-semibold text-lg">{v.name}</h3>
-                  <p className="text-white/50 text-sm">{v.address}</p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-accent-pink font-bold text-xl">{v.score}</span>
-                  <span className="text-white/40 text-xs uppercase tracking-wide">vibe score</span>
-                </div>
+          {vibes.map((v, i) => (
+            <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="mb-3">
+                <h3 className="font-semibold text-lg">{v.name}</h3>
+                <p className="text-white/50 text-sm">{v.address}</p>
               </div>
-            ))}
+
+              <div className="flex items-center justify-between">
+                <span className="text-accent-pink font-bold text-xl">{v.score}</span>
+                <span className="text-white/40 text-xs uppercase tracking-wide">
+                  vibe score
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -157,3 +170,4 @@ export default function Home({ registerLocationFn }) {
     </div>
   );
 }
+
