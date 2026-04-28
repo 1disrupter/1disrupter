@@ -60,13 +60,19 @@ def create_app() -> FastAPI:
     )
 
     # CORS
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+  app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://vibe2nite.com",
+        "https://www.vibe2nite.com",
+        "https://api.vibe2nite.com",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+    
 
     # Static brand assets
     static_dir = os.path.join(os.path.dirname(__file__), "static")
