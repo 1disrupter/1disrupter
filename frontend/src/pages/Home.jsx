@@ -26,14 +26,12 @@ export default function Home() {
     label: "Benalmádena",
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-const useMyLocation = useCallback(() => {
-
+  const [radius] = useState(5);
   const [vibes, setVibes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch vibes (clean + stable)
+  // Fetch vibes
   const fetchVibes = useCallback(async (l = loc, r = radius) => {
     try {
       setLoading(true);
@@ -45,7 +43,7 @@ const useMyLocation = useCallback(() => {
     } finally {
       setLoading(false);
     }
-  }, []); // no deps → stable function
+  }, []); // stable
 
   // Initial load
   useEffect(() => {
@@ -54,6 +52,7 @@ const useMyLocation = useCallback(() => {
   }, []);
 
   // Use my location
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const useMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
       toast.warn("Geolocation not available on this device.");
@@ -141,5 +140,6 @@ const useMyLocation = useCallback(() => {
     </div>
   );
 }
+
 
 
