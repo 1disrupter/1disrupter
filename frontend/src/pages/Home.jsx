@@ -15,7 +15,7 @@ import {
   useToast,
 } from "@/components/v2n";
 
-import { getTopVibes } from "@/api/vibes";
+import { getTopVibes } from "@/lib/api";
 
 export default function Home() {
   const toast = useToast();
