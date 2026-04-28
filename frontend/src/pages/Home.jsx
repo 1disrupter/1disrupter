@@ -43,7 +43,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []); // stable
+  }, []); // stable, no deps
 
   // Initial load
   useEffect(() => {
@@ -140,6 +140,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
