@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+
 import { Users, Music2, Footprints, Share2 } from "lucide-react";
 import { cx } from "@/lib/cx";
 import { BannerChip, Chip } from "./Chip";
