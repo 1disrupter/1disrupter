@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Vibe recommendation routes."""
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -8,14 +6,23 @@ from app.schemas.vibe import TopVibesResponse
 from app.services.recommendations import get_top_vibes
 
 router = APIRouter(prefix="/vibes", tags=["vibes"])
-@router.get("/top", response_model=TopVibesResponse, summary="Top 3 vibes near a location")
+
+@router.get("/top", response_model=TopVibesResponse)
 def vibes_top(
-    lat: float = Query(..., ge=-90, le=90, description="User latitude"),
-    lng: float = Query(..., ge=-180, le=180, description="User longitude"),
-    radius_km: float = Query(50.0, gt=0, le=500, description="Search radius in km"),
+    lat: float = Query(...),
+    lng: float = Query(...),
+    radius_km: float = Query(50.0),
     db: Session = Depends(get_db),
-) -> TopVibesResponse:
-    """Return best_overall, live_music and hidden_gem for a given location."""
+):
+    results = get_top_vibes(db, lat=lat, lng=lng, radius_km=radius_km)
+
+    return TopVibesResponse(
+        best_overall=results.best_overall,
+        live_music=results.live_music,
+        hidden_gem=results.hidden_gem,
+    )
+
+
 
     # Get Pydantic model
     results = get_top_vibes(db, lat=lat, lng=lng, radius_km=radius_km)
