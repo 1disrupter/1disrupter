@@ -18,4 +18,20 @@ def vibes_top(
     db: Session = Depends(get_db),
 ) -> TopVibesResponse:
     """Return **best_overall**, **live_music** and **hidden_gem** for a given location."""
-    return get_top_vibes(db, lat=lat, lng=lng, radius_km=radius_km)
+    results = get_top_vibes(db, lat=lat, lng=lng, radius_km=radius_km)
+
+fallback = {
+    "name": "Coming soon",
+    "address": "",
+    "score": 0,
+    "tags": ["No data"],
+    "distance": "",
+    "placeholder": True
+}
+
+return {
+    "best_overall": results.get("best_overall") or fallback,
+    "live_music": results.get("live_music") or fallback,
+    "hidden_gem": results.get("hidden_gem") or fallback
+}
+
