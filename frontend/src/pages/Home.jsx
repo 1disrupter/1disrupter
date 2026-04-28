@@ -1,29 +1,42 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost, ShieldCheck, CheckCircle2 } from "lucide-react";
+import {
+  MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost,
+  ShieldCheck, CheckCircle2, Navigation, SlidersHorizontal
+} from "lucide-react";
 import { motion } from "framer-motion";
+
 import {
   Navbar, Footer, BottomTabs, Logo, LogoMark,
   VenueHeroCard, LoadingScreen, ErrorState, EmptyState,
   Button, IconButton, Chip, SectionDivider, useToast,
   Modal, Input,
 } from "@/components/v2n";
-import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward } from "@/lib/api";
-import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
+
+import {
+  getTopVibes, submitFeedback, submitClaim,
+  checkInVenue, earnReward
+} from "@/lib/api";
+
+import {
+  getOrCreateUserId, capturePendingReferrer,
+  consumePendingReferrer
+} from "@/lib/userId";
+
 import { useReferralPing } from "@/lib/useReferralPing";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
-// Open the device's native maps app with directions to the venue.
+// Open native maps
 function openDirectionsToVenue(data) {
   if (!data?.venue) return;
   const { latitude, longitude, name } = data.venue;
   const q = encodeURIComponent(`${name} @${latitude},${longitude}`);
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&destination_place_id=&travelmode=walking&query=${q}`;
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=walking&query=${q}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-// Compose the share text + URL for a venue.
+// Build share payload
 function buildShareForVenue(data, myUserId) {
   const { venue, vibe, distance_km } = data;
   const score = vibe.vibe_score.toFixed(1);
@@ -35,53 +48,51 @@ function buildShareForVenue(data, myUserId) {
     bar: "Chill Vibes",
     live_music: "Live Band",
   }[venue.category] || "Vibes";
+
   const params = new URLSearchParams({ v: venue.id });
   if (myUserId) params.set("ref", myUserId);
+
   const link = `${window.location.origin}/?${params.toString()}`;
   const text =
     `${flame} ${venue.name} is a ${score} vibe right now\n` +
     `📍 ${distLine} · ${cat}\n` +
     `Find tonight's vibe → ${link}`;
+
   return { title: `${venue.name} · Vibe ${score}`, text, url: link };
 }
 
 export default function Home() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
   const [radius, setRadius] = useState(50);
+  const [loading, setLoading] = useState(false);
+  const [vibes, setVibes] = useState(null);
+  const [error, setError] = useState(null);
+  const [tab, setTab] = useState("home");
 
-  // Stable anonymous identity for this device — used as wallet user_id
-  // and as the referrer parameter on share links.
   const myUserId = useMemo(() => getOrCreateUserId(), []);
 
-  // On first mount, snatch ?ref=<inviter-id> from the URL (if present) and
-  // clean the param. We'll honour it on the user's first credit-eligible
-  // action below.
+  // Capture ?ref=
   useEffect(() => {
     capturePendingReferrer();
   }, []);
 
-  // Poll my own wallet every 30s — when referral_credits ticks up,
-  // celebrate with a toast on the Home page itself. Auto-pauses when the
-  // tab is hidden; resumes immediately on focus.
+  // Referral ping
   useReferralPing(myUserId, toast, 30000);
 
-  // Best-effort: if a pending referrer exists, credit them +5 Vibe Credits
-  // on the recipient's first credit-eligible action. Fires at most once
-  // per device (consume clears the storage key).
+  // Honour pending referral
   const honourPendingReferral = useCallback(async () => {
     const inviter = consumePendingReferrer();
     if (!inviter) return;
     try {
       await earnReward(inviter, "referral");
       toast.success("+5 Vibe Credits sent to whoever invited you 💜");
-    } catch {
-      // Re-stash so we can retry on a future action — but only if storage works.
-      // (Intentionally ignored — losing one referral credit isn't fatal.)
-    }
+    } catch {}
   }, [toast]);
 
+  // Device ID
   const getDeviceId = () => {
     let d = localStorage.getItem("v2n_device_id");
     if (!d) {
@@ -91,12 +102,12 @@ export default function Home() {
     return d;
   };
 
+  // Check-in
   const onCheckIn = async (venue) => {
     try {
       const r = await checkInVenue(venue.id, getDeviceId());
       if (r.awarded) {
         toast.success(`+${r.bonus_credits} Vibe Credits — First verified visit today!`);
-        setFvvBadge({ venue_id: venue.id, bonus: r.bonus_credits });
       } else if (r.reason === "venue_not_verified") {
         toast.error("Only verified venues award the first-visit bonus.");
       } else if (r.reason === "not_first_visitor") {
@@ -106,87 +117,22 @@ export default function Home() {
       } else {
         toast.success("Checked in.");
       }
-      // First credit-eligible action of this session → credit any pending inviter.
       honourPendingReferral();
     } catch (e) {
       toast.error(e.response?.data?.detail || "Check-in failed");
     }
   };
 
-  const [loc, setLoc] = useState(DEFAULT_LOCATION);
-  const [radius, setRadius] = useState(50);
-
-  // Stable anonymous identity for this device — used as wallet user_id
-  // and as the referrer parameter on share links.
-  const myUserId = useMemo(() => getOrCreateUserId(), []);
-
-  // On first mount, snatch ?ref=<inviter-id> from the URL (if present) and
-  // clean the param. We'll honour it on the user's first credit-eligible
-  // action below.
-  useEffect(() => {
-    capturePendingReferrer();
-  }, []);
-
-  // Poll my own wallet every 30s — when referral_credits ticks up,
-  // celebrate with a toast on the Home page itself. Auto-pauses when the
-  // tab is hidden; resumes immediately on focus.
-  useReferralPing(myUserId, toast, 30000);
-
-  // Best-effort: if a pending referrer exists, credit them +5 Vibe Credits
-  // on the recipient's first credit-eligible action. Fires at most once
-  // per device (consume clears the storage key).
-  const honourPendingReferral = useCallback(async () => {
-    const inviter = consumePendingReferrer();
-    if (!inviter) return;
-    try {
-      await earnReward(inviter, "referral");
-      toast.success("+5 Vibe Credits sent to whoever invited you 💜");
-    } catch {
-      // Re-stash so we can retry on a future action — but only if storage works.
-      // (Intentionally ignored — losing one referral credit isn't fatal.)
-    }
-  }, [toast]);
-
-  const getDeviceId = () => {
-    let d = localStorage.getItem("v2n_device_id");
-    if (!d) {
-      d = "dev_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-      localStorage.setItem("v2n_device_id", d);
-    }
-    return d;
-  };
-
-  const onCheckIn = async (venue) => {
-    try {
-      const r = await checkInVenue(venue.id, getDeviceId());
-      if (r.awarded) {
-        toast.success(`+${r.bonus_credits} Vibe Credits — First verified visit today!`);
-        setFvvBadge({ venue_id: venue.id, bonus: r.bonus_credits });
-      } else if (r.reason === "venue_not_verified") {
-        toast.error("Only verified venues award the first-visit bonus.");
-      } else if (r.reason === "not_first_visitor") {
-        toast.success("Checked in. Someone beat you to the first-visit bonus tonight ✌️");
-      } else if (r.reason === "already_rewarded_today") {
-        toast.success("You already claimed today's first-visit bonus here.");
-      } else {
-        toast.success("Checked in.");
-      }
-      // First credit-eligible action of this session → credit any pending inviter.
-      honourPendingReferral();
-    } catch (e) {
-      toast.error(e.response?.data?.detail || "Check-in failed");
-    }
-  };
-
-
+  // Fetch vibes
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
       try {
         setLoading(true);
         const data = await getTopVibes(l.lat, l.lng, r);
-        setVibes(normalizeVibes(data));
+        setVibes(data);
+        setError(null);
       } catch (e) {
-        toast.warn(e.response?.data?.detail || e.message || "Network error");
+        setError(e.response?.data?.detail || e.message || "Network error");
       } finally {
         setLoading(false);
       }
@@ -198,6 +144,7 @@ export default function Home() {
     fetchVibes(loc, radius);
   }, [fetchVibes, loc, radius]);
 
+  // Use my location
   const useMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
       toast.warn("Geolocation not available on this device.");
@@ -220,35 +167,34 @@ export default function Home() {
     );
   }, [toast, radius, fetchVibes]);
 
+  // Slots
   const slots = useMemo(
     () => [
-      { key: "best_overall", data: data?.best_overall },
-      { key: "live_music", data: data?.live_music },
-      { key: "hidden_gem", data: data?.hidden_gem },
+      { key: "best_overall", data: vibes?.best_overall },
+      { key: "live_music", data: vibes?.live_music },
+      { key: "hidden_gem", data: vibes?.hidden_gem },
     ],
-    [data]
+    [vibes]
   );
 
+  // Share venue
   const handleShareVenue = useCallback(
     async (data) => {
       const payload = buildShareForVenue(data, myUserId);
-      // 1) Try the native share sheet (mobile + a few desktop browsers).
       try {
         if (navigator.share) {
           await navigator.share(payload);
           return;
         }
       } catch (err) {
-        // User dismissed the share sheet — that's not an error worth toasting.
         if (err?.name === "AbortError") return;
       }
-      // 2) Fallback: copy preformatted text to the clipboard.
+
       try {
         const body = `${payload.text}`;
         if (navigator.clipboard?.writeText) {
           await navigator.clipboard.writeText(body);
         } else {
-          // Legacy fallback for very old browsers.
           const ta = document.createElement("textarea");
           ta.value = body;
           ta.setAttribute("readonly", "");
@@ -267,41 +213,35 @@ export default function Home() {
     [toast, myUserId]
   );
 
+  // Vote
   const handleVote = async (venue_id, vote) => {
     try {
       const res = await submitFeedback(venue_id, vote);
       toast.success(`Vote logged. Score: ${res.new_vibe_score.toFixed(2)}`);
       fetchVibes();
-      // First credit-eligible action → credit any pending inviter (idempotent).
       honourPendingReferral();
     } catch (e) {
       toast.error(e.response?.data?.detail || "Vote failed");
     }
   };
 
-    }
-  }, [registerLocationFn, useMyLocation]);
-
   return (
     <div className="min-h-screen pb-24 md:pb-0">
       <Navbar
         onMenu={() => {
-          // Smooth-scroll to the Top-3 cards section so the menu button
-          // actually does something useful on mobile.
           const el = document.getElementById("top-three");
           if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
           else window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         rightSlot={
-          <IconButton onClick={useMyLocation} aria-label="Use my location" data-testid="use-location">
+          <IconButton onClick={useMyLocation} aria-label="Use my location">
             <Locate size={18} />
           </IconButton>
         }
         onAccount={() => navigate("/me")}
       />
 
-      {/* Hero */}
-
+      {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="v2n-grid absolute inset-0 opacity-30" />
 
@@ -330,7 +270,7 @@ export default function Home() {
                 >
                   KNOW.
                 </span>
-                {/* hand-painted brushstroke underline */}
+
                 <svg
                   aria-hidden
                   viewBox="0 0 320 22"
@@ -370,7 +310,7 @@ export default function Home() {
 
       <SectionDivider label={`Top 3 near ${loc.label}`} />
 
-      {/* Cards */}
+      {/* CARDS */}
       <section id="top-three" className="mx-auto max-w-6xl px-4">
         {loading ? (
           <LoadingScreen />
@@ -380,7 +320,7 @@ export default function Home() {
             message={String(error)}
             onRetry={() => fetchVibes()}
           />
-        ) : !data || (!data.best_overall && !data.live_music && !data.hidden_gem) ? (
+        ) : !vibes || (!vibes.best_overall && !vibes.live_music && !vibes.hidden_gem) ? (
           <EmptyState
             title="No venues in range"
             hint="Try expanding your radius."
@@ -404,8 +344,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Quick vote bar */}
-        {data?.best_overall && (
+        {/* QUICK VOTE */}
+        {vibes?.best_overall && (
           <div
             data-testid="quick-vote"
             className="mt-8 flex flex-col items-start gap-3 rounded-xl2 border border-white/10 bg-white/[0.02] p-5 md:flex-row md:items-center md:justify-between"
@@ -416,32 +356,35 @@ export default function Home() {
               </div>
               <div>
                 <p className="font-display text-lg tracking-wider text-white">
-                  TELL US THE VIBE AT {data.best_overall.venue.name.toUpperCase()}
+                  TELL US THE VIBE AT {vibes.best_overall.venue.name.toUpperCase()}
                 </p>
                 <p className="text-xs text-white/50">Real votes shift the score in real time.</p>
               </div>
             </div>
+
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="primary"
                 leftIcon={<Flame size={14} />}
-                onClick={() => handleVote(data.best_overall.venue.id, "busy")}
+                onClick={() => handleVote(vibes.best_overall.venue.id, "busy")}
                 data-testid="vote-busy"
               >
                 Busy
               </Button>
+
               <Button
                 variant="pink"
                 leftIcon={<ThumbsUp size={14} />}
-                onClick={() => handleVote(data.best_overall.venue.id, "good")}
+                onClick={() => handleVote(vibes.best_overall.venue.id, "good")}
                 data-testid="vote-good"
               >
                 Good
               </Button>
+
               <Button
                 variant="secondary"
                 leftIcon={<Ghost size={14} />}
-                onClick={() => handleVote(data.best_overall.venue.id, "dead")}
+                onClick={() => handleVote(vibes.best_overall.venue.id, "dead")}
                 data-testid="vote-dead"
               >
                 Dead
@@ -450,54 +393,6 @@ export default function Home() {
           </div>
         )}
       </section>
-
-
-          <div className="flex items-center gap-3">
-            <IconButton><Navigation size={18} /></IconButton>
-            <IconButton><SlidersHorizontal size={18} /></IconButton>
-          </div>
-        </div>
-
-        {/* 3‑Card Layout */}
-        <div className="grid gap-6 md:grid-cols-3">
-          <VibeCard title="Best Overall" data={vibes.best_overall} loading={loading} />
-          <VibeCard title="Live Music" data={vibes.live_music} loading={loading} />
-          <VibeCard title="Hidden Gem" data={vibes.hidden_gem} loading={loading} />
-        </div>
-      </section>
-      <Footer />
-
-      <BottomTabs
-        activeKey={tab}
-        onChange={(k) => {
-          setTab(k);
-          if (k === "home") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          } else if (k === "map") {
-            const pins = slots.map((s) => s.data).filter(Boolean);
-            if (!pins.length) {
-              toast.warn("No venues to show on the map yet.");
-              return;
-            }
-            // Build a Google Maps URL centered on the user with markers for the top venues.
-            const center = `${loc.lat},${loc.lng}`;
-            const query = pins
-              .map((p) => `${p.venue.name} @${p.venue.latitude},${p.venue.longitude}`)
-              .join(" | ");
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&center=${center}`;
-            window.open(url, "_blank", "noopener,noreferrer");
-          } else if (k === "faves") {
-            toast.success("Favourites coming soon — claim a venue to track it from the owner console.");
-          }
-        }}
-        items={[
-          { key: "home", label: "Home", icon: <Flame size={18} /> },
-          { key: "map", label: "Map", icon: <MapPin size={18} /> },
-          { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
-        ]}
-      />
-
-
 
       {/* RADIUS SLIDER */}
       <section className="mx-auto max-w-6xl px-4 mt-12">
@@ -516,6 +411,36 @@ export default function Home() {
       <footer className="mx-auto max-w-6xl px-4 mt-16 pb-10 text-white/40 text-xs">
         <Logo size="xs" /> Vibe2Nite — Find the vibe, go tonight.
       </footer>
+
+      <BottomTabs
+        activeKey={tab}
+        onChange={(k) => {
+          setTab(k);
+          if (k === "home") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } else if (k === "map") {
+            const pins = slots.map((s) => s.data).filter(Boolean);
+            if (!pins.length) {
+              toast.warn("No venues to show on the map yet.");
+              return;
+            }
+            const center = `${loc.lat},${loc.lng}`;
+            const query = pins
+              .map((p) => `${p.venue.name} @${p.venue.latitude},${p.venue.longitude}`)
+              .join(" | ");
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&center=${center}`;
+            window.open(url, "_blank", "noopener,noreferrer");
+          } else if (k === "faves") {
+            toast.success("Favourites coming soon — claim a venue to track it from the owner console.");
+          }
+        }}
+        items={[
+          { key: "home", label: "Home", icon: <Flame size={18} /> },
+          { key: "map", label: "Map", icon: <MapPin size={18} /> },
+          { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
+        ]}
+      />
     </div>
   );
 }
+
