@@ -3,7 +3,7 @@ import {
   Navbar, Footer, Logo, LogoMark,
   Button, IconButton, Chip, BannerChip,
   VibeScoreBadge, StatusIndicator,
-  VenueHeroCard, VenueListItem, Modal, useToast,
+  VenueHeroCard,  Modal, useToast,
   Input, SearchBar, Select, Slider,
   LoadingScreen, VenueCardSkeleton, EmptyState, ErrorState,
   Pagination, MapPinIcon,
