@@ -67,29 +67,84 @@ function statusForScore(score) {
  *  └───────────────────────────────┘
  */
 export function VenueHeroCard({ slot, data, onGo, onShare, index = 0, className }) {
+  const venue = data?.venue;
+  const cfg = bannerMap[slot] || bannerMap.best_overall;
 
-<div className="flex items-center gap-2">
-  {onShare && (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onShare(data); }}
-      data-testid={`share-${slot}`}
-      aria-label={`Share ${venue.name}`}
-      title="Share this vibe"
+  return (
+    <div
       className={cx(
-        "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70",
-        "transition hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95"
+        "rounded-xl overflow-hidden border bg-black/20 backdrop-blur-md",
+        cfg.border,
+        cfg.glow,
+        className
       )}
     >
-      <Share2 size={14} />
-    </button>
-  )}
-  <Button
-    size="sm"
-    variant={cfg.button}
-    data-testid={`go-here-${slot}`}
-    onClick={() => onGo?.(data)}
-  >
-    Go here
-  </Button>
-</div>
+      {/* Banner */}
+      <BannerChip tone={cfg.tone}>{cfg.label}</BannerChip>
+
+      {/* Hero Image */}
+      <div className="relative aspect-video w-full overflow-hidden">
+        <img
+          src={HERO_IMAGE[slot]}
+          alt={venue?.name}
+          className="h-full w-full object-cover"
+        />
+      </div>
+
+      {/* Content */}
+      <div className="p-4 space-y-3">
+        {/* Title + Score */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">{venue?.name}</h3>
+          <VibeScoreBadge score={data?.score} className={cfg.score} />
+        </div>
+
+        {/* Distance + Status */}
+        <div className="flex items-center justify-between text-sm text-white/70">
+          <div className="flex items-center gap-1">
+            <Footprints size={14} />
+            <span>{minutesAway(data?.distance_km)}</span>
+          </div>
+          <StatusIndicator status={statusForScore(data?.score)} />
+        </div>
+
+        {/* Tags */}
+        <div className="flex items-center gap-2 text-xs">
+          <Chip icon={<Users size={12} />}>{data?.crowd || "Busy"}</Chip>
+          <Chip icon={<Music2 size={12} />}>{data?.music || "Live DJ"}</Chip>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex items-center gap-2">
+          {onShare && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare(data);
+              }}
+              data-testid={`share-${slot}`}
+              aria-label={`Share ${venue?.name}`}
+              title="Share this vibe"
+              className={cx(
+                "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70",
+                "transition hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95"
+              )}
+            >
+              <Share2 size={14} />
+            </button>
+          )}
+
+          <Button
+            size="sm"
+            variant={cfg.button}
+            data-testid={`go-here-${slot}`}
+            onClick={() => onGo?.(data)}
+          >
+            Go here
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
