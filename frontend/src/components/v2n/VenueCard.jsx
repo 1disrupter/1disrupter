@@ -1,15 +1,36 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Users, Music2, Sparkles, MapPin } from "lucide-react";
+import { Users, Music2, Footprints } from "lucide-react";
 import { cx } from "@/lib/cx";
 import { BannerChip, Chip } from "./Chip";
 import { VibeScoreBadge, StatusIndicator } from "./VibeScore";
 import { Button } from "./Button";
 
 const bannerMap = {
-  best_overall: { label: "BEST OVERALL", tone: "purple", ring: "ring-primary-glow/40", glow: "shadow-softPurple" },
-  live_music: { label: "LIVE MUSIC", tone: "pink", ring: "ring-accent-pink/40", glow: "shadow-[0_20px_60px_-20px_rgba(255,46,196,0.55)]" },
-  hidden_gem: { label: "HIDDEN GEM", tone: "aqua", ring: "ring-glow-aqua/40", glow: "shadow-[0_20px_60px_-20px_rgba(0,245,255,0.5)]" },
+  best_overall: {
+    label: "BEST OVERALL",
+    tone: "purple",
+    border: "border-primary-glow/55",
+    glow: "shadow-[0_24px_70px_-24px_rgba(177,92,255,0.65)]",
+    score: "text-primary-glow",
+    button: "primary",
+  },
+  live_music: {
+    label: "LIVE MUSIC",
+    tone: "pink",
+    border: "border-accent-pink/55",
+    glow: "shadow-[0_24px_70px_-24px_rgba(255,46,196,0.6)]",
+    score: "text-accent-pink",
+    button: "pink",
+  },
+  hidden_gem: {
+    label: "HIDDEN GEM",
+    tone: "aqua",
+    border: "border-glow-aqua/55",
+    glow: "shadow-[0_24px_70px_-24px_rgba(0,245,255,0.55)]",
+    score: "text-glow-aqua",
+    button: "aqua",
+  },
 };
 
 const HERO_IMAGE = {
@@ -36,11 +57,16 @@ function statusForScore(score) {
 }
 
 /**
- * Hero venue card matching the VIBE2NITE promo:
- *  [BANNER]
- *  [hero image]
- *  Venue title · walking time        [VIBE SCORE]
- *  [status] [category chip]           [GO HERE]
+ * Hero venue card matching the VIBE2NITE promo layout:
+ *  ┌───────────────────────────────┐
+ *  │ [BANNER]                       │
+ *  │       hero image (16/9)        │
+ *  ├───────────────────────────────┤
+ *  │ TITLE                  9.2     │
+ *  │ 🚶 6 min away      VIBE SCORE  │
+ *  ├───────────────────────────────┤
+ *  │ 👥 Busy  🎵 Live DJ    [GO HERE]│
+ *  └───────────────────────────────┘
  */
 export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
   if (!data) return null;
@@ -48,11 +74,18 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
   const cfg = bannerMap[slot] ?? bannerMap.best_overall;
   const img = HERO_IMAGE[slot];
   const status = statusForScore(vibe.vibe_score);
+  const crowdLabel = {
+    packed: "Packed",
+    busy: "Busy",
+    locals: "Locals",
+    dead: "Quiet",
+  }[status] || "Busy";
   const catLabel = {
     club: "Live DJ",
     bar: "Chill Vibes",
     live_music: "Live Band",
-  }[venue.category] || "Venue";
+  }[venue.category] || "Vibes";
+  const walking = minutesAway(distance_km);
 
   return (
     <motion.article
@@ -61,8 +94,9 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
       transition={{ duration: 0.5, delay: index * 0.08, ease: [0.2, 0.8, 0.2, 1] }}
       data-testid={`venue-card-${slot}`}
       className={cx(
-        "relative overflow-hidden rounded-xl2 bg-background-dark/80 border border-white/10",
-        "ring-1", cfg.ring, cfg.glow,
+        "relative flex flex-col overflow-hidden rounded-xl2 bg-background-deep/90",
+        "border", cfg.border, cfg.glow,
+        "transition-transform duration-300 hover:-translate-y-0.5",
         className
       )}
     >
@@ -71,18 +105,18 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
         <img
           src={img}
           alt={venue.name}
-          className="h-full w-full object-cover opacity-80"
+          className="h-full w-full object-cover"
           loading="lazy"
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-background-dark/10 to-background-dark" />
-        <div className="absolute left-4 top-4">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background-deep/10 via-background-deep/30 to-background-deep" />
+        <div className="absolute left-3 top-3">
           <BannerChip label={cfg.label} tone={cfg.tone} />
         </div>
         {venue.is_verified && (
           <div
             data-testid={`verified-badge-${slot}`}
             title="Verified venue"
-            className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-glow-aqua/60 bg-glow-aqua/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.24em] text-glow-aqua shadow-neonAqua backdrop-blur"
+            className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-glow-aqua/60 bg-glow-aqua/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.24em] text-glow-aqua shadow-neonAqua backdrop-blur"
           >
             <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path fillRule="evenodd" d="M10 1.944A11.953 11.953 0 012.166 5 12 12 0 0010 19 12 12 0 0017.834 5 11.953 11.953 0 0110 1.944zm4.207 6.263a.75.75 0 00-1.06-1.06l-4.147 4.146-1.646-1.646a.75.75 0 10-1.06 1.06l2.176 2.177a.75.75 0 001.06 0l4.677-4.677z" clipRule="evenodd"/></svg>
             Verified
@@ -90,35 +124,49 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
         )}
       </div>
 
-      {/* Body */}
-      <div className="flex items-start justify-between gap-3 p-5">
+      {/* Title row + big score */}
+      <div className="flex items-start justify-between gap-3 px-5 pt-4">
         <div className="min-w-0 flex-1">
-          <h3 className="font-display text-2xl tracking-wider text-white truncate">
+          <h3 className="font-display text-xl tracking-wider text-white truncate sm:text-2xl">
             {venue.name.toUpperCase()}
           </h3>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-white/55">
-            <MapPin size={12} className="text-primary-glow" />
-            <span>{minutesAway(distance_km) || `${distance_km?.toFixed(1) ?? "?"} km away`}</span>
+          <p className="mt-1.5 flex items-center gap-1.5 text-[12px] text-white/65">
+            <Footprints size={13} className="text-white/55" />
+            <span>{walking || (distance_km != null ? `${distance_km.toFixed(1)} km away` : "Nearby")}</span>
           </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <StatusIndicator status={status} icon={<Users size={14} />} />
-            <StatusIndicator status="locals" icon={<Music2 size={14} />} label={catLabel} />
-          </div>
         </div>
-
-        <VibeScoreBadge score={vibe.vibe_score} size="md" />
+        <div className="flex flex-col items-end leading-none">
+          <span
+            data-testid={`vibe-score-${slot}`}
+            className={cx(
+              "font-display text-5xl font-bold tracking-tight tabular-nums",
+              cfg.score
+            )}
+          >
+            {vibe.vibe_score.toFixed(1)}
+          </span>
+          <span className="mt-1 text-[10px] uppercase tracking-[0.28em] text-white/50">
+            Vibe Score
+          </span>
+        </div>
       </div>
 
-      {/* Footer CTA */}
-      <div className="flex items-center justify-between border-t border-white/5 px-5 py-3">
-        <div className="flex items-center gap-2 text-[11px] text-white/40 uppercase tracking-[0.22em]">
-          <Sparkles size={12} className="text-primary-glow" />
-          <span>Updated moments ago</span>
+      {/* Footer row: crowd + music chips on the left, GO HERE button on the right */}
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/5 px-5 py-3">
+        <div className="flex items-center gap-3 text-xs text-white/75">
+          <span className="inline-flex items-center gap-1.5">
+            <Users size={14} className={cfg.score} />
+            <span>{crowdLabel}</span>
+          </span>
+          <span className="text-white/20">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            <Music2 size={14} className={cfg.score} />
+            <span>{catLabel}</span>
+          </span>
         </div>
         <Button
           size="sm"
-          variant={cfg.tone === "aqua" ? "aqua" : cfg.tone === "pink" ? "pink" : "primary"}
+          variant={cfg.button}
           data-testid={`go-here-${slot}`}
           onClick={() => onGo?.(data)}
         >
