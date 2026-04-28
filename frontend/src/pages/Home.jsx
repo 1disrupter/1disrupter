@@ -23,6 +23,27 @@ function openDirectionsToVenue(data) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+// Compose the share text + URL for a venue. Forward-compatible deep-link
+// query (?v=<id>) for a future per-venue page; today the URL just opens Home.
+function buildShareForVenue(data) {
+  const { venue, vibe, distance_km } = data;
+  const score = vibe.vibe_score.toFixed(1);
+  const flame = vibe.vibe_score >= 8 ? "🔥" : vibe.vibe_score >= 5 ? "✨" : "🌙";
+  const minsRaw = distance_km != null ? Math.max(1, Math.round((distance_km / 5) * 60)) : null;
+  const distLine = minsRaw ? `${minsRaw} min away` : "Nearby";
+  const cat = {
+    club: "Live DJ",
+    bar: "Chill Vibes",
+    live_music: "Live Band",
+  }[venue.category] || "Vibes";
+  const link = `${window.location.origin}/?v=${encodeURIComponent(venue.id)}`;
+  const text =
+    `${flame} ${venue.name} is a ${score} vibe right now\n` +
+    `📍 ${distLine} · ${cat}\n` +
+    `Find tonight's vibe → ${link}`;
+  return { title: `${venue.name} · Vibe ${score}`, text, url: link };
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
@@ -113,6 +134,44 @@ export default function Home() {
       { key: "hidden_gem", data: data?.hidden_gem },
     ],
     [data]
+  );
+
+  const handleShareVenue = useCallback(
+    async (data) => {
+      const payload = buildShareForVenue(data);
+      // 1) Try the native share sheet (mobile + a few desktop browsers).
+      try {
+        if (navigator.share) {
+          await navigator.share(payload);
+          return;
+        }
+      } catch (err) {
+        // User dismissed the share sheet — that's not an error worth toasting.
+        if (err?.name === "AbortError") return;
+      }
+      // 2) Fallback: copy preformatted text to the clipboard.
+      try {
+        const body = `${payload.text}`;
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(body);
+        } else {
+          // Legacy fallback for very old browsers.
+          const ta = document.createElement("textarea");
+          ta.value = body;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+        toast.success("Vibe copied — paste it in your group chat 💜");
+      } catch {
+        toast.error("Couldn't copy. Long-press to select instead.");
+      }
+    },
+    [toast]
   );
 
   const handleVote = async (venue_id, vote) => {
@@ -267,6 +326,7 @@ export default function Home() {
                   data={s.data}
                   index={i}
                   onGo={openDirectionsToVenue}
+                  onShare={handleShareVenue}
                 />
               ) : null
             )}

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Users, Music2, Footprints } from "lucide-react";
+import { Users, Music2, Footprints, Share2 } from "lucide-react";
 import { cx } from "@/lib/cx";
 import { BannerChip, Chip } from "./Chip";
 import { VibeScoreBadge, StatusIndicator } from "./VibeScore";
@@ -68,7 +68,7 @@ function statusForScore(score) {
  *  │ 👥 Busy  🎵 Live DJ    [GO HERE]│
  *  └───────────────────────────────┘
  */
-export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
+export function VenueHeroCard({ slot, data, onGo, onShare, index = 0, className }) {
   if (!data) return null;
   const { venue, vibe, distance_km } = data;
   const cfg = bannerMap[slot] ?? bannerMap.best_overall;
@@ -151,7 +151,7 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
         </div>
       </div>
 
-      {/* Footer row: crowd + music chips on the left, GO HERE button on the right */}
+      {/* Footer row: crowd + music chips on the left, share + GO HERE on the right */}
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/5 px-5 py-3">
         <div className="flex items-center gap-3 text-xs text-white/75">
           <span className="inline-flex items-center gap-1.5">
@@ -164,14 +164,31 @@ export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
             <span>{catLabel}</span>
           </span>
         </div>
-        <Button
-          size="sm"
-          variant={cfg.button}
-          data-testid={`go-here-${slot}`}
-          onClick={() => onGo?.(data)}
-        >
-          Go here
-        </Button>
+        <div className="flex items-center gap-2">
+          {onShare && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onShare(data); }}
+              data-testid={`share-${slot}`}
+              aria-label={`Share ${venue.name}`}
+              title="Share this vibe"
+              className={cx(
+                "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70",
+                "transition hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95"
+              )}
+            >
+              <Share2 size={14} />
+            </button>
+          )}
+          <Button
+            size="sm"
+            variant={cfg.button}
+            data-testid={`go-here-${slot}`}
+            onClick={() => onGo?.(data)}
+          >
+            Go here
+          </Button>
+        </div>
       </div>
     </motion.article>
   );
