@@ -102,26 +102,28 @@ export default function Home() {
     return d;
   };
 
-  // Check-in
   
-    try {
-      const r = await checkInVenue(venue.id, getDeviceId());
-      if (r.awarded) {
-        toast.success(`+${r.bonus_credits} Vibe Credits — First verified visit today!`);
-      } else if (r.reason === "venue_not_verified") {
-        toast.error("Only verified venues award the first-visit bonus.");
-      } else if (r.reason === "not_first_visitor") {
-        toast.success("Checked in. Someone beat you to the first-visit bonus tonight ✌️");
-      } else if (r.reason === "already_rewarded_today") {
-        toast.success("You already claimed today's first-visit bonus here.");
-      } else {
-        toast.success("Checked in.");
-      }
-      honourPendingReferral();
-    } catch (e) {
-      toast.error(e.response?.data?.detail || "Check-in failed");
+  // Check-in
+const onCheckIn = async (venue) => {
+  try {
+    const r = await checkInVenue(venue.id, getDeviceId());
+    if (r.awarded) {
+      toast.success(`+${r.bonus_credits} Vibe Credits — First verified visit today!`);
+    } else if (r.reason === "venue_not_verified") {
+      toast.error("Only verified venues award the first-visit bonus.");
+    } else if (r.reason === "not_first_visitor") {
+      toast.success("Checked in. Someone beat you to the first-visit bonus tonight ✌️");
+    } else if (r.reason === "already_rewarded_today") {
+      toast.success("You already claimed today's first-visit bonus here.");
+    } else {
+      toast.success("Checked in.");
     }
-  };
+    honourPendingReferral();
+  } catch (e) {
+    toast.error(e.response?.data?.detail || "Check-in failed");
+  }
+};
+
 
   // Fetch vibes
   const fetchVibes = useCallback(
