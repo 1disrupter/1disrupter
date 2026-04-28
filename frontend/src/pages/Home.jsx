@@ -3,7 +3,7 @@ import { MapPin, Flame, Navigation, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Logo, Button, IconButton, useToast } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
-import VibeCard from "@/components/VibeCard";   // ⭐ REQUIRED IMPORT
+import VibeCard from "@/components/VibeCard";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
@@ -11,7 +11,8 @@ export default function Home({ registerLocationFn }) {
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
   const [radius, setRadius] = useState(50);
 
-  // ⭐ Object shape (matches backend)
+  const [loading, setLoading] = useState(true);
+
   const [vibes, setVibes] = useState({
     best_overall: null,
     live_music: null,
@@ -20,21 +21,22 @@ export default function Home({ registerLocationFn }) {
 
   const toast = useToast();
 
-  // ⭐ Normalize backend response
   const normalizeVibes = (data) => ({
     best_overall: data.best_overall,
     live_music: data.live_music,
     hidden_gem: data.hidden_gem
   });
 
-  // ⭐ Fetch vibes
   const fetchVibes = useCallback(
     async (l = loc, r = radius) => {
       try {
+        setLoading(true);
         const data = await getTopVibes(l.lat, l.lng, r);
         setVibes(normalizeVibes(data));
       } catch (e) {
         toast.warn(e.response?.data?.detail || e.message || "Network error");
+      } finally {
+        setLoading(false);
       }
     },
     [loc, radius, toast]
@@ -44,7 +46,6 @@ export default function Home({ registerLocationFn }) {
     fetchVibes(loc, radius);
   }, [fetchVibes, loc, radius]);
 
-  // ⭐ Use My Location
   const useMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
       toast.warn("Geolocation not available on this device.");
@@ -67,7 +68,6 @@ export default function Home({ registerLocationFn }) {
     );
   }, [toast, radius, fetchVibes]);
 
-  // ⭐ Register location hook
   useEffect(() => {
     if (registerLocationFn) {
       registerLocationFn(useMyLocation);
@@ -118,9 +118,9 @@ export default function Home({ registerLocationFn }) {
       </section>
 
       {/* TONIGHT FEED */}
-      <section className="mx-auto max-w-6xl px-4 mt-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-2xl tracking-wide">Tonight</h2>
+      <section className="mx-auto max-w-6xl px-4 mt-14">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display text-3xl tracking-wide">Tonight</h2>
 
           <div className="flex items-center gap-3">
             <IconButton><Navigation size={18} /></IconButton>
@@ -128,16 +128,27 @@ export default function Home({ registerLocationFn }) {
           </div>
         </div>
 
-        {/* ⭐ Empty state */}
-        {!vibes.best_overall && !vibes.live_music && !vibes.hidden_gem && (
-          <p className="text-white/50 text-sm">No vibes found in this area.</p>
-        )}
+        {/* 3‑Card Layout */}
+        <div className="grid gap-6 md:grid-cols-3">
+          <VibeCard title="Best Overall" data={vibes.best_overall} loading={loading} />
+          <VibeCard title="Live Music" data={vibes.live_music} loading={loading} />
+          <VibeCard title="Hidden Gem" data={vibes.hidden_gem} loading={loading} />
+        </div>
+      </section>
 
-        {/* ⭐ 3‑Card Layout */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <VibeCard title="Best Overall" data={vibes.best_overall} />
-          <VibeCard title="Live Music" data={vibes.live_music} />
-          <VibeCard title="Hidden Gem" data={vibes.hidden_gem} />
+      {/* MAP PREVIEW */}
+      <section className="mx-auto max-w-6xl px-4 mt-16">
+        <h3 className="font-display text-xl mb-3">Map Preview</h3>
+
+        <div className="rounded-xl overflow-hidden border border-white/10 shadow-lg">
+          <iframe
+            title="map"
+            width="100%"
+            height="260"
+            loading="lazy"
+            style={{ border: 0 }}
+            src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyDUMMY&center=${loc.lat},${loc.lng}&zoom=13`}
+          />
         </div>
       </section>
 
@@ -150,7 +161,7 @@ export default function Home({ registerLocationFn }) {
           max="100"
           value={radius}
           onChange={(e) => setRadius(Number(e.target.value))}
-          className="w-full mt-2"
+          className="w-full mt-2 accent-accent-pink"
         />
       </section>
 
@@ -161,5 +172,3 @@ export default function Home({ registerLocationFn }) {
     </div>
   );
 }
-
-
