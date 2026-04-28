@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -11,7 +12,19 @@ import { getTopVibes, submitFeedback, submitClaim, checkInVenue } from "@/lib/ap
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
+// Open the device's native maps app with directions to the venue.
+// On mobile this hands off to Apple/Google Maps; on desktop it opens
+// Google Maps in a new tab. Pure client-side, no API key required.
+function openDirectionsToVenue(data) {
+  if (!data?.venue) return;
+  const { latitude, longitude, name } = data.venue;
+  const q = encodeURIComponent(`${name} @${latitude},${longitude}`);
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&destination_place_id=&travelmode=walking&query=${q}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 export default function Home() {
+  const navigate = useNavigate();
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -115,11 +128,19 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-24 md:pb-0">
       <Navbar
+        onMenu={() => {
+          // Smooth-scroll to the Top-3 cards section so the menu button
+          // actually does something useful on mobile.
+          const el = document.getElementById("top-three");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          else window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
         rightSlot={
           <IconButton onClick={useMyLocation} aria-label="Use my location" data-testid="use-location">
             <Locate size={18} />
           </IconButton>
         }
+        onAccount={() => navigate("/owner")}
       />
 
       {/* Hero */}
@@ -194,7 +215,7 @@ export default function Home() {
       <SectionDivider label={`Top 3 near ${loc.label}`} />
 
       {/* Cards */}
-      <section className="mx-auto max-w-6xl px-4">
+      <section id="top-three" className="mx-auto max-w-6xl px-4">
         {loading ? (
           <LoadingScreen />
         ) : error ? (
@@ -219,7 +240,7 @@ export default function Home() {
                   slot={s.key}
                   data={s.data}
                   index={i}
-                  onGo={() => window.scrollTo({ top: 0 })}
+                  onGo={openDirectionsToVenue}
                 />
               ) : null
             )}
@@ -320,7 +341,27 @@ export default function Home() {
 
       <BottomTabs
         activeKey={tab}
-        onChange={setTab}
+        onChange={(k) => {
+          setTab(k);
+          if (k === "home") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } else if (k === "map") {
+            const pins = slots.map((s) => s.data).filter(Boolean);
+            if (!pins.length) {
+              toast.warn("No venues to show on the map yet.");
+              return;
+            }
+            // Build a Google Maps URL centered on the user with markers for the top venues.
+            const center = `${loc.lat},${loc.lng}`;
+            const query = pins
+              .map((p) => `${p.venue.name} @${p.venue.latitude},${p.venue.longitude}`)
+              .join(" | ");
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&center=${center}`;
+            window.open(url, "_blank", "noopener,noreferrer");
+          } else if (k === "faves") {
+            toast.success("Favourites coming soon — claim a venue to track it from the owner console.");
+          }
+        }}
         items={[
           { key: "home", label: "Home", icon: <Flame size={18} /> },
           { key: "map", label: "Map", icon: <MapPin size={18} /> },

@@ -5,7 +5,7 @@ import { cx } from "@/lib/cx";
 import { Logo, LogoMark } from "./Logo";
 import { IconButton } from "./Button";
 
-export function Navbar({ onMenu, rightSlot, className }) {
+export function Navbar({ onMenu, onAccount, rightSlot, className }) {
   return (
     <header
       className={cx(
@@ -31,7 +31,7 @@ export function Navbar({ onMenu, rightSlot, className }) {
 
         <div className="flex items-center gap-2">
           {rightSlot}
-          <IconButton aria-label="Account" data-testid="nav-account">
+          <IconButton onClick={onAccount} aria-label="Account" data-testid="nav-account">
             <UserRound size={18} />
           </IconButton>
         </div>
@@ -74,6 +74,7 @@ export function BottomTabs({ items, activeKey, onChange }) {
             <li key={it.key}>
               <button
                 onClick={() => onChange?.(it.key)}
+                data-testid={`bottom-tab-${it.key}`}
                 className={cx(
                   "flex w-full flex-col items-center gap-0.5 py-2.5 text-[11px] uppercase tracking-[0.22em]",
                   active ? "text-white" : "text-white/50"
