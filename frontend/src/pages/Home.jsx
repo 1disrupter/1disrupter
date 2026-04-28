@@ -140,9 +140,10 @@ export default function Home() {
     [loc, radius, toast]
   );
 
-  useEffect(() => {
-    fetchVibes(loc, radius);
-  }, [fetchVibes, loc, radius]);
+ useEffect(() => {
+  fetchVibes(loc, radius);
+}, []); // run once on mount
+ 
 
   // Use my location
   const useMyLocation = useCallback(() => {
