@@ -26,7 +26,9 @@ export default function Home() {
     label: "Benalmádena",
   });
 
-  const [radius, setRadius] = useState(5);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+const useMyLocation = useCallback(() => {
+
   const [vibes, setVibes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
