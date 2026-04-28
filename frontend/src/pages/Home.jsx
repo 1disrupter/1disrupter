@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  MapPin, Locate, RefreshCw, ThumbsUp, Flame, Ghost,
-  ShieldCheck, CheckCircle2, Navigation, SlidersHorizontal
+  MapPin, Locate,  ThumbsUp, Flame, Ghost,
+  
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 import {
-  Navbar, Footer, BottomTabs, Logo, LogoMark,
+  Navbar,  BottomTabs, Logo, LogoMark,
   VenueHeroCard, LoadingScreen, ErrorState, EmptyState,
   Button, IconButton, Chip, SectionDivider, useToast,
-  Modal, Input,
+  
 } from "@/components/v2n";
 
 import {
@@ -103,7 +103,7 @@ export default function Home() {
   };
 
   // Check-in
-  const onCheckIn = async (venue) => {
+  
     try {
       const r = await checkInVenue(venue.id, getDeviceId());
       if (r.awarded) {
