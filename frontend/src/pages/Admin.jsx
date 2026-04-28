@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -146,7 +148,10 @@ function Sidebar({ active, onChange, onLogout }) {
 // Overview (charts)
 // ---------------------------------------------------------------------------
 function OverviewPanel({ venues }) {
-  const safeVenues = Array.isArray(venues) ? venues : [];
+const safeVenues = useMemo(() => {
+  return Array.isArray(venues) ? venues : [];
+}, [venues]);
+
 
   const byCategory = useMemo(() => {
     const m = {};

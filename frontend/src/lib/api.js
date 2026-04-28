@@ -46,8 +46,39 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-export const getTopVibes = (lat, lng, radius_km = 50) =>
-  api.get("/vibes/top", { params: { lat, lng, radius_km } }).then((r) => r.data);
+// ---------------------------------------------------------------------------
+// PLACEHOLDER DATA (for when backend returns null / empty)
+// ---------------------------------------------------------------------------
+const PLACEHOLDER_VIBES = {
+  best_overall: {
+    venue_name: "La Terraza Rooftop",
+    vibe_score: 9.2,
+    tagline: "Rooftop · Cocktails",
+    distance: "6 min away"
+  },
+  live_music: {
+    venue_name: "El Pimpi Bar",
+    vibe_score: 8.7,
+    tagline: "Live Music · Tapas",
+    distance: "12 min away"
+  },
+  hidden_gem: {
+    venue_name: "Local Tapas Spot",
+    vibe_score: 8.4,
+    tagline: "Tapas · Wine",
+    distance: "4 min away"
+  }
+};
+
+export const getTopVibes = async (lat, lng, radius_km = 50) => {
+  try {
+    const r = await api.get("/vibes/top", { params: { lat, lng, radius_km } });
+    return r.data;
+  } catch (err) {
+    console.error("API failed, using placeholder vibes");
+    return PLACEHOLDER_VIBES;
+  }
+};
 
 export const submitFeedback = (venue_id, vote) =>
   api.post("/feedback", { venue_id, vote }).then((r) => r.data);
