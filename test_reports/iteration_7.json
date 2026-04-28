@@ -1,0 +1,48 @@
+{
+  "summary": "Frontend-only verification of Vibe2Nite Home page interactions per review request. Tested all 12 specified flows on https://nightlife-tracking.preview.emergentagent.com/. Results: 12/12 PASS (1 SKIP for absent verified-venue check-in button, which is expected). All buttons fire correct backend calls, new tabs open with proper Google Maps URLs, modals work, navigation works, admin regression confirmed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "tests_executed": [
+    {"flow": "3 venue cards render (best_overall/live_music/hidden_gem)", "result": "PASS"},
+    {"flow": "GO HERE on best_overall opens new tab with google.com/maps/dir + destination=lat,lng", "result": "PASS - URL verified: destination=40.733,-73.995 + travelmode=walking"},
+    {"flow": "nav-account icon -> /owner route", "result": "PASS"},
+    {"flow": "nav-menu hamburger smooth scrolls to #top-three", "result": "PASS - top-three element brought into viewport"},
+    {"flow": "hero-use-location triggers geolocation flow with toast (denied in headless)", "result": "PASS"},
+    {"flow": "Navbar use-location icon clickable", "result": "PASS"},
+    {"flow": "hero-refresh fires GET /api/vibes/top", "result": "PASS - network intercepted"},
+    {"flow": "vote-busy POSTs /api/feedback", "result": "PASS"},
+    {"flow": "vote-good POSTs /api/feedback", "result": "PASS"},
+    {"flow": "vote-dead POSTs /api/feedback", "result": "PASS"},
+    {"flow": "checkin-btn (verified venues only)", "result": "SKIP - no verified venue in seed; button hidden as expected"},
+    {"flow": "Claim flow: open modal -> fill name/email/proof -> submit -> POST /api/claims/submit -> result+magic_link", "result": "PASS"},
+    {"flow": "Bottom tab Home scrolls to top (mobile 390x844)", "result": "PASS - scrollY 800 -> 0"},
+    {"flow": "Bottom tab Map opens Google Maps in new tab with multi-venue query", "result": "PASS - https://www.google.com/maps/search/?api=1&query=...|...|... opened"},
+    {"flow": "Bottom tab Faves shows 'Favourites coming soon' toast (no nav)", "result": "PASS"},
+    {"flow": "API base URL = REACT_APP_BACKEND_URL/api", "result": "PASS - all calls hit https://nightlife-tracking.preview.emergentagent.com/api/*"},
+    {"flow": "Admin /admin login with vibe2nite/nightowl renders dashboard (regression)", "result": "PASS - Overview, Venues, Signals, Claims, Settings, charts all rendered"}
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Console warning: '[v2n] Resolved BACKEND_URL equals window.location.origin' is informational only — in this preview deployment the API IS served from the same origin via /api ingress, so the warning is a false alarm. Consider gating the warning to dev mode or removing it to avoid alarming users.",
+    "BottomTabs items previously lacked per-item data-testid; testing agent added data-testid=bottom-tab-{key} (home/map/faves) to /app/frontend/src/components/v2n/Navbar.jsx as a minor test-attribute fix (no behaviour change).",
+    "openDirectionsToVenue includes destination_place_id= (empty) in the URL — harmless but could be omitted to keep the URL clean.",
+    "checkin-btn only renders for is_verified venues; current seed has none, so this code path was not exercised end-to-end. Seeding one verified venue would close that gap."
+  ],
+  "updated_files": [
+    "/app/frontend/src/components/v2n/Navbar.jsx (added data-testid=bottom-tab-{key} to BottomTabs items for testability)"
+  ],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (12/12 verifiable flows pass; 1 conditionally-skipped)"},
+  "test_credentials": "Admin: vibe2nite / nightowl (verified)",
+  "seed_data_creation": "None — relied on existing seed (3 venues: La Terraza Rooftop, El Pimpi Bar, Local Tapas Spot).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Home page interactions wired correctly. If verifying check-in flow, first verify a venue (e.g. via admin Venues panel or direct DB) so checkin-btn renders. Bottom tabs are mobile-only (md:hidden) so use viewport <=768px to test them. Network interception confirms exact endpoints. Use page.context().expect_page() for new-tab assertions on GO HERE and Map tab."
+}

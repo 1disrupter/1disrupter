@@ -14,6 +14,7 @@ REWARD_RULES: Dict[str, int] = {
     "navigate": 1,          # user hit "Go" / opened directions
     "daily_login": 1,       # one-a-day login ping
     "first_visit_bonus": 5, # first time visiting a venue (client-computed)
+    "referral": 5,          # someone you invited took their first credit-eligible action
 }
 
 

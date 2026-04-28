@@ -15,25 +15,30 @@ const RUNTIME_ORIGIN =
 
 export const BACKEND_URL = (RAW_BACKEND_URL || RUNTIME_ORIGIN || "").replace(/\/+$/, "");
 
-if (typeof window !== "undefined") {
-  if (!RAW_BACKEND_URL) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      "[v2n] REACT_APP_BACKEND_URL was not set at build time. " +
-        "Falling back to window.location.origin (" +
-        RUNTIME_ORIGIN +
-        "). API calls will hit the frontend host and likely 404. " +
-        "Fix: set REACT_APP_BACKEND_URL in your hosting provider's env vars and re-run the build."
-    );
-  } else if (BACKEND_URL === RUNTIME_ORIGIN) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      "[v2n] Resolved BACKEND_URL equals window.location.origin (" +
-        RUNTIME_ORIGIN +
-        "). If your backend is hosted on a different domain, REACT_APP_BACKEND_URL " +
-        "is probably misconfigured for this build."
-    );
-  }
+if (typeof window !== "undefined" && !RAW_BACKEND_URL) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[v2n] REACT_APP_BACKEND_URL was not set at build time. " +
+      "Falling back to window.location.origin (" +
+      RUNTIME_ORIGIN +
+      "). API calls will hit the frontend host and likely 404. " +
+      "Fix: set REACT_APP_BACKEND_URL in your hosting provider's env vars and re-run the build."
+  );
+} else if (
+  typeof window !== "undefined" &&
+  process.env.NODE_ENV !== "production" &&
+  BACKEND_URL === RUNTIME_ORIGIN
+) {
+  // Only warn in development. In production deployments (Emergent preview,
+  // Vercel rewrites, Railway with same-origin /api ingress, etc.) it is
+  // perfectly valid for the backend to share an origin with the frontend.
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[v2n] Resolved BACKEND_URL equals window.location.origin (" +
+      RUNTIME_ORIGIN +
+      "). Fine if your backend is reverse-proxied on the same domain; " +
+      "double-check REACT_APP_BACKEND_URL otherwise."
+  );
 }
 
 export const api = axios.create({
@@ -160,3 +165,13 @@ export const submitReverify = (payload) =>
 
 export const checkInVenue = (venue_id, device_id) =>
   api.post("/intel/visits/check-in", { venue_id, device_id }).then((r) => r.data);
+
+
+// --- Iteration 17: rewards / referrals ------------------------------------
+export const earnReward = (user_id, action, amount) =>
+  api
+    .post("/rewards/earn", { user_id, action, ...(amount ? { amount } : {}) })
+    .then((r) => r.data);
+
+export const getWallet = (user_id) =>
+  api.get(`/rewards/wallet/${encodeURIComponent(user_id)}`).then((r) => r.data);

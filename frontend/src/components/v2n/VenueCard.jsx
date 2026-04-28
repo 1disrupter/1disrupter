@@ -1,15 +1,36 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Users, Music2, Sparkles, MapPin } from "lucide-react";
+import { Users, Music2, Footprints, Share2 } from "lucide-react";
 import { cx } from "@/lib/cx";
 import { BannerChip, Chip } from "./Chip";
 import { VibeScoreBadge, StatusIndicator } from "./VibeScore";
 import { Button } from "./Button";
 
 const bannerMap = {
-  best_overall: { label: "BEST OVERALL", tone: "purple", ring: "ring-primary-glow/40", glow: "shadow-softPurple" },
-  live_music: { label: "LIVE MUSIC", tone: "pink", ring: "ring-accent-pink/40", glow: "shadow-[0_20px_60px_-20px_rgba(255,46,196,0.55)]" },
-  hidden_gem: { label: "HIDDEN GEM", tone: "aqua", ring: "ring-glow-aqua/40", glow: "shadow-[0_20px_60px_-20px_rgba(0,245,255,0.5)]" },
+  best_overall: {
+    label: "BEST OVERALL",
+    tone: "purple",
+    border: "border-primary-glow/55",
+    glow: "shadow-[0_24px_70px_-24px_rgba(177,92,255,0.65)]",
+    score: "text-primary-glow",
+    button: "primary",
+  },
+  live_music: {
+    label: "LIVE MUSIC",
+    tone: "pink",
+    border: "border-accent-pink/55",
+    glow: "shadow-[0_24px_70px_-24px_rgba(255,46,196,0.6)]",
+    score: "text-accent-pink",
+    button: "pink",
+  },
+  hidden_gem: {
+    label: "HIDDEN GEM",
+    tone: "aqua",
+    border: "border-glow-aqua/55",
+    glow: "shadow-[0_24px_70px_-24px_rgba(0,245,255,0.55)]",
+    score: "text-glow-aqua",
+    button: "aqua",
+  },
 };
 
 const HERO_IMAGE = {
@@ -33,151 +54,42 @@ function statusForScore(score) {
   if (score >= 5) return "locals";
   return "dead";
 }
+/**
+ * Hero venue card matching the VIBE2NITE promo layout:
+ *  ┌───────────────────────────────┐
+ *  │ [BANNER]                       │
+ *  │       hero image (16/9)        │
+ *  ├───────────────────────────────┤
+ *  │ TITLE                  9.2     │
+ *  │ 🚶 6 min away      VIBE SCORE  │
+ *  ├───────────────────────────────┤
+ *  │ 👥 Busy  🎵 Live DJ    [GO HERE]│
+ *  └───────────────────────────────┘
+ */
+export function VenueHeroCard({ slot, data, onGo, onShare, index = 0, className }) {
 
-export function VenueHeroCard({ slot, data, onGo, index = 0, className }) {
-  if (!data) return null;
-  const { venue, vibe, distance_km } = data;
-  const cfg = bannerMap[slot] ?? bannerMap.best_overall;
-  const img = HERO_IMAGE[slot];
-  const status = statusForScore(vibe.vibe_score);
-  const catLabel = {
-    club: "Live DJ",
-    bar: "Chill Vibes",
-    live_music: "Live Band",
-  }[venue.category] || "Venue";
-
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.2, 0.8, 0.2, 1] }}
-      data-testid={`venue-card-${slot}`}
+<div className="flex items-center gap-2">
+  {onShare && (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onShare(data); }}
+      data-testid={`share-${slot}`}
+      aria-label={`Share ${venue.name}`}
+      title="Share this vibe"
       className={cx(
-        "relative overflow-hidden rounded-xl2 bg-background-dark/80 border border-white/10",
-        "ring-1", cfg.ring, cfg.glow,
-        className
+        "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70",
+        "transition hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95"
       )}
     >
-      {/* Hero image */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden">
-        <img
-          src={img}
-          alt={venue.name}
-          className="h-full w-full object-cover opacity-80"
-          loading="lazy"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-background-dark/10 to-background-dark" />
-        <div className="absolute left-4 top-4">
-          <BannerChip label={cfg.label} tone={cfg.tone} />
-        </div>
-        {venue.is_verified && (
-          <div
-            data-testid={`verified-badge-${slot}`}
-            title="Verified venue"
-            className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-glow-aqua/60 bg-glow-aqua/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.24em] text-glow-aqua shadow-neonAqua backdrop-blur"
-          >
-            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-              <path fillRule="evenodd" d="M10 1.944A11.953 11.953 0 012.166 5 12 12 0 0010 19 12 12 0 0017.834 5 11.953 11.953 0 0110 1.944zm4.207 6.263a.75.75 0 00-1.06-1.06l-4.147 4.146-1.646-1.646a.75.75 0 10-1.06 1.06l2.176 2.177a.75.75 0 001.06 0l4.677-4.677z" clipRule="evenodd" />
-            </svg>
-            Verified
-          </div>
-        )}
-      </div>
-
-      {/* Body */}
-      <div className="flex items-start justify-between gap-3 p-5">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-2xl tracking-wider text-white truncate">
-            {venue.name.toUpperCase()}
-          </h3>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-white/55">
-            <MapPin size={12} className="text-primary-glow" />
-            <span>{minutesAway(distance_km) || `${distance_km?.toFixed(1) ?? "?"} km away`}</span>
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <StatusIndicator status={status} icon={<Users size={14} />} />
-            <StatusIndicator status="locals" icon={<Music2 size={14} />} label={catLabel} />
-          </div>
-        </div>
-
-        <VibeScoreBadge score={vibe.vibe_score} size="md" />
-      </div>
-
-      {/* Footer CTA */}
-      <div className="flex items-center justify-between border-t border-white/5 px-5 py-3">
-        <div className="flex items-center gap-2 text-[11px] text-white/40 uppercase tracking-[0.22em]">
-          <Sparkles size={12} className="text-primary-glow" />
-          <span>Updated moments ago</span>
-        </div>
-
-        <div className="flex flex-col items-end">
-          <Button
-            size="sm"
-            variant={cfg.tone === "aqua" ? "aqua" : cfg.tone === "pink" ? "pink" : "primary"}
-            data-testid={`go-here-${slot}`}
-            onClick={() => onGo?.(data)}
-          >
-            Go here
-          </Button>
-
-          <a
-            href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 text-xs underline mt-2"
-          >
-            Get Directions →
-          </a>
-        </div>
-      </div>
-    </motion.article>
-  );
-}
-
-/** Compact venue list item (for search/feed). */
-export function VenueListItem({ data, onClick, className }) {
-  if (!data) return null;
-  const { venue, vibe, distance_km } = data;
-  const status = statusForScore(vibe.vibe_score);
-
-  return (
-    <div
-      onClick={() => onClick?.(data)}
-      className={cx(
-        "group flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02]",
-        "p-3 text-left transition hover:border-primary-glow/60 hover:bg-white/[0.04]",
-        className
-      )}
-    >
-      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent-pink text-white font-display text-2xl">
-        {venue.name.slice(0, 1)}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate font-semibold text-white">{venue.name}</p>
-          <Chip size="sm" tone="neutral">{venue.category.replace("_", " ")}</Chip>
-        </div>
-
-        <div className="mt-1 flex items-center gap-3 text-[11px] text-white/55">
-          <StatusIndicator status={status} size="sm" />
-          {distance_km != null && <span>· {distance_km.toFixed(1)} km</span>}
-        </div>
-
-        {/* Directions link */}
-        <a
-          href={`https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-400 text-xs underline mt-2 block"
-        >
-          Get Directions →
-        </a>
-      </div>
-
-      <VibeScoreBadge score={vibe.vibe_score} size="sm" />
-    </div>
-  );
-}
-
+      <Share2 size={14} />
+    </button>
+  )}
+  <Button
+    size="sm"
+    variant={cfg.button}
+    data-testid={`go-here-${slot}`}
+    onClick={() => onGo?.(data)}
+  >
+    Go here
+  </Button>
+</div>

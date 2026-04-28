@@ -657,3 +657,163 @@ sudo supervisorctl restart backend frontend postgresql
 - Owner console lockout on expired ownership ✅
 - No regressions: 145 Iter15 tests still green ✅
 
+
+---
+
+## Iteration 17 — Production Polish (Apr 2026)
+
+### Goals
+1. Make the deployed Railway frontend actually build & render the full UI.
+2. Match the user's marketing-image visual brief on the public Home page.
+3. Wire every interactive element on Home (no placeholder onClicks).
+4. Validate `REACT_APP_BACKEND_URL` resolution at build & runtime.
+
+### What changed (frontend only — backend untouched)
+
+**Build pipeline**
+- `frontend/package.json` — added `serve@^14.2.6` + new `"serve"` script (`serve -s build -l tcp://0.0.0.0:${PORT:-3000}`). `start`/`build`/`test` untouched. Railway now uses `yarn build` + `yarn serve` for SPA-fallback static serving.
+- `frontend/src/lib/api.js` — `BACKEND_URL` resolution hardened: trailing-slash strip, build-time absence detection, dev-only same-origin warning (no false alarms in production).
+
+**Visual redesign — VenueHeroCard**
+- `frontend/src/components/v2n/VenueCard.jsx` — `VenueHeroCard` body redesigned to match the user's marketing mockup: image bg, top-left colored badge (BEST OVERALL / LIVE MUSIC / HIDDEN GEM), big colored vibe score on the right with "VIBE SCORE" caption, crowd + music chips on bottom-left, "Go here" button on bottom-right (color-coded per slot). Per-slot border + glow + button + score color tokens centralised in `bannerMap`. `VenueListItem` untouched.
+
+**Hero copy**
+- `frontend/src/pages/Home.jsx` — H1 now reads `DON'T GUESS` / `WHERE TO GO.` / `KNOW.` (last word in pink) per latest mockup.
+
+**Wiring (every Home button now has correct behaviour)**
+- "Go here" on each card → opens Google Maps walking-directions to the venue's lat/lng in a new tab (`openDirectionsToVenue` helper).
+- Account icon (top-right, `data-testid=nav-account`) → `navigate('/owner')`.
+- Hamburger menu (top-left, `data-testid=nav-menu`) → smooth-scroll to `#top-three`.
+- Bottom tab "Home" → smooth-scroll to top.
+- Bottom tab "Map" → opens Google Maps in a new tab with multi-venue query for the current top-3.
+- Bottom tab "Faves" → toast `"Favourites coming soon — claim a venue to track it from the owner console."` (honest placeholder; can be replaced when faves feature ships).
+- `Navbar` extended with `onAccount` prop.
+- `BottomTabs` items each carry `data-testid=bottom-tab-{key}` for click-testability.
+
+### Verification
+- ESLint clean across all touched files.
+- `yarn build` produces 108 kB main + chunked lazy routes; SPA fallback via `serve -s` confirmed.
+- Live-preview backend `/api/admin/venues` returns 200 application/json; seeded 3 demo venues; signal engine populates scores.
+- **Testing agent iteration_7.json: 12/12 frontend flows PASS, 1 conditional skip (`checkin-btn` only renders for verified venues), 0 bugs.** Network interception confirmed all writes hit `${REACT_APP_BACKEND_URL}/api/*`.
+
+### Railway deploy settings (for the user)
+| Setting | Value |
+|---|---|
+| Root Directory | `frontend` |
+| Build Command | `yarn install --frozen-lockfile && yarn build` |
+| Start Command | `yarn serve` |
+| Watch Paths | `frontend/**` |
+| Env: `REACT_APP_BACKEND_URL` | `<deployed backend URL>` |
+| Env: `CI` | `false` |
+| Env: `NODE_VERSION` | `18` |
+| Action | Reset Build Cache → Redeploy |
+
+### Backlog (unchanged from Iter 16)
+- Branded `/claim-verified` landing page (P1)
+- Mobile "Claim this venue" CTA (P1)
+- Faves: localStorage favorites + dedicated tab content (P2)
+- Replace stub provider integrations with real keys: Google Places, Instagram Graph, TikTok Research, Eventbrite, Ticketmaster, Resend (P2)
+- Componentise `Owner.jsx` (P2)
+- Investigate flaky tests `test_osm_real_import_bbox_dedupes`, `test_scoring_based_formula` (P2)
+
+---
+
+## Iteration 18 — Viral Growth Loop (Apr 2026)
+
+### Goals
+1. Make every share URL produce a rich preview card (OG / Twitter Card meta).
+2. Make the app installable on mobile home screens (PWA).
+3. Turn the existing share button into a self-fueling growth loop via `?ref=<inviter-id>` referrals that credit +5 Vibe Credits to the inviter on the recipient's first credit-eligible action.
+
+### Changes
+
+**Backend (1 line)**
+- `backend/app/services/rewards/reward_rules.py` — added `"referral": 5` to `REWARD_RULES`. Existing `/api/rewards/earn` endpoint handles the credit (no new endpoint needed).
+
+**Frontend — referral loop**
+- `frontend/src/lib/userId.js` (new) — anonymous device-stable UUID (`v2n_user_id`), referral capture/consume helpers (`capturePendingReferrer`, `consumePendingReferrer`, `peekPendingReferrer`). Self-referral guard, malformed-UUID guard, URL cleanup via `history.replaceState`.
+- `frontend/src/lib/api.js` — added `earnReward(user_id, action, amount?)` and `getWallet(user_id)` helpers.
+- `frontend/src/pages/Home.jsx`:
+  - `buildShareForVenue(data, myUserId)` now appends `?ref=<my-uuid>` alongside `?v=<venue-id>`.
+  - `handleShareVenue` passes `myUserId` (memoised from `getOrCreateUserId()`).
+  - On mount → `capturePendingReferrer()` strips and stashes any `?ref` param.
+  - First credit-eligible action (vote OR check-in) → `honourPendingReferral()` POSTs `/api/rewards/earn` with `action: "referral"` for the inviter (one-shot, idempotent via `consumePendingReferrer`).
+
+**Frontend — OG / Twitter / PWA**
+- `frontend/public/index.html` — added 6 OG tags (og:type, og:site_name, og:title, og:description, og:image with width/height, og:image:alt) + 4 Twitter tags (summary_large_image card) + manifest link + apple-touch-icon + iOS standalone meta.
+- `frontend/public/manifest.json` (new) — name, short_name, description, theme/bg color, 3 icons (192/512/512-maskable), display: standalone, scope/start_url: /, categories.
+- `frontend/public/og.png` (new) — 1200×630 branded OG image (purple→pink gradient bg, V-pin logo, VIBE2NITE wordmark, "DON'T GUESS. KNOW WHERE TO GO." tagline). Generated via Playwright from a temp HTML template.
+- `frontend/public/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (new) — branded app icons (rounded square, V-pin centered on dark bg). Maskable variant has safe-area padding.
+- `frontend/public/service-worker.js` (new) — minimal cache-first for `/static/*` + image assets; network-only for `/api/*`; network-first w/ shell fallback for navigations. ~50 lines, no dependencies.
+- `frontend/src/index.js` — registers SW only when `NODE_ENV === "production"` (avoids dev-server chunk caching).
+
+### Verification (live preview)
+- ✅ Backend `/api/rewards/rules` includes `"referral": 5`.
+- ✅ Curl roundtrip: inviter wallet 0 → POST earn referral → wallet 5.
+- ✅ Browser roundtrip: `?ref=<uuid>` lands → URL cleaned → localStorage stashed → vote click → exactly 1 `POST /api/rewards/earn {user_id, action: "referral"}` → pending cleared → second vote does NOT re-fire (one-shot guarantee).
+- ✅ Inviter wallet credited to 5 credits via the same UUID.
+- ✅ Static assets all 200: `manifest.json`, `icon-192.png`, `icon-512.png`, `og.png`, `service-worker.js`.
+- ✅ OG meta tags present in production HTML: og:type, og:site, og:title, og:description, og:image + twitter:card/title/description/image.
+- ✅ OG image visually branded (purple/pink gradient, V-pin logo, VIBE2NITE wordmark with pink "2", tagline).
+- ✅ ESLint + Ruff clean. CRA build succeeds.
+
+### Backlog (still pending)
+- Skeleton loading cards (P1)
+- Real Faves tab (localStorage favorites) (P1)
+- Auto-refresh on tab focus (P2)
+- Plausible analytics + Sentry error reporting (P2)
+- Web Push notifications (vibe-score threshold alerts) (P2)
+- Embedded map view (Mapbox / Leaflet) (P2)
+- Real-time WebSocket vibe updates (P3)
+- Branded `/claim-verified` landing page (P1)
+- Mobile "Claim this venue" CTA in Expo app (P1)
+- Componentise `Owner.jsx` (P2)
+- Replace stubs with real provider keys: Resend, Google Places, IG, TikTok, Eventbrite, Ticketmaster (P2)
+
+---
+
+## Iteration 19 — Profile / Wallet Page (Apr 2026)
+
+### Goal
+Surface "🎉 +5 Vibe Credits earned · N invites" so the viral loop is *visible*. Friends compete on who's pulled the most people out tonight.
+
+### Changes
+
+**Backend (additive)**
+- `backend/app/models/user_intel.py` — added `referral_credits` Integer column (default 0) to `UserWallet`. Tracks lifetime referral credits separately from total credits.
+- `backend/app/routers/rewards.py`:
+  - `WalletOut` schema gained `referral_credits: int = 0` and derived `invites: int = 0` (= `referral_credits // 5`).
+  - `wallet()` endpoint includes both fields in the response.
+  - `earn()` endpoint, when `action == "referral"`, also bumps `wallet.referral_credits` by the awarded amount (best-effort, never raises into the route).
+- `backend/alembic/versions/c3d4e5f60001_add_referral_credits_to_user_wallets.py` — migration adding the column with `server_default=0`. Applied successfully (head: `c3d4e5f60001`).
+
+**Frontend**
+- `frontend/src/pages/Profile.jsx` (new, `/me`) — anonymous wallet panel showing:
+  - 3 stat cards: Vibe Credits (purple), Friends Invited (pink), From Referrals (aqua)
+  - Dynamic milestone copy (0 → "share to invite first friend"; 1–4 → "keep the streak going"; 5–19 → "you're a connector"; 20+ → "official ambassador")
+  - Hero invite block: personal `?ref=<my-uuid>` URL with Copy + native Share button
+  - Anonymous device ID strip with copy button + privacy note
+  - Loading + error states, manual refresh button
+- `frontend/src/App.jsx` — registered `/me` lazy route mapped to `Profile`.
+- `frontend/src/pages/Home.jsx` — Navbar account icon now routes to `/me` (was `/owner`). Owners still reach their console after the claim flow's magic-link.
+
+### Verification
+- ✅ Backend roundtrip: 2 referral POSTs → wallet returns `credits: 15, referral_credits: 10, invites: 2`
+- ✅ Browser roundtrip: `/me` with primed `v2n_user_id` shows real numbers (15 / 2 / +10) and the personal invite link
+- ✅ Mobile (414 wide) layout stacks stats vertically with full-bleed cards
+- ✅ Empty/error states verified for new browsers (no wallet yet → `create=true` auto-spawns empty)
+- ✅ ESLint + Ruff clean. CRA build succeeds. Alembic migration applied cleanly.
+
+### Backlog (still pending)
+- Skeleton loading cards (P1)
+- Real Faves tab (localStorage) (P1)
+- Auto-refresh on tab focus (P2)
+- Plausible analytics + Sentry (P2)
+- Web Push notifications for vibe-score thresholds (P2)
+- Embedded Mapbox map view (P2)
+- Real-time WebSocket vibe updates (P3)
+- Branded `/claim-verified` landing page (P1)
+- Mobile "Claim this venue" CTA (P1)
+- Public invite leaderboard ("Top inviters this week") — natural extension of the new counter (P2)
+- Componentise `Owner.jsx` (P2)
+- Replace stubs with real provider keys (P2)
