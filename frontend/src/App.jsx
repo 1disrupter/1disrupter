@@ -53,5 +53,7 @@ export default function App() {
           </MainLayout>
         </Suspense>
       </LocationContext.Provider>
-
+</ToastProvider>
+  );
+}
 
