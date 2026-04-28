@@ -11,3 +11,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// PWA: register the service worker in production only. CRA dev server
+// regenerates assets on every save, so caching them in dev causes stale
+// builds and would mask real issues.
+if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {
+      // Registration failures are non-fatal — app still works, just no
+      // offline shell or installable PWA on this visit.
+    });
+  });
+}
+

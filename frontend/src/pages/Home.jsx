@@ -8,7 +8,8 @@ import {
   Button, IconButton, Chip, SectionDivider, useToast,
   Modal, Input,
 } from "@/components/v2n";
-import { getTopVibes, submitFeedback, submitClaim, checkInVenue } from "@/lib/api";
+import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward } from "@/lib/api";
+import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
@@ -23,9 +24,11 @@ function openDirectionsToVenue(data) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-// Compose the share text + URL for a venue. Forward-compatible deep-link
-// query (?v=<id>) for a future per-venue page; today the URL just opens Home.
-function buildShareForVenue(data) {
+// Compose the share text + URL for a venue. The URL carries:
+//   ?v=<venue-id>   → forward-compatible deep link to highlight the venue
+//   ?ref=<my-uuid>  → so the inviter can be credited Vibe Credits when the
+//                     recipient takes their first credit-eligible action
+function buildShareForVenue(data, myUserId) {
   const { venue, vibe, distance_km } = data;
   const score = vibe.vibe_score.toFixed(1);
   const flame = vibe.vibe_score >= 8 ? "🔥" : vibe.vibe_score >= 5 ? "✨" : "🌙";
@@ -36,7 +39,9 @@ function buildShareForVenue(data) {
     bar: "Chill Vibes",
     live_music: "Live Band",
   }[venue.category] || "Vibes";
-  const link = `${window.location.origin}/?v=${encodeURIComponent(venue.id)}`;
+  const params = new URLSearchParams({ v: venue.id });
+  if (myUserId) params.set("ref", myUserId);
+  const link = `${window.location.origin}/?${params.toString()}`;
   const text =
     `${flame} ${venue.name} is a ${score} vibe right now\n` +
     `📍 ${distLine} · ${cat}\n` +
@@ -55,6 +60,32 @@ export default function Home() {
   const [claimVenue, setClaimVenue] = useState(null);
   const [fvvBadge, setFvvBadge] = useState(null);
   const toast = useToast();
+
+  // Stable anonymous identity for this device — used as wallet user_id
+  // and as the referrer parameter on share links.
+  const myUserId = useMemo(() => getOrCreateUserId(), []);
+
+  // On first mount, snatch ?ref=<inviter-id> from the URL (if present) and
+  // clean the param. We'll honour it on the user's first credit-eligible
+  // action below.
+  useEffect(() => {
+    capturePendingReferrer();
+  }, []);
+
+  // Best-effort: if a pending referrer exists, credit them +5 Vibe Credits
+  // on the recipient's first credit-eligible action. Fires at most once
+  // per device (consume clears the storage key).
+  const honourPendingReferral = useCallback(async () => {
+    const inviter = consumePendingReferrer();
+    if (!inviter) return;
+    try {
+      await earnReward(inviter, "referral");
+      toast.success("+5 Vibe Credits sent to whoever invited you 💜");
+    } catch {
+      // Re-stash so we can retry on a future action — but only if storage works.
+      // (Intentionally ignored — losing one referral credit isn't fatal.)
+    }
+  }, [toast]);
 
   const getDeviceId = () => {
     let d = localStorage.getItem("v2n_device_id");
@@ -80,6 +111,8 @@ export default function Home() {
       } else {
         toast.success("Checked in.");
       }
+      // First credit-eligible action of this session → credit any pending inviter.
+      honourPendingReferral();
     } catch (e) {
       toast.error(e.response?.data?.detail || "Check-in failed");
     }
@@ -138,7 +171,7 @@ export default function Home() {
 
   const handleShareVenue = useCallback(
     async (data) => {
-      const payload = buildShareForVenue(data);
+      const payload = buildShareForVenue(data, myUserId);
       // 1) Try the native share sheet (mobile + a few desktop browsers).
       try {
         if (navigator.share) {
@@ -171,7 +204,7 @@ export default function Home() {
         toast.error("Couldn't copy. Long-press to select instead.");
       }
     },
-    [toast]
+    [toast, myUserId]
   );
 
   const handleVote = async (venue_id, vote) => {
@@ -179,6 +212,8 @@ export default function Home() {
       const res = await submitFeedback(venue_id, vote);
       toast.success(`Vote logged. Score: ${res.new_vibe_score.toFixed(2)}`);
       fetchVibes();
+      // First credit-eligible action → credit any pending inviter (idempotent).
+      honourPendingReferral();
     } catch (e) {
       toast.error(e.response?.data?.detail || "Vote failed");
     }

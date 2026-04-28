@@ -715,3 +715,57 @@ sudo supervisorctl restart backend frontend postgresql
 - Replace stub provider integrations with real keys: Google Places, Instagram Graph, TikTok Research, Eventbrite, Ticketmaster, Resend (P2)
 - Componentise `Owner.jsx` (P2)
 - Investigate flaky tests `test_osm_real_import_bbox_dedupes`, `test_scoring_based_formula` (P2)
+
+---
+
+## Iteration 18 — Viral Growth Loop (Apr 2026)
+
+### Goals
+1. Make every share URL produce a rich preview card (OG / Twitter Card meta).
+2. Make the app installable on mobile home screens (PWA).
+3. Turn the existing share button into a self-fueling growth loop via `?ref=<inviter-id>` referrals that credit +5 Vibe Credits to the inviter on the recipient's first credit-eligible action.
+
+### Changes
+
+**Backend (1 line)**
+- `backend/app/services/rewards/reward_rules.py` — added `"referral": 5` to `REWARD_RULES`. Existing `/api/rewards/earn` endpoint handles the credit (no new endpoint needed).
+
+**Frontend — referral loop**
+- `frontend/src/lib/userId.js` (new) — anonymous device-stable UUID (`v2n_user_id`), referral capture/consume helpers (`capturePendingReferrer`, `consumePendingReferrer`, `peekPendingReferrer`). Self-referral guard, malformed-UUID guard, URL cleanup via `history.replaceState`.
+- `frontend/src/lib/api.js` — added `earnReward(user_id, action, amount?)` and `getWallet(user_id)` helpers.
+- `frontend/src/pages/Home.jsx`:
+  - `buildShareForVenue(data, myUserId)` now appends `?ref=<my-uuid>` alongside `?v=<venue-id>`.
+  - `handleShareVenue` passes `myUserId` (memoised from `getOrCreateUserId()`).
+  - On mount → `capturePendingReferrer()` strips and stashes any `?ref` param.
+  - First credit-eligible action (vote OR check-in) → `honourPendingReferral()` POSTs `/api/rewards/earn` with `action: "referral"` for the inviter (one-shot, idempotent via `consumePendingReferrer`).
+
+**Frontend — OG / Twitter / PWA**
+- `frontend/public/index.html` — added 6 OG tags (og:type, og:site_name, og:title, og:description, og:image with width/height, og:image:alt) + 4 Twitter tags (summary_large_image card) + manifest link + apple-touch-icon + iOS standalone meta.
+- `frontend/public/manifest.json` (new) — name, short_name, description, theme/bg color, 3 icons (192/512/512-maskable), display: standalone, scope/start_url: /, categories.
+- `frontend/public/og.png` (new) — 1200×630 branded OG image (purple→pink gradient bg, V-pin logo, VIBE2NITE wordmark, "DON'T GUESS. KNOW WHERE TO GO." tagline). Generated via Playwright from a temp HTML template.
+- `frontend/public/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (new) — branded app icons (rounded square, V-pin centered on dark bg). Maskable variant has safe-area padding.
+- `frontend/public/service-worker.js` (new) — minimal cache-first for `/static/*` + image assets; network-only for `/api/*`; network-first w/ shell fallback for navigations. ~50 lines, no dependencies.
+- `frontend/src/index.js` — registers SW only when `NODE_ENV === "production"` (avoids dev-server chunk caching).
+
+### Verification (live preview)
+- ✅ Backend `/api/rewards/rules` includes `"referral": 5`.
+- ✅ Curl roundtrip: inviter wallet 0 → POST earn referral → wallet 5.
+- ✅ Browser roundtrip: `?ref=<uuid>` lands → URL cleaned → localStorage stashed → vote click → exactly 1 `POST /api/rewards/earn {user_id, action: "referral"}` → pending cleared → second vote does NOT re-fire (one-shot guarantee).
+- ✅ Inviter wallet credited to 5 credits via the same UUID.
+- ✅ Static assets all 200: `manifest.json`, `icon-192.png`, `icon-512.png`, `og.png`, `service-worker.js`.
+- ✅ OG meta tags present in production HTML: og:type, og:site, og:title, og:description, og:image + twitter:card/title/description/image.
+- ✅ OG image visually branded (purple/pink gradient, V-pin logo, VIBE2NITE wordmark with pink "2", tagline).
+- ✅ ESLint + Ruff clean. CRA build succeeds.
+
+### Backlog (still pending)
+- Skeleton loading cards (P1)
+- Real Faves tab (localStorage favorites) (P1)
+- Auto-refresh on tab focus (P2)
+- Plausible analytics + Sentry error reporting (P2)
+- Web Push notifications (vibe-score threshold alerts) (P2)
+- Embedded map view (Mapbox / Leaflet) (P2)
+- Real-time WebSocket vibe updates (P3)
+- Branded `/claim-verified` landing page (P1)
+- Mobile "Claim this venue" CTA in Expo app (P1)
+- Componentise `Owner.jsx` (P2)
+- Replace stubs with real provider keys: Resend, Google Places, IG, TikTok, Eventbrite, Ticketmaster (P2)

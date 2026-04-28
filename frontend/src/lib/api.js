@@ -134,3 +134,13 @@ export const submitReverify = (payload) =>
 
 export const checkInVenue = (venue_id, device_id) =>
   api.post("/intel/visits/check-in", { venue_id, device_id }).then((r) => r.data);
+
+
+// --- Iteration 17: rewards / referrals ------------------------------------
+export const earnReward = (user_id, action, amount) =>
+  api
+    .post("/rewards/earn", { user_id, action, ...(amount ? { amount } : {}) })
+    .then((r) => r.data);
+
+export const getWallet = (user_id) =>
+  api.get(`/rewards/wallet/${encodeURIComponent(user_id)}`).then((r) => r.data);
