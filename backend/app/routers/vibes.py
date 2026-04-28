@@ -8,7 +8,6 @@ from app.schemas.vibe import TopVibesResponse
 from app.services.recommendations import get_top_vibes
 
 router = APIRouter(prefix="/vibes", tags=["vibes"])
-
 @router.get("/top", response_model=TopVibesResponse, summary="Top 3 vibes near a location")
 def vibes_top(
     lat: float = Query(..., ge=-90, le=90, description="User latitude"),
@@ -18,20 +17,38 @@ def vibes_top(
 ) -> TopVibesResponse:
     """Return best_overall, live_music and hidden_gem for a given location."""
 
+    # Get Pydantic model
     results = get_top_vibes(db, lat=lat, lng=lng, radius_km=radius_km)
 
+    # Convert to dict so .get() works
+    results_dict = results.model_dump()
+
+    # Fallback object matching schema
     fallback = {
-        "name": "Coming soon",
-        "address": "",
-        "score": 0,
-        "tags": ["No data"],
-        "distance": "",
-        "placeholder": True
+        "venue": {
+            "id": None,
+            "name": "Coming soon",
+            "address": "",
+            "latitude": None,
+            "longitude": None,
+            "category": None,
+            "is_verified": False,
+        },
+        "vibe": {
+            "venue_id": None,
+            "vibe_score": 0,
+            "crowd_level": 0,
+            "last_updated": None,
+            "signals": {},
+        },
+        "distance_km": 0,
+        "placeholder": True,
     }
 
     return {
-        "best_overall": results.get("best_overall") or fallback,
-        "live_music": results.get("live_music") or fallback,
-        "hidden_gem": results.get("hidden_gem") or fallback
+        "best_overall": results_dict.get("best_overall") or fallback,
+        "live_music": results_dict.get("live_music") or fallback,
+        "hidden_gem": results_dict.get("hidden_gem") or fallback,
     }
+
 
