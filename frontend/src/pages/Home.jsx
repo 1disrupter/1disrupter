@@ -160,7 +160,33 @@ export default function Home() {
               <br />
               <span className="text-white">WHERE TO GO.</span>
               <br />
-              <span className="text-accent-pink">KNOW.</span>
+              <span className="relative mt-2 inline-block origin-bottom-left -rotate-[4deg]">
+                <span
+                  className="relative z-10 text-accent-pink"
+                  style={{
+                    textShadow:
+                      "0 0 32px rgba(255,46,196,0.55), 0 0 8px rgba(255,46,196,0.85)",
+                  }}
+                >
+                  KNOW.
+                </span>
+                {/* hand-painted brushstroke underline */}
+                <svg
+                  aria-hidden
+                  viewBox="0 0 320 22"
+                  preserveAspectRatio="none"
+                  className="absolute left-[-4%] top-full h-3 w-[108%] md:h-4"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 14px rgba(255,46,196,0.65)) drop-shadow(0 0 4px rgba(255,46,196,0.95))",
+                  }}
+                >
+                  <path
+                    d="M3 12 C 35 5, 80 4, 130 9 S 220 16, 270 8 C 295 5, 312 9, 318 13 L 316 19 C 280 13, 230 18, 175 16 S 70 11, 18 17 C 11 17, 4 16, 2 15 Z"
+                    fill="#FF2EC4"
+                  />
+                </svg>
+              </span>
             </h1>
             <p className="max-w-xl text-sm text-white/60 md:text-base">
               Three perfectly-picked spots, tuned in real time. Powered by crowd signals,
