@@ -54,6 +54,9 @@ class UserWallet(Base):
     __tablename__ = "user_wallets"
     user_id: Mapped[str] = mapped_column(String, primary_key=True)
     credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Lifetime referral credits received by this wallet. Lets us compute
+    # "you've invited N friends" without scanning a full event ledger.
+    referral_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

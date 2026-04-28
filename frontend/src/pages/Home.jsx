@@ -234,7 +234,7 @@ export default function Home() {
             <Locate size={18} />
           </IconButton>
         }
-        onAccount={() => navigate("/owner")}
+        onAccount={() => navigate("/me")}
       />
 
       {/* Hero */}

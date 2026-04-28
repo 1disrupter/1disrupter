@@ -769,3 +769,51 @@ sudo supervisorctl restart backend frontend postgresql
 - Mobile "Claim this venue" CTA in Expo app (P1)
 - Componentise `Owner.jsx` (P2)
 - Replace stubs with real provider keys: Resend, Google Places, IG, TikTok, Eventbrite, Ticketmaster (P2)
+
+---
+
+## Iteration 19 — Profile / Wallet Page (Apr 2026)
+
+### Goal
+Surface "🎉 +5 Vibe Credits earned · N invites" so the viral loop is *visible*. Friends compete on who's pulled the most people out tonight.
+
+### Changes
+
+**Backend (additive)**
+- `backend/app/models/user_intel.py` — added `referral_credits` Integer column (default 0) to `UserWallet`. Tracks lifetime referral credits separately from total credits.
+- `backend/app/routers/rewards.py`:
+  - `WalletOut` schema gained `referral_credits: int = 0` and derived `invites: int = 0` (= `referral_credits // 5`).
+  - `wallet()` endpoint includes both fields in the response.
+  - `earn()` endpoint, when `action == "referral"`, also bumps `wallet.referral_credits` by the awarded amount (best-effort, never raises into the route).
+- `backend/alembic/versions/c3d4e5f60001_add_referral_credits_to_user_wallets.py` — migration adding the column with `server_default=0`. Applied successfully (head: `c3d4e5f60001`).
+
+**Frontend**
+- `frontend/src/pages/Profile.jsx` (new, `/me`) — anonymous wallet panel showing:
+  - 3 stat cards: Vibe Credits (purple), Friends Invited (pink), From Referrals (aqua)
+  - Dynamic milestone copy (0 → "share to invite first friend"; 1–4 → "keep the streak going"; 5–19 → "you're a connector"; 20+ → "official ambassador")
+  - Hero invite block: personal `?ref=<my-uuid>` URL with Copy + native Share button
+  - Anonymous device ID strip with copy button + privacy note
+  - Loading + error states, manual refresh button
+- `frontend/src/App.jsx` — registered `/me` lazy route mapped to `Profile`.
+- `frontend/src/pages/Home.jsx` — Navbar account icon now routes to `/me` (was `/owner`). Owners still reach their console after the claim flow's magic-link.
+
+### Verification
+- ✅ Backend roundtrip: 2 referral POSTs → wallet returns `credits: 15, referral_credits: 10, invites: 2`
+- ✅ Browser roundtrip: `/me` with primed `v2n_user_id` shows real numbers (15 / 2 / +10) and the personal invite link
+- ✅ Mobile (414 wide) layout stacks stats vertically with full-bleed cards
+- ✅ Empty/error states verified for new browsers (no wallet yet → `create=true` auto-spawns empty)
+- ✅ ESLint + Ruff clean. CRA build succeeds. Alembic migration applied cleanly.
+
+### Backlog (still pending)
+- Skeleton loading cards (P1)
+- Real Faves tab (localStorage) (P1)
+- Auto-refresh on tab focus (P2)
+- Plausible analytics + Sentry (P2)
+- Web Push notifications for vibe-score thresholds (P2)
+- Embedded Mapbox map view (P2)
+- Real-time WebSocket vibe updates (P3)
+- Branded `/claim-verified` landing page (P1)
+- Mobile "Claim this venue" CTA (P1)
+- Public invite leaderboard ("Top inviters this week") — natural extension of the new counter (P2)
+- Componentise `Owner.jsx` (P2)
+- Replace stubs with real provider keys (P2)

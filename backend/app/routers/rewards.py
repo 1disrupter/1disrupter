@@ -35,6 +35,8 @@ router = APIRouter(prefix="/rewards", tags=["rewards"])
 class WalletOut(BaseModel):
     user_id: str
     credits: int
+    referral_credits: int = 0
+    invites: int = 0
     updated_at: datetime
 
 
@@ -111,9 +113,17 @@ def wallet(
         w = db.get(UserWallet, user_id)
         if w is None:
             raise HTTPException(status_code=404, detail="wallet not found")
-        return WalletOut(user_id=w.user_id, credits=w.credits, updated_at=w.updated_at)
+        ref = int(getattr(w, "referral_credits", 0) or 0)
+        return WalletOut(
+            user_id=w.user_id, credits=w.credits, referral_credits=ref,
+            invites=ref // 5, updated_at=w.updated_at,
+        )
     w = get_wallet(db, user_id)
-    return WalletOut(user_id=w.user_id, credits=w.credits, updated_at=w.updated_at)
+    ref = int(getattr(w, "referral_credits", 0) or 0)
+    return WalletOut(
+        user_id=w.user_id, credits=w.credits, referral_credits=ref,
+        invites=ref // 5, updated_at=w.updated_at,
+    )
 
 
 @router.post("/earn", response_model=EarnOut, summary="Award credits to a user for an action")
@@ -127,6 +137,16 @@ def earn(payload: EarnIn, db: Session = Depends(get_db)) -> EarnOut:
     previous = int(prev_wallet.credits or 0)
 
     w = add_credits(db, payload.user_id, award)
+
+    # Track lifetime referral credits separately so we can show "N invites"
+    # without a full event ledger. Best-effort — never fails the route.
+    if payload.action == "referral":
+        try:
+            w.referral_credits = int(getattr(w, "referral_credits", 0) or 0) + award
+            db.commit()
+            db.refresh(w)
+        except Exception:  # pragma: no cover
+            db.rollback()
 
     # Fire-and-forget milestone push. Never raise into the route.
     crossed = milestone_for(previous, int(w.credits or 0))
