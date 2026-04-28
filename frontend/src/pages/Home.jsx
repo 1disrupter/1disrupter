@@ -3,28 +3,29 @@ import { MapPin, Flame, Navigation, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Logo, Button, IconButton, useToast } from "@/components/v2n";
 import { getTopVibes } from "@/lib/api";
+import VibeCard from "@/components/VibeCard";   // ⭐ REQUIRED IMPORT
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
 export default function Home({ registerLocationFn }) {
   const [loc, setLoc] = useState(DEFAULT_LOCATION);
   const [radius, setRadius] = useState(50);
-  const [vibes, setVibes] = useState([]);
+
+  // ⭐ Object shape (matches backend)
+  const [vibes, setVibes] = useState({
+    best_overall: null,
+    live_music: null,
+    hidden_gem: null
+  });
+
   const toast = useToast();
 
-  // ⭐ Normalize backend response safely
-  const normalizeVibes = (data) => {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.vibes)) return data.vibes;
-    if (Array.isArray(data?.data)) return data.data;
-
-    // If backend returns an object like {best_overall, live_music, hidden_gem}
-    if (data && typeof data === "object") {
-      return Object.values(data).filter(Boolean);
-    }
-
-    return [];
-  };
+  // ⭐ Normalize backend response
+  const normalizeVibes = (data) => ({
+    best_overall: data.best_overall,
+    live_music: data.live_music,
+    hidden_gem: data.hidden_gem
+  });
 
   // ⭐ Fetch vibes
   const fetchVibes = useCallback(
@@ -66,7 +67,7 @@ export default function Home({ registerLocationFn }) {
     );
   }, [toast, radius, fetchVibes]);
 
-  // ⭐ Correct hook registration (NO callback wrapper)
+  // ⭐ Register location hook
   useEffect(() => {
     if (registerLocationFn) {
       registerLocationFn(useMyLocation);
@@ -127,26 +128,16 @@ export default function Home({ registerLocationFn }) {
           </div>
         </div>
 
-        {vibes.length === 0 && (
+        {/* ⭐ Empty state */}
+        {!vibes.best_overall && !vibes.live_music && !vibes.hidden_gem && (
           <p className="text-white/50 text-sm">No vibes found in this area.</p>
         )}
 
+        {/* ⭐ 3‑Card Layout */}
         <div className="grid gap-4 md:grid-cols-3">
-          {vibes.map((v, i) => (
-            <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="mb-3">
-                <h3 className="font-semibold text-lg">{v.name}</h3>
-                <p className="text-white/50 text-sm">{v.address}</p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-accent-pink font-bold text-xl">{v.score}</span>
-                <span className="text-white/40 text-xs uppercase tracking-wide">
-                  vibe score
-                </span>
-              </div>
-            </div>
-          ))}
+          <VibeCard title="Best Overall" data={vibes.best_overall} />
+          <VibeCard title="Live Music" data={vibes.live_music} />
+          <VibeCard title="Hidden Gem" data={vibes.hidden_gem} />
         </div>
       </section>
 
@@ -170,4 +161,5 @@ export default function Home({ registerLocationFn }) {
     </div>
   );
 }
+
 
