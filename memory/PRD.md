@@ -657,3 +657,61 @@ sudo supervisorctl restart backend frontend postgresql
 - Owner console lockout on expired ownership ✅
 - No regressions: 145 Iter15 tests still green ✅
 
+
+---
+
+## Iteration 17 — Production Polish (Apr 2026)
+
+### Goals
+1. Make the deployed Railway frontend actually build & render the full UI.
+2. Match the user's marketing-image visual brief on the public Home page.
+3. Wire every interactive element on Home (no placeholder onClicks).
+4. Validate `REACT_APP_BACKEND_URL` resolution at build & runtime.
+
+### What changed (frontend only — backend untouched)
+
+**Build pipeline**
+- `frontend/package.json` — added `serve@^14.2.6` + new `"serve"` script (`serve -s build -l tcp://0.0.0.0:${PORT:-3000}`). `start`/`build`/`test` untouched. Railway now uses `yarn build` + `yarn serve` for SPA-fallback static serving.
+- `frontend/src/lib/api.js` — `BACKEND_URL` resolution hardened: trailing-slash strip, build-time absence detection, dev-only same-origin warning (no false alarms in production).
+
+**Visual redesign — VenueHeroCard**
+- `frontend/src/components/v2n/VenueCard.jsx` — `VenueHeroCard` body redesigned to match the user's marketing mockup: image bg, top-left colored badge (BEST OVERALL / LIVE MUSIC / HIDDEN GEM), big colored vibe score on the right with "VIBE SCORE" caption, crowd + music chips on bottom-left, "Go here" button on bottom-right (color-coded per slot). Per-slot border + glow + button + score color tokens centralised in `bannerMap`. `VenueListItem` untouched.
+
+**Hero copy**
+- `frontend/src/pages/Home.jsx` — H1 now reads `DON'T GUESS` / `WHERE TO GO.` / `KNOW.` (last word in pink) per latest mockup.
+
+**Wiring (every Home button now has correct behaviour)**
+- "Go here" on each card → opens Google Maps walking-directions to the venue's lat/lng in a new tab (`openDirectionsToVenue` helper).
+- Account icon (top-right, `data-testid=nav-account`) → `navigate('/owner')`.
+- Hamburger menu (top-left, `data-testid=nav-menu`) → smooth-scroll to `#top-three`.
+- Bottom tab "Home" → smooth-scroll to top.
+- Bottom tab "Map" → opens Google Maps in a new tab with multi-venue query for the current top-3.
+- Bottom tab "Faves" → toast `"Favourites coming soon — claim a venue to track it from the owner console."` (honest placeholder; can be replaced when faves feature ships).
+- `Navbar` extended with `onAccount` prop.
+- `BottomTabs` items each carry `data-testid=bottom-tab-{key}` for click-testability.
+
+### Verification
+- ESLint clean across all touched files.
+- `yarn build` produces 108 kB main + chunked lazy routes; SPA fallback via `serve -s` confirmed.
+- Live-preview backend `/api/admin/venues` returns 200 application/json; seeded 3 demo venues; signal engine populates scores.
+- **Testing agent iteration_7.json: 12/12 frontend flows PASS, 1 conditional skip (`checkin-btn` only renders for verified venues), 0 bugs.** Network interception confirmed all writes hit `${REACT_APP_BACKEND_URL}/api/*`.
+
+### Railway deploy settings (for the user)
+| Setting | Value |
+|---|---|
+| Root Directory | `frontend` |
+| Build Command | `yarn install --frozen-lockfile && yarn build` |
+| Start Command | `yarn serve` |
+| Watch Paths | `frontend/**` |
+| Env: `REACT_APP_BACKEND_URL` | `<deployed backend URL>` |
+| Env: `CI` | `false` |
+| Env: `NODE_VERSION` | `18` |
+| Action | Reset Build Cache → Redeploy |
+
+### Backlog (unchanged from Iter 16)
+- Branded `/claim-verified` landing page (P1)
+- Mobile "Claim this venue" CTA (P1)
+- Faves: localStorage favorites + dedicated tab content (P2)
+- Replace stub provider integrations with real keys: Google Places, Instagram Graph, TikTok Research, Eventbrite, Ticketmaster, Resend (P2)
+- Componentise `Owner.jsx` (P2)
+- Investigate flaky tests `test_osm_real_import_bbox_dedupes`, `test_scoring_based_formula` (P2)
