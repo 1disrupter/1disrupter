@@ -59,20 +59,20 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json",
     )
 
-    # CORS
-  app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://vibe2nite.com",
-        "https://www.vibe2nite.com",
-        "https://api.vibe2nite.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-    
+    # -----------------------------------------------------------------------
+    # CORS (FIXED)
+    # -----------------------------------------------------------------------
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "https://vibe2nite.com",
+            "https://www.vibe2nite.com",
+            "https://api.vibe2nite.com",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     # Static brand assets
     static_dir = os.path.join(os.path.dirname(__file__), "static")
@@ -81,7 +81,9 @@ def create_app() -> FastAPI:
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    # Routers
+    # -----------------------------------------------------------------------
+    # Routers (FIXED INDENTATION)
+    # -----------------------------------------------------------------------
     app.include_router(vibes.router, prefix="/api")
     app.include_router(vibes_extras.router, prefix="/api")
     app.include_router(feedback.router, prefix="/api")
@@ -102,7 +104,7 @@ def create_app() -> FastAPI:
     app.include_router(claims_router.router, prefix="/api")
     app.include_router(owner_router.router, prefix="/api")
 
-    # WebSocket router (existing)
+    # WebSocket router
     app.include_router(ws.router)
 
     # Health
@@ -176,4 +178,5 @@ async def vibe_socket(websocket: WebSocket):
             await websocket.receive_text()
     except:
         ws_manager.disconnect(websocket)
+
 
