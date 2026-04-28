@@ -25,7 +25,7 @@
     "tailwindcss": "^3.4.14"
   },
   "scripts": {
-    "start": "serve -s build -l tcp://0.0.0.0:${PORT:-3000}",
+    "start": "serve -s build -l tcp://0.0.0.0:${PORT:-8080}",
     "build": "craco build",
     "dev": "craco start",
     "test": "craco test"
