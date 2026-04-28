@@ -135,11 +135,11 @@ export default function Home() {
               <Flame size={12} /> Right now near you
             </div>
             <h1 className="font-display text-5xl leading-[0.9] tracking-wider md:text-7xl">
-              <span className="v2n-sheen">DON'T GUESS.</span>
+              <span className="v2n-sheen">DON'T GUESS</span>
               <br />
-              <span className="text-white">
-                KNOW <span className="text-accent-pink">WHERE</span> TO GO.
-              </span>
+              <span className="text-white">WHERE TO GO.</span>
+              <br />
+              <span className="text-accent-pink">KNOW.</span>
             </h1>
             <p className="max-w-xl text-sm text-white/60 md:text-base">
               Three perfectly-picked spots, tuned in real time. Powered by crowd signals,
