@@ -2,6 +2,7 @@ export { Logo, LogoMark } from "./Logo";
 export { Button, IconButton } from "./Button";
 export { Chip, BannerChip } from "./Chip";
 export { VibeScoreBadge, StatusIndicator } from "./VibeScore";
+export { VenueHeroCard } from "./VenueCard";
 
 export { Modal } from "./Modal";
 export { ToastProvider, useToast } from "./Toast";
