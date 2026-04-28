@@ -10,6 +10,7 @@ import {
 } from "@/components/v2n";
 import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward } from "@/lib/api";
 import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
+import { useReferralPing } from "@/lib/useReferralPing";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
@@ -71,6 +72,11 @@ export default function Home() {
   useEffect(() => {
     capturePendingReferrer();
   }, []);
+
+  // Poll my own wallet every 30s — when referral_credits ticks up,
+  // celebrate with a toast on the Home page itself. Auto-pauses when the
+  // tab is hidden; resumes immediately on focus.
+  useReferralPing(myUserId, toast, 30000);
 
   // Best-effort: if a pending referrer exists, credit them +5 Vibe Credits
   // on the recipient's first credit-eligible action. Fires at most once
