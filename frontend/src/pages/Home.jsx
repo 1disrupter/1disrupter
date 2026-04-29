@@ -33,17 +33,17 @@ export default function Home() {
 
   // Fetch vibes
   const fetchVibes = useCallback(async (l = loc, r = radius) => {
-    try {
-      setLoading(true);
-      const data = await getTopVibes(l.lat, l.lng, r);
-      setVibes(data);
-      setError(null);
-    } catch (e) {
-      setError(e.response?.data?.detail || e.message || "Network error");
-    } finally {
-      setLoading(false);
-    }
-  }, []); // stable, no deps
+  try {
+    setLoading(true);
+    const data = await getTopVibes(l.lat, l.lng, r);
+    setVibes(data);
+    setError(null);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+}, [loc, radius]); // stable, no deps
 
   // Initial load
   useEffect(() => {
