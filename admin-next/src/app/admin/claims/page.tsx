@@ -1,4 +1,5 @@
-"use client";
+"use client"; 
+import VenueCard from "@/components/VenueCard"
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Radar, Activity, ShieldCheck } from "lucide-react";
