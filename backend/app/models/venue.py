@@ -13,6 +13,7 @@ class VenueCategory(str, enum.Enum):
     bar = "bar"
     club = "club"
     live_music = "live_music"
+    restaurant = "restaurant"
 
 
 class Venue(Base):
