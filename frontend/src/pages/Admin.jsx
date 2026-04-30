@@ -1084,10 +1084,11 @@ const handleRename = async (venue) => {
 
   try {
     await updateVenue(venue.id, { name: newName });
-    toast.success("Venue updated");
-    fetchVenues(); // refresh list
+    toastRef.success("Venue updated");
+    fetchVenues();
+    load()// refresh list
   } catch (e) {
-    toast.error("Update failed");
+    toastRef.error("Update failed");
   }
 };
   
