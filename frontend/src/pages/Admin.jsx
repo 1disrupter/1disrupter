@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { updateVenue } from "../lib/api";
 import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend,
@@ -20,14 +21,14 @@ import {
   Modal, useToast,
   LoadingScreen, EmptyState, ErrorState,
   VibeScoreBadge, StatusIndicator,
-} from "@/components/v2n";
-import { cx } from "@/lib/cx";
+} from "../components/v2n";
+import { cx } from "../lib/cx";
 import {
   listAdminVenues, createVenue, updateSignals, triggerSignalRefresh,
   getForecast, getTouristFlags, getLiveMusic,
   listClaims, reviewClaim, getProviderStatus, getRecentWebhooks,
   adminExpireOwnership,
-} from "@/lib/api";
+} from "../lib/api";
 
 const ADMIN_CREDS = { user: "vibe2nite", pass: "nightowl" };
 const STORAGE_KEY = "v2n_admin_session";
@@ -1076,7 +1077,20 @@ export default function Admin() {
     setAuth(false);
     navigate("/admin");
   };
+  
+const handleRename = async (venue) => {
+  const newName = prompt("Enter new venue name:", venue.name);
+  if (!newName) return;
 
+  try {
+    await updateVenue(venue.id, { name: newName });
+    toast.success("Venue updated");
+    fetchVenues(); // refresh list
+  } catch (e) {
+    toast.error("Update failed");
+  }
+};
+  
   const safeVenues = Array.isArray(venues) ? venues : [];
 
   return (
