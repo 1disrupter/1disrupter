@@ -59,16 +59,23 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json",
     )
 
-    # -----------------------------------------------------------------------
-    # CORS (FIXED)
-    # -----------------------------------------------------------------------
+    # CORS — allow custom domain, production Vercel URL, all Vercel previews,
+    # and local dev. Regex covers every preview deploy without a redeploy.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
             "https://vibe2nite.com",
             "https://www.vibe2nite.com",
             "https://api.vibe2nite.com",
+            "https://1disrupter.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:3001",
         ],
+        allow_origin_regex=r"https://.*\.vercel\.app",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
