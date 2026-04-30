@@ -5,7 +5,7 @@ import MainLayout from "./layouts/MainLayout";
 import { Locate } from "lucide-react";
 import { LocationContext } from "./context/LocationContext";
 
-const Home = lazy(() => import("./pages/Home"));
+const Home = lazy(() => import("./pages/home"));
 const Brand = lazy(() => import("./pages/Brand"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Owner = lazy(() => import("./pages/Owner"));
