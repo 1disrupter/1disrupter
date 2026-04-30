@@ -1043,10 +1043,10 @@ export default function Admin() {
     setRefreshing(true);
     try {
       const res = await triggerSignalRefresh();
-      toastRef.success(`Signal engine: ${res.refreshed ?? 0}/${res.total ?? 0} venues refreshed`);
+      toast.success(`Signal engine: ${res.refreshed ?? 0}/${res.total ?? 0} venues refreshed`);
       await load();
     } catch (e) {
-      toastRef.error(e.response?.data?.detail || "Refresh failed");
+      toast.error(e.response?.data?.detail || "Refresh failed");
     } finally {
       setRefreshing(false);
     }
