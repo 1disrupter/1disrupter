@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Users, Copy, RefreshCw, Trophy, Share2, ArrowLeft } from "lucide-react";
+import { Copy, RefreshCw, Trophy, Share2, ArrowLeft } from "lucide-react";
 import {
   Navbar, Footer, IconButton, Button, Chip, useToast,
   LoadingScreen, ErrorState,
