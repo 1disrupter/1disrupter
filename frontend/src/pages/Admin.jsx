@@ -148,10 +148,13 @@ function Sidebar({ active, onChange, onLogout }) {
 // Overview (charts)
 // ---------------------------------------------------------------------------
 function OverviewPanel({ venues }) {
-const safeVenues = useMemo(() => {
-  return Array.isArray(venues) ? venues : [];
-}, [venues]);
-
+  // Wrap in useMemo so downstream useMemos get a stable reference-equal
+  // dep when `venues` hasn't changed (otherwise a fresh array is created
+  // on every render and downstream charts recompute unnecessarily).
+  const safeVenues = useMemo(
+    () => (Array.isArray(venues) ? venues : []),
+    [venues]
+  );
 
   const byCategory = useMemo(() => {
     const m = {};
@@ -902,7 +905,7 @@ function ClaimsPanel() {
         ) : (
           <ul className="space-y-1.5 text-xs">
             {safeRecent.map((e, i) => (
-              <li key={i} className="flex items-center gap-2">
+              <li key={e.id ?? `${e.event_type}-${e.created_at ?? i}`} className="flex items-center gap-2">
                 <Chip tone={e.ok ? "aqua" : "pink"}>{e.event_type}</Chip>
                 <span className="text-white/80">{e.title}</span>
                 {!e.ok && <span className="text-accent-pink">· {e.error}</span>}
