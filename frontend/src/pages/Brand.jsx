@@ -384,12 +384,12 @@ export default function Brand({ embedded = false }) {
         </p>
       </Modal>
 
-      <Footer_ embedded={embedded} />
+      <EmbeddedFooter embedded={embedded} />
     </div>
   );
 }
 
-function Footer_({ embedded }) {
+function EmbeddedFooter({ embedded }) {
   if (embedded) return null;
   return <Footer />;
 }
