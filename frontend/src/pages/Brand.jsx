@@ -3,7 +3,7 @@ import {
   Navbar, Footer, Logo, LogoMark,
   Button, IconButton, Chip, BannerChip,
   VibeScoreBadge, StatusIndicator,
-  VenueHeroCard, VenueListItem, Modal, useToast,
+  VenueHeroCard,  Modal, useToast,
   Input, SearchBar, Select, Slider,
   LoadingScreen, VenueCardSkeleton, EmptyState, ErrorState,
   Pagination, MapPinIcon,
@@ -302,8 +302,8 @@ export default function Brand({ embedded = false }) {
             />
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <VenueListItem data={SAMPLE_VENUE} />
-            <VenueListItem data={{ ...SAMPLE_VENUE, venue: { ...SAMPLE_VENUE.venue, name: "Basement 77" }, vibe: { ...SAMPLE_VENUE.vibe, vibe_score: 4.2 } }} />
+            
+            
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             <VenueCardSkeleton />
