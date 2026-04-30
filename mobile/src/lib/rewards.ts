@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getUserId } from "@/lib/identity";
-import { earnCredits, getWallet } from "@/lib/api";
+import { getUserId } from "./identity";
+import { earnCredits, getWallet } from "./api";
 
 /** One-shot toast hook for "+N credit" feedback. */
 export function useCreditToast() {

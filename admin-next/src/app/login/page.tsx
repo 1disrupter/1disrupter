@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, Lock } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { Button, Input } from "@/components/ui";
-import { Logo, LogoMark } from "@/components/Logo";
+import { useAuth } from "../hooks/useAuth";
+import { Button, Input } from "../components/ui";
+import { Logo, LogoMark } from "../components/Logo";
 
 export default function LoginPage() {
   const { login, session, ready } = useAuth();

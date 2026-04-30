@@ -10,12 +10,12 @@ import {
   getTop3, getForecastAll, getTouristFlags, getLiveMusic, getDirections,
   getLocalGems,
   Top3Item, ForecastItem, TouristFlagItem, LiveMusicItem, VibeFilter, Category,
-} from "@/lib/api";
-import { colors, spacing } from "@/theme";
-import { CITY_LABEL, DEFAULT_LOCATION } from "@/config";
-import { VenueCard } from "@/components/VenueCard";
-import { CategoryTabs } from "@/components/CategoryTabs";
-import { Logo, LogoPin } from "@/components/Logo";
+} from "../lib/api";
+import { colors, spacing } from "../theme";
+import { CITY_LABEL, DEFAULT_LOCATION } from "../config";
+import { VenueCard } from "../components/VenueCard";
+import { CategoryTabs } from "../components/CategoryTabs";
+import { Logo, LogoPin } from "../components/Logo";
 
 export default function TonightScreen() {
   const nav = useNavigation<NavigationProp<any>>();

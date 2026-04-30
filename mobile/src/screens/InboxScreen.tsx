@@ -3,9 +3,9 @@ import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
-import { getInbox, InboxItem } from "@/lib/api";
-import { useUserId } from "@/lib/rewards";
-import { colors, radius, spacing } from "@/theme";
+import { getInbox, InboxItem } from "../lib/api";
+import { useUserId } from "../lib/rewards";
+import { colors, radius, spacing } from "../theme";
 
 const KIND_META: Record<string, { icon: keyof typeof Ionicons.glyphMap; tone: string }> = {
   daily_login:       { icon: "sunny-outline",       tone: colors.primaryGlow },

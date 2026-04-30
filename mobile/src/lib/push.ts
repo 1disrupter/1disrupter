@@ -2,8 +2,8 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 
-import { API_BASE } from "@/config";
-import { getUserId } from "@/lib/identity";
+import { API_BASE } from "../config";
+import { getUserId } from "./identity";
 
 // Show notifications in-foreground too — users almost never have Vibe2Nite in focus
 // when their credit totals tick over.

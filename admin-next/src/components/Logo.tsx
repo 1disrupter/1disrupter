@@ -1,5 +1,5 @@
 import React from "react";
-import { cn } from "@/lib/cn";
+import { cn } from "../lib/cn";
 
 export function Logo({ size = "md", className }: { size?: "sm" | "md" | "lg"; className?: string }) {
   const fs = { sm: "text-xl", md: "text-3xl", lg: "text-5xl" }[size];

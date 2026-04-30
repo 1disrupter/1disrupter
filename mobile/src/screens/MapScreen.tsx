@@ -6,12 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getHeatmap, getForecastAll, getLiveMusic, getTouristFlags, getDirections,
   HeatPoint, ForecastItem, LiveMusicItem, TouristFlagItem,
-} from "@/lib/api";
-import { colors, radius, spacing } from "@/theme";
-import { DEFAULT_LOCATION } from "@/config";
-import { Chip, LiveMusicBadge, TouristFlagBadge, TrendBadge } from "@/components/Chip";
-import { VibeScoreBadge } from "@/components/VibeScoreBadge";
-import { GlowButton } from "@/components/GlowButton";
+} from "../lib/api";
+import { colors, radius, spacing } from "../theme";
+import { DEFAULT_LOCATION } from "../config";
+import { Chip, LiveMusicBadge, TouristFlagBadge, TrendBadge } from "../components/Chip";
+import { VibeScoreBadge } from "../components/VibeScoreBadge";
+import { GlowButton } from "../components/GlowButton";
 
 const dark = [
   { elementType: "geometry", stylers: [{ color: "#0b0712" }] },

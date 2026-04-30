@@ -3,8 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "baseUrl": "."
   },
   "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"]
 }

@@ -1,15 +1,15 @@
 "use client"; 
-import VenueCard from "@/components/VenueCard"
+import VenueCard from "../../components/VenueCard"
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Radar, Activity, ShieldCheck } from "lucide-react";
-import { Topbar } from "@/components/Sidebar";
-import { Button, Chip } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Topbar } from "../../components/Sidebar";
+import { Button, Chip } from "../../components/ui";
+import { cn } from "../../lib/cn";
 import {
   listClaims, reviewClaim, getProviderStatus, getRecentWebhooks,
   type ClaimStatus, type VenueClaim,
-} from "@/lib/api";
+} from "../../lib/api";
 
 const FILTERS: (ClaimStatus | "")[] = ["", "pending", "email_sent", "verified", "rejected"];
 
