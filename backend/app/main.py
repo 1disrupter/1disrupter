@@ -76,10 +76,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+       
 
     # Static brand assets
     static_dir = os.path.join(os.path.dirname(__file__), "static")
