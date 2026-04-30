@@ -54,10 +54,17 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json",
     )
 
-    # CORS
+    # CORS — allow production Vercel domain, all vercel previews, and local dev.
+    # Use regex so every preview deploy URL (…-git-xxx-…vercel.app) works without
+    # needing a redeploy for each new branch.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            "https://1disrupter.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:3001",
+        ],
+        allow_origin_regex=r"https://.*\.vercel\.app",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
