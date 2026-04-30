@@ -19,9 +19,8 @@ const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 // Google Maps in a new tab. Pure client-side, no API key required.
 function openDirectionsToVenue(data) {
   if (!data?.venue) return;
-  const { latitude, longitude, name } = data.venue;
-  const q = encodeURIComponent(`${name} @${latitude},${longitude}`);
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&destination_place_id=&travelmode=walking&query=${q}`;
+  const { latitude, longitude } = data.venue;
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=walking`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
