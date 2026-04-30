@@ -88,6 +88,9 @@ export const listAdminVenues = () => api.get("/admin/venues").then((r) => r.data
 export const createVenue = (payload) =>
   api.post("/admin/venues", payload).then((r) => r.data);
 
+export const updateVenue = (venue_id, payload) =>
+  api.patch(`/admin/venues/${venue_id}`, payload).then((r) => r.data);
+
 export const updateSignals = (venue_id, signals) =>
   api.patch(`/admin/venues/${venue_id}/signals`, signals).then((r) => r.data);
 
