@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import { ToastProvider, LoadingScreen, IconButton } from "./components/v2n";
 import MainLayout from "./layouts/MainLayout";
 import { Locate } from "lucide-react";
@@ -54,7 +53,6 @@ export default function App() {
           </MainLayout>
         </Suspense>
       </LocationContext.Provider>
-</ToastProvider>
+    </ToastProvider>
   );
 }
-
