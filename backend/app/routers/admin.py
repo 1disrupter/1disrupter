@@ -30,6 +30,37 @@ class SignalsUpdate(BaseModel):
     venue_boost: Optional[float] = Field(None, ge=0, le=10)
 
 
+class VenueUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=120)
+    category: Optional[VenueCategory] = None
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
+
+
+@router.patch("/venues/{venue_id}", summary="Update venue details")
+def update_venue(venue_id: str, payload: VenueUpdate, db: Session = Depends(get_db)):
+    venue = db.get(Venue, venue_id)
+
+    if not venue:
+        raise HTTPException(status_code=404, detail="venue not found")
+
+    if payload.name is not None:
+        venue.name = payload.name
+
+    if payload.category is not None:
+        venue.category = payload.category
+
+    if payload.latitude is not None:
+        venue.latitude = payload.latitude
+
+    if payload.longitude is not None:
+        venue.longitude = payload.longitude
+
+    db.commit()
+    db.refresh(venue)
+
+    return VenueOut.model_validate(venue)
+
 @router.get("/venues", summary="List all venues with current vibe")
 def list_venues(
     verified_only: bool = False,
