@@ -38,7 +38,7 @@ export default function App() {
                 onClick={() => myLocationFn()}
                 aria-label="Use my location"
               >
-                <Footer />
+                
                 <Locate size={18} />
               </IconButton>
             }
@@ -55,6 +55,7 @@ export default function App() {
               <Route path="/me" element={<Profile />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            <Footer>
           </MainLayout>
         </Suspense>
       </LocationContext.Provider>
