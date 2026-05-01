@@ -1,5 +1,5 @@
 
-
+import { useToast } from "../components/v2n";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateVenue } from "../lib/api";
@@ -1084,11 +1084,11 @@ const handleRename = async (venue) => {
 
   try {
     await updateVenue(venue.id, { name: newName });
-    toastRef.success("Venue updated");
-    fetchVenues();
-    load()// refresh list
+alert("Venue updated"); 
+fetchVenues(); // ✅ this is enough
+    
   } catch (e) {
-    toastRef.error("Update failed");
+    alert("Update failed");
   }
 };
   
