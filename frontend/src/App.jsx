@@ -55,7 +55,7 @@ export default function App() {
               <Route path="/me" element={<Profile />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-            <Footer>
+            <Footer/>
           </MainLayout>
         </Suspense>
       </LocationContext.Provider>
