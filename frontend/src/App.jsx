@@ -47,6 +47,7 @@ export default function App() {
                 path="/"
                 element={<Home registerLocationFn={setMyLocationFn} />}
               />
+              <Route path="/disclaimer" element={<Disclaimer />} />
               <Route path="/brand" element={<AdminGuardedBrand />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/owner" element={<Owner />} />
