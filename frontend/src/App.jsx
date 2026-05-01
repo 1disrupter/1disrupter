@@ -38,6 +38,7 @@ export default function App() {
                 onClick={() => myLocationFn()}
                 aria-label="Use my location"
               >
+                <Footer />
                 <Locate size={18} />
               </IconButton>
             }
