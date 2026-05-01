@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateVenue } from "../lib/api";
@@ -140,13 +138,6 @@ function Sidebar({ active, onChange, onLogout }) {
         <Button variant="ghost" size="sm" leftIcon={<LogOut size={14} />} onClick={onLogout} data-testid="sidebar-logout">
           Log out
         </Button>
-        <Button
-  size="sm"
-  variant="ghost"
-  onClick={() => handleRename(x)}
->
-  Rename
-</Button>
       </div>
     </aside>
   );
@@ -1045,25 +1036,22 @@ export default function Admin() {
   const [refreshing, setRefreshing] = useState(false);
   
   const navigate = useNavigate();
+  const toast = useToast();
 
-const toast = useToast();
-
-const runRefresh = async () => {
-  setRefreshing(true);
-  try {
-    const res = await triggerSignalRefresh();
-
-    toast.success(
-      `Signal engine: ${res.refreshed ?? 0}/${res.total ?? 0} venues refreshed`
-    );
-
-    await load();
-  } catch (e) {
-    toast.error(e.response?.data?.detail || "Refresh failed");
-  } finally {
-    setRefreshing(false);
-  }
-};
+  const runRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await triggerSignalRefresh();
+      toast.success(
+        `Signal engine: ${res.refreshed ?? 0}/${res.total ?? 0} venues refreshed`
+      );
+      await load();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Refresh failed");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -1090,20 +1078,7 @@ const runRefresh = async () => {
     setAuth(false);
     navigate("/admin");
   };
-  
-const handleRename = async (venue) => {
-  const newName = prompt("Enter new venue name:", venue.name);
-  if (!newName) return;
 
-  try {
-    await updateVenue(venue.id, { name: newName });
-    alert("Venue updated");
-    load(); // correct refresh
-  } catch (e) {
-    alert("Update failed");
-  }
-};
-  
   const safeVenues = Array.isArray(venues) ? venues : [];
 
   return (
