@@ -1,5 +1,5 @@
 
-import { useToast } from "../components/v2n";
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateVenue } from "../lib/api";
@@ -1039,18 +1039,24 @@ export default function Admin() {
   const toastRef = useToast();
   const navigate = useNavigate();
 
-  const runRefresh = async () => {
-    setRefreshing(true);
-    try {
-      const res = await triggerSignalRefresh();
-      toast.success(`Signal engine: ${res.refreshed ?? 0}/${res.total ?? 0} venues refreshed`);
-      await load();
-    } catch (e) {
-      toast.error(e.response?.data?.detail || "Refresh failed");
-    } finally {
-      setRefreshing(false);
-    }
-  };
+const toast = useToast();
+
+const runRefresh = async () => {
+  setRefreshing(true);
+  try {
+    const res = await triggerSignalRefresh();
+
+    toast.success(
+      `Signal engine: ${res.refreshed ?? 0}/${res.total ?? 0} venues refreshed`
+    );
+
+    await load();
+  } catch (e) {
+    toast.error(e.response?.data?.detail || "Refresh failed");
+  } finally {
+    setRefreshing(false);
+  }
+};
 
   const load = async () => {
     setLoading(true);
@@ -1084,9 +1090,8 @@ const handleRename = async (venue) => {
 
   try {
     await updateVenue(venue.id, { name: newName });
-alert("Venue updated"); 
-fetchVenues(); // ✅ this is enough
-    
+    alert("Venue updated");
+    load(); // correct refresh
   } catch (e) {
     alert("Update failed");
   }
