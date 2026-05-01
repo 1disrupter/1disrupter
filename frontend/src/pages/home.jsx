@@ -11,6 +11,8 @@ import {
 import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward } from "@/lib/api";
 import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
 import { useReferralPing } from "@/lib/useReferralPing";
+import { useState } from "react";
+import QRScanner from "../components/QRScanner";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
 
@@ -23,6 +25,7 @@ function openDirectionsToVenue(data) {
   const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=walking`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
+const [showScanner, setShowScanner] = useState(false);
 
 // Compose the share text + URL for a venue. The URL carries:
 //   ?v=<venue-id>   → forward-compatible deep link to highlight the venue
@@ -598,6 +601,18 @@ function ClaimModal({ venue, onClose, onSuccess }) {
           <p className="text-[11px] text-white/45">
             You'll receive a single-use verification link valid for 30 minutes.
           </p>
+          <button
+  onClick={() => setShowScanner(true)}
+  className="fixed bottom-6 right-6 bg-purple-600 text-white px-4 py-3 rounded-full shadow-lg"
+>
+   <div className="relative min-h-screen">         
+  Scan at Venue
+</button>
+      {showScanner && (
+          
+
+        <QRScanner onClose={() => setShowScanner(false)} />
+          )}
         </div>
       )}
     </Modal>
