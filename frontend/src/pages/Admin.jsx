@@ -1036,7 +1036,7 @@ export default function Admin() {
   const [inspect, setInspect] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const useToast();
+  
   const navigate = useNavigate();
 
 const toast = useToast();
