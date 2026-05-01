@@ -5,8 +5,9 @@ import MainLayout from "./layouts/MainLayout";
 import { Locate } from "lucide-react";
 import { LocationContext } from "./context/LocationContext";
 import Footer from "./components/Footer";
-<Footer>
 
+import Disclaimer from "./pages/Disclaimer";
+  
 const Home = lazy(() => import("./pages/home"));
 const Brand = lazy(() => import("./pages/Brand"));
 const Admin = lazy(() => import("./pages/Admin"));
