@@ -4,6 +4,8 @@ import { ToastProvider, LoadingScreen, IconButton } from "./components/v2n";
 import MainLayout from "./layouts/MainLayout";
 import { Locate } from "lucide-react";
 import { LocationContext } from "./context/LocationContext";
+import Footer from "./components/Footer";
+<Footer>
 
 const Home = lazy(() => import("./pages/home"));
 const Brand = lazy(() => import("./pages/Brand"));
