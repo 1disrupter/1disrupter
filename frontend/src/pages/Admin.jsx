@@ -140,6 +140,13 @@ function Sidebar({ active, onChange, onLogout }) {
         <Button variant="ghost" size="sm" leftIcon={<LogOut size={14} />} onClick={onLogout} data-testid="sidebar-logout">
           Log out
         </Button>
+        <Button
+  size="sm"
+  variant="ghost"
+  onClick={() => handleRename(x)}
+>
+  Rename
+</Button>
       </div>
     </aside>
   );
