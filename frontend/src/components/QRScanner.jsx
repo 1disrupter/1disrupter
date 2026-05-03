@@ -33,12 +33,13 @@ export default function QRScanner({ onClose }) {
     
       <div className="w-full max-w-md">
         <QrReader
-          onResult={(result, error) => {
-            if (result) handleResult(result);
-            if (error) setError(error?.message);
-          }}
-          constraints={{ facingMode: "environment" }}
-        />
+  delay={300}
+  onError={(err) => setError(err?.message)}
+  onScan={(data) => {
+    if (data) handleResult({ text: data });
+  }}
+  style={{ width: "100%" }}
+/>
       </div>
 
       {error && <p className="text-red-500 mt-2">{error}</p>}
