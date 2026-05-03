@@ -1,4 +1,4 @@
-import { QrReader } from 'react-qr-reader';
+import QrReader from 'react-qr-scanner';
 import { useState } from 'react';
 
 export default function QRScanner({ onClose }) {
