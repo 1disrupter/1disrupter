@@ -72,8 +72,55 @@ const PLACEHOLDER_VIBES = {
 
 export const getTopVibes = async (lat, lng, radius_km = 50) => {
   try {
-    const r = await api.get("/vibes/top", { params: { lat, lng, radius_km } });
+    const r = await api.get("/vibes/top", {
+      params: { lat, lng, radius_km }
+    });
+
     return r.data;
+
+  } catch (err) {
+    console.error("API failed, using placeholder vibes");
+
+    return {
+      best_overall: {
+        venue: {
+          id: "1",
+          name: "Test Club",
+          latitude: lat,
+          longitude: lng,
+          is_verified: true,
+          category: "club"
+        },
+        vibe: { vibe_score: 8.5 },
+        distance_km: 1
+      },
+      live_music: {
+        venue: {
+          id: "2",
+          name: "Live Bar",
+          latitude: lat,
+          longitude: lng,
+          is_verified: true,
+          category: "live_music"
+        },
+        vibe: { vibe_score: 7.8 },
+        distance_km: 2
+      },
+      hidden_gem: {
+        venue: {
+          id: "3",
+          name: "Hidden Spot",
+          latitude: lat,
+          longitude: lng,
+          is_verified: false,
+          category: "bar"
+        },
+        vibe: { vibe_score: 7.2 },
+        distance_km: 0.5
+      }
+    };
+  }
+};
   } catch (err) {
     console.error("API failed, using placeholder vibes");
     return PLACEHOLDER_VIBES;
