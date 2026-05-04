@@ -78,7 +78,7 @@ export default function Home() {
   // Poll my own wallet every 30s — when referral_credits ticks up,
   // celebrate with a toast on the Home page itself. Auto-pauses when the
   // tab is hidden; resumes immediately on focus.
-  useReferralPing(myUserId, toast, 30000);
+ // useReferralPing(myUserId, toast, 30000);
 
   // Best-effort: if a pending referrer exists, credit them +5 Vibe Credits
   // on the recipient's first credit-eligible action. Fires at most once
