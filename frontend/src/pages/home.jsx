@@ -119,7 +119,29 @@ export default function Home() {
   }, []);
 
   useReferralPing(myUserId, toast, 30000);
+useEffect(() => {
+  async function loadVibes() {
+    try {
+      setLoading(true);
+      setError(null);
 
+      const vibes = await getTopVibes(loc.lat, loc.lng, radius);
+
+      const normalizedData = Array.isArray(vibes)
+        ? vibes
+        : Object.values(vibes || {});
+
+      setData(normalizedData);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load vibes");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadVibes();
+}, [loc.lat, loc.lng, radius]);
   const honourPendingReferral = useCallback(async () => {
     const inviter = consumePendingReferrer();
     if (!inviter) return;
