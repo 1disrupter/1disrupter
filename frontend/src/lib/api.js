@@ -69,7 +69,6 @@ const PLACEHOLDER_VIBES = {
     distance: "4 min away"
   }
 };
-
 export const getTopVibes = async (lat, lng, radius_km = 50) => {
   try {
     const r = await api.get("/vibes/top", {
@@ -77,7 +76,6 @@ export const getTopVibes = async (lat, lng, radius_km = 50) => {
     });
 
     return r.data;
-
   } catch (err) {
     console.error("API failed, using placeholder vibes");
 
@@ -119,11 +117,6 @@ export const getTopVibes = async (lat, lng, radius_km = 50) => {
         distance_km: 0.5
       }
     };
-  }
-};
-  } catch (err) {
-    console.error("API failed, using placeholder vibes");
-    return PLACEHOLDER_VIBES;
   }
 };
 
