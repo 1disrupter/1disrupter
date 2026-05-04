@@ -216,7 +216,7 @@ export const earnReward = (user_id, action, amount) =>
     .post("/rewards/earn", { user_id, action, ...(amount ? { amount } : {}) })
     .then((r) => r.data);
 
-export const getWallet = (user_id) =>
+
   export const getWallet = async (user_id) => {
   try {
     const res = await api.get(`/rewards/wallet/${encodeURIComponent(user_id)}`);
