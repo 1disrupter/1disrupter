@@ -217,4 +217,12 @@ export const earnReward = (user_id, action, amount) =>
     .then((r) => r.data);
 
 export const getWallet = (user_id) =>
-  api.get(`/rewards/wallet/${encodeURIComponent(user_id)}`).then((r) => r.data);
+  export const getWallet = async (user_id) => {
+  try {
+    const res = await api.get(`/rewards/wallet/${encodeURIComponent(user_id)}`);
+    return res.data;
+  } catch (e) {
+    console.warn("Wallet temporarily disabled");
+    return { credits: 0, referral_credits: 0 };
+  }
+};
