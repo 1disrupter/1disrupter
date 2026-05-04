@@ -466,7 +466,24 @@ export default function Home() {
         )}
       </section>
 
-      <Footer />
+      <section id="top-three" className="mx-auto max-w-6xl px-4">
+  <div className="grid gap-5 md:grid-cols-3">
+    {slots.map((s, i) =>
+      s.data ? (
+        <VenueHeroCard
+          key={s.key}
+          slot={s.key}
+          data={s.data}
+          index={i}
+          onGo={openDirectionsToVenue}
+          onShare={handleShareVenue}
+        />
+      ) : null
+    )}
+  </div>
+</section>
+
+<Footer />
 
       <BottomTabs
         activeKey={tab}
