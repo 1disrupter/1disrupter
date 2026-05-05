@@ -25,7 +25,7 @@ function openDirectionsToVenue(data) {
   const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=walking`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
-const [showScanner, setShowScanner] = useState(false);
+
 
 // Compose the share text + URL for a venue. The URL carries:
 //   ?v=<venue-id>   → forward-compatible deep link to highlight the venue
@@ -62,6 +62,7 @@ export default function Home() {
   const [tab, setTab] = useState("home");
   const [claimVenue, setClaimVenue] = useState(null);
   const [fvvBadge, setFvvBadge] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
   const toast = useToast();
 
   // Stable anonymous identity for this device — used as wallet user_id
