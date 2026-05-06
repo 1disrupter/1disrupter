@@ -78,7 +78,7 @@ import { Html5QrcodeScanner } from "html5-qrcode";
         setMessage("Error checking in");
       }
     },
-    [onClose]
+    [onClose, onCheckInSuccess]
   );
 
   useEffect(() => {
