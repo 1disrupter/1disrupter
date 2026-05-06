@@ -507,12 +507,16 @@ export default function Home() {
           { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
         ]}
       />
-   {showScanner && (
+{showScanner && (
   <QRScanner
     onClose={() => setShowScanner(false)}
     onCheckInSuccess={(result) => {
-      toast.success("Checked in successfully 🔥");
-      fetchVibes(); // refresh cards
+      const tokens = result?.reward?.tokens || 0;
+      const group = result?.group_size || 1;
+
+      toast.success(`+${tokens} tokens · ${group} people here 🔥`);
+
+      fetchVibes();
     }}
   />
 )}
