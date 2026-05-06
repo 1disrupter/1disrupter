@@ -342,7 +342,14 @@ export default function Home() {
       </section>
 
       <SectionDivider label={`Top 3 near ${loc.label}`} />
-
+<div className="mx-auto max-w-6xl px-4 mb-4 flex justify-end">
+  <Button
+    variant="secondary"
+    onClick={() => setShowScanner(true)}
+  >
+    Scan at Venue
+  </Button>
+</div>
       {/* Cards */}
       <section id="top-three" className="mx-auto max-w-6xl px-4">
         {loading ? (
@@ -500,7 +507,9 @@ export default function Home() {
           { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
         ]}
       />
-
+      {showScanner && (
+  <QRScanner onClose={() => setShowScanner(false)} />
+)}
       {claimVenue && (
         <ClaimModal
           venue={claimVenue}
