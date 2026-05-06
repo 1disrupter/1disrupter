@@ -4,9 +4,22 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 export default function QRScanner({ onClose }) {
   const [scanned, setScanned] = useState(false);
 
+  // UX STATES
+  const [status, setStatus] = useState("scanning"); 
+  // scanning | loading | success | error
+
+  const [message, setMessage] = useState("");
+
   const handleResult = useCallback(
     async (decodedText) => {
       try {
+        // 📳 vibration feedback
+        if (navigator.vibrate) {
+          navigator.vibrate(100);
+        }
+
+        setStatus("loading");
+
         let venueId;
 
         try {
@@ -17,7 +30,8 @@ export default function QRScanner({ onClose }) {
         }
 
         if (!venueId) {
-          alert("❌ Invalid QR code");
+          setStatus("error");
+          setMessage("Invalid QR code");
           return;
         }
 
@@ -38,23 +52,33 @@ export default function QRScanner({ onClose }) {
         const result = await res.json();
 
         if (result.success) {
-          alert(
-            `✅ Checked in!\nGroup size: ${result.group_size}\nReward: ${result.reward.tier} (${result.reward.tokens} tokens)`
+          setStatus("success");
+          setMessage(
+            `Checked in · ${result.reward.tokens} tokens earned`
           );
         } else {
-          alert("❌ Check-in failed");
+          setStatus("error");
+          setMessage("Check-in failed");
         }
 
-        onClose();
+        // ⏱ smoother close timing
+        setTimeout(() => {
+          onClose();
+        }, 2500);
+
       } catch (err) {
         console.error(err);
-        alert("❌ Error checking in");
+        setStatus("error");
+        setMessage("Error checking in");
       }
     },
     [onClose]
   );
 
   useEffect(() => {
+    // 🛑 only run scanner when actively scanning
+    if (status !== "scanning") return;
+
     const scanner = new Html5QrcodeScanner(
       "reader",
       { fps: 10, qrbox: 250 },
@@ -73,23 +97,67 @@ export default function QRScanner({ onClose }) {
     );
 
     return () => scanner.clear().catch(() => {});
-  }, [scanned, handleResult]);
+  }, [scanned, handleResult, status]);
 
-return (
-  <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
-    
-    <button 
-      onClick={onClose} 
-      className="text-white mb-4 text-sm uppercase tracking-wider border border-white/20 px-4 py-2 rounded-lg"
-    >
-      Close
-    </button>
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
 
-    <div className="w-full max-w-md rounded-xl overflow-hidden border border-white/10 bg-black p-2">
-      <div id="reader" className="w-full" />
+      {/* CLOSE BUTTON */}
+      <button 
+        onClick={onClose} 
+        className="text-white mb-4 text-sm uppercase tracking-wider border border-white/20 px-4 py-2 rounded-lg"
+      >
+        Close
+      </button>
+
+      {/* TITLE */}
+      <h2 className="text-white mb-3 text-xs uppercase tracking-widest opacity-70">
+        Scan Venue QR
+      </h2>
+
+      {/* SCANNING */}
+      {status === "scanning" && (
+        <div className="w-full max-w-md rounded-xl overflow-hidden border border-white/10 bg-black p-2">
+          <div id="reader" className="w-full" />
+        </div>
+      )}
+
+      {/* LOADING */}
+      {status === "loading" && (
+        <div className="text-white text-center">
+          <p className="text-sm opacity-70 animate-pulse">
+            Checking you in...
+          </p>
+        </div>
+      )}
+
+      {/* SUCCESS */}
+      {status === "success" && (
+        <div className="text-center text-green-400 animate-pulse">
+          <p className="text-lg">✅ Success</p>
+          <p className="text-sm mt-2">{message}</p>
+        </div>
+      )}
+
+      {/* ERROR */}
+      {status === "error" && (
+        <div className="text-center text-red-400">
+          <p className="text-lg">❌ Error</p>
+          <p className="text-sm mt-2">{message}</p>
+
+          <button
+            onClick={() => {
+              setStatus("scanning");
+              setScanned(false);
+            }}
+            className="mt-4 text-white border border-white/20 px-3 py-1 rounded"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
     </div>
-
-  </div>
-);
+  );
 }
      
