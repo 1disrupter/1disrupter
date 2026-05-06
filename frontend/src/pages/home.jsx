@@ -507,8 +507,14 @@ export default function Home() {
           { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
         ]}
       />
-      {showScanner && (
-  <QRScanner onClose={() => setShowScanner(false)} />
+   {showScanner && (
+  <QRScanner
+    onClose={() => setShowScanner(false)}
+    onCheckInSuccess={(result) => {
+      toast.success("Checked in successfully 🔥");
+      fetchVibes(); // refresh cards
+    }}
+  />
 )}
       {claimVenue && (
         <ClaimModal
