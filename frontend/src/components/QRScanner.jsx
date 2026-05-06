@@ -75,14 +75,21 @@ export default function QRScanner({ onClose }) {
     return () => scanner.clear().catch(() => {});
   }, [scanned, handleResult]);
 
-  return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
-      <button onClick={onClose} className="text-white mb-4">
-        Close
-      </button>
+return (
+  <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
+    
+    <button 
+      onClick={onClose} 
+      className="text-white mb-4 text-sm uppercase tracking-wider border border-white/20 px-4 py-2 rounded-lg"
+    >
+      Close
+    </button>
 
-      <div id="reader" className="w-full max-w-md bg-white" />
+    <div className="w-full max-w-md rounded-xl overflow-hidden border border-white/10 bg-black p-2">
+      <div id="reader" className="w-full" />
     </div>
-  );
+
+  </div>
+);
 }
      
