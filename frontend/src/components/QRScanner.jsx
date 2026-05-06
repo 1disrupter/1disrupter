@@ -52,11 +52,17 @@ import { Html5QrcodeScanner } from "html5-qrcode";
         const result = await res.json();
 
         if (result.success) {
-          setStatus("success");
-          setMessage(
-            `Checked in · ${result.reward.tokens} tokens earned`
-          );
-        } else {
+  setStatus("success");
+  setMessage(
+    `Checked in · ${result.reward.tokens} tokens earned`
+  );
+
+  // 🔥 THIS IS THE CONNECTION
+  if (onCheckInSuccess) {
+    onCheckInSuccess(result);
+  }
+
+} else {
           setStatus("error");
           setMessage("Check-in failed");
         }
