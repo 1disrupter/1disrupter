@@ -618,16 +618,7 @@ function ClaimModal({ venue, onClose, onSuccess }) {
           <p className="text-[11px] text-white/45">
             You'll receive a single-use verification link valid for 30 minutes.
           </p>
-          <Button
-  onClick={() => setShowScanner(true)}
-  className="fixed bottom-6 right-6"
->
-  Scan at Venue
-</Button>
 
-{showScanner && (
-  <QRScanner onClose={() => setShowScanner(false)} />
-)}
         )}
       </Modal>
     );
