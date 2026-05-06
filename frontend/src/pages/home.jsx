@@ -467,21 +467,7 @@ export default function Home() {
         )}
       </section>
 
-<section id="top-three" className="mx-auto max-w-6xl px-4">
-  {loading ? (
-    <LoadingScreen />
-  ) : error ? (
-    <ErrorState ... />
-  ) : (
-    <div className="grid gap-5 md:grid-cols-3">
-      {slots.map((s, i) =>
-        s.data ? (
-          <VenueHeroCard ... />
-        ) : null
-      )}
-    </div>
-  )}
-</section>    
+    
 
 <Footer />
 
