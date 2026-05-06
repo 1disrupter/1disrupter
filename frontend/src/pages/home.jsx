@@ -32,6 +32,7 @@ function openDirectionsToVenue(data) {
 //   ?ref=<my-uuid>  → so the inviter can be credited Vibe Credits when the
 //                     recipient takes their first credit-eligible action
 function buildShareForVenue(data, myUserId) {
+  
   const { venue, vibe, distance_km } = data;
   const score = vibe.vibe_score.toFixed(1);
   const flame = vibe.vibe_score >= 8 ? "🔥" : vibe.vibe_score >= 5 ? "✨" : "🌙";
@@ -64,7 +65,7 @@ export default function Home() {
   const [fvvBadge, setFvvBadge] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
   const toast = useToast();
-
+  const [tokens, setTokens] = useState(0);
   // Stable anonymous identity for this device — used as wallet user_id
   // and as the referrer parameter on share links.
   const myUserId = useMemo(() => getOrCreateUserId(), []);
@@ -292,10 +293,16 @@ export default function Home() {
               </span>
             </h1>
             <p className="max-w-xl text-sm text-white/60 md:text-base">
+              
               Three perfectly-picked spots, tuned in real time. Powered by crowd signals,
               live feedback and an honest vibe score. <Logo size="xs" /> — find the vibe, go tonight.
             </p>
-
+     <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary-glow">
+  💰 Tokens
+  <span className="font-mono text-white text-sm">
+    {tokens}
+  </span>
+</div>
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 leftIcon={<MapPin size={16} />}
@@ -507,14 +514,16 @@ export default function Home() {
           { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
         ]}
       />
-{showScanner && (
+      {showScanner && (
   <QRScanner
     onClose={() => setShowScanner(false)}
     onCheckInSuccess={(result) => {
-      const tokens = result?.reward?.tokens || 0;
+      const earned = result?.reward?.tokens || 0;
       const group = result?.group_size || 1;
 
-      toast.success(`+${tokens} tokens · ${group} people here 🔥`);
+      setTokens((prev) => prev + earned);
+
+      toast.success(`+${earned} tokens · ${group} people here 🔥`);
 
       fetchVibes();
     }}
