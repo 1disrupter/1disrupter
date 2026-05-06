@@ -301,7 +301,11 @@ export default function Home() {
               live feedback and an honest vibe score. <Logo size="xs" /> — find the vibe, go tonight.
             </p>
             <button
-  onClick={() => setShowWallet(true)}
+  onClick={() => {
+    console.log("wallet click");
+    setShowWallet(true);
+  }}
+  
   className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary-glow hover:scale-105 transition"
 >
   💰 Tokens
@@ -563,28 +567,22 @@ export default function Home() {
 }
 function WalletModal({ tokens, onClose }) {
   return (
-    <Modal
-      open
-      onClose={onClose}
-      title="YOUR TOKENS"
-      footer={
-        <Button variant="primary" onClick={onClose}>
-          Close
-        </Button>
-      }
-    >
-      <div className="text-center space-y-4">
-        <p className="text-4xl font-mono text-primary-glow">
+    <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
+      <div className="bg-black border border-white/10 p-6 rounded-xl text-center">
+        <p className="text-white text-xl mb-2">YOUR TOKENS</p>
+
+        <p className="text-primary-glow text-3xl font-mono">
           {tokens}
         </p>
-        <p className="text-sm text-white/60">
-          Earn tokens by checking in at venues and scanning QR codes.
-        </p>
-        <p className="text-xs text-white/40">
-          Soon you'll be able to spend these for drinks, entry & rewards.
-        </p>
+
+        <button
+          onClick={onClose}
+          className="mt-4 text-white border px-4 py-2 rounded"
+        >
+          Close
+        </button>
       </div>
-    </Modal>
+    </div>
   );
 }
 function ClaimModal({ venue, onClose, onSuccess }) {
