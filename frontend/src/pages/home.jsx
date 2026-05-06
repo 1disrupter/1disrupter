@@ -604,7 +604,7 @@ function ClaimModal({ venue, onClose, onSuccess }) {
           <p className="text-[11px] text-white/45">
             You'll receive a single-use verification link valid for 30 minutes.
           </p>
-
+        <div>
         )}
       </Modal>
     );
