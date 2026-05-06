@@ -543,6 +543,14 @@ export default function Home() {
     }}
   />
 )}
+   {console.log("showWallet:", showWallet)}
+
+{showWallet && (
+  <WalletModal
+    tokens={tokens}
+    onClose={() => setShowWallet(false)}
+  />
+)}   
       {showWallet && (
   <WalletModal
     tokens={tokens}
