@@ -64,6 +64,7 @@ export default function Home() {
   const [claimVenue, setClaimVenue] = useState(null);
   const [fvvBadge, setFvvBadge] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [showWallet, setShowWallet] = useState(false);
   const toast = useToast();
   const [tokens, setTokens] = useState(0);
   // Stable anonymous identity for this device — used as wallet user_id
@@ -297,12 +298,15 @@ export default function Home() {
               Three perfectly-picked spots, tuned in real time. Powered by crowd signals,
               live feedback and an honest vibe score. <Logo size="xs" /> — find the vibe, go tonight.
             </p>
-     <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary-glow">
+            <button
+  onClick={() => setShowWallet(true)}
+  className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary-glow hover:scale-105 transition"
+>
   💰 Tokens
   <span className="font-mono text-white text-sm">
     {tokens}
   </span>
-</div>
+</button>
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 leftIcon={<MapPin size={16} />}
@@ -529,6 +533,12 @@ export default function Home() {
     }}
   />
 )}
+      {showWallet && (
+  <WalletModal
+    tokens={tokens}
+    onClose={() => setShowWallet(false)}
+  />
+)}
       {claimVenue && (
         <ClaimModal
           venue={claimVenue}
@@ -545,7 +555,32 @@ export default function Home() {
     </div>
   );
 }
-
+function WalletModal({ tokens, onClose }) {
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="YOUR TOKENS"
+      footer={
+        <Button variant="primary" onClick={onClose}>
+          Close
+        </Button>
+      }
+    >
+      <div className="text-center space-y-4">
+        <p className="text-4xl font-mono text-primary-glow">
+          {tokens}
+        </p>
+        <p className="text-sm text-white/60">
+          Earn tokens by checking in at venues and scanning QR codes.
+        </p>
+        <p className="text-xs text-white/40">
+          Soon you'll be able to spend these for drinks, entry & rewards.
+        </p>
+      </div>
+    </Modal>
+  );
+}
 function ClaimModal({ venue, onClose, onSuccess }) {
   const toast = useToast();
   const [form, setForm] = useState({ owner_name: "", email: "", proof: "" });
