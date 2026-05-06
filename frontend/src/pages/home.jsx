@@ -11,7 +11,7 @@ import {
 import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward } from "@/lib/api";
 import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
 import { useReferralPing } from "@/lib/useReferralPing";
-import { useState } from "react";
+
 import QRScanner from "../components/QRScanner";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
@@ -467,22 +467,21 @@ export default function Home() {
         )}
       </section>
 
-      <section id="top-three" className="mx-auto max-w-6xl px-4">
-  <div className="grid gap-5 md:grid-cols-3">
-    {slots.map((s, i) =>
-      s.data ? (
-        <VenueHeroCard
-          key={s.key}
-          slot={s.key}
-          data={s.data}
-          index={i}
-          onGo={openDirectionsToVenue}
-          onShare={handleShareVenue}
-        />
-      ) : null
-    )}
-  </div>
-</section>
+<section id="top-three" className="mx-auto max-w-6xl px-4">
+  {loading ? (
+    <LoadingScreen />
+  ) : error ? (
+    <ErrorState ... />
+  ) : (
+    <div className="grid gap-5 md:grid-cols-3">
+      {slots.map((s, i) =>
+        s.data ? (
+          <VenueHeroCard ... />
+        ) : null
+      )}
+    </div>
+  )}
+</section>    
 
 <Footer />
 
@@ -619,17 +618,16 @@ function ClaimModal({ venue, onClose, onSuccess }) {
           <p className="text-[11px] text-white/45">
             You'll receive a single-use verification link valid for 30 minutes.
           </p>
-          <button
-            onClick={() => setShowScanner(true)}
-            className="fixed bottom-6 right-6 bg-purple-600 text-white px-4 py-3 rounded-full shadow-lg"
-          >
-            <div className="relative min-h-screen">         
-              Scan at Venue
-            </button>
-            {showScanner && (
-              <QRScanner onClose={() => setShowScanner(false)} />
-            )}
-          </div>
+          <Button
+  onClick={() => setShowScanner(true)}
+  className="fixed bottom-6 right-6"
+>
+  Scan at Venue
+</Button>
+
+{showScanner && (
+  <QRScanner onClose={() => setShowScanner(false)} />
+)}
         )}
       </Modal>
     );
