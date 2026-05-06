@@ -83,7 +83,14 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 
   useEffect(() => {
     // 🛑 only run scanner when actively scanning
-    if (status !== "scanning") return;
+    if (!scanned) {
+  setScanned(true);
+
+  // 🛑 immediately stop scanner
+  scanner.clear().catch(() => {});
+
+  handleResult(decodedText);
+}
 
     const scanner = new Html5QrcodeScanner(
       "reader",
