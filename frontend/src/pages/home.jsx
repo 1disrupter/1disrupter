@@ -253,7 +253,7 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="v2n-grid absolute inset-0 opacity-30 pointer-events-none" />
-        <div className="mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -302,11 +302,10 @@ export default function Home() {
             </p>
             <button
   onClick={() => {
-    console.log("wallet click");
+    console.log("clicked");
     setShowWallet(true);
   }}
-  
-  className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary-glow hover:scale-105 transition"
+  className="relative z-20 mt-4 inline-flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary-glow"
 >
   💰 Tokens
   <span className="font-mono text-white text-sm">
