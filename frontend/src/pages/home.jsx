@@ -252,7 +252,7 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="v2n-grid absolute inset-0 opacity-30" />
+        <div className="v2n-grid absolute inset-0 opacity-30 pointer-events-none" />
         <div className="mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
