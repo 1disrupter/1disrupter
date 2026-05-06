@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
-export default function QRScanner({ onClose }) {
+ export default function QRScanner({ onClose, onCheckInSuccess }){
   const [scanned, setScanned] = useState(false);
 
   // UX STATES
