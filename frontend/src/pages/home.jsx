@@ -66,11 +66,13 @@ export default function Home() {
   const [showScanner, setShowScanner] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
   const toast = useToast();
-  const [tokens, setTokens] = useState(0);
+  
   // Stable anonymous identity for this device — used as wallet user_id
   // and as the referrer parameter on share links.
   const myUserId = useMemo(() => getOrCreateUserId(), []);
-
+  const [tokens, setTokens] = useState(() => {
+  return Number(localStorage.getItem("v2n_tokens") || 0);
+});
   // On first mount, snatch ?ref=<inviter-id> from the URL (if present) and
   // clean the param. We'll honour it on the user's first credit-eligible
   // action below.
@@ -525,7 +527,11 @@ export default function Home() {
       const earned = result?.reward?.tokens || 0;
       const group = result?.group_size || 1;
 
-      setTokens((prev) => prev + earned);
+      setTokens((prev) => {
+  const next = prev + earned;
+  localStorage.setItem("v2n_tokens", next);
+  return next;
+});
 
       toast.success(`+${earned} tokens · ${group} people here 🔥`);
 
