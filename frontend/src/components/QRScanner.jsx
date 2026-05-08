@@ -77,7 +77,7 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
       setMessage("Error checking in");
     }
   }, [onClose, onCheckInSuccess]);
-
+```jsx
   useEffect(() => {
     if (status !== "scanning") return;
 
@@ -102,10 +102,14 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
       },
       () => {}
     );
+
     return () => {
       scanner.clear().catch(() => {});
     };
   }, [scanned, handleResult, status]);
+```
+
+
     
 
   return (
