@@ -8,7 +8,7 @@ import {
   Button, IconButton, Chip, SectionDivider, useToast,
   Modal, Input,
 } from "@/components/v2n";
-import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward } from "@/lib/api";
+import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward,getwallet } from "@/lib/api";
 import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
 import { useReferralPing } from "@/lib/useReferralPing";
 
@@ -65,14 +65,36 @@ export default function Home() {
   const [fvvBadge, setFvvBadge] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const [showWallet, setShowWallet] = useState(false);
+
+const [tokens, setTokens] = useState(() => {
+  return Number(localStorage.getItem("v2n_tokens") || 0);
+});
+  
   const toast = useToast();
   
   // Stable anonymous identity for this device — used as wallet user_id
   // and as the referrer parameter on share links.
   const myUserId = useMemo(() => getOrCreateUserId(), []);
-  const [tokens, setTokens] = useState(() => {
-  return Number(localStorage.getItem("v2n_tokens") || 0);
-});
+  useEffect(() => {
+  async function loadWallet() {
+    try {
+      const wallet = await getWallet(myUserId);
+
+      const balance = wallet?.credits || 0;
+
+      setTokens(balance);
+
+      localStorage.setItem("v2n_tokens", balance);
+    } catch (e) {
+      console.warn("Wallet load failed");
+    }
+  }
+
+  loadWallet();
+}, [myUserId]);
+ 
+
   // On first mount, snatch ?ref=<inviter-id> from the URL (if present) and
   // clean the param. We'll honour it on the user's first credit-eligible
   // action below.
