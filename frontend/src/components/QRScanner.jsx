@@ -102,11 +102,11 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
       },
       () => {}
     );
-
     return () => {
       scanner.clear().catch(() => {});
     };
   }, [scanned, handleResult, status]);
+    
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
