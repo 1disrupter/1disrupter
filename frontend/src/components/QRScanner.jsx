@@ -1,4 +1,4 @@
-```jsx id="jlwmw0"
+
 import { useEffect, useState, useCallback } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
