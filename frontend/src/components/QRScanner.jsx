@@ -83,14 +83,30 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 
   useEffect(() => {
     // 🛑 only run scanner when actively scanning
-    if (!scanned) {
-  setScanned(true);
+   useEffect(() => {
+  if (status !== "scanning") return;
 
-  // 🛑 immediately stop scanner
-  scanner.clear().catch(() => {});
+  const scanner = new Html5QrcodeScanner(
+    "reader",
+    { fps: 10, qrbox: 250 },
+    false
+  );
 
-  handleResult(decodedText);
-}
+  scanner.render(
+    (decodedText) => {
+      if (!scanned) {
+        setScanned(true);
+
+        scanner.clear().catch(() => {});
+
+        handleResult(decodedText);
+      }
+    },
+    () => {}
+  );
+
+  return () => scanner.clear().catch(() => {});
+}, [scanned, handleResult, status]);
 
     const scanner = new Html5QrcodeScanner(
       "reader",
