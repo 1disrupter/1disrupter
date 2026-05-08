@@ -76,9 +76,9 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
       setStatus("error");
       setMessage("Error checking in");
     }
-  }, [onClose, onCheckInSuccess]);
-```jsx
-  useEffect(() => {
+ }, [onClose, onCheckInSuccess]);
+
+useEffect(() => {
     if (status !== "scanning") return;
 
     const scanner = new Html5QrcodeScanner(
