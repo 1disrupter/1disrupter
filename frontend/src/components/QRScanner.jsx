@@ -1,4 +1,4 @@
-```jsx id="sq89z1"
+```jsx id="jlwmw0"
 import { useEffect, useState, useCallback } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
@@ -7,79 +7,76 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
   const [status, setStatus] = useState("scanning");
   const [message, setMessage] = useState("");
 
-  const handleResult = useCallback(
-    async (decodedText) => {
+  const handleResult = useCallback(async (decodedText) => {
+    try {
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
+
+      setStatus("loading");
+
+      let venueId;
+
       try {
-        if (navigator.vibrate) {
-          navigator.vibrate(100);
+        const url = new URL(decodedText);
+        venueId = url.searchParams.get("venue");
+      } catch {
+        venueId = decodedText;
+      }
+
+      if (!venueId) {
+        setStatus("error");
+        setMessage("Invalid QR code");
+        return;
+      }
+
+      const deviceId =
+        localStorage.getItem("deviceId") || crypto.randomUUID();
+
+      localStorage.setItem("deviceId", deviceId);
+
+      const res = await fetch(
+        "https://api.vibe2nite.com/api/checkin",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            venueId,
+            deviceId,
+          }),
         }
+      );
 
-        setStatus("loading");
+      const result = await res.json();
 
-        let venueId;
+      if (result.success) {
+        setStatus("success");
 
-        try {
-          const url = new URL(decodedText);
-          venueId = url.searchParams.get("venue");
-        } catch {
-          venueId = decodedText;
-        }
-
-        if (!venueId) {
-          setStatus("error");
-          setMessage("Invalid QR code");
-          return;
-        }
-
-        const deviceId =
-          localStorage.getItem("deviceId") || crypto.randomUUID();
-
-        localStorage.setItem("deviceId", deviceId);
-
-        const res = await fetch(
-          "https://api.vibe2nite.com/api/checkin",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              venueId,
-              deviceId,
-            }),
-          }
+        setMessage(
+          `Checked in · ${result.reward.tokens} tokens earned`
         );
 
-        const result = await res.json();
-
-        if (result.success) {
-          setStatus("success");
-
-          setMessage(
-            `Checked in · ${result.reward.tokens} tokens earned`
-          );
-
-          if (onCheckInSuccess) {
-            onCheckInSuccess(result);
-          }
-        } else {
-          setStatus("error");
-          setMessage("Check-in failed");
+        if (onCheckInSuccess) {
+          onCheckInSuccess(result);
         }
-
-        setTimeout(() => {
-          onClose();
-        }, 2500);
-
-      } catch (err) {
-        console.error(err);
-
+      } else {
         setStatus("error");
-        setMessage("Error checking in");
+        setMessage("Check-in failed");
       }
-    },
-    [onClose, onCheckInSuccess]
-  );
+
+      setTimeout(() => {
+        onClose();
+      }, 2500);
+
+    } catch (err) {
+      console.error(err);
+
+      setStatus("error");
+      setMessage("Error checking in");
+    }
+  }, [onClose, onCheckInSuccess]);
 
   useEffect(() => {
     if (status !== "scanning") return;
@@ -113,7 +110,6 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
-
       <button
         onClick={onClose}
         className="text-white mb-4 text-sm uppercase tracking-wider border border-white/20 px-4 py-2 rounded-lg"
@@ -142,7 +138,10 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
       {status === "success" && (
         <div className="text-center text-green-400 animate-pulse">
           <p className="text-lg">✅ Success</p>
-          <p className="text-sm mt-2">{message}</p>
+
+          <p className="text-sm mt-2">
+            {message}
+          </p>
         </div>
       )}
 
@@ -169,5 +168,6 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
   );
 }
 ```
+
 
 
