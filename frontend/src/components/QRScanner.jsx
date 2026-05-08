@@ -107,7 +107,7 @@ useEffect(() => {
       scanner.clear().catch(() => {});
     };
   }, [scanned, handleResult, status]);
-```
+
 
 
     
