@@ -1,4 +1,4 @@
-```jsx
+```jsx id="sq89z1"
 import { useEffect, useState, useCallback } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
@@ -36,21 +36,25 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
 
         localStorage.setItem("deviceId", deviceId);
 
-        const res = await fetch("https://api.vibe2nite.com/api/checkin", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            venueId,
-            deviceId,
-          }),
-        });
+        const res = await fetch(
+          "https://api.vibe2nite.com/api/checkin",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              venueId,
+              deviceId,
+            }),
+          }
+        );
 
         const result = await res.json();
 
         if (result.success) {
           setStatus("success");
+
           setMessage(
             `Checked in · ${result.reward.tokens} tokens earned`
           );
@@ -69,6 +73,7 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
 
       } catch (err) {
         console.error(err);
+
         setStatus("error");
         setMessage("Error checking in");
       }
@@ -81,7 +86,10 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
 
     const scanner = new Html5QrcodeScanner(
       "reader",
-      { fps: 10, qrbox: 250 },
+      {
+        fps: 10,
+        qrbox: 250,
+      },
       false
     );
 
@@ -141,7 +149,10 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
       {status === "error" && (
         <div className="text-center text-red-400">
           <p className="text-lg">❌ Error</p>
-          <p className="text-sm mt-2">{message}</p>
+
+          <p className="text-sm mt-2">
+            {message}
+          </p>
 
           <button
             onClick={() => {
@@ -158,4 +169,5 @@ export default function QRScanner({ onClose, onCheckInSuccess }) {
   );
 }
 ```
+
 
