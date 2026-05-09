@@ -539,6 +539,7 @@ setActiveReward(redemption);
         
          {activeReward ? (
   <div className="text-center space-y-4">
+    
     <p className="text-2xl text-primary-glow">
       🔥 Reward Redeemed
     </p>
