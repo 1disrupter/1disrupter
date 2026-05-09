@@ -492,6 +492,7 @@ const [tokens, setTokens] = useState(() => {
   );
 }
 function RewardsModal({ tokens, setTokens, onClose }) {
+  const [activeReward, setActiveReward] = useState(null);
   const rewards = [
     { id: 1, name: "Free Shot", cost: 50 },
     { id: 2, name: "VIP Entry", cost: 200 },
@@ -510,7 +511,22 @@ function RewardsModal({ tokens, setTokens, onClose }) {
 
     localStorage.setItem("v2n_tokens", next);
 
-    alert(`Redeemed: ${reward.name} 🔥`);
+    const code =
+  "V2N-" +
+  Math.random().toString(36).substring(2, 8).toUpperCase();
+
+const redemption = {
+  ...reward,
+  code,
+  redeemed_at: new Date().toISOString(),
+};
+
+localStorage.setItem(
+  "v2n_last_reward",
+  JSON.stringify(redemption)
+);
+
+setActiveReward(redemption);
   };
 
   return (
@@ -520,42 +536,58 @@ function RewardsModal({ tokens, setTokens, onClose }) {
           Rewards Marketplace
         </h2>
 
-        <div className="space-y-3">
-          {rewards.map((reward) => (
-            <div
-              key={reward.id}
-              className="flex items-center justify-between border border-white/10 rounded-lg p-3"
-            >
-              <div>
-                <p className="text-white">
-                  {reward.name}
-                </p>
+        
+         {activeReward ? (
+  <div className="text-center space-y-4">
+    <p className="text-2xl text-primary-glow">
+      🔥 Reward Redeemed
+    </p>
 
-                <p className="text-sm text-primary-glow">
-                  {reward.cost} tokens
-                </p>
-              </div>
+    <p className="text-white text-lg">
+      {activeReward.name}
+    </p>
 
-              <button
-                onClick={() => redeemReward(reward)}
-                className="bg-primary-glow text-black px-3 py-2 rounded font-semibold"
-              >
-                Redeem
-              </button>
-            </div>
-          ))}
+    <div className="border border-primary-glow/40 rounded-xl p-4 bg-primary/10">
+      <p className="text-xs text-white/60 mb-2">
+        SHOW THIS TO STAFF
+      </p>
+
+      <p className="text-3xl font-mono text-primary-glow tracking-widest">
+        {activeReward.code}
+      </p>
+    </div>
+
+    <p className="text-xs text-white/40">
+      Redeemed just now
+    </p>
+  </div>
+) : (
+  <div className="space-y-3">
+    {rewards.map((reward) => (
+      <div
+        key={reward.id}
+        className="flex items-center justify-between border border-white/10 rounded-lg p-3"
+      >
+        <div>
+          <p className="text-white">
+            {reward.name}
+          </p>
+
+          <p className="text-sm text-primary-glow">
+            {reward.cost} tokens
+          </p>
         </div>
 
         <button
-          onClick={onClose}
-          className="w-full mt-5 text-white border border-white/20 px-4 py-2 rounded"
+          onClick={() => redeemReward(reward)}
+          className="bg-primary-glow text-black px-3 py-2 rounded font-semibold"
         >
-          Close
+          Redeem
         </button>
       </div>
-    </div>
-  );
-}
+    ))}
+  </div>
+)} 
 function WalletModal({ tokens, onClose, setShowRewards }) {
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
