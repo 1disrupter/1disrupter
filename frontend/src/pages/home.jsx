@@ -65,7 +65,7 @@ export default function Home() {
   const [fvvBadge, setFvvBadge] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
-  
+  const [showRewards, setShowRewards] = useState(false);
 
 const [tokens, setTokens] = useState(() => {
   return Number(localStorage.getItem("v2n_tokens") || 0);
@@ -462,12 +462,19 @@ const [tokens, setTokens] = useState(() => {
    
 
 {showWallet && (
-  <WalletModal
-    tokens={tokens}
-    onClose={() => setShowWallet(false)}
-  />
+ <WalletModal
+  tokens={tokens}
+  onClose={() => setShowWallet(false)}
+  setShowRewards={setShowRewards}
+/> 
 )}   
-      
+      {showRewards && (
+  <RewardsModal
+    tokens={tokens}
+    setTokens={setTokens}
+    onClose={() => setShowRewards(false)}
+  />
+)}
       {claimVenue && (
         <ClaimModal
           venue={claimVenue}
@@ -484,7 +491,72 @@ const [tokens, setTokens] = useState(() => {
     </div>
   );
 }
-function WalletModal({ tokens, onClose }) {
+function RewardsModal({ tokens, setTokens, onClose }) {
+  const rewards = [
+    { id: 1, name: "Free Shot", cost: 50 },
+    { id: 2, name: "VIP Entry", cost: 200 },
+    { id: 3, name: "2-for-1 Cocktails", cost: 80 },
+  ];
+
+  const redeemReward = (reward) => {
+    if (tokens < reward.cost) {
+      alert("Not enough tokens");
+      return;
+    }
+
+    const next = tokens - reward.cost;
+
+    setTokens(next);
+
+    localStorage.setItem("v2n_tokens", next);
+
+    alert(`Redeemed: ${reward.name} 🔥`);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-black border border-white/10 p-6 rounded-xl">
+        <h2 className="text-white text-2xl mb-5 text-center">
+          Rewards Marketplace
+        </h2>
+
+        <div className="space-y-3">
+          {rewards.map((reward) => (
+            <div
+              key={reward.id}
+              className="flex items-center justify-between border border-white/10 rounded-lg p-3"
+            >
+              <div>
+                <p className="text-white">
+                  {reward.name}
+                </p>
+
+                <p className="text-sm text-primary-glow">
+                  {reward.cost} tokens
+                </p>
+              </div>
+
+              <button
+                onClick={() => redeemReward(reward)}
+                className="bg-primary-glow text-black px-3 py-2 rounded font-semibold"
+              >
+                Redeem
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-5 text-white border border-white/20 px-4 py-2 rounded"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+function WalletModal({ tokens, onClose, setShowRewards }) {
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
       <div className="bg-black border border-white/10 p-6 rounded-xl text-center">
@@ -495,7 +567,10 @@ function WalletModal({ tokens, onClose }) {
         </p>
 <div className="mt-4 flex flex-col gap-3">
   <button
-    onClick={() => alert("Rewards marketplace coming next 🔥")}
+    onClick={() => {
+  onClose();
+  setShowRewards(true);
+}}
     className="text-black bg-primary-glow px-4 py-2 rounded font-semibold"
   >
     Spend Tokens
