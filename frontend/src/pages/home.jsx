@@ -65,7 +65,7 @@ export default function Home() {
   const [fvvBadge, setFvvBadge] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
-  const [showWallet, setShowWallet] = useState(false);
+  
 
 const [tokens, setTokens] = useState(() => {
   return Number(localStorage.getItem("v2n_tokens") || 0);
@@ -459,7 +459,7 @@ const [tokens, setTokens] = useState(() => {
     }}
   />
 )}
-   {console.log("showWallet:", showWallet)}
+   
 
 {showWallet && (
   <WalletModal
@@ -467,12 +467,7 @@ const [tokens, setTokens] = useState(() => {
     onClose={() => setShowWallet(false)}
   />
 )}   
-      {showWallet && (
-  <WalletModal
-    tokens={tokens}
-    onClose={() => setShowWallet(false)}
-  />
-)}
+      
       {claimVenue && (
         <ClaimModal
           venue={claimVenue}
