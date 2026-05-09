@@ -8,7 +8,7 @@ import {
   Button, IconButton, Chip, SectionDivider, useToast,
   Modal, Input,
 } from "@/components/v2n";
-import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward,getwallet } from "@/lib/api";
+import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward,getWallet } from "@/lib/api";
 import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
 import { useReferralPing } from "@/lib/useReferralPing";
 
