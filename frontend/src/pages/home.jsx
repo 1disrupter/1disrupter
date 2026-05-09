@@ -493,13 +493,22 @@ function WalletModal({ tokens, onClose }) {
         <p className="text-primary-glow text-3xl font-mono">
           {tokens}
         </p>
+<div className="mt-4 flex flex-col gap-3">
+  <button
+    onClick={() => alert("Rewards marketplace coming next 🔥")}
+    className="text-black bg-primary-glow px-4 py-2 rounded font-semibold"
+  >
+    Spend Tokens
+  </button>
 
-        <button
-          onClick={onClose}
-          className="mt-4 text-white border px-4 py-2 rounded"
-        >
-          Close
-        </button>
+  <button
+    onClick={onClose}
+    className="text-white border px-4 py-2 rounded"
+  >
+    Close
+  </button>
+</div>
+        
       </div>
     </div>
   );
