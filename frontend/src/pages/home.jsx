@@ -66,7 +66,7 @@ export default function Home() {
   const [showScanner, setShowScanner] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
-
+const [showVenueStats, setShowVenueStats] = useState(false);
 const [tokens, setTokens] = useState(() => {
   return Number(localStorage.getItem("v2n_tokens") || 0);
 });
@@ -618,7 +618,7 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
   );
 
   window.location.reload();
-};
+ };
 
 const verifyReward = () => {
   const updated = {
