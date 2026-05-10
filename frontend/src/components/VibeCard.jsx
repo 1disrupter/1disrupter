@@ -28,6 +28,18 @@ export default function VibeCard({ title, data, loading }) {
     );
 
   return (
+    {/* Venue Image */}
+<div className="relative h-48 overflow-hidden rounded-xl mb-4">
+
+  <img
+    src={data.venue?.image_url}
+    alt={data.venue?.name}
+    className="w-full h-full object-cover"
+  />
+
+  <div className="absolute inset-0 bg-black/30" />
+
+</div>
     <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-4 shadow-lg backdrop-blur-md">
       {/* Title + Icon */}
       <div className="flex items-center gap-2 mb-2">
