@@ -589,6 +589,16 @@ setActiveReward(redemption);
     ))}
   </div>
 )} 
+          <button
+          onClick={onClose}
+          className="w-full mt-5 text-white border border-white/20 px-4 py-2 rounded"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}      
 function WalletModal({ tokens, onClose, setShowRewards }) {
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
