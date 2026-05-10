@@ -601,22 +601,25 @@ setActiveReward(redemption);
   );
 }      
 function WalletModal({ tokens, onClose, setShowRewards }) {
-  const savedReward = JSON.parse(
-    const markRewardUsed = () => {
-  const updated = {
-    ...savedReward,
-    status: "USED",
-  };
 
-  localStorage.setItem(
-    "v2n_last_reward",
-    JSON.stringify(updated)
+  const savedReward = JSON.parse(
+    localStorage.getItem("v2n_last_reward") || "null"
   );
 
-  window.location.reload();
-};
-  localStorage.getItem("v2n_last_reward") || "null"
-);
+  const markRewardUsed = () => {
+    const updated = {
+      ...savedReward,
+      status: "USED",
+    };
+
+    localStorage.setItem(
+      "v2n_last_reward",
+      JSON.stringify(updated)
+    );
+
+    window.location.reload();
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
       <div className="bg-black border border-white/10 p-6 rounded-xl text-center">
