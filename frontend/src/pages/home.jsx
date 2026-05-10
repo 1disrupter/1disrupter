@@ -731,9 +731,43 @@ const verifyReward = () => {
 }
 function VenueStatsModal({ onClose }) {
 
- 
+  const [stats, setStats] = useState({
+    checkins: 127,
+    rewards: 43,
+    peak: "11:20 PM",
+    vibe: 8.7,
+  });
+
+  useEffect(() => {
+
+    const interval = setInterval(() => {
+
+      setStats((prev) => ({
+        ...prev,
+        checkins: prev.checkins + Math.floor(Math.random() * 3),
+        rewards: prev.rewards + (Math.random() > 0.7 ? 1 : 0),
+        vibe: Math.min(
+          9.9,
+          Math.max(
+            7.5,
+            Number(
+              (
+                prev.vibe +
+                (Math.random() * 0.2 - 0.1)
+              ).toFixed(1)
+            )
+          )
+        ),
+      }));
+
+    }, 4000);
+
+    return () => clearInterval(interval);
+
+  }, []);
 
   return (
+    <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4">
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-black border border-white/10 p-6 rounded-xl">
 
@@ -747,39 +781,6 @@ function VenueStatsModal({ onClose }) {
     Live Activity
   </p>
 </div>
-       const [stats, setStats] = useState({
-  checkins: 127,
-  rewards: 43,
-  peak: "11:20 PM",
-  vibe: 8.7,
-});    
-        useEffect(() => {
-
-  const interval = setInterval(() => {
-
-    setStats((prev) => ({
-      ...prev,
-      checkins: prev.checkins + Math.floor(Math.random() * 3),
-      rewards: prev.rewards + (Math.random() > 0.7 ? 1 : 0),
-      vibe: Math.min(
-        9.9,
-        Math.max(
-          7.5,
-          Number(
-            (
-              prev.vibe +
-              (Math.random() * 0.2 - 0.1)
-            ).toFixed(1)
-          )
-        )
-      ),
-    }));
-
-  }, 4000);
-
-  return () => clearInterval(interval);
-
-}, []);
         <div className="space-y-4">
 
           <div className="border border-primary-glow/20 rounded-xl p-4">
