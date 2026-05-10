@@ -519,7 +519,7 @@ const redemption = {
   ...reward,
   code,
   redeemed_at: new Date().toISOString(),
-  status: "ACTIVE",
+  status: "READY",
 };
 
 localStorage.setItem(
@@ -607,6 +607,19 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
   );
 
   const markRewardUsed = () => {
+   const verifyReward = () => {
+  const updated = {
+    ...savedReward,
+    status: "VERIFIED",
+  };
+
+  localStorage.setItem(
+    "v2n_last_reward",
+    JSON.stringify(updated)
+  );
+
+  window.location.reload();
+}; 
     const updated = {
       ...savedReward,
       status: "USED",
@@ -628,6 +641,7 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
         <p className="text-primary-glow text-3xl font-mono">
           {tokens}
         </p>
+        
      {savedReward && (
   <div className="mt-4 border border-primary-glow/30 bg-primary/5 rounded-xl p-4 text-left">
     <p className="text-xs uppercase tracking-widest text-primary-glow mb-3">
@@ -640,9 +654,11 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
 
     <p
       className={`text-xs mt-1 uppercase tracking-widest ${
-        savedReward.status === "USED"
-          ? "text-red-400"
-          : "text-green-400"
+       savedReward.status === "USED"
+  ? "text-red-400"
+  : savedReward.status === "VERIFIED"
+  ? "text-aqua"
+  : "text-green-400" 
       }`}
     >
       {savedReward.status}
@@ -655,7 +671,14 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
     <p className="text-xs text-white/40 mt-2">
       Redeemed recently
     </p>
-
+{savedReward.status === "READY" && (
+  <button
+    onClick={verifyReward}
+    className="mt-3 w-full border border-primary-glow/40 text-primary-glow px-3 py-2 rounded"
+  >
+    Verify With Staff
+  </button>
+)}
     {savedReward.status !== "USED" && (
       <button
         onClick={markRewardUsed}
