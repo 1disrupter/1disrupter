@@ -67,6 +67,7 @@ export default function Home() {
   const [showWallet, setShowWallet] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
 const [showVenueStats, setShowVenueStats] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 const [tokens, setTokens] = useState(() => {
   return Number(localStorage.getItem("v2n_tokens") || 0);
 });
@@ -467,6 +468,7 @@ const [tokens, setTokens] = useState(() => {
   onClose={() => setShowWallet(false)}
   setShowRewards={setShowRewards}
   setShowVenueStats={setShowVenueStats}
+   setShowLeaderboard={setShowLeaderboard}
 />
 )}   
       {showVenueStats && (
@@ -474,6 +476,11 @@ const [tokens, setTokens] = useState(() => {
     onClose={() => setShowVenueStats(false)}
   />
 )}
+     {showLeaderboard && (
+  <LeaderboardModal
+    onClose={() => setShowLeaderboard(false)}
+  />
+)} 
       {showRewards && (
   <RewardsModal
     tokens={tokens}
@@ -606,7 +613,7 @@ setActiveReward(redemption);
     </div>
   );
 }      
-function WalletModal({ tokens, onClose, setShowRewards,setShowVenueStats, }) {
+function WalletModal({ tokens, onClose, setShowRewards,setShowVenueStats,setShowLeaderboard, }) {
 
   const savedReward = JSON.parse(
     localStorage.getItem("v2n_last_reward") || "null"
@@ -716,16 +723,88 @@ const verifyReward = () => {
   className="text-white border border-primary-glow/30 px-4 py-2 rounded"
 >
   Venue Dashboard
+<button
+  onClick={() => {
+    onClose();
+    setShowLeaderboard(true);
+  }}
+  className="text-white border border-yellow-500/30 px-4 py-2 rounded"
+>
+  Leaderboards
 </button>
-  <button
-    onClick={onClose}
-    className="text-white border px-4 py-2 rounded"
-  >
+    
     Close
   </button>
 </div>
         
       </div>
+    </div>
+  );
+}
+function LeaderboardModal({ onClose }) {
+
+  const venues = [
+    { rank: 1, name: "Sky Lounge", score: 9.4 },
+    { rank: 2, name: "Club Nova", score: 9.1 },
+    { rank: 3, name: "Electric Room", score: 8.8 },
+    { rank: 4, name: "Neon Bar", score: 8.5 },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4">
+
+      <div className="w-full max-w-md bg-black border border-white/10 p-6 rounded-xl">
+
+        <h2 className="text-2xl text-white mb-5 text-center">
+          Tonight's Leaderboard
+        </h2>
+
+        <div className="space-y-3">
+
+          {venues.map((venue) => (
+
+            <div
+              key={venue.rank}
+              className="flex items-center justify-between border border-white/10 rounded-xl p-4"
+            >
+
+              <div className="flex items-center gap-3">
+
+                <div className="text-xl font-bold text-primary-glow">
+                  #{venue.rank}
+                </div>
+
+                <div>
+                  <p className="text-white">
+                    {venue.name}
+                  </p>
+
+                  <p className="text-xs text-white/50">
+                    Trending tonight
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="text-primary-glow font-mono">
+                {venue.score}
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-5 border border-white/20 text-white px-4 py-2 rounded"
+        >
+          Close
+        </button>
+
+      </div>
+
     </div>
   );
 }
