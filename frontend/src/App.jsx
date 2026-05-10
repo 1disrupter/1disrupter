@@ -13,6 +13,7 @@ const Brand = lazy(() => import("./pages/Brand"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Owner = lazy(() => import("./pages/Owner"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Explore = lazy(() => import("./pages/explore"));
 
 const ADMIN_STORAGE_KEY = "v2n_admin_session";
 
@@ -48,6 +49,7 @@ export default function App() {
                 path="/"
                 element={<Home registerLocationFn={setMyLocationFn} />}
               />
+              <Route path="/explore" element={<Explore />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
               <Route path="/brand" element={<AdminGuardedBrand />} />
               <Route path="/admin" element={<Admin />} />
