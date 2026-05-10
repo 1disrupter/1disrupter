@@ -84,6 +84,7 @@ export const getTopVibes = async (lat, lng, radius_km = 50) => {
         venue: {
           id: "1",
           name: "Test Club",
+          image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop",
           latitude: lat,
           longitude: lng,
           is_verified: true,
@@ -96,6 +97,7 @@ export const getTopVibes = async (lat, lng, radius_km = 50) => {
         venue: {
           id: "2",
           name: "Live Bar",
+          image_url: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1200&auto=format&fit=crop",
           latitude: lat,
           longitude: lng,
           is_verified: true,
@@ -108,6 +110,7 @@ export const getTopVibes = async (lat, lng, radius_km = 50) => {
         venue: {
           id: "3",
           name: "Hidden Spot",
+          image_url: "https://images.unsplash.com/photo-1496024840928-4c417adf211d?q=80&w=1200&auto=format&fit=crop",
           latitude: lat,
           longitude: lng,
           is_verified: false,
