@@ -843,7 +843,7 @@ function VenueStatsModal({ onClose }) {
     </div>
   );
 }
-function ClaimModal({ venue, onClose, onSuccess }) 
+function ClaimModal({ venue, onClose, onSuccess })} 
   const toast = useToast();
   const [form, setForm] = useState({ owner_name: "", email: "", proof: "" });
   const [busy, setBusy] = useState(false);
