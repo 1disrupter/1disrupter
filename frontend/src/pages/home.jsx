@@ -768,7 +768,7 @@ function VenueStatsModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4">
-    <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4">
+    
       <div className="w-full max-w-md bg-black border border-white/10 p-6 rounded-xl">
 
         <h2 className="text-2xl text-white mb-5 text-center">
@@ -843,7 +843,7 @@ function VenueStatsModal({ onClose }) {
     </div>
   );
 }
-function ClaimModal({ venue, onClose, onSuccess }) {
+function ClaimModal({ venue, onClose, onSuccess }) 
   const toast = useToast();
   const [form, setForm] = useState({ owner_name: "", email: "", proof: "" });
   const [busy, setBusy] = useState(false);
