@@ -519,6 +519,7 @@ const redemption = {
   ...reward,
   code,
   redeemed_at: new Date().toISOString(),
+  status: "ACTIVE",
 };
 
 localStorage.setItem(
@@ -601,6 +602,19 @@ setActiveReward(redemption);
 }      
 function WalletModal({ tokens, onClose, setShowRewards }) {
   const savedReward = JSON.parse(
+    const markRewardUsed = () => {
+  const updated = {
+    ...savedReward,
+    status: "USED",
+  };
+
+  localStorage.setItem(
+    "v2n_last_reward",
+    JSON.stringify(updated)
+  );
+
+  window.location.reload();
+};
   localStorage.getItem("v2n_last_reward") || "null"
 );
   return (
@@ -620,7 +634,15 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
     <p className="text-white text-lg">
       {savedReward.name}
     </p>
-
+<p
+  className={`text-xs mt-1 uppercase tracking-widest ${
+    savedReward.status === "USED"
+      ? "text-red-400"
+      : "text-green-400"
+  }`}
+>
+  {savedReward.status}
+</p>
     <p className="text-primary-glow font-mono text-2xl mt-2">
       {savedReward.code}
     </p>
@@ -628,6 +650,14 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
     <p className="text-xs text-white/40 mt-2">
       Redeemed recently
     </p>
+    {savedReward.status !== "USED" && (
+  <button
+    onClick={markRewardUsed}
+    className="mt-3 w-full border border-red-500/40 text-red-400 px-3 py-2 rounded"
+  >
+    Mark as Used
+  </button>
+)}
   </div>
 )}  
 <div className="mt-4 flex flex-col gap-3">
