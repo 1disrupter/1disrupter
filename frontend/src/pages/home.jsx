@@ -462,12 +462,18 @@ const [tokens, setTokens] = useState(() => {
    
 
 {showWallet && (
- <WalletModal
+<WalletModal
   tokens={tokens}
   onClose={() => setShowWallet(false)}
   setShowRewards={setShowRewards}
-/> 
+  setShowVenueStats={setShowVenueStats}
+/>
 )}   
+      {showVenueStats && (
+  <VenueStatsModal
+    onClose={() => setShowVenueStats(false)}
+  />
+)}
       {showRewards && (
   <RewardsModal
     tokens={tokens}
@@ -600,7 +606,7 @@ setActiveReward(redemption);
     </div>
   );
 }      
-function WalletModal({ tokens, onClose, setShowRewards }) {
+function WalletModal({ tokens, onClose, setShowRewards,setShowVenueStats, }) {
 
   const savedReward = JSON.parse(
     localStorage.getItem("v2n_last_reward") || "null"
@@ -702,7 +708,15 @@ const verifyReward = () => {
   >
     Spend Tokens
   </button>
-
+<button
+  onClick={() => {
+    onClose();
+    setShowVenueStats(true);
+  }}
+  className="text-white border border-primary-glow/30 px-4 py-2 rounded"
+>
+  Venue Dashboard
+</button>
   <button
     onClick={onClose}
     className="text-white border px-4 py-2 rounded"
@@ -711,6 +725,82 @@ const verifyReward = () => {
   </button>
 </div>
         
+      </div>
+    </div>
+  );
+}
+function VenueStatsModal({ onClose }) {
+
+  const stats = {
+    checkins: 127,
+    rewards: 43,
+    peak: "11:20 PM",
+    vibe: 8.7,
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-black border border-white/10 p-6 rounded-xl">
+
+        <h2 className="text-2xl text-white mb-5 text-center">
+          Venue Dashboard
+        </h2>
+
+        <div className="space-y-4">
+
+          <div className="border border-primary-glow/20 rounded-xl p-4">
+            <p className="text-xs text-white/50 uppercase">
+              Tonight Check-ins
+            </p>
+
+            <p className="text-3xl text-primary-glow font-mono">
+              {stats.checkins}
+            </p>
+          </div>
+
+          <div className="border border-primary-glow/20 rounded-xl p-4">
+            <p className="text-xs text-white/50 uppercase">
+              Rewards Redeemed
+            </p>
+
+            <p className="text-3xl text-primary-glow font-mono">
+              {stats.rewards}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+
+            <div className="border border-white/10 rounded-xl p-4">
+              <p className="text-xs text-white/50 uppercase">
+                Peak Time
+              </p>
+
+              <p className="text-white text-xl">
+                {stats.peak}
+              </p>
+            </div>
+
+            <div className="border border-white/10 rounded-xl p-4">
+              <p className="text-xs text-white/50 uppercase">
+                Vibe Score
+              </p>
+
+              <p className="text-primary-glow text-xl">
+                {stats.vibe}
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-5 border border-white/20 text-white px-4 py-2 rounded"
+        >
+          Close
+        </button>
+
       </div>
     </div>
   );
