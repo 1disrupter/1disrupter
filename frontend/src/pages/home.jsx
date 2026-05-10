@@ -600,6 +600,9 @@ setActiveReward(redemption);
   );
 }      
 function WalletModal({ tokens, onClose, setShowRewards }) {
+  const savedReward = JSON.parse(
+  localStorage.getItem("v2n_last_reward") || "null"
+);
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
       <div className="bg-black border border-white/10 p-6 rounded-xl text-center">
@@ -608,6 +611,25 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
         <p className="text-primary-glow text-3xl font-mono">
           {tokens}
         </p>
+      {savedReward && (
+  <div className="mt-4 border border-primary-glow/30 bg-primary/5 rounded-xl p-4 text-left">
+    <p className="text-xs uppercase tracking-widest text-primary-glow mb-3">
+      Active Reward
+    </p>
+
+    <p className="text-white text-lg">
+      {savedReward.name}
+    </p>
+
+    <p className="text-primary-glow font-mono text-2xl mt-2">
+      {savedReward.code}
+    </p>
+
+    <p className="text-xs text-white/40 mt-2">
+      Redeemed recently
+    </p>
+  </div>
+)}  
 <div className="mt-4 flex flex-col gap-3">
   <button
     onClick={() => {
