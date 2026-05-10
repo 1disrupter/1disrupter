@@ -607,7 +607,7 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
   );
 
   const markRewardUsed = () => {
-   const verifyReward = () => {
+  const verifyReward = () => {
   const updated = {
     ...savedReward,
     status: "VERIFIED",
@@ -619,19 +619,9 @@ function WalletModal({ tokens, onClose, setShowRewards }) {
   );
 
   window.location.reload();
-}; 
-    const updated = {
-      ...savedReward,
-      status: "USED",
-    };
-
-    localStorage.setItem(
-      "v2n_last_reward",
-      JSON.stringify(updated)
-    );
-
-    window.location.reload();
-  };
+};  
+  
+ 
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
