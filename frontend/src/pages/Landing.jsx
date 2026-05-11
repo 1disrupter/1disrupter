@@ -1,342 +1,309 @@
-
+```jsx id="6i7v0h"
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Music,
-  Martini,
-  MapPin,
-  Trophy,
-  Users,
-  Star,
-} from "lucide-react";
 
 export default function Landing() {
 
   const navigate = useNavigate();
 
   return (
-    <div className="bg-[#02030A] text-white overflow-hidden">
+    <div className="bg-[#02030A] text-white overflow-x-hidden">
 
-      {/* HERO */}
-      <section className="relative min-h-screen overflow-hidden">
+      {/* GLOBAL BACKGROUND */}
+      <div className="fixed inset-0 z-0">
 
-        {/* Background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-50"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1800&auto=format&fit=crop')",
-          }}
-        />
+        <div className="absolute inset-0 bg-[#02030A]" />
 
-        <div className="absolute inset-0 bg-black/65" />
+        <div className="absolute top-[-300px] left-[-200px] w-[900px] h-[900px] bg-fuchsia-500/30 blur-[180px] rounded-full" />
 
-        {/* Neon Glows */}
-        <div className="absolute top-[-200px] left-[-120px] w-[700px] h-[700px] bg-fuchsia-500/50 blur-[150px] rounded-full" />
+        <div className="absolute bottom-[-300px] right-[-200px] w-[900px] h-[900px] bg-cyan-400/20 blur-[180px] rounded-full" />
 
-        <div className="absolute bottom-[-200px] right-[-120px] w-[700px] h-[700px] bg-cyan-400/40 blur-[150px] rounded-full" />
+      </div>
 
-        {/* NAV */}
-        <div className="relative z-30 flex items-center justify-between px-6 md:px-16 py-8">
+      <div className="relative z-10">
 
-          {/* Logo */}
-          <div className="flex items-center gap-4">
+        {/* ================= HERO ================= */}
 
-            <div className="w-16 h-16 rounded-full border border-pink-500/50 flex items-center justify-center shadow-[0_0_40px_rgba(255,0,200,0.8)] bg-black/30 backdrop-blur-xl">
+        <section className="relative min-h-screen overflow-hidden px-6 md:px-14 pt-8">
 
-              <span className="text-fuchsia-400 text-4xl font-black">
-                V
-              </span>
+          {/* HERO BG */}
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-50"
+            style={{
+              backgroundImage: "url('/hero-bg.jpg')",
+            }}
+          />
+
+          <div className="absolute inset-0 bg-black/70" />
+
+          {/* NAV */}
+          <div className="relative z-20 flex items-center justify-between">
+
+            {/* LOGO */}
+            <div className="flex items-center gap-4">
+
+              <div className="w-16 h-16 rounded-full border border-fuchsia-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(255,0,200,0.9)]">
+
+                <span className="text-fuchsia-400 text-4xl font-black">
+                  V
+                </span>
+
+              </div>
+
+              <div>
+
+                <h1 className="text-4xl font-black">
+                  VIBE<span className="text-fuchsia-500">2</span>NITE
+                </h1>
+
+                <p className="uppercase tracking-[0.3em] text-xs text-cyan-300">
+                  Live The Nite. Own The Vibe.
+                </p>
+
+              </div>
 
             </div>
 
+            {/* MENU */}
+            <div className="hidden md:flex items-center gap-10 uppercase text-sm tracking-[0.2em] text-white/70">
+
+              <button>Home</button>
+              <button>Features</button>
+              <button>For Venues</button>
+              <button>Partners</button>
+              <button>Contact</button>
+
+            </div>
+
+            {/* CTA */}
+            <button
+              className="hidden md:block px-7 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 font-bold shadow-[0_0_45px_rgba(255,0,200,0.8)]"
+            >
+              DOWNLOAD APP
+            </button>
+
+          </div>
+
+          {/* HERO CONTENT */}
+          <div className="relative z-20 grid md:grid-cols-2 gap-10 items-center pt-14">
+
+            {/* LEFT */}
             <div>
 
-              <h1 className="text-4xl font-black tracking-tight">
-                VIBE<span className="text-fuchsia-500">2</span>NITE
+              <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-[-0.05em] mb-6">
+
+                LIVE THE NITE.
+
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-pink-500 to-purple-400 drop-shadow-[0_0_40px_rgba(255,0,200,1)]">
+                  OWN THE VIBE.
+                </span>
+
               </h1>
 
-              <p className="text-xs tracking-[0.3em] uppercase text-cyan-300">
-                Live The Nite. Own The Vibe.
+              <p className="text-xl text-white/75 max-w-xl mb-8 leading-relaxed">
+                Real-time vibe scores. Live crowds. The hottest spots near you — right now.
               </p>
 
+              {/* ICON STRIP */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+
+                <div className="text-center">
+                  <div className="text-cyan-300 text-4xl mb-2">◉</div>
+                  <p className="text-xs uppercase text-white/70">
+                    Live Vibes
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-fuchsia-400 text-4xl mb-2">◎</div>
+                  <p className="text-xs uppercase text-white/70">
+                    Real Crowds
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-yellow-300 text-4xl mb-2">◇</div>
+                  <p className="text-xs uppercase text-white/70">
+                    Rewards
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-purple-300 text-4xl mb-2">▣</div>
+                  <p className="text-xs uppercase text-white/70">
+                    Check-ins
+                  </p>
+                </div>
+
+              </div>
+
+              {/* BUTTONS */}
+              <div className="flex flex-wrap gap-5">
+
+                <button
+                  onClick={() => navigate("/app")}
+                  className="px-10 py-5 rounded-3xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 text-lg font-black shadow-[0_0_60px_rgba(255,0,200,1)]"
+                >
+                  DOWNLOAD FREE
+                </button>
+
+                <button className="px-8 py-5 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-xl font-bold">
+                  App Store
+                </button>
+
+                <button className="px-8 py-5 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-xl font-bold">
+                  Google Play
+                </button>
+
+              </div>
+
+            </div>
+
+            {/* RIGHT PHONE */}
+            <div className="relative flex justify-center">
+
+              {/* GLOW */}
+              <div className="absolute w-[550px] h-[550px] bg-fuchsia-500/40 blur-[140px] rounded-full" />
+
+              {/* PHONE */}
+              <img
+                src="/landing-phone.png"
+                alt="Vibe2nite App"
+                className="relative z-20 w-full max-w-[520px] rotate-[8deg] drop-shadow-[0_0_120px_rgba(255,0,200,1)]"
+              />
+
             </div>
 
           </div>
 
-          {/* Menu */}
-          <div className="hidden md:flex items-center gap-10 text-sm uppercase tracking-[0.2em] text-white/70">
+        </section>
 
-            <button className="hover:text-fuchsia-400 transition">
-              Home
-            </button>
+        {/* ================= FEATURE STRIP ================= */}
 
-            <button className="hover:text-fuchsia-400 transition">
-              Features
-            </button>
+        <section className="px-6 md:px-14 py-8">
 
-            <button className="hover:text-fuchsia-400 transition">
-              Venues
-            </button>
+          <div className="rounded-[40px] border border-fuchsia-500/30 bg-white/5 backdrop-blur-2xl p-10 shadow-[0_0_60px_rgba(255,0,200,0.15)]">
 
-            <button className="hover:text-fuchsia-400 transition">
-              Contact
-            </button>
-
-          </div>
-
-          {/* CTA */}
-          <button
-            onClick={() => navigate("/app")}
-            className="hidden md:block px-7 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 font-bold shadow-[0_0_45px_rgba(255,0,200,0.7)] hover:scale-105 transition"
-          >
-            OPEN APP
-          </button>
-
-        </div>
-
-        {/* MAIN HERO */}
-        <div className="relative z-20 max-w-7xl mx-auto px-6 md:px-16 pt-10 md:pt-20 grid md:grid-cols-2 gap-12 items-center">
-
-          {/* LEFT */}
-          <div>
-
-            <p className="uppercase tracking-[0.35em] text-cyan-300 text-sm mb-5">
-              Real-time nightlife discovery
+            <p className="text-center text-fuchsia-400 uppercase tracking-[0.3em] text-sm mb-4">
+              BUILT FOR NIGHTLIFE
             </p>
 
-            <h1 className="text-6xl md:text-8xl font-black tracking-[-0.05em] leading-[0.92] mb-6">
+            <h2 className="text-center text-4xl md:text-5xl font-black mb-12">
+              EVERYTHING YOU NEED FOR AN EPIC NIGHT OUT
+            </h2>
 
-              LIVE THE NITE.
+            <div className="grid md:grid-cols-5 gap-8 text-center">
 
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-pink-500 to-purple-400 drop-shadow-[0_0_35px_rgba(255,0,200,0.9)]">
-                OWN THE VIBE.
-              </span>
-
-            </h1>
-
-            <p className="text-xl text-white/75 leading-relaxed max-w-xl mb-10">
-              Discover the best nightlife, bars, music and social spots in Benalmádena — live.
-            </p>
-
-            {/* Features */}
-            <div className="grid grid-cols-2 gap-4 mb-10">
-
-              <div className="bg-white/5 backdrop-blur-2xl border border-fuchsia-500/30 rounded-3xl p-5 shadow-[0_0_30px_rgba(255,0,200,0.15)]">
-
-                <Users className="text-fuchsia-400 mb-3" size={28} />
-
-                <h3 className="font-bold text-lg mb-2">
-                  Live Crowds
-                </h3>
-
-                <p className="text-white/60 text-sm">
-                  Real-time nightlife energy and crowd signals.
-                </p>
-
+              <div>
+                <div className="text-fuchsia-400 text-5xl mb-4">▥</div>
+                <h3 className="font-bold mb-2">LIVE VIBE SCORES</h3>
               </div>
 
-              <div className="bg-white/5 backdrop-blur-2xl border border-cyan-400/30 rounded-3xl p-5 shadow-[0_0_30px_rgba(0,255,255,0.12)]">
-
-                <Trophy className="text-cyan-300 mb-3" size={28} />
-
-                <h3 className="font-bold text-lg mb-2">
-                  Rewards
-                </h3>
-
-                <p className="text-white/60 text-sm">
-                  Earn rewards and unlock nightlife perks.
-                </p>
-
+              <div>
+                <div className="text-cyan-300 text-5xl mb-4">◎</div>
+                <h3 className="font-bold mb-2">FIND YOUR CROWD</h3>
               </div>
 
-            </div>
+              <div>
+                <div className="text-fuchsia-400 text-5xl mb-4">▣</div>
+                <h3 className="font-bold mb-2">SCAN & CHECK IN</h3>
+              </div>
 
-            {/* Buttons */}
-            <div className="flex flex-wrap gap-5">
+              <div>
+                <div className="text-pink-300 text-5xl mb-4">◇</div>
+                <h3 className="font-bold mb-2">EARN REWARDS</h3>
+              </div>
 
-              <button
-                onClick={() => navigate("/app")}
-                className="px-10 py-5 rounded-3xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 text-lg font-black shadow-[0_0_50px_rgba(255,0,200,0.7)] hover:scale-105 transition"
-              >
-                OPEN APP
-              </button>
-
-              <button
-                onClick={() => navigate("/explore")}
-                className="px-10 py-5 rounded-3xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 text-lg font-black hover:bg-cyan-400/20 transition"
-              >
-                EXPLORE VENUES
-              </button>
+              <div>
+                <div className="text-purple-300 text-5xl mb-4">✦</div>
+                <h3 className="font-bold mb-2">VENUE PARTNERS</h3>
+              </div>
 
             </div>
 
           </div>
 
-          {/* RIGHT */}
-          <div className="relative flex justify-center">
+        </section>
 
-            {/* Phone Glow */}
-            <div className="absolute w-[500px] h-[500px] bg-fuchsia-500/40 blur-[140px] rounded-full" />
+        {/* ================= VENUE TYPES ================= */}
 
-            {/* Phone */}
-            <img
-              src="/landing-phone.png"
-              alt="Vibe2nite App"
-              className="relative z-20 w-full max-w-[540px] rotate-[8deg] drop-shadow-[0_0_120px_rgba(255,0,200,0.9)]"
-            />
+        <section className="px-6 md:px-14 py-10">
 
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* FEATURE STRIP */}
-      <section className="relative z-20 max-w-7xl mx-auto px-6 md:px-16 -mt-10">
-
-        <div className="grid md:grid-cols-4 gap-5">
-
-          {[
-            {
-              icon: <MapPin size={26} />,
-              title: "Live Vibes",
-              text: "See what's busy right now",
-              color: "text-cyan-300",
-            },
-            {
-              icon: <Users size={26} />,
-              title: "Real Crowds",
-              text: "Live nightlife energy",
-              color: "text-fuchsia-400",
-            },
-            {
-              icon: <Trophy size={26} />,
-              title: "Earn Rewards",
-              text: "Unlock perks and offers",
-              color: "text-yellow-300",
-            },
-            {
-              icon: <Star size={26} />,
-              title: "Top Venues",
-              text: "Best nightlife spots nearby",
-              color: "text-purple-300",
-            },
-          ].map((item, i) => (
-
-            <div
-              key={i}
-              className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-[0_0_35px_rgba(255,0,200,0.12)]"
-            >
-
-              <div className={`${item.color} mb-4`}>
-                {item.icon}
-              </div>
-
-              <h3 className="font-bold text-xl mb-2">
-                {item.title}
-              </h3>
-
-              <p className="text-white/60">
-                {item.text}
-              </p>
-
-            </div>
-
-          ))}
-
-        </div>
-
-      </section>
-
-      {/* VENUE TYPES */}
-      <section className="py-24 px-6 md:px-16">
-
-        <div className="max-w-7xl mx-auto">
-
-          <h2 className="text-5xl md:text-6xl font-black text-center mb-16 tracking-tight">
-
-            EXPLORE THE VIBE
-
+          <h2 className="text-center text-5xl font-black mb-12">
+            EXPLORE BY VENUE TYPE
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8">
 
-            {/* Bars */}
-            <div className="group relative overflow-hidden rounded-[32px] border border-fuchsia-500/30 h-[420px] shadow-[0_0_45px_rgba(255,0,200,0.2)]">
+            {/* BARS */}
+            <div className="relative overflow-hidden rounded-[32px] border border-fuchsia-500/30 h-[420px]">
 
               <img
                 src="/bars.jpg"
                 alt="Bars"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                className="absolute inset-0 w-full h-full object-cover"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-black/50" />
 
               <div className="absolute bottom-0 p-8">
-
-                <Martini className="text-fuchsia-400 mb-4" size={42} />
 
                 <h3 className="text-5xl font-black mb-3">
                   BARS
                 </h3>
 
-                <p className="text-white/70 text-lg">
-                  Cocktails • Lounges • Social vibes
+                <p className="text-white/70">
+                  Cocktail bars • pubs • lounges
                 </p>
 
               </div>
 
             </div>
 
-            {/* Clubs */}
-            <div className="group relative overflow-hidden rounded-[32px] border border-cyan-400/30 h-[420px] shadow-[0_0_45px_rgba(0,255,255,0.18)]">
+            {/* CLUBS */}
+            <div className="relative overflow-hidden rounded-[32px] border border-cyan-400/30 h-[420px]">
 
               <img
                 src="/clubs.jpg"
                 alt="Clubs"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                className="absolute inset-0 w-full h-full object-cover"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-black/50" />
 
               <div className="absolute bottom-0 p-8">
-
-                <Users className="text-cyan-300 mb-4" size={42} />
 
                 <h3 className="text-5xl font-black mb-3">
                   NITE CLUBS
                 </h3>
 
-                <p className="text-white/70 text-lg">
-                  DJs • Dance floors • Energy
+                <p className="text-white/70">
+                  DJs • dance floors • energy
                 </p>
 
               </div>
 
             </div>
 
-            {/* Music */}
-            <div className="group relative overflow-hidden rounded-[32px] border border-purple-400/30 h-[420px] shadow-[0_0_45px_rgba(180,0,255,0.2)]">
+            {/* MUSIC */}
+            <div className="relative overflow-hidden rounded-[32px] border border-purple-400/30 h-[420px]">
 
               <img
                 src="/music.jpg"
                 alt="Music"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                className="absolute inset-0 w-full h-full object-cover"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-black/50" />
 
               <div className="absolute bottom-0 p-8">
-
-                <Music className="text-purple-300 mb-4" size={42} />
 
                 <h3 className="text-5xl font-black mb-3">
                   LIVE MUSIC
                 </h3>
 
-                <p className="text-white/70 text-lg">
-                  Bands • Acoustic • Events
+                <p className="text-white/70">
+                  Bands • acoustic • events
                 </p>
 
               </div>
@@ -345,11 +312,12 @@ export default function Landing() {
 
           </div>
 
-        </div>
+        </section>
 
-      </section>
+      </div>
 
     </div>
   );
 }
+```
 
