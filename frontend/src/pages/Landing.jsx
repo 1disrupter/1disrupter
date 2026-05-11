@@ -9,7 +9,10 @@ export default function Landing() {
     <div className="min-h-screen bg-black text-white overflow-hidden">
 
 {/* HERO */}
-<section className="relative min-h-screen overflow-hidden bg-[#050510]">
+<section className="relative min-h-screen overflow-hidden 
+bg-[#02030A]
+
+">
 
   {/* Background image */}
   <div
