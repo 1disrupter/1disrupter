@@ -782,38 +782,49 @@ const verifyReward = () => {
     )}
   </div>
 )}
-    
+
 <div className="mt-4 flex flex-col gap-3">
+
   <button
     onClick={() => {
-  onClose();
-  setShowRewards(true);
-}}
+      onClose();
+      setShowRewards(true);
+    }}
     className="text-black bg-primary-glow px-4 py-2 rounded font-semibold"
   >
     Spend Tokens
   </button>
-<button
-  onClick={() => {
-    onClose();
-    setShowVenueStats(true);
-  }}
-  className="text-white border border-primary-glow/30 px-4 py-2 rounded"
->
-  Venue Dashboard
-<button
-  onClick={() => {
-    onClose();
-    setShowLeaderboard(true);
-  }}
-  className="text-white border border-yellow-500/30 px-4 py-2 rounded"
->
-  Leaderboards
-</button>
-    
+
+  <button
+    onClick={() => {
+      onClose();
+      setShowVenueStats(true);
+    }}
+    className="text-white border border-primary-glow/30 px-4 py-2 rounded"
+  >
+    Venue Dashboard
+  </button>
+
+  <button
+    onClick={() => {
+      onClose();
+      setShowLeaderboard(true);
+    }}
+    className="text-white border border-yellow-500/30 px-4 py-2 rounded"
+  >
+    Leaderboards
+  </button>
+
+  <button
+    onClick={onClose}
+    className="text-white border border-white/20 px-4 py-2 rounded"
+  >
     Close
   </button>
+
 </div>
+
+
         
       </div>
     </div>
