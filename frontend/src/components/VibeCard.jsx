@@ -26,62 +26,69 @@ export default function VibeCard({ title, data, loading }) {
     ) : (
       <FaBuilding className="text-accent-pink text-xl" />
     );
+return (
+  <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-4 shadow-lg backdrop-blur-md">
 
-  return (
     {/* Venue Image */}
-<div className="relative h-48 overflow-hidden rounded-xl mb-4">
+    <div className="relative h-48 overflow-hidden rounded-xl mb-4">
 
-  <img
-    src={data.venue?.image_url}
-    alt={data.venue?.name}
-    className="w-full h-full object-cover"
-  />
+      <img
+        src={data.venue?.image_url}
+        alt={data.venue?.name}
+        className="w-full h-full object-cover"
+      />
 
-  <div className="absolute inset-0 bg-black/30" />
+      <div className="absolute inset-0 bg-black/30" />
 
-</div>
-    <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-4 shadow-lg backdrop-blur-md">
-      {/* Title + Icon */}
-      <div className="flex items-center gap-2 mb-2">
-        {icon}
-        <h4 className="text-xs uppercase tracking-wide text-accent-pink">
-          {title}
-        </h4>
-      </div>
-
-      {/* Venue Name */}
-      <h3 className="font-semibold text-lg mb-1">
-        {data.venue_name || data.venue?.name || "Coming soon"}
-      </h3>
-
-      {/* Tagline */}
-      <p className="text-white/60 text-sm mb-3">
-        {data.tagline || ""}
-      </p>
-
-      {/* Animated Vibe Score */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-4xl font-bold text-accent-pink animate-pulse">
-          {data.vibe_score || data.vibe?.vibe_score || 0}
-        </span>
-        <span className="text-white/40 text-xs uppercase tracking-wide">
-          vibe score
-        </span>
-      </div>
-
-      {/* Distance */}
-      <p className="text-white/50 text-sm mb-4">
-        {data.distance ||
-          (data.distance_km
-            ? `${Math.round(data.distance_km)} min away`
-            : "")}
-      </p>
-
-      {/* Button */}
-      <button className="w-full py-2 rounded-lg font-semibold bg-accent-pink text-black hover:bg-pink-400 transition">
-        GO HERE
-      </button>
     </div>
-  );
-}
 
+    {/* Title + Icon */}
+    <div className="flex items-center gap-2 mb-2">
+
+      {icon}
+
+      <h4 className="text-xs uppercase tracking-wide text-accent-pink">
+        {title}
+      </h4>
+
+    </div>
+
+    {/* Venue Name */}
+    <h3 className="font-semibold text-lg mb-1">
+      {data.venue_name || data.venue?.name || "Coming soon"}
+    </h3>
+
+    {/* Tagline */}
+    <p className="text-white/60 text-sm mb-3">
+      {data.tagline || ""}
+    </p>
+
+    {/* Animated Vibe Score */}
+    <div className="flex items-center justify-between mb-3">
+
+      <span className="text-4xl font-bold text-accent-pink animate-pulse">
+        {data.vibe_score || data.vibe?.vibe_score || 0}
+      </span>
+
+      <span className="text-white/40 text-xs uppercase tracking-wide">
+        vibe score
+      </span>
+
+    </div>
+
+    {/* Distance */}
+    <p className="text-white/50 text-sm mb-4">
+      {data.distance ||
+        (data.distance_km
+          ? `${Math.round(data.distance_km)} min away`
+          : "")}
+    </p>
+
+    {/* Button */}
+    <button className="w-full py-2 rounded-lg font-semibold bg-accent-pink text-black hover:bg-pink-400 transition">
+      GO HERE
+    </button>
+
+  </div>
+);
+ 
