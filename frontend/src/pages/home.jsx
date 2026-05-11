@@ -280,7 +280,10 @@ const [tokens, setTokens] = useState(() => {
 
   <div className="relative z-10 mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
 
-    <motion.div
+    <motion.div>
+    </div>
+  </section>
+  
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-start gap-5"
