@@ -272,106 +272,24 @@ const [tokens, setTokens] = useState(() => {
         }
         onAccount={() => navigate("/me")}
       />
-
-      {/* Hero */}
+{/* Hero */}
 <section className="relative overflow-hidden">
 
   <div className="v2n-grid absolute inset-0 opacity-30 pointer-events-none" />
 
   <div className="relative z-10 mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
 
-         </div>
+    <div className="flex flex-col gap-6">
 
-</section>
-
-
-
-
-  
-
-    
-
-
-
-
-
-  
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-start gap-5"
-    >
-
-      <div className="flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-primary-glow">
-        <Flame size={12} />
-        Right now near you
-      </div>
-
-      <h1 className="font-display text-5xl leading-[0.9] tracking-wider md:text-7xl">
-
-        <span className="v2n-sheen">
-          DON'T GUESS
-        </span>
-
+      <h1 className="text-5xl md:text-7xl font-bold text-white">
+        DON'T GUESS.
         <br />
-
-        <span className="text-white">
-          WHERE TO GO.
-        </span>
-
-        <br />
-
-        <span className="relative mt-2 inline-block origin-bottom-left -rotate-[4deg]">
-
-          <span
-            className="relative z-10 text-accent-pink"
-            style={{
-              textShadow:
-                "0 0 32px rgba(255,46,196,0.55), 0 0 8px rgba(255,46,196,0.85)",
-            }}
-          >
-            KNOW.
-          </span>
-
-          <svg
-            aria-hidden
-            viewBox="0 0 320 22"
-            preserveAspectRatio="none"
-            className="absolute left-[-4%] top-full h-3 w-[108%] md:h-4"
-            style={{
-              filter:
-                "drop-shadow(0 0 14px rgba(255,46,196,0.65)) drop-shadow(0 0 4px rgba(255,46,196,0.95))",
-            }}
-          >
-            <path
-              d="M3 12 C 35 5, 80 4, 130 9 S 220 16, 270 8 C 295 5, 312 9, 318 13 L 316 19 C 280 13, 230 18, 175 16 S 70 11, 18 17 C 11 17, 4 16, 2 15 Z"
-              fill="#FF2EC4"
-            />
-          </svg>
-
-        </span>
-
+        KNOW.
       </h1>
 
-      <p className="max-w-xl text-sm text-white/60 md:text-base">
-        Three perfectly-picked spots, tuned in real time. Powered by crowd
-        signals, live feedback and an honest vibe score.
-        <Logo size="xs" /> — find the vibe, go tonight.
+      <p className="text-white/60 max-w-xl">
+        Live nightlife vibes, rewards and real-time discovery.
       </p>
-
-      <button
-        onClick={() => {
-          console.log("clicked");
-          setShowWallet(true);
-        }}
-        className="relative z-20 mt-4 inline-flex items-center gap-2 rounded-full border border-primary-glow/40 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary-glow"
-      >
-        💰 Tokens
-
-        <span className="font-mono text-white text-sm">
-          {tokens}
-        </span>
-
-      </button>
 
       <div className="flex flex-wrap items-center gap-3">
 
@@ -380,7 +298,6 @@ const [tokens, setTokens] = useState(() => {
           size="md"
           variant="primary"
           onClick={useMyLocation}
-          data-testid="hero-use-location"
         >
           Use my location
         </Button>
@@ -398,10 +315,19 @@ const [tokens, setTokens] = useState(() => {
           size="md"
           variant="secondary"
           onClick={() => fetchVibes()}
-          data-testid="hero-refresh"
         >
           Refresh vibes
         </Button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
 
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60">
 
