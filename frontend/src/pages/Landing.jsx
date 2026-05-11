@@ -1,4 +1,4 @@
-```jsx id="6i7v0h"
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -314,10 +314,90 @@ export default function Landing() {
 
         </section>
 
+{/* ================= LIVE STATS ================= */}
+
+<section className="px-6 md:px-14 py-8">
+
+  <div className="rounded-[36px] border border-fuchsia-500/20 bg-white/5 backdrop-blur-2xl p-8 shadow-[0_0_60px_rgba(255,0,200,0.12)]">
+
+    <div className="grid md:grid-cols-5 gap-8 text-center">
+
+      {/* Stat */}
+      <div>
+
+        <div className="text-fuchsia-400 text-5xl font-black mb-2">
+          25K+
+        </div>
+
+        <p className="uppercase tracking-[0.2em] text-xs text-white/60">
+          Nights Lived
+        </p>
+
+      </div>
+
+      {/* Stat */}
+      <div>
+
+        <div className="text-cyan-300 text-5xl font-black mb-2">
+          12K+
+        </div>
+
+        <p className="uppercase tracking-[0.2em] text-xs text-white/60">
+          Check-ins Today
+        </p>
+
+      </div>
+
+      {/* Stat */}
+      <div>
+
+        <div className="text-pink-400 text-5xl font-black mb-2">
+          350+
+        </div>
+
+        <p className="uppercase tracking-[0.2em] text-xs text-white/60">
+          Venues Growing
+        </p>
+
+      </div>
+
+      {/* Stat */}
+      <div>
+
+        <div className="text-purple-300 text-5xl font-black mb-2">
+          50K+
+        </div>
+
+        <p className="uppercase tracking-[0.2em] text-xs text-white/60">
+          Rewards Earned
+        </p>
+
+      </div>
+
+      {/* Stat */}
+      <div>
+
+        <div className="text-yellow-300 text-5xl font-black mb-2">
+          4.8★
+        </div>
+
+        <p className="uppercase tracking-[0.2em] text-xs text-white/60">
+          App Rating
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
       </div>
 
     </div>
   );
 }
-```
+
 
