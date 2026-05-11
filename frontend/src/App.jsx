@@ -7,7 +7,7 @@ import { LocationContext } from "./context/LocationContext";
 import Footer from "./components/Footer";
 
 import Disclaimer from "./pages/Disclaimer";
-  
+ const Landing = lazy(() => import("./pages/Landing")); 
 const Home = lazy(() => import("./pages/home"));
 const Brand = lazy(() => import("./pages/Brand"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -45,10 +45,12 @@ export default function App() {
             }
           >
             <Routes>
-              <Route
-                path="/"
-                element={<Home registerLocationFn={setMyLocationFn} />}
-              />
+             <Route path="/" element={<Landing />} />
+
+<Route
+  path="/app"
+  element={<Home registerLocationFn={setMyLocationFn} />}
+/>
               <Route path="/explore" element={<Explore />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
               <Route path="/brand" element={<AdminGuardedBrand />} />
