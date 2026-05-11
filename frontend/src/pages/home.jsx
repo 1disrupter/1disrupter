@@ -280,8 +280,10 @@ const [tokens, setTokens] = useState(() => {
 
   <div className="relative z-10 mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
 
-    <motion.div>
+  </motion.div>
+  
     </div>
+      
   </section>
   
       initial={{ opacity: 0, y: 16 }}
