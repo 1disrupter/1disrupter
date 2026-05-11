@@ -354,7 +354,13 @@ const [tokens, setTokens] = useState(() => {
 
       </div>
  
-      <SectionDivider label={`Top 3 near ${loc.label}`} />
+      
+<>
+  </section>
+
+  <SectionDivider label={`Top 3 near ${loc.label}`} />
+
+
 <div className="mx-auto max-w-6xl px-4 mb-4 flex justify-end">
   <Button
     variant="secondary"
