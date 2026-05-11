@@ -353,11 +353,7 @@ const [tokens, setTokens] = useState(() => {
         </div>
 
       </div>
-  variant="secondary"
-  onClick={() => navigate("/explore")}
->
-  Explore More
-</Button> leftIcon={<MapPin size={16} />} size="md" variant="primary" onClick={useMyLocation} data-testid="hero-use-location" > Use my location </Button> <Button leftIcon={<RefreshCw size={14} />} size="md" variant="secondary" onClick={() => fetchVibes()} data-testid="hero-refresh" > Refresh vibes </Button> <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60"> <span className="text-primary-glow">radius</span> <input type="range" min={1} max={100} value={radius} onChange={(e) => setRadius(Number(e.target.value))} onMouseUp={() => fetchVibes(loc, radius)} onTouchEnd={() => fetchVibes(loc, radius)} className="w-32 accent-[#B15CFF]" /> <span className="font-mono text-white">{radius} km</span> </div> </div> <div className="flex flex-wrap gap-2 pt-1 text-[11px]"> <Chip tone="purple">Real-time vibe scores</Chip> <Chip tone="pink">Top 3. Every time.</Chip> <Chip tone="aqua">Bars · Clubs · Live Music</Chip> <Chip tone="amber">Crowd signals</Chip> </div> </motion.div> </div> </section>
+ 
       <SectionDivider label={`Top 3 near ${loc.label}`} />
 <div className="mx-auto max-w-6xl px-4 mb-4 flex justify-end">
   <Button
