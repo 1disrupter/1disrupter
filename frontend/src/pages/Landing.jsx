@@ -21,26 +21,27 @@ export default function Landing() {
 
           {/* LEFT */}
           <div>
+<p className="text-cyan-400 tracking-[0.3em] uppercase text-sm mb-4">
+  Real-time nightlife discovery
+</p>
 
-            <p className="text-cyan-400 tracking-[0.3em] uppercase text-sm mb-4">
-              Live the Nite. Own the Vibe.
-            </p>
+<h1 className="text-5xl md:text-7xl font-black leading-tight mb-6">
 
-            <h1 className="text-6xl md:text-8xl font-black leading-none mb-6">
+  Discover the best nightlife,
+  bars, music and social spots
+  in Benalmádena — live.
 
-              LIVE THE NITE.
+</h1>
 
-              <span className="block text-pink-500">
-                OWN THE VIBE.
-              </span>
+<p className="text-pink-500 text-2xl md:text-3xl font-bold tracking-wide mb-6">
+  LIVE THE NITE. OWN THE VIBE.
+</p>
 
-            </h1>
-
-            <p className="text-white/70 text-lg max-w-xl mb-8">
-              Real-time nightlife discovery powered by live crowds,
-              vibe scores, rewards and venue check-ins.
-            </p>
-
+<p className="text-white/70 text-lg max-w-xl mb-8">
+  Real-time vibe scores, live crowd energy, rewards
+  and venue discovery — all in one app.
+</p>
+           
             <div className="flex flex-wrap gap-4">
 
               <button
