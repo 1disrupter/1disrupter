@@ -392,6 +392,69 @@ export default function Landing() {
   </div>
 
 </section>
+{/* ================= VENUE OWNER CTA ================= */}
+
+<section className="px-6 md:px-14 py-10">
+
+  <div className="relative overflow-hidden rounded-[40px] border border-fuchsia-500/30 min-h-[420px] shadow-[0_0_70px_rgba(255,0,200,0.18)]">
+
+    {/* Background Image */}
+    <img
+      src="/venue-owner.jpg"
+      alt="Venue Owner"
+      className="absolute inset-0 w-full h-full object-cover"
+    />
+
+    {/* Overlay */}
+    <div className="absolute inset-0 bg-black/65" />
+
+    {/* Neon Glow */}
+    <div className="absolute top-[-120px] right-[-120px] w-[400px] h-[400px] bg-fuchsia-500/30 blur-[120px] rounded-full" />
+
+    {/* Content */}
+    <div className="relative z-20 p-10 md:p-16 max-w-3xl">
+
+      <p className="uppercase tracking-[0.3em] text-cyan-300 text-sm mb-5">
+        FOR VENUES
+      </p>
+
+      <h2 className="text-5xl md:text-7xl font-black leading-[0.92] tracking-[-0.05em] mb-6">
+
+        OWN A BAR,
+        CLUB OR
+        LIVE VENUE?
+
+      </h2>
+
+      <p className="text-xl text-white/75 leading-relaxed mb-10 max-w-2xl">
+        Get discovered live by nightlife crowds, promote your venue,
+        increase footfall and become part of the Vibe2nite network.
+      </p>
+
+      {/* Buttons */}
+      <div className="flex flex-wrap gap-5">
+
+        <button
+          onClick={() => navigate("/owner")}
+          className="px-10 py-5 rounded-3xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 text-lg font-black shadow-[0_0_60px_rgba(255,0,200,1)] hover:scale-105 transition"
+        >
+          CLAIM YOUR VENUE
+        </button>
+
+        <button
+          className="px-10 py-5 rounded-3xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 text-lg font-black hover:bg-cyan-400/20 transition"
+        >
+          LEARN MORE
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
 
 
       </div>
