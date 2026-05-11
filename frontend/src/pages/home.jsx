@@ -279,14 +279,17 @@ const [tokens, setTokens] = useState(() => {
   <div className="v2n-grid absolute inset-0 opacity-30 pointer-events-none" />
 
   <div className="relative z-10 mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
-    
-</div>
-  
-  </motion.div>
-  
+
+        </div>
+
+      </motion.div>
+
     </div>
-      
-  </section>
+
+</section>
+
+
+
   
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
