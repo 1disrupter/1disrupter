@@ -7,10 +7,21 @@ import {
   VenueHeroCard, LoadingScreen, ErrorState, EmptyState,
   Button, IconButton, Chip, SectionDivider, useToast,
   Modal, Input,
-} from "@/components/v2n";
-import { getTopVibes, submitFeedback, submitClaim, checkInVenue, earnReward,getWallet } from "@/lib/api";
-import { getOrCreateUserId, capturePendingReferrer, consumePendingReferrer } from "@/lib/userId";
-import { useReferralPing } from "@/lib/useReferralPing";
+} from "../components/v2n";
+import {
+  getTopVibes,
+  submitFeedback,
+  submitClaim,
+  checkInVenue,
+  earnReward,
+  getWallet
+} from "../lib/api";
+import {
+  getOrCreateUserId,
+  capturePendingReferrer,
+  consumePendingReferrer
+} from "../lib/userId";
+import { useReferralPing } from "../lib/useReferralPing";
 
 import QRScanner from "../components/QRScanner";
 
