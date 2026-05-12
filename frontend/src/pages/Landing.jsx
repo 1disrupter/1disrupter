@@ -625,22 +625,48 @@ duration-500
     </p>
 
     
-{/* LIVE APP */}
 
-<div className="relative z-20 mt-16 rounded-[40px]
+{/* ENTER APP PORTAL */}
+<div className="mt-20 flex justify-center">
 
- overflow-hidden border border-fuchsia-500/20 shadow-[0_0_120px_rgba(255,0,200,0.15)]">
+  <button
+    onClick={() => navigate("/app")}
+    className="
+      group
+      relative
+      px-16
+      py-8
+      rounded-full
+      overflow-hidden
+      bg-black
+      border border-fuchsia-500/40
+      shadow-[0_0_80px_rgba(255,0,200,0.25)]
+      hover:scale-105
+      transition-all
+      duration-500
+    "
+  >
 
-  <iframe
-    src="/app"
-    title="Vibe2nite Live App"
-    
-className="w-full min-h-screen border-0 bg-black"
+    {/* Glow */}
+    <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/20 via-pink-500/20 to-cyan-400/20 opacity-0 group-hover:opacity-100 transition duration-500" />
 
+    <div className="relative z-20">
 
-  />
+      <p className="text-xs uppercase tracking-[0.4em] text-cyan-300 mb-2">
+        ENTER THE LIVE EXPERIENCE
+      </p>
+
+      <h3 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
+        ENTER VIBE2NITE
+      </h3>
+
+    </div>
+
+  </button>
 
 </div>
+
+
 
 
 
