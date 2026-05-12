@@ -625,7 +625,6 @@ duration-500
     </p>
 
     
-
 {/* ENTER APP PORTAL */}
 <div className="mt-20 flex justify-center">
 
@@ -666,23 +665,14 @@ duration-500
 
 </div>
 
-
-
-
-
-    
-
-  </div>
+</div>
 
 </section>
 
-
       </div>
 
-    
-    
-  
   );
 }
+
 
 
