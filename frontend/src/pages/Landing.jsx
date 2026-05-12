@@ -676,33 +676,45 @@ bg-gradient-to-t from-black via-black/40 to-black/10
       </p>
 
       {/* FORM */}
-      <form className="grid md:grid-cols-2 gap-6">
+      
+<form
+  action="https://formspree.io/f/xgodqvyp"
+  method="POST"
+  className="grid md:grid-cols-2 gap-6"
+>
+
+
 
         <input
           type="text"
+          name="venue"
           placeholder="Venue Name"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <input
           type="text"
+          name="venue"
           placeholder="Contact Name"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <input
           type="email"
+          name="venue"
           placeholder="Email Address"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <input
           type="text"
+          name="venue"
           placeholder="WhatsApp / Phone"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <select
+          name="venueType"
           className="bg-black border border-white/10 rounded-2xl px-6 py-5 text-white outline-none focus:border-fuchsia-500"
         >
           <option>Venue Type</option>
@@ -715,11 +727,13 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
         <input
           type="text"
+          name="venue"
           placeholder="City"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <textarea
+          name="message"
           placeholder="Tell us about your venue..."
           rows="5"
           className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
