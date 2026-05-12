@@ -7,20 +7,27 @@ export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-[#02030A] text-white overflow-x-hidden">
+    
+<div className="min-h-screen overflow-x-hidden bg-[#05010D] text-white relative">
 
-      {/* GLOBAL BACKGROUND */}
-      <div className="fixed inset-0 z-0">
+  {/* GLOBAL GLOW */}
+  <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
 
-        <div className="absolute inset-0 bg-[#02030A]" />
+    {/* Pink Glow */}
+    <div className="absolute top-[-200px] left-[-150px] w-[700px] h-[700px] rounded-full bg-[#FF2D8D]/20 blur-[140px]" />
 
-        <div className="absolute top-[-300px] left-[-200px] w-[900px] h-[900px] bg-fuchsia-500/30 blur-[180px] rounded-full" />
+    {/* Purple Glow */}
+    <div className="absolute top-[20%] right-[-200px] w-[800px] h-[800px] rounded-full bg-[#A020F0]/20 blur-[160px]" />
 
-        <div className="absolute bottom-[-300px] right-[-200px] w-[900px] h-[900px] bg-cyan-400/20 blur-[180px] rounded-full" />
+    {/* Cyan Accent */}
+    <div className="absolute bottom-[-200px] left-[20%] w-[500px] h-[500px] rounded-full bg-[#00D9FF]/10 blur-[120px]" />
 
-      </div>
+  </div>
 
-      <div className="relative z-10">
+  {/* CONTENT */}
+  <div className="relative z-10">
+
+
 
         {/* ================= HERO ================= */}
 
@@ -459,6 +466,8 @@ export default function Landing() {
 
       </div>
 
+    </div>
+    
     </div>
   );
 }
