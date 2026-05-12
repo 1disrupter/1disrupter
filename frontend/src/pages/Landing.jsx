@@ -626,12 +626,18 @@ duration-500
 
     
 {/* LIVE APP */}
-<div className="mt-16 rounded-[40px] overflow-hidden border border-fuchsia-500/20 shadow-[0_0_120px_rgba(255,0,200,0.15)]">
+
+<div className="relative z-20 mt-16 rounded-[40px]
+
+ overflow-hidden border border-fuchsia-500/20 shadow-[0_0_120px_rgba(255,0,200,0.15)]">
 
   <iframe
     src="/app"
     title="Vibe2nite Live App"
-    className="w-full h-[1200px] border-0 bg-black"
+    
+className="w-full min-h-screen border-0 bg-black"
+
+
   />
 
 </div>
