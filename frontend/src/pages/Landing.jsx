@@ -28,7 +28,7 @@ export default function Landing() {
 
           {/* HERO BG */}
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-50"
+            className="absolute inset-0 bg-cover bg-center opacity-100"
             style={{
               backgroundImage: "url('/hero-bg.png')",
             }}
