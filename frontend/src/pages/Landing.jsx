@@ -647,6 +647,100 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
 </section>
 
+{/* ================= FOUNDING VENUES WAITLIST ================= */}
+
+<section className="px-6 md:px-14 py-20">
+
+  <div className="relative overflow-hidden rounded-[40px] border border-cyan-400/20 bg-black/60 backdrop-blur-2xl p-10 md:p-16 shadow-[0_0_80px_rgba(0,217,255,0.12)]">
+
+    {/* Glow */}
+    <div className="absolute top-[-100px] left-[-100px] w-[300px] h-[300px] bg-cyan-400/20 blur-[120px] rounded-full" />
+
+    <div className="relative z-20">
+
+      <p className="uppercase tracking-[0.4em] text-cyan-300 text-sm mb-5">
+        FOUNDING VENUES
+      </p>
+
+      <h2 className="text-5xl md:text-7xl font-black leading-[0.92] tracking-[-0.05em] mb-6">
+
+        JOIN THE
+        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-pink-500">
+          WAITLIST
+        </span>
+
+      </h2>
+
+      <p className="text-xl text-white/70 max-w-3xl leading-relaxed mb-12">
+        We’re onboarding a limited number of bars, clubs and live venues for the first Vibe2nite launch in Benalmádena.
+      </p>
+
+      {/* FORM */}
+      <form className="grid md:grid-cols-2 gap-6">
+
+        <input
+          type="text"
+          placeholder="Venue Name"
+          className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
+        />
+
+        <input
+          type="text"
+          placeholder="Contact Name"
+          className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
+        />
+
+        <input
+          type="email"
+          placeholder="Email Address"
+          className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
+        />
+
+        <input
+          type="text"
+          placeholder="WhatsApp / Phone"
+          className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
+        />
+
+        <select
+          className="bg-black border border-white/10 rounded-2xl px-6 py-5 text-white outline-none focus:border-fuchsia-500"
+        >
+          <option>Venue Type</option>
+          <option>Bar</option>
+          <option>Nightclub</option>
+          <option>Cocktail Lounge</option>
+          <option>Live Music Venue</option>
+          <option>DJ / Promoter</option>
+        </select>
+
+        <input
+          type="text"
+          placeholder="City"
+          className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
+        />
+
+        <textarea
+          placeholder="Tell us about your venue..."
+          rows="5"
+          className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
+        />
+
+        <button
+          type="submit"
+          className="md:col-span-2 py-6 rounded-3xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-cyan-400 text-xl font-black shadow-[0_0_60px_rgba(255,0,200,0.4)] hover:scale-[1.02] transition"
+        >
+          JOIN FOUNDING VENUES
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</section>
+
+
 
 
 {/* ================= ENTER THE APP ================= */}
