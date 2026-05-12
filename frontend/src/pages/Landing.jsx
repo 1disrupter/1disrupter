@@ -588,30 +588,18 @@ duration-500
 </section>
 
 
+
 {/* ================= ENTER THE APP ================= */}
 
-<section className="relative min-h-screen overflow-hidden flex items-center justify-center px-6 md:px-14">
+<section className="px-6 md:px-14 py-24">
 
-  {/* Background */}
-  <div className="absolute inset-0 bg-black" />
-
-  {/* Glow */}
-  <div className="absolute inset-0 overflow-hidden">
-
-    <div className="absolute top-[10%] left-[10%] w-[400px] h-[400px] bg-fuchsia-500/10 blur-[140px] rounded-full" />
-
-    <div className="absolute bottom-[0%] right-[5%] w-[500px] h-[500px] bg-cyan-400/10 blur-[160px] rounded-full" />
-
-  </div>
-
-  {/* App Preview */}
-  <div className="relative z-20 text-center max-w-6xl">
+  <div className="text-center">
 
     <p className="uppercase tracking-[0.4em] text-cyan-300 text-sm mb-6">
       THE NIGHT IS LIVE
     </p>
 
-    <h2 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-[-0.05em] mb-8">
+    <h2 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-[-0.05em] mb-10">
 
       ENTER THE
       <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
@@ -620,52 +608,51 @@ duration-500
 
     </h2>
 
-    <p className="text-xl text-white/70 max-w-3xl mx-auto mb-14">
+    <p className="text-xl text-white/70 max-w-3xl mx-auto mb-16">
       Real crowds. Real venues. Real nightlife energy happening live around you.
     </p>
 
-    
-{/* ENTER APP PORTAL */}
-<div className="mt-20 flex justify-center">
+    {/* ENTER APP PORTAL */}
+    <div className="mt-20 flex justify-center">
 
-  <button
-    onClick={() => navigate("/app")}
-    className="
-      group
-      relative
-      px-16
-      py-8
-      rounded-full
-      overflow-hidden
-      bg-black
-      border border-fuchsia-500/40
-      shadow-[0_0_80px_rgba(255,0,200,0.25)]
-      hover:scale-105
-      transition-all
-      duration-500
-    "
-  >
+      <button
+        onClick={() => navigate("/app")}
+        className="
+          group
+          relative
+          px-16
+          py-8
+          rounded-full
+          overflow-hidden
+          bg-black
+          border border-fuchsia-500/40
+          shadow-[0_0_80px_rgba(255,0,200,0.25)]
+          hover:scale-105
+          transition-all
+          duration-500
+        "
+      >
 
-    {/* Glow */}
-    <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/20 via-pink-500/20 to-cyan-400/20 opacity-0 group-hover:opacity-100 transition duration-500" />
+        {/* Glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/20 via-pink-500/20 to-cyan-400/20 opacity-0 group-hover:opacity-100 transition duration-500" />
 
-    <div className="relative z-20">
+        <div className="relative z-20">
 
-      <p className="text-xs uppercase tracking-[0.4em] text-cyan-300 mb-2">
-        ENTER THE LIVE EXPERIENCE
-      </p>
+          <p className="text-xs uppercase tracking-[0.4em] text-cyan-300 mb-2">
+            ENTER THE LIVE EXPERIENCE
+          </p>
 
-      <h3 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
-        ENTER VIBE2NITE
-      </h3>
+          <h3 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
+            ENTER VIBE2NITE
+          </h3>
+
+        </div>
+
+      </button>
 
     </div>
 
-  </button>
-
-</div>
-
-</div>
+  </div>
 
 </section>
 
@@ -673,6 +660,4 @@ duration-500
 
   );
 }
-
-
 
