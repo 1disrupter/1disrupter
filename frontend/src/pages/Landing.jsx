@@ -8,7 +8,7 @@ export default function Landing() {
 
   return (
     
-<div className="min-h-screen overflow-x-hidden bg-[#05010D] text-white relative">
+<div className="min-h-screen overflow-x-hidden bg-black text-white relative">
 
  
   {/* CONTENT */}
@@ -16,16 +16,7 @@ export default function Landing() {
   <div className="relative z-10">
     
 
-{/* GLOBAL ATMOSPHERE */}
-<div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#05010D]">
 
-  {/* Subtle Pink Edge Glow */}
-  <div className="absolute top-[-300px] left-[-300px] w-[500px] h-[500px] rounded-full bg-[#FF2D8D]/10 blur-[180px]" />
-
-  {/* Small Purple Accent */}
-  <div className="absolute bottom-[-250px] right-[-250px] w-[450px] h-[450px] rounded-full bg-[#A020F0]/10 blur-[180px]" />
-
-</div>
 
 
 
@@ -171,8 +162,10 @@ export default function Landing() {
             {/* RIGHT PHONE */}
             <div className="relative flex justify-center">
 
-              {/* GLOW */}
-              <div className="absolute w-[550px] h-[550px] bg-fuchsia-500/40 blur-[140px] rounded-full" />
+{/* Subtle Device Glow */}
+<div className="absolute w-[380px] h-[380px] bg-fuchsia-500/15 blur-[90px] rounded-full" />
+
+
 
               {/* PHONE */}
               <img
