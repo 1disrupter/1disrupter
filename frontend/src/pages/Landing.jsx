@@ -284,19 +284,7 @@ export default function Landing() {
 
            
 
-{/* Subtle Device Glow */}
-<div className="absolute w-[380px] h-[380px] bg-fuchsia-500/15 blur-[90px] rounded-full" />
 
-
-
-              {/* PHONE */}
-              <img
-                src="/landing-phone.png"
-                alt="Vibe2nite App"
-                className="relative z-20 w-full max-w-[520px] rotate-[8deg] drop-shadow-[0_0_120px_rgba(255,0,200,1)]"
-              />
-
-            </div>
 
           </div>
 
