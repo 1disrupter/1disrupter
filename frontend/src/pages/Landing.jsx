@@ -687,8 +687,8 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
         <input
           type="text"
-          name="contact"
-          placeholder="contact Name"
+          name="venue"
+          placeholder="Venue Name"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
