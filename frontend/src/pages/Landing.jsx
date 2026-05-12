@@ -677,23 +677,31 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
       <button
         onClick={() => navigate("/app")}
-        className="
-          group
-          relative
-          px-16
-          py-8
-          rounded-full
-          overflow-hidden
-          bg-black
-          border border-fuchsia-500/40
-          shadow-[0_0_80px_rgba(255,0,200,0.25)]
-          hover:scale-105
-          transition-all
-          duration-500
-        "
+        
+className="
+  group
+  relative
+  px-20
+  py-10
+  rounded-full
+  overflow-hidden
+  bg-black/80
+  backdrop-blur-2xl
+  border border-fuchsia-500/40
+  shadow-[0_0_120px_rgba(255,0,200,0.35)]
+  hover:scale-[1.04]
+  transition-all
+  duration-700
+"
+
+
       >
 
         {/* Glow */}
+        
+<div className="absolute -inset-10 bg-gradient-to-r from-fuchsia-500/20 via-pink-500/10 to-cyan-400/20 blur-[80px] opacity-60 group-hover:opacity-100 transition duration-700" />
+
+
         <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/20 via-pink-500/20 to-cyan-400/20 opacity-0 group-hover:opacity-100 transition duration-500" />
 
         <div className="relative z-20">
@@ -702,7 +710,10 @@ bg-gradient-to-t from-black via-black/40 to-black/10
             ENTER THE LIVE EXPERIENCE
           </p>
 
-          <h3 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
+          <h3 className=" 
+text-5xl md:text-7xl
+
+font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
             ENTER VIBE2NITE
           </h3>
 
@@ -718,7 +729,7 @@ bg-gradient-to-t from-black via-black/40 to-black/10
     
   </div>
   
-      </div>
+      
 
   );
 }
