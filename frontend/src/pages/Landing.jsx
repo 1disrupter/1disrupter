@@ -624,31 +624,21 @@ duration-500
       Real crowds. Real venues. Real nightlife energy happening live around you.
     </p>
 
-    {/* Full App Preview */}
-    <div className="relative rounded-[40px] overflow-hidden border border-fuchsia-500/30 shadow-[0_0_100px_rgba(255,0,200,0.2)]">
+    
+{/* LIVE APP */}
+<div className="mt-16 rounded-[40px] overflow-hidden border border-fuchsia-500/20 shadow-[0_0_120px_rgba(255,0,200,0.15)]">
 
-      <img
-        src="/app-preview-full.png"
-        alt="Vibe2nite App"
-        className="w-full object-cover"
-      />
+  <iframe
+    src="/app"
+    title="Vibe2nite Live App"
+    className="w-full h-[1200px] border-0 bg-black"
+  />
 
-      {/* Overlay Fade */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+</div>
 
-    </div>
 
-    {/* CTA */}
-    <div className="mt-12">
 
-      <button
-        onClick={() => navigate("/app")}
-        className="px-14 py-6 rounded-3xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 text-xl font-black shadow-[0_0_70px_rgba(255,0,200,0.8)] hover:scale-105 transition duration-500"
-      >
-        ENTER LIVE APP
-      </button>
-
-    </div>
+    
 
   </div>
 
