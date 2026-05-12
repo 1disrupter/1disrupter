@@ -15,19 +15,19 @@ export default function Landing() {
   
   <div className="relative z-10">
     
-{/* GLOBAL GLOW */}
-<div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
 
-  {/* Pink Glow */}
-  <div className="absolute top-[-200px] left-[-150px] w-[700px] h-[700px] rounded-full bg-[#FF2D8D]/20 blur-[140px]" />
+{/* GLOBAL ATMOSPHERE */}
+<div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#05010D]">
 
-  {/* Purple Glow */}
-  <div className="absolute top-[20%] right-[-200px] w-[800px] h-[800px] rounded-full bg-[#A020F0]/20 blur-[160px]" />
+  {/* Subtle Pink Edge Glow */}
+  <div className="absolute top-[-300px] left-[-300px] w-[500px] h-[500px] rounded-full bg-[#FF2D8D]/10 blur-[180px]" />
 
-  {/* Cyan Accent */}
-  <div className="absolute bottom-[-200px] left-[20%] w-[500px] h-[500px] rounded-full bg-[#00D9FF]/10 blur-[120px]" />
+  {/* Small Purple Accent */}
+  <div className="absolute bottom-[-250px] right-[-250px] w-[450px] h-[450px] rounded-full bg-[#A020F0]/10 blur-[180px]" />
 
 </div>
+
+
 
 
 
