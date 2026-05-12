@@ -592,7 +592,7 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
     {/* Background Image */}
     <img
-      src="/venue-owner.jpg"
+      src="/owner.png"
       alt="Venue Owner"
       className="absolute inset-0 w-full h-full object-cover"
     />
