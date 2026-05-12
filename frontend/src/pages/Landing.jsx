@@ -30,7 +30,7 @@ export default function Landing() {
           <div
             className="absolute inset-0 bg-cover bg-center opacity-50"
             style={{
-              backgroundImage: "url('/hero-bg.jpg')",
+              backgroundImage: "url('/hero-bg.png')",
             }}
           />
 
