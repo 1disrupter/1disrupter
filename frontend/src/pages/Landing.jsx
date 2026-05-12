@@ -213,7 +213,7 @@ duration-500
   ">
 
     <img
-      src="/bars.jpg"
+      src="/bars.png"
       alt="Electric Avenue"
       className="h-[140px] w-full object-cover"
     />
@@ -269,7 +269,7 @@ duration-500
   ">
 
     <img
-      src="/clubs.jpg"
+      src="/clubs.png"
       alt="Neon District"
       className="h-[140px] w-full object-cover"
     />
@@ -378,7 +378,7 @@ duration-500
  border border-fuchsia-500/30 h-[420px]">
 
               <img
-                src="/bars.jpg"
+                src="/bars.png"
                 alt="Bars"
                 
 className="
@@ -421,7 +421,7 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 border border-cyan-400/30 h-[420px]">
 
               <img
-                src="/clubs.jpg"
+                src="/clubs.png"
                 alt="Clubs"
             
 className="
@@ -465,7 +465,7 @@ bg-gradient-to-t from-black via-black/40 to-black/10
  border border-purple-400/30 h-[420px]">
 
               <img
-                src="/music.jpg"
+                src="/music.png"
                 alt="Music"
               
 className="
