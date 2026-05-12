@@ -321,38 +321,89 @@ duration-500
           <div className="rounded-[40px] border border-fuchsia-500/30 bg-white/5 backdrop-blur-2xl p-10 shadow-[0_0_60px_rgba(255,0,200,0.15)]">
 
             <p className="text-center text-fuchsia-400 uppercase tracking-[0.3em] text-sm mb-4">
-              BUILT FOR NIGHTLIFE
+              
+DON'T GUESS WHERE TO GO. KNOW.
+
+
             </p>
 
             <h2 className="text-center text-4xl md:text-5xl font-black mb-12">
-              EVERYTHING YOU NEED FOR AN EPIC NIGHT OUT
+              
             </h2>
 
             <div className="grid md:grid-cols-5 gap-8 text-center">
+               
+REAL-TIME NIGHTLIFE INTELLIGENCE
+
 
               <div>
                 <div className="text-fuchsia-400 text-5xl mb-4">▥</div>
-                <h3 className="font-bold mb-2">LIVE VIBE SCORES</h3>
+                
+<h3 className="font-bold mb-3 text-lg">
+  REAL-TIME DATA
+</h3>
+
+<p className="text-white/60 text-sm leading-relaxed">
+  Live crowd levels, wait times & venue activity updated every minute.
+</p>
+
+
               </div>
 
               <div>
                 <div className="text-cyan-300 text-5xl mb-4">◎</div>
-                <h3 className="font-bold mb-2">FIND YOUR CROWD</h3>
+                
+<h3 className="font-bold mb-3 text-lg">
+  VIBE SCORE
+</h3>
+
+<p className="text-white/60 text-sm leading-relaxed">
+  AI analyzes music, crowd energy and trends in real-time.
+</p>
+
+
               </div>
 
               <div>
                 <div className="text-fuchsia-400 text-5xl mb-4">▣</div>
-                <h3 className="font-bold mb-2">SCAN & CHECK IN</h3>
+                
+<h3 className="font-bold mb-3 text-lg">
+  SMART RECS
+</h3>
+
+<p className="text-white/60 text-sm leading-relaxed">
+  Get personalized nightlife recommendations based on your vibe.
+</p>
+
+
               </div>
 
               <div>
                 <div className="text-pink-300 text-5xl mb-4">◇</div>
-                <h3 className="font-bold mb-2">EARN REWARDS</h3>
+                
+<h3 className="font-bold mb-3 text-lg">
+  DISCOVER MORE
+</h3>
+
+<p className="text-white/60 text-sm leading-relaxed">
+  Find hidden gems, upcoming events and the hottest spots before they peak.
+</p>
+
+
               </div>
 
               <div>
                 <div className="text-purple-300 text-5xl mb-4">✦</div>
-                <h3 className="font-bold mb-2">VENUE PARTNERS</h3>
+                
+<h3 className="font-bold mb-3 text-lg">
+  OWN THE NIGHT
+</h3>
+
+<p className="text-white/60 text-sm leading-relaxed">
+  Save favorite spots, share with friends and make every night legendary.
+</p>
+
+
               </div>
 
             </div>
