@@ -171,12 +171,18 @@ export default function Landing() {
     <img
       src="/landing-phone.png"
       alt="Vibe2nite App"
-      className="
-        w-[320px]
-        md:w-[380px]
-        rotate-[8deg]
-        drop-shadow-[0_0_80px_rgba(255,0,200,0.55)]
-      "
+      
+className="
+  w-[320px]
+  md:w-[420px]
+  rotate-[8deg]
+  relative z-30
+  drop-shadow-[0_0_120px_rgba(255,0,200,0.45)]
+  hover:scale-[1.03]
+  transition duration-500
+"
+
+
     />
 
   </div>
@@ -188,11 +194,18 @@ export default function Landing() {
     top-[18%]
     w-[240px]
     rounded-[28px]
-    border border-fuchsia-500/30
-    bg-black/70
-    backdrop-blur-2xl
+    border border-fuchsia-400/50
+    bg-black/55
+    backdrop-blur-[20px]
     overflow-hidden
     shadow-[0_0_40px_rgba(255,0,200,0.25)]
+    
+hover:-translate-y-3
+hover:scale-[1.02]
+transition-all
+duration-500
+
+
   ">
 
     <img
@@ -237,11 +250,18 @@ export default function Landing() {
     bottom-[12%]
     w-[240px]
     rounded-[28px]
-    border border-cyan-400/30
-    bg-black/70
-    backdrop-blur-2xl
+    border border-cyan-300/50
+    bg-black/55
+    backdrop-blur-[20px]
     overflow-hidden
     shadow-[0_0_40px_rgba(0,217,255,0.2)]
+    
+hover:-translate-y-3
+hover:scale-[1.02]
+transition-all
+duration-500
+
+
   ">
 
     <img
