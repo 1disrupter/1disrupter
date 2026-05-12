@@ -588,6 +588,72 @@ duration-500
 </section>
 
 
+{/* ================= ENTER THE APP ================= */}
+
+<section className="relative min-h-screen overflow-hidden flex items-center justify-center px-6 md:px-14">
+
+  {/* Background */}
+  <div className="absolute inset-0 bg-black" />
+
+  {/* Glow */}
+  <div className="absolute inset-0 overflow-hidden">
+
+    <div className="absolute top-[10%] left-[10%] w-[400px] h-[400px] bg-fuchsia-500/10 blur-[140px] rounded-full" />
+
+    <div className="absolute bottom-[0%] right-[5%] w-[500px] h-[500px] bg-cyan-400/10 blur-[160px] rounded-full" />
+
+  </div>
+
+  {/* App Preview */}
+  <div className="relative z-20 text-center max-w-6xl">
+
+    <p className="uppercase tracking-[0.4em] text-cyan-300 text-sm mb-6">
+      THE NIGHT IS LIVE
+    </p>
+
+    <h2 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-[-0.05em] mb-8">
+
+      ENTER THE
+      <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
+        VIBE WORLD
+      </span>
+
+    </h2>
+
+    <p className="text-xl text-white/70 max-w-3xl mx-auto mb-14">
+      Real crowds. Real venues. Real nightlife energy happening live around you.
+    </p>
+
+    {/* Full App Preview */}
+    <div className="relative rounded-[40px] overflow-hidden border border-fuchsia-500/30 shadow-[0_0_100px_rgba(255,0,200,0.2)]">
+
+      <img
+        src="/app-preview-full.png"
+        alt="Vibe2nite App"
+        className="w-full object-cover"
+      />
+
+      {/* Overlay Fade */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+
+    </div>
+
+    {/* CTA */}
+    <div className="mt-12">
+
+      <button
+        onClick={() => navigate("/app")}
+        className="px-14 py-6 rounded-3xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 text-xl font-black shadow-[0_0_70px_rgba(255,0,200,0.8)] hover:scale-105 transition duration-500"
+      >
+        ENTER LIVE APP
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
 
       </div>
 
