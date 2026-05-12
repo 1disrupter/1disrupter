@@ -372,15 +372,33 @@ duration-500
           <div className="grid md:grid-cols-3 gap-8">
 
             {/* BARS */}
-            <div className="relative overflow-hidden rounded-[32px] border border-fuchsia-500/30 h-[420px]">
+            
+<div className="group relative overflow-hidden rounded-[32px]
+
+ border border-fuchsia-500/30 h-[420px]">
 
               <img
                 src="/bars.jpg"
                 alt="Bars"
-                className="absolute inset-0 w-full h-full object-cover"
+                
+className="
+  absolute
+  inset-0
+  w-full
+  h-full
+  object-cover
+  scale-100
+  group-hover:scale-110
+  transition-transform
+  duration-[4000ms]
+"
+
               />
 
-              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute inset-0
+bg-gradient-to-t from-black via-black/40 to-black/10
+
+" />
 
               <div className="absolute bottom-0 p-8">
 
@@ -397,15 +415,34 @@ duration-500
             </div>
 
             {/* CLUBS */}
-            <div className="relative overflow-hidden rounded-[32px] border border-cyan-400/30 h-[420px]">
+             
+<div className="group relative overflow-hidden rounded-[32px]
+
+border border-cyan-400/30 h-[420px]">
 
               <img
                 src="/clubs.jpg"
                 alt="Clubs"
-                className="absolute inset-0 w-full h-full object-cover"
+            
+className="
+  absolute
+  inset-0
+  w-full
+  h-full
+  object-cover
+  scale-100
+  group-hover:scale-110
+  transition-transform
+  duration-[4000ms]
+"
+
+
               />
 
-              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute inset-0
+bg-gradient-to-t from-black via-black/40 to-black/10
+
+" />
 
               <div className="absolute bottom-0 p-8">
 
@@ -422,15 +459,34 @@ duration-500
             </div>
 
             {/* MUSIC */}
-            <div className="relative overflow-hidden rounded-[32px] border border-purple-400/30 h-[420px]">
+            
+<div className="group relative overflow-hidden rounded-[32px]
+
+ border border-purple-400/30 h-[420px]">
 
               <img
                 src="/music.jpg"
                 alt="Music"
-                className="absolute inset-0 w-full h-full object-cover"
+              
+className="
+  absolute
+  inset-0
+  w-full
+  h-full
+  object-cover
+  scale-100
+  group-hover:scale-110
+  transition-transform
+  duration-[4000ms]
+"
+
+
               />
 
-              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute inset-0 
+bg-gradient-to-t from-black via-black/40 to-black/10
+
+" />
 
               <div className="absolute bottom-0 p-8">
 
