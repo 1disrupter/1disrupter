@@ -320,23 +320,27 @@ duration-500
 
           <div className="rounded-[40px] border border-fuchsia-500/30 bg-white/5 backdrop-blur-2xl p-10 shadow-[0_0_60px_rgba(255,0,200,0.15)]">
 
-            <p className="text-center text-fuchsia-400 uppercase tracking-[0.3em] text-sm mb-4">
-              
-DON'T GUESS WHERE TO GO. KNOW.
+<div className="text-center mb-14">
 
+  <p className="text-fuchsia-400 uppercase tracking-[0.35em] text-sm mb-5">
+    DON'T GUESS WHERE TO GO. KNOW.
+  </p>
 
-            </p>
+  <h2 className="text-4xl md:text-6xl font-black leading-[1]">
+    REAL-TIME NIGHTLIFE
+    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
+      INTELLIGENCE
+    </span>
+  </h2>
 
-            <h2 className="text-center text-4xl md:text-5xl font-black mb-12">
-              
-            </h2>
+</div>
 
-            <div className="grid md:grid-cols-5 gap-8 text-center">
-               
-REAL-TIME NIGHTLIFE INTELLIGENCE
-
-
+            
               <div>
+                
+<div className="grid md:grid-cols-5 gap-8 text-center">  
+
+
                 <div className="text-fuchsia-400 text-5xl mb-4">▥</div>
                 
 <h3 className="font-bold mb-3 text-lg">
@@ -403,7 +407,7 @@ REAL-TIME NIGHTLIFE INTELLIGENCE
   Save favorite spots, share with friends and make every night legendary.
 </p>
 
-
+            </div>
               </div>
 
             </div>
