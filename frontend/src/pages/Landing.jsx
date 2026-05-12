@@ -687,28 +687,28 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
         <input
           type="text"
-          name="venue"
-          placeholder="Venue Name"
+          name="contact"
+          placeholder="contact Name"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <input
           type="text"
-          name="venue"
+          name="contact"
           placeholder="Contact Name"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <input
           type="email"
-          name="venue"
+          name="email"
           placeholder="Email Address"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
 
         <input
           type="text"
-          name="venue"
+          name="phone"
           placeholder="WhatsApp / Phone"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
@@ -727,7 +727,7 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
         <input
           type="text"
-          name="venue"
+          name="city"
           placeholder="City"
           className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500"
         />
