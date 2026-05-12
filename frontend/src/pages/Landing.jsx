@@ -729,7 +729,7 @@ font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-p
     
   </div>
   
-      
+</div>    
 
   );
 }
