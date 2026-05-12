@@ -655,7 +655,9 @@ duration-500
   </div>
 
 </section>
-
+    
+  </div>
+  
       </div>
 
   );
