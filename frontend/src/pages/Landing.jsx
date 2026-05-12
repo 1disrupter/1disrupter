@@ -789,8 +789,8 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 className="
   group
   relative
-  px-20
-  py-10
+ px-10 md:px-20
+  py-8 md:py-10
   rounded-full
   overflow-hidden
   bg-black/80
