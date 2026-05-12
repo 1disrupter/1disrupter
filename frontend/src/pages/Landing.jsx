@@ -679,7 +679,7 @@ duration-500
 
       </div>
 
-    </div>
+    
     
   
   );
