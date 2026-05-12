@@ -159,8 +159,130 @@ export default function Landing() {
 
             </div>
 
-            {/* RIGHT PHONE */}
-            <div className="relative flex justify-center">
+{/* RIGHT VISUALS */}
+<div className="relative flex items-center justify-center min-h-[700px]">
+
+  {/* Background Glow */}
+  <div className="absolute w-[420px] h-[420px] bg-fuchsia-500/10 blur-[90px] rounded-full" />
+
+  {/* Floating Phone */}
+  <div className="relative z-20">
+
+    <img
+      src="/landing-phone.png"
+      alt="Vibe2nite App"
+      className="
+        w-[320px]
+        md:w-[380px]
+        rotate-[8deg]
+        drop-shadow-[0_0_80px_rgba(255,0,200,0.55)]
+      "
+    />
+
+  </div>
+
+  {/* Floating Venue Card */}
+  <div className="
+    absolute
+    left-0
+    top-[18%]
+    w-[240px]
+    rounded-[28px]
+    border border-fuchsia-500/30
+    bg-black/70
+    backdrop-blur-2xl
+    overflow-hidden
+    shadow-[0_0_40px_rgba(255,0,200,0.25)]
+  ">
+
+    <img
+      src="/bars.jpg"
+      alt="Electric Avenue"
+      className="h-[140px] w-full object-cover"
+    />
+
+    <div className="p-5">
+
+      <div className="flex items-center justify-between mb-3">
+
+        <span className="text-fuchsia-400 text-xs uppercase tracking-[0.2em]">
+          Cocktail Lounge
+        </span>
+
+        <span className="text-cyan-300 text-xs font-bold">
+          LIVE
+        </span>
+
+      </div>
+
+      <h3 className="text-2xl font-black mb-2">
+        ELECTRIC AVENUE
+      </h3>
+
+      <div className="flex justify-between text-sm text-white/70">
+
+        <span>92% Vibe</span>
+        <span>428 inside</span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  {/* Floating Club Card */}
+  <div className="
+    absolute
+    right-0
+    bottom-[12%]
+    w-[240px]
+    rounded-[28px]
+    border border-cyan-400/30
+    bg-black/70
+    backdrop-blur-2xl
+    overflow-hidden
+    shadow-[0_0_40px_rgba(0,217,255,0.2)]
+  ">
+
+    <img
+      src="/clubs.jpg"
+      alt="Neon District"
+      className="h-[140px] w-full object-cover"
+    />
+
+    <div className="p-5">
+
+      <div className="flex items-center justify-between mb-3">
+
+        <span className="text-cyan-300 text-xs uppercase tracking-[0.2em]">
+          Nite Club
+        </span>
+
+        <span className="text-fuchsia-400 text-xs font-bold">
+          HOT
+        </span>
+
+      </div>
+
+      <h3 className="text-2xl font-black mb-2">
+        NEON DISTRICT
+      </h3>
+
+      <div className="flex justify-between text-sm text-white/70">
+
+        <span>97% Vibe</span>
+        <span>812 inside</span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+           
 
 {/* Subtle Device Glow */}
 <div className="absolute w-[380px] h-[380px] bg-fuchsia-500/15 blur-[90px] rounded-full" />
