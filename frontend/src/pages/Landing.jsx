@@ -10,22 +10,24 @@ export default function Landing() {
     
 <div className="min-h-screen overflow-x-hidden bg-[#05010D] text-white relative">
 
-  {/* GLOBAL GLOW */}
-  <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-
-    {/* Pink Glow */}
-    <div className="absolute top-[-200px] left-[-150px] w-[700px] h-[700px] rounded-full bg-[#FF2D8D]/20 blur-[140px]" />
-
-    {/* Purple Glow */}
-    <div className="absolute top-[20%] right-[-200px] w-[800px] h-[800px] rounded-full bg-[#A020F0]/20 blur-[160px]" />
-
-    {/* Cyan Accent */}
-    <div className="absolute bottom-[-200px] left-[20%] w-[500px] h-[500px] rounded-full bg-[#00D9FF]/10 blur-[120px]" />
-
-  </div>
-
+ 
   {/* CONTENT */}
+  
   <div className="relative z-10">
+    
+{/* GLOBAL GLOW */}
+<div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+
+  {/* Pink Glow */}
+  <div className="absolute top-[-200px] left-[-150px] w-[700px] h-[700px] rounded-full bg-[#FF2D8D]/20 blur-[140px]" />
+
+  {/* Purple Glow */}
+  <div className="absolute top-[20%] right-[-200px] w-[800px] h-[800px] rounded-full bg-[#A020F0]/20 blur-[160px]" />
+
+  {/* Cyan Accent */}
+  <div className="absolute bottom-[-200px] left-[20%] w-[500px] h-[500px] rounded-full bg-[#00D9FF]/10 blur-[120px]" />
+
+</div>
 
 
 
