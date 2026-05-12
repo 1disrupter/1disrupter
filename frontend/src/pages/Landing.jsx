@@ -407,8 +407,7 @@ duration-500
   Save favorite spots, share with friends and make every night legendary.
 </p>
 
-            </div>
-              </div>
+            
 
             </div>
 
