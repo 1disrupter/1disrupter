@@ -163,7 +163,10 @@ export default function Landing() {
 <div className="relative flex items-center justify-center min-h-[700px]">
 
   {/* Background Glow */}
-  <div className="absolute w-[420px] h-[420px] bg-fuchsia-500/10 blur-[90px] rounded-full" />
+  <div className="absolute w-[420px] h-[420px] 
+bg-fuchsia-500/20 blur-[120px] glow-pulse
+
+ rounded-full" />
 
   {/* Floating Phone */}
   <div className="relative z-20">
@@ -173,6 +176,7 @@ export default function Landing() {
       alt="Vibe2nite App"
       
 className="
+  float-slow    
   w-[320px]
   md:w-[420px]
   rotate-[8deg]
