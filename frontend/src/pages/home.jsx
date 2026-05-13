@@ -507,19 +507,12 @@ const [tokens, setTokens] = useState(() => {
           setTab(k);
           if (k === "home") {
             window.scrollTo({ top: 0, behavior: "smooth" });
-          } else if (k === "map") {
-            const pins = slots.map((s) => s.data).filter(Boolean);
-            if (!pins.length) {
-              toast.warn("No venues to show on the map yet.");
-              return;
-            }
-            // Build a Google Maps URL centered on the user with markers for the top venues.
-            const center = `${loc.lat},${loc.lng}`;
-            const query = pins
-              .map((p) => `${p.venue.name} @${p.venue.latitude},${p.venue.longitude}`)
-              .join(" | ");
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&center=${center}`;
-            window.open(url, "_blank", "noopener,noreferrer");
+          } 
+else if (k === "map") { 
+  navigate("/map");
+}
+
+
           } else if (k === "faves") {
             toast.success("Favourites coming soon — claim a venue to track it from the owner console.");
           }
