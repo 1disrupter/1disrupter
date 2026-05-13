@@ -15,6 +15,9 @@ const Owner = lazy(() => import("./pages/Owner"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Explore = lazy(() => import("./pages/explore"));
 
+const MapView = lazy(() => import("./pages/MapView"));
+
+
 const ADMIN_STORAGE_KEY = "v2n_admin_session";
 
 function AdminGuardedBrand() {
@@ -46,6 +49,9 @@ export default function App() {
           >
             <Routes>
              <Route path="/" element={<Landing />} />
+
+<Route path="/map" element={<MapView />} />
+
 
 <Route
   path="/app"
