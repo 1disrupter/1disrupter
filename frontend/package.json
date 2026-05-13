@@ -4,19 +4,20 @@
   "private": true,
   "dependencies": {
     "@craco/craco": "^7.1.0",
+    "@react-google-maps/api": "^2.20.8",
     "axios": "^1.7.7",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.17",
+    "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "html5-qrcode": "^2.3.8",
+    "react-icons": "^4.12.0",
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "recharts": "^2.13.3",
     "serve": "^14.2.6",
-    "tailwind-merge": "^2.5.4",
-    "react-icons": "^4.12.0"
+    "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
@@ -26,12 +27,12 @@
   "engines": {
     "node": "20.x"
   },
-"scripts": {
-  "start": "serve -s build -l tcp://0.0.0.0:${PORT:-8080}",
-  "build": "CI=false craco build",
-  "dev": "craco start",
-  "test": "craco test"
-}  ,
+  "scripts": {
+    "start": "serve -s build -l tcp://0.0.0.0:${PORT:-8080}",
+    "build": "CI=false craco build",
+    "dev": "craco start",
+    "test": "craco test"
+  },
   "eslintConfig": {
     "extends": [
       "react-app"
