@@ -314,109 +314,115 @@ duration-500
 
         </section>
 
-        {/* ================= FEATURE STRIP ================= */}
+        
+{/* ================= FEATURE STRIP ================= */}
 
-        <section className="px-6 md:px-14 py-8">
+<section className="px-6 md:px-14 py-8">
 
-          <div className="rounded-[40px] border border-fuchsia-500/30 bg-white/5 backdrop-blur-2xl p-10 shadow-[0_0_60px_rgba(255,0,200,0.15)]">
+  <div className="rounded-[40px] border border-fuchsia-500/30 bg-white/5 backdrop-blur-2xl p-10 shadow-[0_0_60px_rgba(255,0,200,0.15)]">
 
-<div className="text-center mb-14">
+    {/* Heading */}
+    <div className="text-center mb-14">
 
-  <p className="text-fuchsia-400 uppercase tracking-[0.35em] text-sm mb-5">
-    DON'T GUESS WHERE TO GO. KNOW.
-  </p>
+      <p className="text-fuchsia-400 uppercase tracking-[0.35em] text-sm mb-5">
+        DON'T GUESS WHERE TO GO. KNOW.
+      </p>
 
-  <h2 className="text-4xl md:text-6xl font-black leading-[1]">
-    REAL-TIME NIGHTLIFE
-    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
-      INTELLIGENCE
-    </span>
-  </h2>
+      <h2 className="text-4xl md:text-6xl font-black leading-[1]">
+        REAL-TIME NIGHTLIFE
+        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
+          INTELLIGENCE
+        </span>
+      </h2>
 
-</div>
+    </div>
 
-            
-              <div>
-                
-<div className="grid md:grid-cols-5 gap-8 text-center">  
-  
-        {/* CARD 1 */} <div>
+    {/* Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-8 text-center">
 
-                <div className="text-fuchsia-400 text-5xl mb-4">▥</div>
-                
-<h3 className="font-bold mb-3 text-lg">
-  REAL-TIME DATA
-</h3>
+      {/* Card 1 */}
+      <div>
 
-<p className="text-white/60 text-sm leading-relaxed">
-  Live crowd levels, wait times & venue activity updated every minute.
-</p>
+        <div className="text-fuchsia-400 text-5xl mb-4">▥</div>
 
+        <h3 className="font-bold mb-3 text-lg">
+          REAL-TIME DATA
+        </h3>
 
-              </div>
+        <p className="text-white/60 text-sm leading-relaxed">
+          Live crowd levels, wait times & venue activity updated every minute.
+        </p>
 
-              <div>
-                <div className="text-cyan-300 text-5xl mb-4">◎</div>
-                
-<h3 className="font-bold mb-3 text-lg">
-  VIBE SCORE
-</h3>
+      </div>
 
-<p className="text-white/60 text-sm leading-relaxed">
-  AI analyzes music, crowd energy and trends in real-time.
-</p>
+      {/* Card 2 */}
+      <div>
 
+        <div className="text-cyan-300 text-5xl mb-4">◎</div>
 
-              </div>
+        <h3 className="font-bold mb-3 text-lg">
+          VIBE SCORE
+        </h3>
 
-              <div>
-                <div className="text-fuchsia-400 text-5xl mb-4">▣</div>
-                
-<h3 className="font-bold mb-3 text-lg">
-  SMART RECS
-</h3>
+        <p className="text-white/60 text-sm leading-relaxed">
+          AI analyzes music, crowd energy and trends in real-time.
+        </p>
 
-<p className="text-white/60 text-sm leading-relaxed">
-  Get personalized nightlife recommendations based on your vibe.
-</p>
+      </div>
 
+      {/* Card 3 */}
+      <div>
 
-              </div>
+        <div className="text-fuchsia-400 text-5xl mb-4">▣</div>
 
-              <div>
-                <div className="text-pink-300 text-5xl mb-4">◇</div>
-                
-<h3 className="font-bold mb-3 text-lg">
-  DISCOVER MORE
-</h3>
+        <h3 className="font-bold mb-3 text-lg">
+          SMART RECS
+        </h3>
 
-<p className="text-white/60 text-sm leading-relaxed">
-  Find hidden gems, upcoming events and the hottest spots before they peak.
-</p>
+        <p className="text-white/60 text-sm leading-relaxed">
+          Get personalized nightlife recommendations based on your vibe.
+        </p>
 
+      </div>
 
-              </div>
+      {/* Card 4 */}
+      <div>
 
-              <div>
-                <div className="text-purple-300 text-5xl mb-4">✦</div>
-                
-<h3 className="font-bold mb-3 text-lg">
-  OWN THE NIGHT
-</h3>
+        <div className="text-pink-300 text-5xl mb-4">◇</div>
 
-<p className="text-white/60 text-sm leading-relaxed">
-  Save favorite spots, share with friends and make every night legendary.
-</p>
+        <h3 className="font-bold mb-3 text-lg">
+          DISCOVER MORE
+        </h3>
 
-            
+        <p className="text-white/60 text-sm leading-relaxed">
+          Find hidden gems, upcoming events and the hottest spots before they peak.
+        </p>
 
-            </div>
+      </div>
 
-          </div>
+      {/* Card 5 */}
+      <div>
 
-        </section>
+        <div className="text-purple-300 text-5xl mb-4">✦</div>
 
-        {/* ================= VENUE TYPES ================= */}
+        <h3 className="font-bold mb-3 text-lg">
+          OWN THE NIGHT
+        </h3>
+
+        <p className="text-white/60 text-sm leading-relaxed">
+          Save favorite spots, share with friends and make every night legendary.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+{/* ================= VENUE TYPES ================= */}
+
 
         <section className="px-6 md:px-14 py-10">
 
