@@ -699,12 +699,10 @@ bg-gradient-to-t from-black via-black/40 to-black/10
           className="px-10 py-5 rounded-3xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-purple-500 text-lg font-black shadow-[0_0_60px_rgba(255,0,200,1)] hover:scale-105 transition"
         >
           CLAIM YOUR VENUE
+      
         </button>
-
-        <button
-          className="px-10 py-5 rounded-3xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 text-lg font-black hover:bg-cyan-400/20 transition"
-        >
         
+
 <button
   onClick={() =>
     document.getElementById("venues")?.scrollIntoView({
@@ -714,8 +712,9 @@ bg-gradient-to-t from-black via-black/40 to-black/10
   className="px-10 py-5 rounded-3xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 text-lg font-black hover:bg-cyan-400/20 transition"
 >
   LEARN MORE
-  
 </button>
+
+
 
   
         
