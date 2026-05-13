@@ -339,7 +339,8 @@ duration-500
               <div>
                 
 <div className="grid md:grid-cols-5 gap-8 text-center">  
-
+  
+        {/* CARD 1 */} <div>
 
                 <div className="text-fuchsia-400 text-5xl mb-4">▥</div>
                 
