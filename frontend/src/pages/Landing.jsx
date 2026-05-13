@@ -728,6 +728,87 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
 </section>
 
+{/* ================= WHY JOIN VIBE2NITE ================= */}
+
+<section className="px-6 md:px-14 py-12">
+
+  <div className="rounded-[40px] border border-fuchsia-500/20 bg-white/5 backdrop-blur-2xl p-10 md:p-16 shadow-[0_0_60px_rgba(255,0,200,0.12)]">
+
+    <div className="max-w-5xl mx-auto text-center">
+
+      <p className="uppercase tracking-[0.35em] text-cyan-300 text-sm mb-5">
+        WHY VIBE2NITE?
+      </p>
+
+      <h2 className="text-5xl md:text-7xl font-black leading-[0.95] tracking-[-0.05em] mb-8">
+
+        HELPING NIGHTLIFE
+        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-500 to-cyan-300">
+          COME ALIVE
+        </span>
+
+      </h2>
+
+      <p className="text-xl text-white/75 leading-relaxed mb-10 max-w-4xl mx-auto">
+        Vibe2nite was created to help bars, clubs and live music venues increase visibility, attract more customers and bring real nightlife energy back into local venues.
+      </p>
+
+      <p className="text-lg text-white/60 leading-relaxed mb-14 max-w-4xl mx-auto">
+        We help tourists and locals discover the best places to go based on live crowd activity, atmosphere, music and real-time vibe scores — making it easier to find the perfect night out for every age group and every vibe.
+      </p>
+
+      {/* BENEFITS */}
+      <div className="grid md:grid-cols-4 gap-8 text-center">
+
+        <div>
+          <div className="text-fuchsia-400 text-5xl mb-4">🔥</div>
+          <h3 className="font-black text-lg mb-2">
+            MORE FOOTFALL
+          </h3>
+          <p className="text-white/60 text-sm">
+            Bring more people directly to your venue.
+          </p>
+        </div>
+
+        <div>
+          <div className="text-cyan-300 text-5xl mb-4">📍</div>
+          <h3 className="font-black text-lg mb-2">
+            LIVE DISCOVERY
+          </h3>
+          <p className="text-white/60 text-sm">
+            Help users find your venue in real-time.
+          </p>
+        </div>
+
+        <div>
+          <div className="text-pink-400 text-5xl mb-4">🎶</div>
+          <h3 className="font-black text-lg mb-2">
+            PROMOTE EVENTS
+          </h3>
+          <p className="text-white/60 text-sm">
+            Showcase DJs, live music and nightlife experiences.
+          </p>
+        </div>
+
+        <div>
+          <div className="text-purple-300 text-5xl mb-4">⚡</div>
+          <h3 className="font-black text-lg mb-2">
+            GROW YOUR BRAND
+          </h3>
+          <p className="text-white/60 text-sm">
+            Become part of the Vibe2nite nightlife network.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
 {/* ================= FOUNDING VENUES WAITLIST ================= */}
 
 <section
