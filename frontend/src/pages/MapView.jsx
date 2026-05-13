@@ -3,9 +3,35 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flame, Music, Martini } from "lucide-react";
 
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Marker,
+} from "@react-google-maps/api";
+
+
 export default function MapView() {
 
   const navigate = useNavigate();
+
+const { isLoaded } = useJsApiLoader({
+  googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+});
+
+const center = {
+  lat: 36.559,
+  lng: -4.436,
+};
+
+if (!isLoaded) {
+  return (
+    <div className="min-h-screen bg-black flex items-center justify-center text-white">
+      Loading Map...
+    </div>
+  );
+}
+
+
 
   return (
 
@@ -35,17 +61,57 @@ export default function MapView() {
       {/* Map Area */}
       <div className="relative w-full h-[calc(100vh-80px)] overflow-hidden">
 
-        {/* Fake Map Background */}
-        <div
-          className="absolute inset-0 opacity-40 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1600&auto=format&fit=crop')",
-          }}
-        />
+        {/* google Maps  */}
+        
+<GoogleMap
+  center={center}
+  zoom={16}
+  mapContainerStyle={{
+    width: "100%",
+    height: "100%",
+  }}
+  options={{
+    disableDefaultUI: true,
+    styles: [
+      {
+        elementType: "geometry",
+        stylers: [{ color: "#0a0a0a" }],
+      },
+      {
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#000000" }],
+      },
+      {
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#ffffff" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#1f1f1f" }],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#111827" }],
+      },
+      {
+        featureType: "poi",
+        stylers: [{ visibility: "off" }],
+      },
+    ],
+  }}
+>
 
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black/55" />
+  <Marker
+    position={{
+      lat: 36.559,
+      lng: -4.436,
+    }}
+  />
+
+</GoogleMap>
+
 
         {/* HOTSPOT 1 */}
         <div className="absolute top-[42%] left-[52%]">
