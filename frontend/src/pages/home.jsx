@@ -501,28 +501,40 @@ const [tokens, setTokens] = useState(() => {
 
 <Footer />
 
-      <BottomTabs
-        activeKey={tab}
-        onChange={(k) => {
-          setTab(k);
-          if (k === "home") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          } 
-else if (k === "map") { 
-  navigate("/map");
-}
+<BottomTabs
+  activeKey={tab}
+  onChange={(k) => {
+
+    setTab(k);
+
+    if (k === "home") {
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+
+    } else if (k === "map") {
+
+      navigate("/map");
+
+    } else if (k === "faves") {
+
+      toast.success(
+        "Favourites coming soon — claim a venue to track it from the owner console."
+      );
+
+    }
+
+  }}
+  items={[
+    { key: "home", label: "Home", icon: <Flame size={18} /> },
+    { key: "map", label: "Map", icon: <MapPin size={18} /> },
+    { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
+  ]}
+/>
 
 
-          } else if (k === "faves") {
-            toast.success("Favourites coming soon — claim a venue to track it from the owner console.");
-          }
-        }}
-        items={[
-          { key: "home", label: "Home", icon: <Flame size={18} /> },
-          { key: "map", label: "Map", icon: <MapPin size={18} /> },
-          { key: "faves", label: "Faves", icon: <ThumbsUp size={18} /> },
-        ]}
-      />
       {showScanner && (
   <QRScanner
     onClose={() => setShowScanner(false)}
