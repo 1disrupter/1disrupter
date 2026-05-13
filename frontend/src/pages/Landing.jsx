@@ -704,8 +704,21 @@ bg-gradient-to-t from-black via-black/40 to-black/10
         <button
           className="px-10 py-5 rounded-3xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 text-lg font-black hover:bg-cyan-400/20 transition"
         >
-          LEARN MORE
-        </button>
+        
+<button
+  onClick={() =>
+    document.getElementById("venues")?.scrollIntoView({
+      behavior: "smooth",
+    })
+  }
+  className="px-10 py-5 rounded-3xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 text-lg font-black hover:bg-cyan-400/20 transition"
+>
+  LEARN MORE
+  
+</button>
+
+  
+        
 
       </div>
 
@@ -717,7 +730,12 @@ bg-gradient-to-t from-black via-black/40 to-black/10
 
 {/* ================= FOUNDING VENUES WAITLIST ================= */}
 
-<section className="px-6 md:px-14 py-20">
+<section
+  id="venues"
+  className="px-6 md:px-14 py-20"
+>
+
+
 
   <div className="relative overflow-hidden rounded-[40px] border border-cyan-400/20 bg-black/60 backdrop-blur-2xl p-10 md:p-16 shadow-[0_0_80px_rgba(0,217,255,0.12)]">
 
