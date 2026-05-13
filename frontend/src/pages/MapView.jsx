@@ -48,7 +48,7 @@ export default function MapView() {
         <div className="absolute inset-0 bg-black/55" />
 
         {/* HOTSPOT 1 */}
-        <div className="absolute top-[28%] left-[35%]">
+        <div className="absolute top-[42%] left-[52%]">
 
           <div className="relative">
 
@@ -69,7 +69,7 @@ export default function MapView() {
             </p>
 
             <h3 className="text-2xl font-black">
-              Neon District
+              Hole in the Wall
             </h3>
 
             <p className="text-white/60 text-sm mt-1">
