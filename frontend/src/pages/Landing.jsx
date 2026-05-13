@@ -149,10 +149,17 @@ export default function Landing() {
 
                 <button className="px-8 py-5 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-xl font-bold">
                   App Store
+                  <span className="block text-xs text-fuchsia-400 mt-1 tracking-[0.2em]"> 
+                    COMING SOON
+                  </span> 
                 </button>
+                
 
                 <button className="px-8 py-5 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-xl font-bold">
                   Google Play
+                <span className="block text-xs text-cyan-300 mt-1 tracking-[0.2em]"> 
+                  COMING SOON
+                </span>
                 </button>
 
               </div>
