@@ -3,41 +3,19 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flame, Music, Martini } from "lucide-react";
 
-import {
-  GoogleMap,
-  LoadScript,
-  Marker,
-} from "@react-google-maps/api";
-
-
-
-
-
 export default function MapView() {
 
   const navigate = useNavigate();
-
-
-
-const center = {
-  lat: 36.559,
-  lng: -4.436,
-};
-
-
-    
-
-
 
   return (
 
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
 
       {/* Background Glow */}
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,rgba(255,0,200,0.18),transparent_40%)] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,rgba(255,0,200,0.18),transparent_40%)] pointer-events-none z-10" />
 
       {/* Header */}
-      <div className="relative z-20 flex items-center justify-between px-6 py-5 border-b border-white/10 backdrop-blur-xl">
+      <div className="relative z-30 flex items-center justify-between px-6 py-5 border-b border-white/10 backdrop-blur-xl">
 
         <button
           onClick={() => navigate("/app")}
@@ -52,74 +30,26 @@ const center = {
         </h1>
 
         <div />
+
       </div>
 
       {/* Map Area */}
-      
-<div className="relative w-full h-screen overflow-hidden">
+      <div className="relative w-full h-screen overflow-hidden">
 
+        {/* REAL GOOGLE MAP */}
+        <div className="absolute inset-0 z-0">
 
+          <iframe
+            title="Benalmadena Map"
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
+            src="https://www.google.com/maps?q=36.559,-4.436&z=15&output=embed"
+          />
 
-        {/* google Maps  */}
-        
-<LoadScript
-  googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
->
-
-  <div className="absolute inset-0 z-0">
-
-    <GoogleMap
-      center={center}
-      zoom={16}
-      mapContainerClassName="w-full h-full"
-      options={{
-        disableDefaultUI: true,
-        styles: [
-          {
-            elementType: "geometry",
-            stylers: [{ color: "#0a0a0a" }],
-          },
-          {
-            elementType: "labels.text.stroke",
-            stylers: [{ color: "#000000" }],
-          },
-          {
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#ffffff" }],
-          },
-          {
-            featureType: "road",
-            elementType: "geometry",
-            stylers: [{ color: "#1f1f1f" }],
-          },
-          {
-            featureType: "water",
-            elementType: "geometry",
-            stylers: [{ color: "#111827" }],
-          },
-          {
-            featureType: "poi",
-            stylers: [{ visibility: "off" }],
-          },
-        ],
-      }}
-    >
-
-      <Marker
-        position={{
-          lat: 36.559,
-          lng: -4.436,
-        }}
-      />
-
-    </GoogleMap>
-
-  </div>
-
-</LoadScript>
-
-
-
+        </div>
 
         {/* HOTSPOT 1 */}
         <div className="absolute z-20 top-[42%] left-[52%]">
@@ -151,6 +81,12 @@ const center = {
             </p>
 
             <button
+              onClick={() =>
+                window.open(
+                  "https://www.google.com/maps/dir/?api=1&destination=36.559,-4.436",
+                  "_blank"
+                )
+              }
               className="mt-4 w-full py-3 rounded-xl bg-fuchsia-500 text-white font-bold"
             >
               GET DIRECTIONS
@@ -161,7 +97,7 @@ const center = {
         </div>
 
         {/* HOTSPOT 2 */}
-        <div className="absolute z-20 top-[42%] left-[52%]">
+        <div className="absolute z-20 top-[58%] left-[65%]">
 
           <div className="relative">
 
@@ -200,7 +136,7 @@ const center = {
         </div>
 
         {/* HOTSPOT 3 */}
-        <div className="absolute z-20 top-[42%] left-[52%]">
+        <div className="absolute z-20 top-[70%] left-[25%]">
 
           <div className="relative">
 
@@ -244,4 +180,6 @@ const center = {
 
   );
 }
+
+
 
