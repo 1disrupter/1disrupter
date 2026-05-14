@@ -5,26 +5,26 @@ import { ArrowLeft, Flame, Music, Martini } from "lucide-react";
 
 import {
   GoogleMap,
-  useJsApiLoader,
+  LoadScript,
   Marker,
 } from "@react-google-maps/api";
+
+
+
 
 
 export default function MapView() {
 
   const navigate = useNavigate();
 
-const { isLoaded } = useJsApiLoader({
-  googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-});
+
 
 const center = {
   lat: 36.559,
   lng: -4.436,
 };
 
-if (!isLoaded) {
-  return (
+
     <div className="min-h-screen bg-black flex items-center justify-center text-white">
       Loading Map...
     </div>
@@ -66,8 +66,15 @@ if (!isLoaded) {
 
         {/* google Maps  */}
         
+<LoadScript
+  googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+>
 
 <div className="absolute inset-0 z-0">
+
+
+
+
 
   <GoogleMap
 
@@ -125,7 +132,7 @@ mapContainerClassName="w-full h-full"
 </GoogleMap>
         
 </div>
-
+</LoadScript>
 
 
         {/* HOTSPOT 1 */}
