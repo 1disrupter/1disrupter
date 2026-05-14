@@ -59,13 +59,20 @@ if (!isLoaded) {
       </div>
 
       {/* Map Area */}
-      <div className="relative w-full h-[calc(100vh-80px)] overflow-hidden">
+      
+<div className="relative w-full h-screen overflow-hidden">
+
+
 
         {/* google Maps  */}
         
 <GoogleMap
   center={center}
   zoom={16}
+  
+mapContainerClassName="w-full h-full"
+
+
   mapContainerStyle={{
     width: "100%",
     height: "100%",
