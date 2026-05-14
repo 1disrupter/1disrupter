@@ -66,7 +66,12 @@ if (!isLoaded) {
 
         {/* google Maps  */}
         
-<GoogleMap
+
+<div className="absolute inset-0 z-0">
+
+  <GoogleMap
+
+
   center={center}
   zoom={16}
   
@@ -118,10 +123,13 @@ mapContainerClassName="w-full h-full"
   />
 
 </GoogleMap>
+        
+</div>
+
 
 
         {/* HOTSPOT 1 */}
-        <div className="absolute top-[42%] left-[52%]">
+        <div className="absolute z-20 top-[42%] left-[52%]">
 
           <div className="relative">
 
@@ -160,7 +168,7 @@ mapContainerClassName="w-full h-full"
         </div>
 
         {/* HOTSPOT 2 */}
-        <div className="absolute top-[55%] left-[58%]">
+        <div className="absolute z-20 top-[42%] left-[52%]">
 
           <div className="relative">
 
@@ -199,7 +207,7 @@ mapContainerClassName="w-full h-full"
         </div>
 
         {/* HOTSPOT 3 */}
-        <div className="absolute top-[68%] left-[20%]">
+        <div className="absolute z-20 top-[42%] left-[52%]">
 
           <div className="relative">
 
