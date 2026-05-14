@@ -66,69 +66,59 @@ const center = {
   googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
 >
 
-<div className="absolute inset-0 z-0">
+  <div className="absolute inset-0 z-0">
 
+    <GoogleMap
+      center={center}
+      zoom={16}
+      mapContainerClassName="w-full h-full"
+      options={{
+        disableDefaultUI: true,
+        styles: [
+          {
+            elementType: "geometry",
+            stylers: [{ color: "#0a0a0a" }],
+          },
+          {
+            elementType: "labels.text.stroke",
+            stylers: [{ color: "#000000" }],
+          },
+          {
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#ffffff" }],
+          },
+          {
+            featureType: "road",
+            elementType: "geometry",
+            stylers: [{ color: "#1f1f1f" }],
+          },
+          {
+            featureType: "water",
+            elementType: "geometry",
+            stylers: [{ color: "#111827" }],
+          },
+          {
+            featureType: "poi",
+            stylers: [{ visibility: "off" }],
+          },
+        ],
+      }}
+    >
 
+      <Marker
+        position={{
+          lat: 36.559,
+          lng: -4.436,
+        }}
+      />
 
+    </GoogleMap>
 
+  </div>
 
-  <GoogleMap
-
-
-  center={center}
-  zoom={16}
-  
-mapContainerClassName="w-full h-full"
-
-
-  mapContainerStyle={{
-    width: "100%",
-    height: "100%",
-  }}
-  options={{
-    disableDefaultUI: true,
-    styles: [
-      {
-        elementType: "geometry",
-        stylers: [{ color: "#0a0a0a" }],
-      },
-      {
-        elementType: "labels.text.stroke",
-        stylers: [{ color: "#000000" }],
-      },
-      {
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#ffffff" }],
-      },
-      {
-        featureType: "road",
-        elementType: "geometry",
-        stylers: [{ color: "#1f1f1f" }],
-      },
-      {
-        featureType: "water",
-        elementType: "geometry",
-        stylers: [{ color: "#111827" }],
-      },
-      {
-        featureType: "poi",
-        stylers: [{ visibility: "off" }],
-      },
-    ],
-  }}
->
-
-  <Marker
-    position={{
-      lat: 36.559,
-      lng: -4.436,
-    }}
-  />
-
-</GoogleMap>
-        
-</div>
 </LoadScript>
+
+
 
 
         {/* HOTSPOT 1 */}
