@@ -3,6 +3,9 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flame, Music, Martini } from "lucide-react";
 
+import venues from "../data/venues";
+import { ArrowLeft, Flame, Music, Martini } from "lucide-react";
+
 export default function MapView() {
 
   const navigate = useNavigate();
@@ -51,105 +54,63 @@ export default function MapView() {
 
         </div>
 
-        {/* HOTSPOT 1 */}
-        <div className="absolute z-20 top-[42%] left-[52%]">
+{venues.map((venue, index) => (
 
-          <div className="relative">
+  <div
+    key={venue.id}
+    className={`absolute z-20`}
+    style={{
+      top: `${35 + index * 12}%`,
+      left: `${45 + index * 8}%`,
+    }}
+  >
 
-            <div className="absolute inset-0 animate-ping rounded-full bg-fuchsia-500/40 blur-xl w-20 h-20" />
+    <div className="relative">
 
-            <div className="relative w-20 h-20 rounded-full bg-fuchsia-500/30 border border-fuchsia-400/60 backdrop-blur-xl flex items-center justify-center shadow-[0_0_60px_rgba(255,0,200,0.8)]">
+      <div className={`absolute inset-0 animate-ping rounded-full blur-xl w-16 h-16 bg-${venue.color}-500/40`} />
 
-              <Flame className="text-fuchsia-300" size={34} />
+      <div className={`relative w-16 h-16 rounded-full border backdrop-blur-xl flex items-center justify-center shadow-[0_0_60px_rgba(255,0,200,0.8)] bg-${venue.color}-500/20 border-${venue.color}-400/60`}>
 
-            </div>
+        <Flame className={`text-${venue.color}-300`} size={28} />
 
-          </div>
+      </div>
 
-          <div className="mt-4 rounded-2xl border border-fuchsia-500/30 bg-black/70 backdrop-blur-xl p-4 w-[220px]">
+    </div>
 
-            <p className="text-fuchsia-400 text-xs uppercase tracking-[0.2em] mb-2">
-              HOT NOW
-            </p>
+    <div className={`mt-4 rounded-2xl border bg-black/70 backdrop-blur-xl p-4 w-[220px] border-${venue.color}-500/30`}>
 
-            <h3 className="text-2xl font-black">
-              Hole in the Wall
-            </h3>
+      <p className={`text-${venue.color}-300 text-xs uppercase tracking-[0.2em] mb-2`}>
+        {venue.tag}
+      </p>
 
-            <p className="text-white/60 text-sm mt-1">
-              97% Vibe · Packed
-            </p>
+      <h3 className="text-2xl font-black">
+        {venue.name}
+      </h3>
 
-            <button
-              onClick={() =>
-                window.open(
-                  "https://www.google.com/maps/dir/?api=1&destination=36.559,-4.436",
-                  "_blank"
-                )
-              }
-              className="mt-4 w-full py-3 rounded-xl bg-fuchsia-500 text-white font-bold"
-            >
-              GET DIRECTIONS
-            </button>
+      <p className="text-white/60 text-sm mt-1">
+        {venue.vibe}
+      </p>
 
-          </div>
+      <button
+        onClick={() =>
+          window.open(
+            `https://www.google.com/maps/dir/?api=1&destination=${venue.lat},${venue.lng}`,
+            "_blank"
+          )
+        }
+        className={`mt-4 w-full py-3 rounded-xl font-bold bg-${venue.color}-500 text-white`}
+      >
+        GET DIRECTIONS
+      </button>
 
-        </div>
+    </div>
 
-        {/* HOTSPOT 2 */}
-        <div className="absolute z-20 top-[58%] left-[65%]">
+  </div>
 
-          <div className="relative">
+))}
 
-            <div className="absolute inset-0 animate-ping rounded-full bg-cyan-400/40 blur-xl w-16 h-16" />
 
-            <div className="relative w-16 h-16 rounded-full bg-cyan-400/20 border border-cyan-300/60 flex items-center justify-center shadow-[0_0_60px_rgba(0,217,255,0.8)]">
-
-              <Music className="text-cyan-300" size={28} />
-
-            </div>
-
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-cyan-400/30 bg-black/70 backdrop-blur-xl p-4 w-[220px]">
-
-            <p className="text-cyan-300 text-xs uppercase tracking-[0.2em] mb-2">
-              LIVE MUSIC
-            </p>
-
-            <h3 className="text-2xl font-black">
-              Sky Lounge
-            </h3>
-
-            <p className="text-white/60 text-sm mt-1">
-              89% Vibe · Acoustic Night
-            </p>
-
-            <button
-              className="mt-4 w-full py-3 rounded-xl bg-cyan-400 text-black font-bold"
-            >
-              GET DIRECTIONS
-            </button>
-
-          </div>
-
-        </div>
-
-        {/* HOTSPOT 3 */}
-        <div className="absolute z-20 top-[70%] left-[25%]">
-
-          <div className="relative">
-
-            <div className="absolute inset-0 animate-ping rounded-full bg-purple-400/40 blur-xl w-16 h-16" />
-
-            <div className="relative w-16 h-16 rounded-full bg-purple-500/20 border border-purple-300/60 flex items-center justify-center shadow-[0_0_60px_rgba(180,0,255,0.7)]">
-
-              <Martini className="text-purple-300" size={28} />
-
-            </div>
-
-          </div>
-
+        
           <div className="mt-4 rounded-2xl border border-purple-400/30 bg-black/70 backdrop-blur-xl p-4 w-[220px]">
 
             <p className="text-purple-300 text-xs uppercase tracking-[0.2em] mb-2">
