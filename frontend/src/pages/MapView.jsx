@@ -25,11 +25,7 @@ const center = {
 };
 
 
-    <div className="min-h-screen bg-black flex items-center justify-center text-white">
-      Loading Map...
-    </div>
-  );
-}
+    
 
 
 
