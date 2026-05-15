@@ -389,7 +389,10 @@ const trendingVenues = [...venues]
 
       <button
         key={item}
-        className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white whitespace-nowrap text-sm font-bold hover:bg-fuchsia-500/20 transition"
+       
+className="px-5 py-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-white whitespace-nowrap text-sm font-bold hover:bg-fuchsia-500/20 hover:border-fuchsia-400/40 hover:shadow-[0_0_20px_rgba(255,0,200,0.25)] transition-all duration-300"
+
+
       >
         {item}
       </button>
