@@ -375,6 +375,72 @@ const [tokens, setTokens] = useState(() => {
 </div>
       {/* Cards */}
       <section id="top-three" className="mx-auto max-w-6xl px-4">
+        
+{/* TRENDING TONIGHT */}
+<div className="mb-10">
+
+  <div className="flex items-center justify-between mb-5">
+
+    <h2 className="text-3xl font-black">
+      🔥 Trending Tonight
+    </h2>
+
+    <p className="text-white/40">
+      Live nightlife energy
+    </p>
+
+  </div>
+
+  <div className="grid gap-4">
+
+    {trendingVenues.map((venue) => (
+
+      <div
+        key={venue.id}
+        className="rounded-[28px] border border-fuchsia-500/20 bg-fuchsia-500/5 backdrop-blur-2xl p-5"
+      >
+
+        <div className="flex items-center justify-between">
+
+          <div>
+
+            <p className="text-fuchsia-400 text-xs uppercase tracking-[0.2em] mb-2">
+              {venue.tag}
+            </p>
+
+            <h3 className="text-2xl font-black">
+              {venue.name}
+            </h3>
+
+            <p className="text-white/60 mt-1">
+              {venue.vibe}
+            </p>
+
+          </div>
+
+          <div className="text-right">
+
+            <div className="text-4xl font-black text-fuchsia-400">
+              {venue.busyScore}%
+            </div>
+
+            <p className="text-white/40 text-sm">
+              Busy Score
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    ))}
+
+  </div>
+
+</div>
+
+
         {loading ? (
           <LoadingScreen />
         ) : error ? (
