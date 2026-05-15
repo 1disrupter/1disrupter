@@ -34,6 +34,62 @@ const venues = [
     tag: "TRENDING",
   },
 
+{
+  id: 4,
+  name: "Kaleido",
+  type: "Cocktail Bar",
+  vibe: "92% Vibe · Sunset Cocktails",
+  lat: 36.595,
+  lng: -4.530,
+  color: "cyan",
+  tag: "TRENDING",
+},
+
+{
+  id: 5,
+  name: "Molly Malone's",
+  type: "Irish Bar",
+  vibe: "95% Vibe · Live Sports & Music",
+  lat: 36.597,
+  lng: -4.516,
+  color: "fuchsia",
+  tag: "BUSY",
+},
+
+{
+  id: 6,
+  name: "Monaghans",
+  type: "Pub",
+  vibe: "88% Vibe · Late Night Drinks",
+  lat: 36.598,
+  lng: -4.517,
+  color: "purple",
+  tag: "HOT",
+},
+
+{
+  id: 7,
+  name: "Maracas Beach",
+  type: "Beach Bar",
+  vibe: "90% Vibe · DJs & Cocktails",
+  lat: 36.590,
+  lng: -4.525,
+  color: "cyan",
+  tag: "LIVE DJ",
+},
+
+{
+  id: 8,
+  name: "Saint Tropez",
+  type: "Nightclub",
+  vibe: "98% Vibe · Packed Dancefloor",
+  lat: 36.601,
+  lng: -4.518,
+  color: "fuchsia",
+  tag: "HOT NOW",
+},
+
+
 ];
 
 export default venues;
