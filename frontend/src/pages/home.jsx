@@ -301,7 +301,7 @@ const [tokens, setTokens] = useState(() => {
   </h1>
 
 
-<div className="absolute bottom-1 right-0 w-40 h-4 bg-fuchsia-500/70 blur-xl rounded-full rotate-[-1deg]" />
+<div className="absolute bottom-0 right-0 w-40 h-5 bg-fuchsia-500/70 blur-xl rounded-full rotate-[-1deg]" />
 
 
 
