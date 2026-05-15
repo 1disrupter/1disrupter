@@ -13,6 +13,42 @@ const [activeVenue, setActiveVenue] = useState(null);
 const [searchTerm, setSearchTerm] = useState("");
 const [activeCategory, setActiveCategory] = useState("ALL");
 const [searchQuery, setSearchQuery] = useState("");
+  
+const getHeatStyles = (score) => {
+
+  if (score >= 95) {
+    return {
+      glow: "bg-red-500/50",
+      core: "bg-red-500 border-red-300",
+      pulse: "animate-ping",
+    };
+  }
+
+  if (score >= 85) {
+    return {
+      glow: "bg-orange-500/50",
+      core: "bg-orange-500 border-orange-300",
+      pulse: "animate-pulse",
+    };
+  }
+
+  if (score >= 70) {
+    return {
+      glow: "bg-green-500/40",
+      core: "bg-green-500 border-green-300",
+      pulse: "",
+    };
+  }
+
+  return {
+    glow: "bg-cyan-500/30",
+    core: "bg-cyan-500 border-cyan-300",
+    pulse: "",
+  };
+
+};
+
+
 const filteredVenues = venues.filter((venue) => { 
   const matchesCategory = activeCategory === "ALL"
     ? true
@@ -113,6 +149,8 @@ const filteredVenues = venues.filter((venue) => {
         
 
 {filteredVenues.slice(0, 5).map((venue, index) => (
+const heat = getHeatStyles(venue.busyScore);
+
 
 
 
@@ -134,9 +172,14 @@ onClick={() => navigate(`/venue/${venue.id}`)}
       className="relative"
     >
 
-      <div className="absolute inset-0 animate-ping rounded-full bg-fuchsia-500/40 blur-xl w-10 h-10" />
+<div
+  className={`absolute inset-0 rounded-full blur-xl w-10 h-10 ${heat.glow} ${heat.pulse}`}
+/>
 
-      <div className="relative w-10 h-10 rounded-full bg-fuchsia-500 border border-fuchsia-300 shadow-[0_0_40px_rgba(255,0,200,0.9)]" />
+<div
+  className={`relative w-10 h-10 rounded-full border shadow-[0_0_40px_rgba(255,255,255,0.3)] ${heat.core}`}
+/>
+      
 
     </button>
 
