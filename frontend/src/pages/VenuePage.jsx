@@ -135,6 +135,43 @@ const saveVenue = () => {
 
         </div>
 
+{/* EVENTS */}
+<div className="rounded-[32px] border border-fuchsia-500/20 bg-fuchsia-500/5 backdrop-blur-2xl p-8 mb-10">
+
+  <h2 className="text-4xl font-black mb-6">
+    TONIGHT AT THIS VENUE
+  </h2>
+
+  <div className="grid gap-4">
+
+    {venue.events?.map((event, index) => (
+
+      <div
+        key={index}
+        className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-6 py-5"
+      >
+
+        <div>
+
+          <h3 className="text-xl font-bold">
+            {event.title}
+          </h3>
+
+        </div>
+
+        <div className="text-fuchsia-400 font-black text-lg">
+          {event.time}
+        </div>
+
+      </div>
+
+    ))}
+
+  </div>
+
+</div>
+
+
         {/* ABOUT */}
         <div className="rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-2xl p-8 mb-10">
 
