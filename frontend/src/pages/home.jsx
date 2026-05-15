@@ -207,6 +207,11 @@ const [tokens, setTokens] = useState(() => {
     );
   };
 
+const trendingVenues = [...venues]
+  .sort((a, b) => b.busyScore - a.busyScore)
+  .slice(0, 3);
+
+
   const slots = useMemo(
     () => [
       { key: "best_overall", data: data?.best_overall },
