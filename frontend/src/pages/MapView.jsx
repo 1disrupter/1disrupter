@@ -217,8 +217,15 @@ onClick={() => navigate(`/venue/${venue.id}`)}
 />
 
 <div
-  className={`relative w-10 h-10 rounded-full border shadow-[0_0_40px_rgba(255,255,255,0.3)] ${heat.core}`}
-/>
+  className={`relative w-14 h-14 rounded-full border shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center text-white font-black text-sm ${heat.core}`}
+>
+  {venue.busyScore}%
+</div>
+
+
+
+  
+
       
 
     </button>
@@ -243,6 +250,11 @@ onClick={() => navigate(`/venue/${venue.id}`)}
     <p className="text-white/60 mb-5">
       {activeVenue.vibe}
     </p>
+
+<p className="mt-2 text-fuchsia-400 font-black">
+  LIVE CROWD: {venue.busyScore}%
+</p>
+
 
     <button
       onClick={() =>
