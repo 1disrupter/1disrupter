@@ -43,6 +43,28 @@ const getCrowdStatus = (score) => {
 
 const crowd = getCrowdStatus(venue.busyScore);
 
+const getHeatGlow = (score) => {
+
+  if (score >= 95) {
+    return "shadow-[0_0_80px_rgba(255,0,80,0.9)]";
+  }
+
+  if (score >= 85) {
+    return "shadow-[0_0_60px_rgba(255,120,0,0.7)]";
+  }
+
+  if (score >= 70) {
+    return "shadow-[0_0_40px_rgba(0,255,180,0.6)]";
+  }
+
+  return "shadow-[0_0_25px_rgba(0,180,255,0.4)]";
+
+};
+
+const heatGlow = getHeatGlow(venue.busyScore);
+
+
+
 
 
 const saveVenue = () => {
@@ -79,7 +101,8 @@ const saveVenue = () => {
     <div className="min-h-screen bg-black text-white">
 
       {/* HERO IMAGE */}
-      <div className="relative h-[45vh] overflow-hidden">
+      
+      <div className={`relative h-[45vh] overflow-hidden ${heatGlow}`}>
 
         <img
           src="/bars.png"
