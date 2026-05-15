@@ -214,15 +214,18 @@ const filteredVenues = liveVenues.filter((venue) => {
 
         {/* REAL GOOGLE MAP */}
         <div className="absolute inset-0 z-0">
-          <iframe
-            title="Benalmadena Map"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            loading="lazy"
-            allowFullScreen
-            src="https://www.google.com/maps?q=36.559,-4.436&z=15&output=embed"
-          />
+          
+<iframe
+  title="Benalmadena Map"
+  width="100%"
+  height="100%"
+  style={{ border: 0 }}
+  loading="lazy"
+  allowFullScreen
+  src="https://maps.google.com/maps?q=Benalmadena&t=&z=13&ie=UTF8&iwloc=&output=embed"
+/>
+
+
         </div>
 
         {/* Dynamic Venue Hotspots */}
