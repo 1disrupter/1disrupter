@@ -107,7 +107,7 @@ const filteredVenues = liveVenues.filter((venue) => {
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
 
       {/* Background Glow */}
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,rgba(255,0,200,0.18),transparent_40%)] pointer-events-none z-10" />
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,rgba(255,0,200,0.6),transparent_40%)] pointer-events-none z-1" />
 
       {/* Header */}
       <div className="relative z-30 flex items-center justify-between px-6 py-5 border-b border-white/10 backdrop-blur-xl">
