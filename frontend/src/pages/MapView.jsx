@@ -227,9 +227,15 @@ const filteredVenues = liveVenues.filter((venue) => {
 
         {/* Dynamic Venue Hotspots */}
         
+{filteredVenues.slice(0, 5).map((venue, index) => {
 
-{filteredVenues.slice(0, 5).map((venue, index) => (
-const heat = getHeatStyles(venue.busyScore);
+  const heat = getHeatStyles(venue.busyScore);
+
+  return (
+
+
+
+
 
 
 
@@ -272,7 +278,12 @@ onClick={() => navigate(`/venue/${venue.id}`)}
 
   </div>
 
-))}
+  );
+
+})}
+
+
+
 
 {/* ACTIVE VENUE CARD */}
 {activeVenue && (
@@ -292,7 +303,7 @@ onClick={() => navigate(`/venue/${venue.id}`)}
     </p>
 
 <p className="mt-2 text-fuchsia-400 font-black">
-  LIVE CROWD: {venue.busyScore}%
+  LIVE CROWD: {activeVenue.busyScore}%
 </p>
 
 
