@@ -184,7 +184,8 @@ bg-fuchsia-500/20 blur-[120px] glow-pulse
       
 className="
   float-slow    
-  w-[320px]
+  w-[240px]
+  sm:w-[280px]    
   md:w-[420px]
   rotate-[8deg]
   relative z-30
