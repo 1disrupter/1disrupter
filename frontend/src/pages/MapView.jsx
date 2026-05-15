@@ -129,6 +129,46 @@ const filteredVenues = venues.filter((venue) => {
   ))}
 
 </div>
+      
+{/* LIVE HEAT LEGEND */}
+      
+<div className="relative z-30 px-6 py-4">
+
+  <div className="inline-flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-black/60 backdrop-blur-2xl px-5 py-4">
+
+    <div className="flex items-center gap-2 text-sm">
+      <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+      <span className="text-white/70">
+        🔥 Packed
+      </span>
+    </div>
+
+    <div className="flex items-center gap-2 text-sm">
+      <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
+      <span className="text-white/70">
+        🟠 Busy
+      </span>
+    </div>
+
+    <div className="flex items-center gap-2 text-sm">
+      <div className="w-3 h-3 rounded-full bg-green-500" />
+      <span className="text-white/70">
+        🟢 Good Vibes
+      </span>
+    </div>
+
+    <div className="flex items-center gap-2 text-sm">
+      <div className="w-3 h-3 rounded-full bg-cyan-400" />
+      <span className="text-white/70">
+        🌙 Chill
+      </span>
+    </div>
+
+  </div>
+
+</div>
+
+
       {/* Map Area */}
       <div className="relative w-full h-screen overflow-hidden">
 
