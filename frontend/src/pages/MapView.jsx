@@ -11,14 +11,17 @@ export default function MapView() {
 
 const [activeVenue, setActiveVenue] = useState(null);
 const [activeCategory, setActiveCategory] = useState("ALL");
-
-const filteredVenues =
-  activeCategory === "ALL"
-    ? venues
-    : venues.filter(
-        (venue) =>
-          venue.type.toLowerCase() === activeCategory.toLowerCase()
-      );
+const [searchQuery, setSearchQuery] = useState("");
+const filteredVenues = venues.filter((venue) => { 
+  const matchesCategory = activeCategory === "ALL"
+    ? true
+    : venue.type.toLowerCase() === activeCategory.toLowerCase();
+  const matchesSearch = 
+    venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    venue.type.toLowerCase().includes(searchQuery.toLowerCase());
+  
+  return matchesCategory && matchesSearch;
+});
 
 
 
@@ -45,7 +48,21 @@ const filteredVenues =
 
         <div />
       </div>
-      
+   
+{/* SEARCH */}
+<div className="relative z-30 px-6 pt-4">
+
+  <input
+    type="text"
+    placeholder="Search venues, music, bars..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="w-full rounded-2xl bg-white/5 border border-white/10 px-6 py-4 text-white placeholder:text-white/30 outline-none focus:border-fuchsia-500 backdrop-blur-xl"
+  />
+
+</div>
+
+   
 {/* FILTERS */}
       
 <div className="relative z-30 flex gap-3 overflow-x-auto px-6 py-4 border-b border-white/10 bg-black/40 backdrop-blur-xl">
