@@ -112,7 +112,10 @@ const [activeVenue, setActiveVenue] = useState(null);
   </div>
 
 )}
-
+</div> 
+    </div> 
+  ); 
+}
 
         
 
