@@ -46,7 +46,11 @@ export default function MapView() {
         </div>
 
         {/* Dynamic Venue Hotspots */}
-        {venues.map((venue, index) => (
+        
+        
+{venues.slice(0, 3).map((venue, index) => (
+
+
           <div
             key={venue.id}
             className="absolute z-20"
