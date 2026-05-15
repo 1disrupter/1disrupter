@@ -292,11 +292,23 @@ const [tokens, setTokens] = useState(() => {
 
     <div className="flex flex-col gap-6">
 
-      <h1 className="text-5xl md:text-7xl font-bold text-white">
-        DON'T GUESS.
-        <br />
-        KNOW.
-      </h1>
+<div className="relative inline-block">
+
+  <h1 className="text-5xl md:text-7xl font-bold text-white relative z-10">
+    DON'T GUESS WHERE TO GO.
+    <br />
+    KNOW.
+  </h1>
+
+
+<div className="absolute bottom-1 right-0 w-40 h-4 bg-fuchsia-500/70 blur-xl rounded-full rotate-[-1deg]" />
+
+
+
+</div>
+
+
+      
 
       <p className="text-white/60 max-w-xl">
         Live nightlife vibes, rewards and real-time discovery.
