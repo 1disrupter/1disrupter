@@ -296,7 +296,7 @@ const trendingVenues = [...venues]
   <div className="relative z-10 mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
 
     
-<div className="flex flex-col gap-6">
+<div className="flex flex-col gap-4">
 
   <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
 
@@ -318,7 +318,7 @@ const trendingVenues = [...venues]
     Live nightlife vibes, rewards and real-time discovery.
   </p>
 
-  <div className="flex flex-wrap items-center gap-3">
+  <div className="flex flex-wrap items-center gap-4 pt-2">
 
 
 
