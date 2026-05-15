@@ -66,7 +66,10 @@ const [activeVenue, setActiveVenue] = useState(null);
 
     {/* GLOW PIN */}
     <button
-      onClick={() => setActiveVenue(venue)}
+      
+onClick={() => navigate(`/venue/${venue.id}`)}
+
+
       className="relative"
     >
 
