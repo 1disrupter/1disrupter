@@ -1,4 +1,7 @@
 
+import holeinthewall from "../assets/venues/holeinthewall.jpg";
+
+
 const venues = [
 
   {
@@ -10,6 +13,10 @@ const venues = [
     lng: -4.436,
     color: "fuchsia",
     tag: "HOT NOW",
+    
+image: holeinthewall,
+
+
     busyScore: 97,
     trending: true,
 events: [ { title: "Live football", time: "23:00", },
