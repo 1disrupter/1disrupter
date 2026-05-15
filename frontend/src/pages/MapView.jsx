@@ -1,10 +1,16 @@
-import React from "react";
+
+import React, { useState } from "react";
+
+
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flame } from "lucide-react";
 import venues from "../data/venues";
 
 export default function MapView() {
   const navigate = useNavigate();
+
+const [activeVenue, setActiveVenue] = useState(null);
+
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
@@ -47,57 +53,67 @@ export default function MapView() {
 
         {/* Dynamic Venue Hotspots */}
         
+{venues.slice(0, 5).map((venue, index) => (
+
+  <div
+    key={venue.id}
+    className="absolute z-20"
+    style={{
+      top: `${25 + index * 14}%`,
+      left: `${20 + index * 15}%`,
+    }}
+  >
+
+    {/* GLOW PIN */}
+    <button
+      onClick={() => setActiveVenue(venue)}
+      className="relative"
+    >
+
+      <div className="absolute inset-0 animate-ping rounded-full bg-fuchsia-500/40 blur-xl w-10 h-10" />
+
+      <div className="relative w-10 h-10 rounded-full bg-fuchsia-500 border border-fuchsia-300 shadow-[0_0_40px_rgba(255,0,200,0.9)]" />
+
+    </button>
+
+  </div>
+
+))}
+
+{/* ACTIVE VENUE CARD */}
+{activeVenue && (
+
+  <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 w-[320px] rounded-[30px] border border-fuchsia-500/30 bg-black/80 backdrop-blur-2xl p-6 shadow-[0_0_60px_rgba(255,0,200,0.3)]">
+
+    <p className="text-fuchsia-400 text-xs uppercase tracking-[0.2em] mb-2">
+      {activeVenue.tag}
+    </p>
+
+    <h2 className="text-3xl font-black mb-2">
+      {activeVenue.name}
+    </h2>
+
+    <p className="text-white/60 mb-5">
+      {activeVenue.vibe}
+    </p>
+
+    <button
+      onClick={() =>
+        window.open(
+          `https://www.google.com/maps/dir/?api=1&destination=${activeVenue.lat},${activeVenue.lng}`,
+          "_blank"
+        )
+      }
+      className="w-full py-4 rounded-2xl bg-fuchsia-500 text-white font-black"
+    >
+      GET DIRECTIONS
+    </button>
+
+  </div>
+
+)}
+
+
         
-{venues.slice(0, 3).map((venue, index) => (
-
-
-          <div
-            key={venue.id}
-            className="absolute z-20"
-            style={{
-              top: `${25 + index * 18}%`,
-              left: `${15 + index * 22}%`,
-            }}
-          >
-            <div className="relative">
-              <div className="absolute inset-0 animate-ping rounded-full blur-xl w-16 h-16 bg-fuchsia-500/40" />
-
-              <div className="relative w-16 h-16 rounded-full border backdrop-blur-xl flex items-center justify-center shadow-[0_0_60px_rgba(255,0,200,0.8)] bg-fuchsia-500/20 border-fuchsia-400/60">
-                <Flame className="text-fuchsia-300" size={28} />
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-2xl border bg-black/70 backdrop-blur-xl p-4 w-[220px] border-fuchsia-500/30">
-              <p className="text-fuchsia-300 text-xs uppercase tracking-[0.2em] mb-2">
-                {venue.tag}
-              </p>
-
-              <h3 className="text-2xl font-black">
-                {venue.name}
-              </h3>
-
-              <p className="text-white/60 text-sm mt-1">
-                {venue.vibe}
-              </p>
-
-              <button
-                onClick={() =>
-                  window.open(
-                    `https://www.google.com/maps/dir/?api=1&destination=${venue.lat},${venue.lng}`,
-                    "_blank"
-                  )
-                }
-                className="mt-4 w-full py-3 rounded-xl font-bold bg-fuchsia-500 text-white"
-              >
-                GET DIRECTIONS
-              </button>
-            </div>
-          </div>
-        ))}
-
-      </div>
-    </div>
-  );
-}
 
 
