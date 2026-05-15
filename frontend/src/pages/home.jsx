@@ -295,33 +295,48 @@ const trendingVenues = [...venues]
 
   <div className="relative z-10 mx-auto max-w-6xl px-4 pt-10 pb-6 md:pt-16">
 
-    <div className="flex flex-col gap-6">
+    
+<div className="flex flex-col gap-6">
 
-<div className="relative inline-block">
+  <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
 
-  <h1 className="text-5xl md:text-7xl font-bold text-white relative z-10">
     DON'T GUESS WHERE TO GO.
+
     <br />
-    KNOW.
+
+    <span className="relative inline-block">
+
+      KNOW.
+
+      <span className="absolute left-0 bottom-2 w-full h-5 bg-fuchsia-500/80 blur-lg rounded-full -rotate-1 opacity-90" />
+
+    </span>
+
   </h1>
 
+  <p className="text-white/60 max-w-xl">
+    Live nightlife vibes, rewards and real-time discovery.
+  </p>
 
-<div className="absolute bottom-0 right-0 w-40 h-5 bg-fuchsia-500/70 blur-xl rounded-full rotate-[-1deg]" />
+  <div className="flex flex-wrap items-center gap-3">
 
 
 
-</div>
+
+
+
+
+
+  
 
 
       
 
-      <p className="text-white/60 max-w-xl">
-        Live nightlife vibes, rewards and real-time discovery.
-      </p>
+     
 
-      <div className="flex flex-wrap items-center gap-3">
+      
 
-        <Button
+     <Button
           leftIcon={<MapPin size={16} />}
           size="md"
           variant="primary"
