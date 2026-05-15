@@ -1,5 +1,5 @@
 
-import holeinthewall from "../assets/venues/holeinthewall.jpg";
+import holeinthewall from "../assets/venues/hole in the wall.jpg";
 
 
 const venues = [
