@@ -102,7 +102,14 @@ const saveVenue = () => {
 
       {/* HERO IMAGE */}
       
-      <div className={`relative h-[45vh] overflow-hidden ${heatGlow}`}>
+      
+<div
+  className={`relative h-[45vh] overflow-hidden ${heatGlow} ${
+    venue.busyScore >= 90 ? "animate-pulse" : ""
+  }`}
+>
+
+
 
         <img
           src="/bars.png"
