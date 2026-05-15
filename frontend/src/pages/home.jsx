@@ -288,7 +288,9 @@ const trendingVenues = [...venues]
         }
         onAccount={() => navigate("/me")}
       />
+      
 {/* Hero */}
+      
 <section className="relative overflow-hidden">
 
   <div className="v2n-grid absolute inset-0 opacity-30 pointer-events-none" />
@@ -373,6 +375,31 @@ const trendingVenues = [...venues]
 
 </section>
 
+<div className="overflow-x-auto pb-2 no-scrollbar">
+  <div className="flex gap-3 min-w-max">
+
+    {[
+      "🔥 Trending",
+      "🍸 Cocktail Bars",
+      "🎶 Live Music",
+      "🌴 Beach Bars",
+      "💃 Clubs",
+      "⭐ Saved",
+    ].map((item) => (
+
+      <button
+        key={item}
+        className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white whitespace-nowrap text-sm font-bold hover:bg-fuchsia-500/20 transition"
+      >
+        {item}
+      </button>
+
+    ))}
+
+  </div>
+</div>
+
+
 
 
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60">
@@ -408,11 +435,15 @@ const trendingVenues = [...venues]
     Scan at Venue
   </Button>
 </div>
+      
       {/* Cards */}
+      
       <section id="top-three" className="mx-auto max-w-6xl px-4">
         
 {/* TRENDING TONIGHT */}
+        
 <div className="mb-10">
+  
 
   <div className="flex items-center justify-between mb-5">
 
