@@ -14,12 +14,10 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Owner = lazy(() => import("./pages/Owner"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Explore = lazy(() => import("./pages/explore"));
-
 const MapView = lazy(() => import("./pages/MapView"));
-
 const VenuePage = lazy(() => import("./pages/VenuePage"));
  
-
+const Favourites = lazy(() => import("./pages/Favourites"));
 
 const ADMIN_STORAGE_KEY = "v2n_admin_session";
 
@@ -54,6 +52,9 @@ export default function App() {
              <Route path="/" element={<Landing />} />
 
 <Route path="/venue/:id" element={<VenuePage />} />
+
+<Route path="/favourites" element={<Favourites />} />
+
 
 
 <Route path="/map" element={<MapView />} />
