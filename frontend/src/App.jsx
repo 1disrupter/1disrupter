@@ -17,6 +17,9 @@ const Explore = lazy(() => import("./pages/explore"));
 
 const MapView = lazy(() => import("./pages/MapView"));
 
+const VenuePage = lazy(() => import("./pages/VenuePage"));
+ 
+
 
 const ADMIN_STORAGE_KEY = "v2n_admin_session";
 
@@ -49,6 +52,9 @@ export default function App() {
           >
             <Routes>
              <Route path="/" element={<Landing />} />
+
+<Route path="/venue/:id" element={<VenuePage />} />
+
 
 <Route path="/map" element={<MapView />} />
 
