@@ -105,6 +105,14 @@ const saveVenue = () => {
       
 <div
   className={`relative h-[45vh] overflow-hidden ${heatGlow} ${
+    
+<img
+  src={venue.image}
+  alt={venue.name}
+  className="w-full h-full object-cover"
+/>
+
+
     venue.busyScore >= 90 ? "animate-pulse" : ""
   }`}
 >
