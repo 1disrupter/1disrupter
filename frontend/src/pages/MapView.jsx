@@ -113,7 +113,10 @@ const filteredVenues = liveVenues.filter((venue) => {
       <div className="relative z-30 flex items-center justify-between px-6 py-5 border-b border-white/10 backdrop-blur-xl">
         <button
           onClick={() => navigate("/app")}
-          className="flex items-center gap-2 text-white/70 hover:text-white transition"
+          
+className="flex items-center gap-3 text-white text-lg font-bold hover:text-fuchsia-300 transition"
+
+
         >
           <ArrowLeft size={18} />
           Back
