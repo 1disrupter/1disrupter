@@ -10,6 +10,17 @@ export default function MapView() {
   const navigate = useNavigate();
 
 const [activeVenue, setActiveVenue] = useState(null);
+const [activeCategory, setActiveCategory] = useState("ALL");
+
+const filteredVenues =
+  activeCategory === "ALL"
+    ? venues
+    : venues.filter(
+        (venue) =>
+          venue.type.toLowerCase() === activeCategory.toLowerCase()
+      );
+
+
 
 
   return (
@@ -34,7 +45,36 @@ const [activeVenue, setActiveVenue] = useState(null);
 
         <div />
       </div>
+      
+{/* FILTERS */}
+      
+<div className="relative z-30 flex gap-3 overflow-x-auto px-6 py-4 border-b border-white/10 bg-black/40 backdrop-blur-xl">
 
+  {[
+    "ALL",
+    "Cocktail Bar",
+    "Irish Bar",
+    "Pub",
+    "Beach Bar",
+    "Nightclub",
+    "Live Music",
+  ].map((category) => (
+
+    <button
+      key={category}
+      onClick={() => setActiveCategory(category)}
+      className={`px-5 py-3 rounded-2xl whitespace-nowrap text-sm font-bold transition ${
+        activeCategory === category
+          ? "bg-fuchsia-500 text-white"
+          : "bg-white/5 text-white/60 border border-white/10"
+      }`}
+    >
+      {category}
+    </button>
+
+  ))}
+
+</div>
       {/* Map Area */}
       <div className="relative w-full h-screen overflow-hidden">
 
@@ -53,7 +93,10 @@ const [activeVenue, setActiveVenue] = useState(null);
 
         {/* Dynamic Venue Hotspots */}
         
-{venues.slice(0, 5).map((venue, index) => (
+
+{filteredVenues.slice(0, 5).map((venue, index) => (
+
+
 
   <div
     key={venue.id}
