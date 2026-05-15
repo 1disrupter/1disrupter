@@ -247,8 +247,8 @@ const filteredVenues = liveVenues.filter((venue) => {
     key={venue.id}
     className="absolute z-20"
     style={{
-      top: `${25 + index * 14}%`,
-      left: `${20 + index * 15}%`,
+      top: `${40 + index * 5}%`,
+      left: `${45 + index * 4}%`,
     }}
   >
 
