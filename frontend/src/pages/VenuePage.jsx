@@ -102,28 +102,25 @@ const saveVenue = () => {
 
       {/* HERO IMAGE */}
       
-      
+     
 <div
   className={`relative h-[45vh] overflow-hidden ${heatGlow} ${
-    
-<img
-  src={venue.image}
-  alt={venue.name}
-  className="w-full h-full object-cover"
-/>
-
-
     venue.busyScore >= 90 ? "animate-pulse" : ""
   }`}
 >
 
+  <img
+    src={venue.image}
+    alt={venue.name}
+    className="w-full h-full object-cover"
+  />
+
+ 
 
 
-        <img
-          src="/bars.png"
-          alt={venue.name}
-          className="w-full h-full object-cover"
-        />
+
+
+      
 
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
