@@ -124,15 +124,17 @@ const saveVenue = () => {
 
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
-        {/* BACK BUTTON */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-6 left-6 z-30 flex items-center gap-2 bg-black/60 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/10"
-        >
-          <ArrowLeft size={18} />
-          Back
-        </button>
+{/* BACK BUTTON */}
+  
+<button
+  onClick={() => navigate(-1)}
+  className="absolute top-6 left-6 z-30 flex items-center gap-3 bg-black/70 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/20 text-white text-lg font-black shadow-[0_0_20px_rgba(0,0,0,0.4)]"
+>
+  <ArrowLeft size={22} />
+  Back
+</button>
 
+       
         {/* VENUE TITLE */}
         <div className="absolute bottom-10 left-8 z-20">
 
