@@ -11,6 +11,27 @@ export default function VenuePage() {
 
   const venue = venues.find((v) => v.id === Number(id));
 
+const saveVenue = () => {
+
+  const saved =
+    JSON.parse(localStorage.getItem("v2n_favourites")) || [];
+
+  const alreadySaved = saved.find((v) => v.id === venue.id);
+
+  if (alreadySaved) return;
+
+  saved.push(venue);
+
+  localStorage.setItem(
+    "v2n_favourites",
+    JSON.stringify(saved)
+  );
+
+  alert(`${venue.name} saved to favourites`);
+
+};
+
+
   if (!venue) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -141,16 +162,17 @@ export default function VenuePage() {
           >
             GET DIRECTIONS
           </button>
+       
+<button
+  onClick={saveVenue}
+  className="px-10 py-5 rounded-3xl border border-cyan-400/30 bg-cyan-400/10 text-cyan-300 text-lg font-black"
+>
+  SAVE VENUE
+</button>
 
-          <button
-            className="px-10 py-5 rounded-3xl border border-cyan-400/30 bg-cyan-400/10 text-cyan-300 text-lg font-black"
-          >
-            SAVE VENUE
-          </button>
-
-          <button
-            onClick={() => navigate("/owner")}
-            className="px-10 py-5 rounded-3xl border border-white/10 bg-white/5 text-white text-lg font-black"
+<button
+  onClick={() => navigate("/owner")}
+    className="px-10 py-5 rounded-3xl border border-white/10 bg-white/5 text-white text-lg font-black"
           >
             CLAIM VENUE
           </button>
