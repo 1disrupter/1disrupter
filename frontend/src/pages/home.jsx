@@ -338,24 +338,27 @@ const trendingVenues = [...venues]
 
      <Button
           leftIcon={<MapPin size={16} />}
-          size="md"
+          size="lg"
           variant="primary"
           onClick={useMyLocation}
         >
           Use my location
         </Button>
 
-        <Button
-          size="md"
-          variant="secondary"
-          onClick={() => navigate("/explore")}
-        >
-          Explore More
-        </Button>
+<Button
+  size="lg"
+  variant="secondary"
+  onClick={() => navigate("/explore")}
+>
+  Explore Venues
+</Button>
+
+
+        
 
         <Button
           leftIcon={<RefreshCw size={14} />}
-          size="md"
+          size="lg"
           variant="secondary"
           onClick={() => fetchVibes()}
         >
