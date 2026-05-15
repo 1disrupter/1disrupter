@@ -11,6 +11,40 @@ export default function VenuePage() {
 
   const venue = venues.find((v) => v.id === Number(id));
 
+const getCrowdStatus = (score) => {
+
+  if (score >= 95) {
+    return {
+      label: "🔥 PACKED",
+      color: "text-red-400",
+    };
+  }
+
+  if (score >= 85) {
+    return {
+      label: "🟠 BUSY",
+      color: "text-orange-400",
+    };
+  }
+
+  if (score >= 70) {
+    return {
+      label: "🟢 GOOD VIBES",
+      color: "text-green-400",
+    };
+  }
+
+  return {
+    label: "🌙 CHILL",
+    color: "text-cyan-300",
+  };
+
+};
+
+const crowd = getCrowdStatus(venue.busyScore);
+
+
+
 const saveVenue = () => {
 
   const saved =
@@ -99,6 +133,12 @@ const saveVenue = () => {
 
             <p className="text-white/70">
               {venue.vibe}
+              
+<p className={`mt-3 text-lg font-black ${crowd.color}`}>
+  {crowd.label}
+</p>
+
+
             </p>
 
           </div>
