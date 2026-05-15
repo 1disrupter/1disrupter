@@ -1,5 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+
+
 
 
 import { useNavigate } from "react-router-dom";
@@ -7,6 +10,43 @@ import { ArrowLeft, Flame } from "lucide-react";
 import venues from "../data/venues";
 
 export default function MapView() {
+  
+const [liveVenues, setLiveVenues] = useState(venues);
+
+useEffect(() => {
+
+  const interval = setInterval(() => {
+
+    setLiveVenues((prev) =>
+      prev.map((venue) => {
+
+        const fluctuation =
+          Math.floor(Math.random() * 7) - 3;
+
+        let updatedScore =
+          venue.busyScore + fluctuation;
+
+        updatedScore = Math.max(
+          55,
+          Math.min(100, updatedScore)
+        );
+
+        return {
+          ...venue,
+          busyScore: updatedScore,
+        };
+
+      })
+    );
+
+  }, 4000);
+
+  return () => clearInterval(interval);
+
+}, []);
+
+
+
   const navigate = useNavigate();
 
 const [activeVenue, setActiveVenue] = useState(null);
@@ -49,7 +89,7 @@ const getHeatStyles = (score) => {
 };
 
 
-const filteredVenues = venues.filter((venue) => { 
+const filteredVenues = liveVenues.filter((venue) => {
   const matchesCategory = activeCategory === "ALL"
     ? true
     : venue.type.toLowerCase() === activeCategory.toLowerCase();
