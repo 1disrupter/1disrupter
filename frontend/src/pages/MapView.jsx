@@ -55,8 +55,8 @@ export default function MapView() {
             key={venue.id}
             className="absolute z-20"
             style={{
-              top: `${35 + index * 12}%`,
-              left: `${45 + index * 8}%`,
+              top: `${25 + index * 18}%`,
+              left: `${15 + index * 22}%`,
             }}
           >
             <div className="relative">
