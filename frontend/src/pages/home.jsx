@@ -22,7 +22,7 @@ import {
   consumePendingReferrer
 } from "../lib/userId";
 import { useReferralPing } from "../lib/useReferralPing";
-
+import venues from "../data/venues";
 import QRScanner from "../components/QRScanner";
 
 const DEFAULT_LOCATION = { lat: 40.73, lng: -73.99, label: "Manhattan, NY" };
@@ -741,6 +741,11 @@ const verifyReward = () => {
   window.location.reload();
 };
  
+const trendingVenues = [...venues]
+  .sort((a, b) => b.busyScore - a.busyScore)
+  .slice(0, 3);
+
+
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
