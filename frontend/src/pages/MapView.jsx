@@ -10,6 +10,7 @@ export default function MapView() {
   const navigate = useNavigate();
 
 const [activeVenue, setActiveVenue] = useState(null);
+const [searchTerm, setSearchTerm] = useState("");
 const [activeCategory, setActiveCategory] = useState("ALL");
 const [searchQuery, setSearchQuery] = useState("");
 const filteredVenues = venues.filter((venue) => { 
