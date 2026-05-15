@@ -4,12 +4,15 @@ const venues = [
   {
     id: 1,
     name: "Hole in the Wall",
-    type: "Cocktail Bar",
+    type: " Bar ",
     vibe: "97% Vibe · Packed",
     lat: 36.559,
     lng: -4.436,
     color: "fuchsia",
     tag: "HOT NOW",
+    events: [ { title: "Live football", time: "23:00", },
+       { title: "2-for-1 Cocktails", 
+        time: "20:00", }, ],
   },
 
   {
@@ -21,6 +24,10 @@ const venues = [
     lng: -4.440,
     color: "cyan",
     tag: "LIVE MUSIC",
+    events: [ { title: "Live DJ Set", time: "23:00", }, 
+             { title: "2-for-1 Cocktails", time: "20:00",
+             }, 
+            ],
   },
 
   {
@@ -32,6 +39,10 @@ const venues = [
     lng: -4.432,
     color: "purple",
     tag: "TRENDING",
+    events: [ { title: "Live DJ Set", time: "23:00", }, 
+             { title: "2-for-1 Cocktails", time: "20:00",
+             }, 
+            ],
   },
 
 {
@@ -43,6 +54,10 @@ const venues = [
   lng: -4.530,
   color: "cyan",
   tag: "TRENDING",
+  events: [ { title: "Live DJ Set", time: "23:00", },
+           { title: "2-for-1 Cocktails", time: "20:00",
+           },
+          ],
 },
 
 {
@@ -54,6 +69,10 @@ const venues = [
   lng: -4.516,
   color: "fuchsia",
   tag: "BUSY",
+  events: [ { title: "Live DJ Set", time: "23:00", },
+           { title: "2-for-1 Cocktails", time: "20:00", 
+           }, 
+          ],
 },
 
 {
@@ -65,6 +84,10 @@ const venues = [
   lng: -4.517,
   color: "purple",
   tag: "HOT",
+  events: [ { title: "Live DJ Set", time: "23:00", }, 
+           { title: "2-for-1 Cocktails", time: "20:00", 
+           }, 
+          ],
 },
 
 {
@@ -76,6 +99,10 @@ const venues = [
   lng: -4.525,
   color: "cyan",
   tag: "LIVE DJ",
+  events: [ { title: "Live DJ Set", time: "23:00", },
+           { title: "2-for-1 Cocktails", time: "20:00", 
+           },
+          ],
 },
 
 {
@@ -87,6 +114,10 @@ const venues = [
   lng: -4.518,
   color: "fuchsia",
   tag: "HOT NOW",
+  events: [ { title: "Live DJ Set", time: "23:00", },
+           { title: "2-for-1 Cocktails", time: "20:00", 
+           },
+          ],
 },
 
 
