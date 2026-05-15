@@ -24,10 +24,7 @@ export function Navbar({ onMenu, onAccount, rightSlot, className }) {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          <NavItem to="/" end icon={<Sparkles size={14} />}>Tonight</NavItem>
-          <NavItem to="/admin" icon={<LayoutDashboard size={14} />}>Admin</NavItem>
-        </nav>
+       
 
         <div className="flex items-center gap-2">
           {rightSlot}
