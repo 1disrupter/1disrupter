@@ -71,27 +71,45 @@ export default function MainLayout({ children }) {
 
 <nav className="flex flex-col gap-3 text-white mt-6">
 
-  <a href="/explore" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+  <a href="/explore"
+className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white hover:bg-fuchsia-500/15 hover:border-fuchsia-400/30 hover:shadow-[0_0_20px_rgba(255,0,200,0.2)] transition-all duration-300
+
+">
     🔥 Trending Tonight
   </a>
 
-  <a href="/map" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+  <a href="/map"
+className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white hover:bg-fuchsia-500/15 hover:border-fuchsia-400/30 hover:shadow-[0_0_20px_rgba(255,0,200,0.2)] transition-all duration-300"
+
+ >
     🗺️ Live Map
   </a>
 
-  <a href="/favourites" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+  <a href="/favourites"
+className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white hover:bg-fuchsia-500/15 hover:border-fuchsia-400/30 hover:shadow-[0_0_20px_rgba(255,0,200,0.2)] transition-all duration-300"
+
+ >
     ⭐ Favourites
   </a>
 
-  <a href="/me" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+  <a href="/me"
+className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white hover:bg-fuchsia-500/15 hover:border-fuchsia-400/30 hover:shadow-[0_0_20px_rgba(255,0,200,0.2)] transition-all duration-300"
+
+ >
     👤 Profile
   </a>
 
-  <a href="/owner" className="rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 px-4 py-3">
+  <a href="/owner"
+className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white hover:bg-fuchsia-500/15 hover:border-fuchsia-400/30 hover:shadow-[0_0_20px_rgba(255,0,200,0.2)] transition-all duration-300"
+
+ >
     🏢 Venue Owner
   </a>
 
-  <a href="/admin" className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+  <a href="/admin"
+className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white hover:bg-fuchsia-500/15 hover:border-fuchsia-400/30 hover:shadow-[0_0_20px_rgba(255,0,200,0.2)] transition-all duration-300"
+
+ >
     ⚙️ Admin
   </a>
 
