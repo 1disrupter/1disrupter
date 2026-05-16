@@ -86,7 +86,10 @@ export function VenueHeroCard({ slot, data, onGo, onShare, index = 0, className 
       <div className="relative aspect-video w-full overflow-hidden">
         <img
           
-src={venue?.image || HERO_IMAGE[slot]}
+src={data?.image || venue?.image || HERO_IMAGE[slot]}  
+
+
+
 
 
           alt={venue?.name}
