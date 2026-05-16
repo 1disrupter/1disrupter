@@ -33,7 +33,11 @@ export default function MainLayout({ children }) {
         >
           <div
            
-className="absolute left-0 top-0 h-full w-72 bg-background-deep/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] p-5"
+<div
+  className="absolute left-0 top-0 h-full w-72 bg-background-deep/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] p-5 animate-slideIn"
+
+
+
 
  
             onClick={(e) => e.stopPropagation()}
