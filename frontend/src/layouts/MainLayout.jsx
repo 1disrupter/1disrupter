@@ -42,12 +42,15 @@ export default function MainLayout({ children }) {
  
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setMenuOpen(false)}
-              className="mb-4 text-white"
-            >
-              Close
-            </button>
+           
+<button
+  onClick={() => setMenuOpen(false)}
+  className="mb-5 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white hover:bg-white/10 transition"
+>
+  ✕ Close
+</button>
+
+ 
 
 <div className="mb-6 border-b border-white/10 pb-5">
 
