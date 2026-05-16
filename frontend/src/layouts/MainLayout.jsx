@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+
+import { Locate } from "lucide-react";
+import { IconButton } from "@/components/v2n/Button";
+
+
 import { Navbar } from "@/components/v2n/Navbar";
 
 export default function MainLayout({ children }) {
@@ -6,9 +11,21 @@ export default function MainLayout({ children }) {
 
   return (
     <>
-      <Navbar onMenu={() => setMenuOpen(true)} />
+     
+<Navbar
+  onMenu={() => setMenuOpen(true)}
+  rightSlot={
+    <IconButton
+      onClick={() => window.location.reload()}
+      aria-label="Use my location"
+    >
+      <Locate size={18} />
+    </IconButton>
+  }
+/>
 
-      {/* Drawer */}
+ {/* Drawer */}
+      
       {menuOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50"
