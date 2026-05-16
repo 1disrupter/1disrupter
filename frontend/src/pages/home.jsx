@@ -273,21 +273,7 @@ const trendingVenues = [...venues]
 
   return (
     <div className="min-h-screen pb-24 md:pb-0">
-      <Navbar
-        onMenu={() => {
-          // Smooth-scroll to the Top-3 cards section so the menu button
-          // actually does something useful on mobile.
-          const el = document.getElementById("top-three");
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          else window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        rightSlot={
-          <IconButton onClick={useMyLocation} aria-label="Use my location" data-testid="use-location">
-            <Locate size={18} />
-          </IconButton>
-        }
-        onAccount={() => navigate("/me")}
-      />
+   
       
 {/* Hero */}
       
