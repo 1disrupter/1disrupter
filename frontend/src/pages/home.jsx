@@ -375,6 +375,9 @@ const trendingVenues = [...venues]
 
 </section>
 
+
+<div className="sticky top-[72px] z-20 bg-background-deep/80 backdrop-blur-xl border-b border-white/5 py-3">
+
 <div className="overflow-x-auto pb-2 no-scrollbar">
   <div className="flex gap-3 min-w-max">
 
@@ -401,7 +404,7 @@ className="px-5 py-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white
 
   </div>
 </div>
-
+</div>
 
 
 
