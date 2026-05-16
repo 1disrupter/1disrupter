@@ -383,27 +383,54 @@ const trendingVenues = [...venues]
 <div className="overflow-x-auto pb-2 no-scrollbar">
   <div className="flex gap-3 min-w-max">
 
-    {[
-      "🔥 Trending",
-      "🍸 Cocktail Bars",
-      "🎶 Live Music",
-      "🌴 Beach Bars",
-      "💃 Clubs",
-      "⭐ Saved",
-    ].map((item) => (
+{[
+  {
+    label: "🔥 Trending",
+    target: "trending-section",
+  },
+  {
+    label: "🍸 Cocktail Bars",
+    target: "trending-section",
+  },
+  {
+    label: "🎶 Live Music",
+    target: "trending-section",
+  },
+  {
+    label: "🌴 Beach Bars",
+    target: "trending-section",
+  },
+  {
+    label: "💃 Clubs",
+    target: "trending-section",
+  },
+  {
+    label: "⭐ Saved",
+    target: "trending-section",
+  },
+].map((item) => (
 
-      <button
-        key={item}
-       
-className="px-5 py-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-white whitespace-nowrap text-sm font-bold hover:bg-fuchsia-500/20 hover:border-fuchsia-400/40 hover:shadow-[0_0_20px_rgba(255,0,200,0.25)] transition-all duration-300"
+  <button
+    key={item.label}
+    onClick={() => {
+      const el = document.getElementById(item.target);
+
+      if (el) {
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }}
+    className="px-5 py-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-white whitespace-nowrap text-sm font-bold hover:bg-fuchsia-500/20 hover:border-fuchsia-400/40 hover:shadow-[0_0_20px_rgba(255,0,200,0.25)] transition-all duration-300"
+  >
+    {item.label}
+  </button>
+
+))}
 
 
-      >
-        {item}
-      </button>
-
-    ))}
-
+   
   </div>
 </div>
 </div>
@@ -450,7 +477,10 @@ className="px-5 py-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white
         
 {/* TRENDING TONIGHT */}
         
-<div className="mb-10">
+<div id="trending-section" className="mb-10">
+
+
+
   
 
   <div className="flex items-center justify-between mb-5">
