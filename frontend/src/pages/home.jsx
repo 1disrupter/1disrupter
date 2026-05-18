@@ -311,22 +311,7 @@ const trendingVenues = [...venues]
   <div className="flex flex-wrap items-center gap-4 pt-2">
 
 
-
-
-
-
-
-
-  
-
-
-      
-
-     
-
-      
-
-     <Button
+ <Button
           leftIcon={<MapPin size={16} />}
           size="lg"
           variant="primary"
@@ -460,6 +445,7 @@ const trendingVenues = [...venues]
   
   ))}
     </div>
+    
       key={venue.id}
       className="overflow-hidden rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-xl hover:border-fuchsia-400/30 hover:shadow-[0_0_30px_rgba(255,0,200,0.2)] transition-all duration-300"
     >
