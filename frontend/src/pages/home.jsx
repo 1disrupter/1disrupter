@@ -401,6 +401,78 @@ const trendingVenues = [...venues]
 </div>
 </div>
 
+<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-8">
+
+  {venues.map((venue) => (
+
+    <div
+      key={venue.id}
+      className="overflow-hidden rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-xl hover:border-fuchsia-400/30 hover:shadow-[0_0_30px_rgba(255,0,200,0.2)] transition-all duration-300"
+    >
+
+      <img
+        src={venue.image}
+        alt={venue.name}
+        className="h-52 w-full object-cover"
+      />
+
+      <div className="p-5">
+
+        <div className="flex items-center justify-between mb-3">
+
+          <div>
+            <p className="text-fuchsia-400 text-xs uppercase tracking-[0.2em]">
+              {venue.tag}
+            </p>
+
+            <h3 className="text-2xl font-black mt-1">
+              {venue.name}
+            </h3>
+          </div>
+
+          <div className="text-right">
+            <div className="text-3xl font-black text-fuchsia-400">
+              {venue.busyScore}%
+            </div>
+
+            <p className="text-white/40 text-xs">
+              Vibe
+            </p>
+          </div>
+
+        </div>
+
+        <p className="text-white/60 mb-4">
+          {venue.vibe}
+        </p>
+
+        <div className="flex items-center justify-between">
+
+          <div className="text-sm text-white/40">
+            Open Until 2AM
+          </div>
+
+<button
+  onClick={() => navigate(`/venue/${venue.id}`)}
+  className="rounded-2xl bg-fuchsia-500 px-5 py-2 font-bold text-white hover:bg-fuchsia-400 transition"
+>
+  Go Here
+</button>
+
+
+          
+
+        </div>
+
+      </div>
+
+    </div>
+
+  ))}
+
+</div>
+
+
         
 
         <Button
