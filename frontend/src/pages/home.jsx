@@ -368,7 +368,7 @@ const trendingVenues = [...venues]
 
 </section>
  
-<div className="mx-auto max-w-6xl px-4 pt-10">
+<div className="mx-auto max-w-6xl px-4 pt-10"> 
 
   <div className="flex items-center justify-between mb-5">
 
@@ -510,7 +510,7 @@ const trendingVenues = [...venues]
     </div>
 
   ))}
-
+</div>
 
 
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60">
