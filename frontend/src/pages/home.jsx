@@ -504,7 +504,7 @@ const trendingVenues = [...venues]
   ))}
 
 </div>
-
+ </div>
 
 
 
