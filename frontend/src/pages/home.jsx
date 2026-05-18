@@ -367,7 +367,9 @@ const trendingVenues = [...venues]
     </div>
 
   </div>
-
+    
+    
+    
 </section>
     
     </div>
@@ -377,7 +379,9 @@ const trendingVenues = [...venues]
   <div className="flex items-center justify-between mb-5">
 
     <h2 className="text-3xl font-black text-white">
+      
       Explore More Venues
+      
     </h2>
 
     <p className="text-white/40">
@@ -448,9 +452,14 @@ const trendingVenues = [...venues]
 
 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-8">
     
+     
+      
 {venues.map((venue) => (
-
-    <div
+  
+//cards
+  
+  ))}
+    </div>
       key={venue.id}
       className="overflow-hidden rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-xl hover:border-fuchsia-400/30 hover:shadow-[0_0_30px_rgba(255,0,200,0.2)] transition-all duration-300"
     >
