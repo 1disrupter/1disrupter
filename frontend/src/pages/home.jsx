@@ -303,7 +303,9 @@ const trendingVenues = [...venues]
   </h1>
 
   <p className="text-white/60 max-w-xl">
+    
     Live nightlife vibes, rewards and real-time discovery.
+    
   </p>
 
   <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -367,8 +369,10 @@ const trendingVenues = [...venues]
   </div>
 
 </section>
- 
-<div className="mx-auto max-w-6xl px-4 pt-10"> 
+    
+    </div>
+    
+ <div className="mx-auto max-w-6xl px-4 pt-10">
 
   <div className="flex items-center justify-between mb-5">
 
