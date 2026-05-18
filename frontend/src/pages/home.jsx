@@ -949,7 +949,16 @@ setActiveReward(redemption);
     </div>
   );
 }      
-function WalletModal({ tokens, onClose, setShowRewards,setShowVenueStats,setShowLeaderboard, }) {
+
+function WalletModal({
+  tokens,
+  onClose,
+  setShowRewards,
+  setShowVenueStats,
+  setShowLeaderboard,
+}) {
+
+
 
   const savedReward = JSON.parse(
     localStorage.getItem("v2n_last_reward") || "null"
