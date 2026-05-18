@@ -339,29 +339,9 @@ const trendingVenues = [...venues]
   onClick={() => navigate("/explore")}
 >
   Explore Venues
+  
 </Button>
-
-
-        
-
-        <Button
-          leftIcon={<RefreshCw size={14} />}
-          size="lg"
-          variant="secondary"
-          onClick={() => fetchVibes()}
-        >
-          Refresh vibes
-        </Button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-
+    
 <div className="sticky top-[88px] z-20 bg-background-deep/70 backdrop-blur-xl border-b border-white/5 py-3 px-4">
 
 
@@ -420,6 +400,27 @@ const trendingVenues = [...venues]
   </div>
 </div>
 </div>
+
+        
+
+        <Button
+          leftIcon={<RefreshCw size={14} />}
+          size="lg"
+          variant="secondary"
+          onClick={() => fetchVibes()}
+        >
+          Refresh vibes
+        </Button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
 
 
 
