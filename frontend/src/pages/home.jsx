@@ -351,13 +351,14 @@ const trendingVenues = [...venues]
 
     </div>
 
-  </div>
-    
+  
+      
+  
     
     
 </section>
     
-    </div>
+    
     
  <div className="mx-auto max-w-6xl px-4 pt-10">
 
@@ -435,17 +436,12 @@ const trendingVenues = [...venues]
 </div>
 </div>
 
+
 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-8">
-    
-     
-      
-{venues.map((venue) => (
-  
-//cards
-  
-  ))}
-    </div>
-    
+
+  {venues.map((venue) => (
+
+    <div
       key={venue.id}
       className="overflow-hidden rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-xl hover:border-fuchsia-400/30 hover:shadow-[0_0_30px_rgba(255,0,200,0.2)] transition-all duration-300"
     >
@@ -492,15 +488,12 @@ const trendingVenues = [...venues]
             Open Until 2AM
           </div>
 
-<button
-  onClick={() => navigate(`/venue/${venue.id}`)}
-  className="rounded-2xl bg-fuchsia-500 px-5 py-2 font-bold text-white hover:bg-fuchsia-400 transition"
->
-  Go Here
-</button>
-
-
-          
+          <button
+            onClick={() => navigate(`/venue/${venue.id}`)}
+            className="rounded-2xl bg-fuchsia-500 px-5 py-2 font-bold text-white hover:bg-fuchsia-400 transition"
+          >
+            Go Here
+          </button>
 
         </div>
 
@@ -509,7 +502,10 @@ const trendingVenues = [...venues]
     </div>
 
   ))}
+
 </div>
+
+
 
 
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60">
