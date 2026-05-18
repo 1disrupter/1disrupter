@@ -342,66 +342,7 @@ const trendingVenues = [...venues]
   
 </Button>
     
-<div className="sticky top-[88px] z-20 bg-background-deep/70 backdrop-blur-xl border-b border-white/5 py-3 px-4">
 
-
-
-<div className="overflow-x-auto pb-2 no-scrollbar">
-  <div className="flex gap-3 min-w-max">
-
-{[
-  {
-    label: "🔥 Trending",
-    target: "trending-section",
-  },
-  {
-    label: "🍸 Cocktail Bars",
-    target: "trending-section",
-  },
-  {
-    label: "🎶 Live Music",
-    target: "trending-section",
-  },
-  {
-    label: "🌴 Beach Bars",
-    target: "trending-section",
-  },
-  {
-    label: "💃 Clubs",
-    target: "trending-section",
-  },
-  {
-    label: "⭐ Saved",
-    target: "trending-section",
-  },
-].map((item) => (
-
-  <button
-    key={item.label}
-    onClick={() => {
-      const el = document.getElementById(item.target);
-
-      if (el) {
-        el.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-    }}
-    className="px-5 py-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-white whitespace-nowrap text-sm font-bold hover:bg-fuchsia-500/20 hover:border-fuchsia-400/40 hover:shadow-[0_0_20px_rgba(255,0,200,0.25)] transition-all duration-300"
-  >
-    {item.label}
-  </button>
-
-))}
-
-
-   
-  </div>
-</div>
-</div>
-
-<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-8">
 
   {venues.map((venue) => (
 
@@ -491,7 +432,82 @@ const trendingVenues = [...venues]
   </div>
 
 </section>
+ 
+<div className="mx-auto max-w-6xl px-4 pt-10">
 
+  <div className="flex items-center justify-between mb-5">
+
+    <h2 className="text-3xl font-black text-white">
+      Explore More Venues
+    </h2>
+
+    <p className="text-white/40">
+      Discover tonight’s hotspots
+    </p>
+
+  </div>
+
+   
+<div className="sticky top-[88px] z-20 bg-background-deep/70 backdrop-blur-xl border-b border-white/5 py-3 px-4">
+
+
+
+<div className="overflow-x-auto pb-2 no-scrollbar">
+  <div className="flex gap-3 min-w-max">
+
+{[
+  {
+    label: "🔥 Trending",
+    target: "trending-section",
+  },
+  {
+    label: "🍸 Cocktail Bars",
+    target: "trending-section",
+  },
+  {
+    label: "🎶 Live Music",
+    target: "trending-section",
+  },
+  {
+    label: "🌴 Beach Bars",
+    target: "trending-section",
+  },
+  {
+    label: "💃 Clubs",
+    target: "trending-section",
+  },
+  {
+    label: "⭐ Saved",
+    target: "trending-section",
+  },
+].map((item) => (
+
+  <button
+    key={item.label}
+    onClick={() => {
+      const el = document.getElementById(item.target);
+
+      if (el) {
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }}
+    className="px-5 py-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-white whitespace-nowrap text-sm font-bold hover:bg-fuchsia-500/20 hover:border-fuchsia-400/40 hover:shadow-[0_0_20px_rgba(255,0,200,0.25)] transition-all duration-300"
+  >
+    {item.label}
+  </button>
+
+))}
+
+
+   
+  </div>
+</div>
+</div>
+
+<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-8">
 
 
 
@@ -637,6 +653,7 @@ const trendingVenues = [...venues]
         )}
 
         {/* Quick vote bar */}
+        
         {data?.best_overall && (
           <div
             data-testid="quick-vote"
