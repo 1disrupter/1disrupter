@@ -8,7 +8,7 @@ const venues = [
     id: 1,
     name: "Hole in the Wall",
     type: " Bar ",
-    description: "popular bar with locals, live football, sports etc, great atmosphere & brillant host kevin looks after your needs,
+    description: "popular bar with locals, live football, sports etc, great atmosphere & brillant host kevin looks after your needs",
     vibe: "97% Vibe · Packed",
     lat: 36.559,
     lng: -4.436,
