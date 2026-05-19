@@ -189,7 +189,7 @@ const saveVenue = () => {
             </h3>
 
             <p className="text-white/70">
-              Benalmádena, Spain
+              {venue.location}
             </p>
 
           </div>
@@ -205,7 +205,8 @@ const saveVenue = () => {
             </h3>
 
             <p className="text-white/70">
-              Live DJs • House • Party Vibes
+              {venue.music}
+              {venue.openingHours}
             </p>
 
           </div>
@@ -255,10 +256,10 @@ const saveVenue = () => {
           <h2 className="text-4xl font-black mb-5">
             ABOUT THIS VENUE
           </h2>
-
-          <p className="text-white/70 leading-relaxed text-lg">
-            Experience one of Benalmádena’s hottest nightlife destinations with live music, cocktails, vibrant crowds and unforgettable nightlife energy powered by Vibe2nite.
-          </p>
+<p className="text-white/70 leading-relaxed text-lg">
+  {venue.description}
+</p>
+        
 
         </div>
 
