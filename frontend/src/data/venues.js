@@ -19,9 +19,9 @@ image: holeinthewall,
 
     busyScore: 97,
     trending: true,
-events: [ { title: "Live football", time: "23:00", },
-       { title: "2-for-1 Cocktails", 
-        time: "20:00", }, ],
+events: [ { title: "Live football, sports etc", time: "24:00", },
+       { title: "top of the pops for whiskey & real local vibe, kevin is a fantastic host", 
+        time: "17:30", }, ],
   },
 
   {
